@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from QuICT.algorithm.quantum_algorithm.quantum_walk import Graph, QuantumWalk
-from QuICT.core.gate import *
 from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
@@ -38,38 +37,44 @@ class QuantumWalkSearch(QuantumWalk):
             edge.append(e)
         return edge
 
-    def draw(self):
-        """ Plot the probability distribution of the states. """
-        p = self.sv.real * self.sv.real
-        prob = np.zeros(self._graph.position)
-        idx = 0
-        for i in range(0, 1 << self._total_qubits, 2 ** self._action_qubits):
-            for j in range(self._position_qubits):
-                prob[idx] += p[i + j]
-            idx += 1
-        plt.bar(range(self._graph.position), prob)
-        plt.show()
+    def _set_coins(self, r, a_r, a_nr):
+        """ Set the coins for marked and unmarked nodes. """
+        n = 2 ** self._action_qubits
+        if r is None:
+            r = self._action_qubits
+        assert 0 <= r < n, "r should in the range of [0, n - 1]."
+        assert a_r > a_nr, "a_r should larger than a_nr."
 
-    def run(self,
-            index_qubits: int,
-            target: int = None,
-            step: int = None,
-            coin_marked: np.ndarray = None,
-            coin_unmarked: np.ndarray = None,
-            coin_oracle: np.ndarray = None,
-            switched_time: int = -1,
-            ):
+        # set C0 to G
+        s_c = np.ones((n, n)) / n
+        self._coin_unmarked = np.eye(n) - 2 * s_c
+
+        # set C1
+        a = np.sqrt(a_r * a_r + (n - 1) * (a_nr * a_nr))
+        x = np.zeros((1, n))
+        for i in range(n):
+            x[0, i] = a_r / a if i == r else a_nr / a
+        self._coin_marked = np.eye(n) - 2 * (x.T @ x)
+
+    def run(
+        self,
+        index_qubits: int,
+        targets: list = None,
+        step: int = None,
+        r: int = None,
+        a_r: float = 1,
+        a_nr: float = 0,
+        switched_time: int = -1,
+    ):
         """ Execute the quantum walk search with given number of index qubits.
 
         Args:
             index_qubits (int): The size of the node register.
-            target (int, optional): The index of the target element.
+            targets (list, optional): The indexes of the target elements.
             step (int, optional): The steps of random walk, a step including a coin operator and a shift operator.
-            coin_marked (np.ndarray, optional): The coin operator for the target node. Should be a unitary matrix.
-            coin_unmarked (np.ndarray, optional): The coin operator for other nodes except the target.
-                Should be a unitary matrix. Defaults to Grover coin.
-            coin_oracle (np.ndarray, optional): A coin operator which takes on the function of an oracle.
-                Should be a unitary matrix.
+            r (int, optional): The 'direction' of inclination of an asymmetric coin. Defaults to action_qubits (c).
+            a_r (float, optional): Parameter of the asymmetry degree of the coin. Defaults to 1.
+            a_nr (float, optional): Parameter of the asymmetry degree of the coin. Defaults to 0.
             switched_time (int, optional): The number of steps of each coin operator in the vector.
                 Defaults to -1, means not switch coin operator.
 
@@ -81,21 +86,27 @@ class QuantumWalkSearch(QuantumWalk):
         self._action_qubits = int(np.ceil(np.log2(index_qubits)))  # c
         self._total_qubits = self._position_qubits + self._action_qubits
         position = 1 << index_qubits  # N
-        self._step = step if step is not None and step > 0 else int(np.ceil(np.sqrt(position) * np.pi / 2)) + 1
-        self._coin_marked = coin_marked
-        self._coin_unmarked = coin_unmarked
+        self._step = (
+            step
+            if step is not None and step > 0
+            else int(np.ceil(1.0 / np.sqrt(len(targets) / position))) + 1
+        )
+        self._step = 6
+        self._set_coins(r, a_r, a_nr)
         edges = self._get_hypercube_edges(position)
         self._graph = Graph(position, edges, None, switched_time)
 
         # Validation graph
         assert self._graph.validation(), "The edge's number should be equal."
         # Validation coin operator
-        assert coin_oracle is not None or target is not None, "Should provide a coin oracle or a target index."
-        if target is not None:
-            assert 0 <= target < position, "Target should be within the range of values allowed by the index register. "
-            self._target = target
-        if coin_oracle is not None:
-            self._coin_operator_validation(coin_oracle)
+        assert (
+            targets is not None and len(targets) > 0
+        ), "Should provide target indexes."
+        for target in targets:
+            assert (
+                0 <= target < position
+            ), "Target should be within the range of values allowed by the index register. "
+        self._targets = targets
 
         # Build random walk circuit
         self._circuit_construct()

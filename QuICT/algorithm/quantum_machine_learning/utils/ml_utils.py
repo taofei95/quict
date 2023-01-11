@@ -31,7 +31,10 @@ def save_checkpoint(net, optim, model_path, ep, it, latest=False):
     """
     os.makedirs(model_path, exist_ok=True)
     checkpoint = dict(
-        epoch=ep, iter=it, graph=net.state_dict(), optimizer=optim.state_dict(),
+        epoch=ep,
+        iter=it,
+        graph=net.state_dict(),
+        optimizer=optim.state_dict(),
     )
     torch.save(checkpoint, "{0}/model.ckpt".format(model_path))
     if not latest:
@@ -58,15 +61,9 @@ def restore_checkpoint(net, optim, model_path, device, resume):
     """
     assert resume and model_path
     try:
-        model_name = (
-            "{0}/model.ckpt".format(model_path)
-            if resume is True
-            else "{0}/{1}_{2}.ckpt".format(model_path, resume["ep"], resume["it"])
-        )
+        checkpoint = torch.load(model_path, map_location=device)
     except:
         raise Exception("Cannot find the model.")
-
-    checkpoint = torch.load(model_name, map_location=device)
     try:
         net.load_state_dict(checkpoint["graph"])
         if optim:
@@ -74,7 +71,7 @@ def restore_checkpoint(net, optim, model_path, device, resume):
     except:
         raise Exception("Cannot load the model correctly.")
 
-    ep = checkpoint["ep"]
+    ep = checkpoint["epoch"]
     it = checkpoint["iter"]
     assert resume is True or (resume["ep"] == ep and resume["it"] == it)
 

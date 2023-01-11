@@ -3,6 +3,7 @@
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
 
 
 OPTIONS = {
@@ -13,6 +14,29 @@ OPTIONS = {
     "node_size": 2000,
     "width": 3,
 }
+
+
+def draw_prob_with_auxiliary(sv, qubits, anxiliary, title: str = "Probability", save_path=None):
+    """ Draw the probability distribution of the state vector.
+
+    Args:
+        sv (np.array): The state vector.
+        qubits (int): The number of data qubits.
+        anxiliary (int): The number of auxiliary qubits.
+        title (str, optional): The title of the figure. Defaults to "Probability".
+        save_path (str, optional): The path to save the figure. Defaults to None.
+    """
+    p = sv.real * sv.real
+    prob = np.zeros(2 ** qubits)
+    idx = 0
+    for i in range(0, 1 << qubits + anxiliary, 2 ** anxiliary):
+        for j in range(qubits):
+            prob[idx] += p[i + j]
+        idx += 1
+    plt.bar(range(2 ** qubits), prob)
+    if save_path:
+        plt.savefig(save_path + "/{}.png".format(title), transparent=True)
+    plt.show()
 
 
 def draw_graph(nodes, edges, title: str = "Graph", save_path=None):
