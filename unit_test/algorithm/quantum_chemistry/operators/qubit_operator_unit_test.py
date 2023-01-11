@@ -4,7 +4,7 @@
 # @Author  : Xiaoquan Xu
 # @File    : qubit_operator_unit_test.py
 
-from QuICT.algorithm.quantum_chemistry.operator.qubit_operator import QubitOperator
+from QuICT.algorithm.quantum_chemistry.operators.qubit_operator import QubitOperator
 
 
 def test_construction():

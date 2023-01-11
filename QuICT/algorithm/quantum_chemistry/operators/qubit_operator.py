@@ -9,7 +9,7 @@ A Qubit operator is a polynomial of Pauli matrices {X, Y, Z} = {sigma_1, sigma_2
 which is a useful representation for circuits by second quantization.
 """
 
-from QuICT.algorithm.quantum_chemistry.operator.polynomial_operator import PolynomialOperator
+from QuICT.algorithm.quantum_chemistry.operators.polynomial_operator import PolynomialOperator
 
 
 class QubitOperator(PolynomialOperator):

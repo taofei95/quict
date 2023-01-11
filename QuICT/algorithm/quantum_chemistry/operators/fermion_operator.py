@@ -9,7 +9,7 @@ A fermion operator is a polynomial of anti-commutative creation-annihilation ope
 which is a useful representation for states and Hamiltonians by second quantization.
 """
 
-from QuICT.algorithm.quantum_chemistry.operator.polynomial_operator import PolynomialOperator
+from QuICT.algorithm.quantum_chemistry.operators.polynomial_operator import PolynomialOperator
 
 
 class FermionOperator(PolynomialOperator):

@@ -5,10 +5,10 @@
 # @File    : parametertensor.py
 
 import itertools as it
-import numpy as np
-from numpy import einsum
 
-from QuICT.algorithm.quantum_chemistry.operator.fermion_operator import FermionOperator
+import numpy as np
+
+from QuICT.algorithm.quantum_chemistry.operators.fermion_operator import FermionOperator
 
 
 def obi_basis_rotation(obi, R):
@@ -22,7 +22,7 @@ def obi_basis_rotation(obi, R):
     Returns:
         Ndarray: n*n one-body integrals of i^ j after rotation
     """
-    return einsum("pi,pq,qj->ij", R.conj(), obi, R)
+    return np.einsum("pi,pq,qj->ij", R.conj(), obi, R)
 
 
 def tbi_basis_rotation(tbi, R):
@@ -36,7 +36,7 @@ def tbi_basis_rotation(tbi, R):
     Returns:
         Ndarray: n*n*n*n two-body integrals of i^ j^ s t after rotation
     """
-    return einsum("pi,qj,pquv,us,vt->ijst", R.conj(), R.conj(), tbi, R, R)
+    return np.einsum("pi,qj,pquv,us,vt->ijst", R.conj(), R.conj(), tbi, R, R)
 
 
 class ParameterTensor:
@@ -67,15 +67,6 @@ class ParameterTensor:
         for index in it.product(range(n_qubits), repeat=4):
             fermion_operator += FermionOperator(list(zip(index, (1, 1, 0, 0))), self.tbi[index])
         return fermion_operator
-
-    def expectation(self, other):
-        """
-        Multiply coefficient matrix with hamitonian
-        """
-        expectation = self.const * other.const
-        expectation += np.sum(self.obi * other.obi)
-        expectation += np.sum(self.tbi * other.tbi)
-        return expectation
 
 
 def generate_hamiltonian(const, obi, tbi, eps=1e-12):
