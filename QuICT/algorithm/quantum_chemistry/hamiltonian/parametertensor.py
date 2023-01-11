@@ -8,7 +8,7 @@ import itertools as it
 import numpy as np
 from numpy import einsum
 
-from QuICT.chemistry.operator.fermion_operator import FermionOperator
+from QuICT.algorithm.quantum_chemistry.operator.fermion_operator import FermionOperator
 
 
 def obi_basis_rotation(obi, R):
@@ -78,7 +78,7 @@ class ParameterTensor:
         return expectation
 
 
-def generate_hamiltonian(const, obi, tbi, EQ_TOLERANCE=1.0E-12):
+def generate_hamiltonian(const, obi, tbi, eps=1e-12):
     """
     Double the dimension of obi and tbi,
     then generate an interaction operator as Hamiltonian
@@ -105,8 +105,7 @@ def generate_hamiltonian(const, obi, tbi, EQ_TOLERANCE=1.0E-12):
                     new_tbi[2 * p, 2 * q, 2 * r, 2 * s] = tbi[p, q, r, s] / 2.
                     new_tbi[2 * p + 1, 2 * q + 1, 2 * r + 1, 2 * s + 1] = tbi[p, q, r, s] / 2.
 
-    # Truncate.
-    new_obi[np.absolute(new_obi) < EQ_TOLERANCE] = 0.
-    new_tbi[np.absolute(new_tbi) < EQ_TOLERANCE] = 0.
+    new_obi[np.absolute(new_obi) < eps] = 0
+    new_tbi[np.absolute(new_tbi) < eps] = 0
 
     return ParameterTensor(const, new_obi, new_tbi)

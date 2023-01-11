@@ -21,8 +21,7 @@ def get_from_file(item, molfile, set_type=None):
         elif set_type is not None:
             data = data.astype(set_type)
     except Exception:
-        data = None
-        print("!! no " + item)
+        raise ValueError('Invalid ' + item)
     return data
 
 
