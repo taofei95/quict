@@ -184,61 +184,6 @@ class OPENQASMInterface(BasicInterface):
         with open(self.DEFAULT_QUICT_FILE, 'w') as f:
             config_parser.write(f)
 
-    def output_qiskit(self, filename, generator_qasm=False, shots=1024):
-        if not self.valid_qasm or self.qasm is None:
-            if self.circuit is None:
-                return
-            self.qasm = self.circuit.qasm()
-            if self.qasm != 'error':
-                self.valid_qasm = True
-            else:
-                return False
-
-        if self.token is None:
-            self.load_token()
-            if self.token is None:
-                token = input("please input token > ")
-                self.save_token(token)
-
-        if generator_qasm:
-            with open(filename + '.qasm', 'w+') as file:
-                file.write(self.qasm)
-            code = """
-                    from qiskit import QuantumCircuit
-                    from qiskit import IBMQ, execute
-                    from qiskit.providers.ibmq import least_busy
-                    IBMQ.save_account('{}', overwrite=True)
-                    circ = QuantumCircuit.from_qasm_file("{}.qasm")
-                    provider = IBMQ.load_account()
-                    least_busy_device = least_busy(
-                    provider.backends(simulator=False,
-                        filters=lambda x: x.configuration().n_qubits > 4))
-                    job = execute(circ, least_busy_device, shots={})
-                    result = job.result()
-                    print(result.get_counts(circ))
-                """.format(self.token, filename, shots)
-
-            with open(filename + '.py', 'w+') as file:
-                file.write(code)
-        else:
-            code = """
-                from qiskit import QuantumCircuit
-                from qiskit import IBMQ, execute
-                from qiskit.providers.ibmq import least_busy
-                IBMQ.save_account('{}')
-                circ = QuantumCircuit.from_qasm_str({})
-                provider = IBMQ.load_account()
-                least_busy_device = least_busy(
-                provider.backends(simulator=False,
-                    filters=lambda x: x.configuration().n_qubits > 4))
-                job = execute(circ, least_busy_device, shots={})
-                result = job.result()
-                print(result.get_counts(circ))
-            """.format(self.token, '"""' + self.qasm + '"""', shots)
-
-            with open(filename + '.py', 'w+') as file:
-                file.write(code)
-
     def analyse_node(self, node):
         if not self.valid_circuit:
             return

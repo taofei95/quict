@@ -19,6 +19,8 @@ class DensityMatrixSimulation:
         precision (str, optional): The precision for the density matrix, one of [single, double]. Defaults to "double".
         accumulated_mode (bool): If True, calculated density matrix with Kraus Operators in NoiseGate.
             if True, p = \\sum Ki p Ki^T.conj(). Default to be False.
+            [Important: set accumulated_mode for True if you need sample result, otherwise, using False for
+            fast simulate time.]
     """
     def __init__(
         self,
@@ -45,7 +47,9 @@ class DensityMatrixSimulation:
 
     def initial_circuit(self, circuit: Circuit, noise_model: NoiseModel):
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
-        self._circuit = circuit if noise_model is None else noise_model.transpile(circuit)
+        self._origin_circuit = circuit
+        self._circuit = circuit if noise_model is None else noise_model.transpile(circuit, self._accumulated_mode)
+        self._noise_model = noise_model
         self._qubits = int(circuit.width())
 
         if self._precision != circuit._precision:
@@ -107,23 +111,28 @@ class DensityMatrixSimulation:
         elif (self._density_matrix is None or not use_previous):
             self.initial_density_matrix(self._qubits)
 
+        self._run(self._circuit)
+
+        # Check Readout Error in the NoiseModel
+        if noise_model is not None:
+            noise_model.apply_readout_error(circuit.qubits)
+
+        return self._density_matrix
+
+    def _run(self, noised_circuit):
         # Start simulator
         cgate = CompositeGate()
-        for gate in self._circuit.gates:
+        cgate._max_qubit = self._qubits
+        for gate in noised_circuit.gates:
             # Store continuous BasicGates into cgate
             if isinstance(gate, BasicGate) and gate.type != GateType.measure:
                 gate | cgate
                 continue
 
-            if not self._accumulated_mode and isinstance(gate, NoiseGate):
-                ugate = self.apply_noise_without_accumulated(gate)
-                ugate | cgate
-                gate.gate | cgate
-                continue
-
             if cgate.size() > 0:
                 self.apply_gates(cgate)
                 cgate.clean()
+                cgate._max_qubit = self._qubits
 
             if gate.type == GateType.measure:
                 self.apply_measure(gate.targ)
@@ -134,12 +143,6 @@ class DensityMatrixSimulation:
 
         if cgate.size() > 0:
             self.apply_gates(cgate)
-
-        # Check Readout Error in the NoiseModel
-        if noise_model is not None:
-            noise_model.apply_readout_error(circuit.qubits)
-
-        return self._density_matrix
 
     def apply_gates(self, cgate: CompositeGate):
         """ Simulating Circuit with BasicGates
@@ -164,7 +167,7 @@ class DensityMatrixSimulation:
             noise_gate (NoiseGate): The NoiseGate
             qubits (int): The number of qubits in the circuit.
         """
-        gate_args = noise_gate.cargs + noise_gate.targs
+        gate_args = noise_gate.targs
         noised_matrix = self._array_helper.zeros_like(self._density_matrix)
         for kraus_matrix in noise_gate.noise_matrix:
             umat = matrix_product_to_circuit(kraus_matrix, gate_args, qubits, gpu_output=self._device == "GPU")
@@ -175,17 +178,6 @@ class DensityMatrixSimulation:
             )
 
         self._density_matrix = noised_matrix.copy()
-
-    def apply_noise_without_accumulated(self, gate: NoiseGate) -> UnitaryGate:
-        prob = np.random.random()
-        error_matrix = gate.prob_mapping_operator(prob)
-        gate_args = gate.cargs + gate.targs
-
-        unitary_gate = Unitary(error_matrix) & gate_args
-        if self._precision == np.complex64:
-            unitary_gate.convert_precision()
-
-        return unitary_gate
 
     def apply_measure(self, index: int):
         """ Simulating the MeasureGate.
@@ -218,7 +210,9 @@ class DensityMatrixSimulation:
     def sample(self, shots: int) -> list:
         assert (self._density_matrix is not None), \
             SampleBeforeRunError("DensityMatrixSimulation sample without run any circuit.")
-        original_dm = self._density_matrix.copy()
+        if self._accumulated_mode or self._noise_model is None:
+            original_dm = self._density_matrix.copy()
+
         state_list = [0] * self._density_matrix.shape[0]
         lastcall_per_qubit = self._circuit.get_lastcall_for_each_qubits()
         measured_idx = [
@@ -230,7 +224,17 @@ class DensityMatrixSimulation:
             for m_id in measured_idx:
                 self.apply_measure(m_id)
 
+            if self._noise_model is not None:
+                self._noise_model.apply_readout_error(self._circuit.qubits)
+
             state_list[int(self._circuit.qubits)] += 1
-            self._density_matrix = original_dm.copy()
+            if self._accumulated_mode or self._noise_model is None:
+                self._density_matrix = original_dm.copy()
+            else:
+                self.initial_density_matrix(self._qubits)
+                noised_circuit = self._noise_model.transpile(self._origin_circuit, self._accumulated_mode) \
+                    if self._noise_model is not None else self._circuit
+
+                self._run(noised_circuit)
 
         return state_list

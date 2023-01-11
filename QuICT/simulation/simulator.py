@@ -20,7 +20,7 @@ class Simulator:
     """ The high-level simulation class, including all QuICT simulator mode.
 
     Args:
-        device (str): The device of the simulator. One of [CPU, GPU, qiskit, qcompute]
+        device (str): The device of the simulator. One of [CPU, GPU]
         backend (str): The backend for the simulator. One of [unitary, state_vector, density_matrix]
         shots (int): The running times; must be a positive integer, default to 1.
         precision (str): The precision of simulator, one of [single, double], default to double.
@@ -41,6 +41,7 @@ class Simulator:
         output_path: str = None,
         circuit_record: bool = False,
         amplitude_record: bool = False,
+        output_path: str = None,
         **options
     ):
         assert device in Simulator.__DEVICE, ValueError("Simulator.device", "[CPU, GPU]", device)
@@ -59,7 +60,9 @@ class Simulator:
             )
 
         # Result's arguments
-        self._result_recorder = Result(device, backend, precision, circuit_record, amplitude_record, self._options)
+        self._result_recorder = Result(
+            device, backend, precision, circuit_record, amplitude_record, self._options, output_path
+        )
 
     def _load_simulator(self):
         """ Initial simulator. """
@@ -114,8 +117,8 @@ class Simulator:
                 "The state vector input is not allowed in the density matrix backend."
             )
 
-        circuit_name = circuit.name if isinstance(circuit, Circuit) else "unitary_matrix"
-        self._result_recorder.record_circuit(circuit, circuit_name)
+        if isinstance(circuit, Circuit):
+            self._result_recorder.record_circuit(circuit)
 
         simulator = self._load_simulator()
         if self._backend == "density_matrix":

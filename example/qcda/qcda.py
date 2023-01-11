@@ -13,7 +13,7 @@ typelist = [GateType.rx, GateType.ry, GateType.rz, GateType.x, GateType.y, GateT
 
 
 if __name__ == '__main__':
-    layout_path = os.path.join(os.path.dirname(__file__), "ibmqx2_layout.json")
+    layout_path = os.path.join(os.path.dirname(__file__), "../layout/ibmqx2_layout.json")
     layout = Layout.load_file(layout_path)
 
     circuit = Circuit(5)
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     qcda = QCDA()
     qcda.add_gate_transform(USTCSet)
     qcda.add_default_optimization()
-    qcda.add_default_mapping(layout)
+    qcda.add_mapping(layout)
     qcda.add_gate_transform(USTCSet)
     circuit_phy = qcda.compile(circuit)
     circuit_phy.draw()

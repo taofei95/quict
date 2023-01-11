@@ -31,7 +31,7 @@ class CircuitLib:
             "ctrl_unitary", "diag", "single_bit", "ctrl_diag",
             "google", "ibmq", "ionq", "ustc", "nam", "origin"
         ],
-        "algorithm": ["adder", "clifford", "grover", "qft", "vqe", "cnf", "maxcut"],
+        "algorithm": ["adder", "clifford", "cnf", "grover", "maxcut", "qft", "qnn", "quantum_walk", "vqe"],
         "benchmark": ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"],
     }
     __DEFAULT_GATESET_for_RANDOM = {
@@ -141,7 +141,7 @@ class CircuitLib:
         max_depth: int = None
     ):
         if isinstance(qubits_interval, int):
-            qubits_interval = list(range(1, qubits_interval + 1))
+            qubits_interval = list(range(2, qubits_interval + 1))
 
         circuit_list = []
         size_interval = [3, 5, 10, 20]
@@ -175,22 +175,26 @@ class CircuitLib:
         self,
         qubits_interval: Union[list, int] = None,
         max_size: int = None,
-        max_depth: int = None
+        max_depth: int = None,
+        typelist: list = None
     ) -> Union[List[Union[Circuit, str]], None]:
         """
         Get template circuits in QuICT circuit library. A template will be loaded if
         it satisfies the following restrictions:
-            1. its number of qubits <= `max_width`,
-            2. its number of gates <= `max_size`,
-            3. its depth <= `max_depth`.
+            1. the circuit in the given classify.
+            2. its number of qubits <= `max_width`,
+            3. its number of gates <= `max_size`,
+            4. its depth <= `max_depth`.
+            5. its gates' types are in `typelist`
 
         Restrictions will be ignored if not specified.
 
         Args:
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [1, qubits_interval]. The qubits' number range is [1, 5].
+                it equals to the interval of [2, qubits_interval]. The qubits' number range is [1, 5].
             max_size(int): max number of gates, range is [2, 6].
             max_depth(int): max depth of circuit, range is [2, 9].
+            typelist(Iterable[GateType]): list of allowed gate types
 
         Returns:
             (List[Circuit | String] | None): Return the list of output circuit order by output_type.
@@ -198,7 +202,16 @@ class CircuitLib:
         path = os.path.join(self.__LIB_PATH, "template")
         files = self._db.circuit_filter("template", "template", qubits_interval, max_size, max_depth)
 
-        return self._get_all(path, files)
+        ret = self._get_all(path, files)
+
+        if typelist is not None:
+            filtered = []
+            for each in ret:
+                if all([g.type in typelist for g in each.gates]):
+                    filtered.append(each)
+            ret = filtered
+
+        return ret
 
     def get_random_circuit(
         self,
@@ -220,7 +233,7 @@ class CircuitLib:
             classify (str): one of ["aspen-4", "ourense", "rochester", "sycamore", "tokyo", \
                 "ctrl_unitary", "diag", "single_bits", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"]
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [1, qubits_interval].
+                it equals to the interval of [2, qubits_interval].
             max_size(int): max number of gates.
             max_depth(int): max depth of circuit.
 
@@ -263,7 +276,7 @@ class CircuitLib:
         Args:
             classify (str): one of ["adder", "clifford", "grover", "qft", "vqe"]
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [1, qubits_interval].
+                it equals to the interval of [2, qubits_interval].
             max_size(int): max number of gates.
             max_depth(int): max depth of circuit.
 
@@ -295,7 +308,7 @@ class CircuitLib:
         Args:
             classify (str): one of ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"]
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [1, qubits_interval].
+                it equals to the interval of [2, qubits_interval].
             max_size(int): max number of gates.
             max_depth(int): max depth of circuit.
 
@@ -317,7 +330,7 @@ class CircuitLib:
         """Get the target circuits from QuICT Circuit Library.
 
         Args:
-            type (str): The type of circuits, one of [template, random, algorithm, benchmark, instructionset].
+            type (str): The type of circuits, one of [template, random, algorithm, benchmark].
             classify (str, optional): The classify of selected circuit's type.
                 For template circuit's type, classify must be template;
                 For random circuit's type, classify is one of

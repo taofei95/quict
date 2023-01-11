@@ -7,7 +7,6 @@ Stephane Beauregard in "Circuit for Shor's algorithm using 2n+3 qubits"\
 Without one control-bit trick.
 """
 
-import logging
 from math import gcd, pi
 import numpy as np
 from fractions import Fraction
@@ -19,12 +18,17 @@ from QuICT.qcda.synthesis.arithmetic.bea import *
 from QuICT.simulation.state_vector import CircuitSimulator
 from .utility import *
 
+from QuICT.tools import Logger
+from QuICT.tools.exception.core import *
+
+logger = Logger("BEA")
+
 
 def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     # phase estimation procedure
     n = int(np.ceil(np.log2(N + 1)))
     t = int(2 * n + 1 + np.ceil(np.log(2 + 1 / (2 * eps))))
-    logging.info(f"\torder_finding circuit construction: circuit: n = {n} t = {t}")
+    logger.info(f"\torder_finding circuit construction: circuit: n = {n} t = {t}")
 
     circuit = Circuit(2 * n + 2 + t)
     b_reg = list(range(n + 1))  # n+1
@@ -57,9 +61,9 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulato
 
     # continued fraction procedure
     phi_ = int(circuit[trickbits]) / (1 << t)
-    logging.info(f"\tphi~ (approximately s/r) in decimal form is {phi_}")
+    logger.info(f"\tphi~ (approximately s/r) in decimal form is {phi_}")
     r = Fraction(phi_).limit_denominator(N - 1).denominator
-    logging.info(f"\tclose fraction form: {Fraction(phi_).limit_denominator(N - 1)}")
+    logger.info(f"\tclose fraction form: {Fraction(phi_).limit_denominator(N - 1)}")
     return r
 
 
@@ -78,12 +82,12 @@ def reinforced_order_finding(
         i += 1
         simulator.run(circuit)
         phi_ = int(circuit[trickbits]) / (1 << t)
-        logging.info(
+        logger.info(
             f"\tclose fraction form (repetition {i}): {Fraction(phi_).limit_denominator(N - 1)}"
         )
         r = Fraction(phi_).limit_denominator(N - 1).denominator
         if r != 0 and (a ** r) % N == 1:
-            logging.info("\tsuccess!")
+            logger.info("\tsuccess!")
             r_list.append(r)
     if len(r_list) == 0:
         return 0

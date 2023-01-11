@@ -1,7 +1,6 @@
 from QuICT.algorithm.quantum_algorithm.shor.BEA_zip import order_finding as BEA_zip_run
 from QuICT.algorithm.quantum_algorithm.shor.BEA import construct_circuit as BEA_circuit
 from QuICT.algorithm.quantum_algorithm.shor.BEA import order_finding as BEA_run
-
 from QuICT.algorithm.quantum_algorithm.shor.HRS_zip import order_finding as HRS_zip_run
 from QuICT.algorithm.quantum_algorithm.shor.HRS import (
     construct_circuit as HRS_circuit,

@@ -1,7 +1,8 @@
-OPENQASM 3.0;
-include "stdgates.qasm";
+OPENQASM 2.0;
+include "qelib1.inc";
 
-qubit qs[7];
+qreg qs[7];
+creg cs[7];
 
 x qs[0];
 x qs[1];

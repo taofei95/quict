@@ -1,7 +1,8 @@
-OPENQASM 3.0;
-include "stdgates.qasm";
+OPENQASM 2.0;
+include "qelib1.inc";
 
-qubit qs[6];
+qreg qs[6];
+creg cs[6];
 
 // Rotation
 rz(1.7718890957194597) qs[0];

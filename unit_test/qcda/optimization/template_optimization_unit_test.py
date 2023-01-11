@@ -3,8 +3,10 @@ from random import sample
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.tools.circuit_library import CircuitLib
-from QuICT.qcda.optimization.template_optimization.template_matching import ForwardMatch, MatchingDAGCircuit
-from QuICT.qcda.optimization.template_optimization.template_optimization import TemplateOptimization
+from QuICT.qcda.optimization.template_optimization.template_matching import (
+    ForwardMatch, MatchingDAGCircuit)
+from QuICT.qcda.optimization.template_optimization.template_optimization import \
+    TemplateOptimization
 
 
 def get_circ():
@@ -95,14 +97,9 @@ def test_random_circuit():
     n_templates = 10
 
     for idx in range(n_iter):
-        print('testing', idx)
         circ = Circuit(n_qubits)
         circ.random_append(n_gates, typelist=gates)
-        TO = TemplateOptimization(
-            template_list=sample(template_list, n_templates),
-            heuristics_qubits_param=[10],
-            heuristics_backward_param=[3, 1]
-        )
+        TO = TemplateOptimization(template_typelist=sample(template_list, n_templates))
         circ_optim = TO.execute(circ)
 
         mat_1 = circ.matrix()

@@ -3,7 +3,7 @@
 # @TIME    : 2022/1/15 10:31
 # @Author  : Han Yu, Li Kaiqi
 # @File    : _circuit_computing.py
-
+from collections import Iterable
 from typing import List
 import numpy as np
 from enum import Enum
@@ -187,11 +187,11 @@ class CircuitBased(object):
 
         if self.size() == 0:
             if device == "CPU":
-                circuit_matrix = np.identity(1 << self.width(), dtype=np.complex128)
+                circuit_matrix = np.identity(1 << self.width(), dtype=self._precision)
             else:
                 import cupy as cp
 
-                circuit_matrix = cp.identity(1 << self.width(), dtype=np.complex128)
+                circuit_matrix = cp.identity(1 << self.width(), dtype=self._precision)
 
             return circuit_matrix
 
@@ -224,3 +224,6 @@ class CircuitBased(object):
 
 class CircuitMode(Enum):
     Clifford = "Clifford"
+    CliffordRz = "CliffordRz"
+    Arithmetic = 'Arithmetic'
+    Misc = "Misc"

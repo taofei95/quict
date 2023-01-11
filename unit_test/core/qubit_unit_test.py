@@ -7,11 +7,11 @@ from QuICT.core import Qureg
 class TestQubit(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        print("circuit_unit_test begin")
+        print("The Qubit unit test start!")
 
     @classmethod
     def tearDownClass(cls) -> None:
-        print("circuit_unit_test finish")
+        print("The Qubit unit test finished!")
 
     def test_qubit_attr(self):
         # unqiue test

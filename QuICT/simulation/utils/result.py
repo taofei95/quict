@@ -18,7 +18,8 @@ class Result:
         precision: str,
         circuit_record: bool,
         amplitude_record: bool,
-        options: dict
+        options: dict,
+        output_path: str = None
     ):
         self.device = device
         self.backend = backend
@@ -33,6 +34,8 @@ class Result:
 
         # prepare output path
         self._dump_folder = True if self._amplitude_record or self._circuit_record else False
+        if self._dump_folder:
+            self._output_path = self._prepare_output_file(output_path)
 
     def __str__(self):
         return f"Device: {self.device}\nBackend: {self.backend}\n" + \
@@ -54,11 +57,11 @@ class Result:
             }
         }
 
-    def _prepare_output_file(self, output_path: str):
+    def _prepare_output_file(self, output_path):
         """ Prepare output path. """
         if output_path is None:
             curr_path = os.getcwd()
-            output_path = os.path.join(curr_path, "output", self.id)
+            output_path = os.path.join(curr_path, "output")
 
         if not os.path.exists(output_path):
             os.makedirs(output_path)
@@ -78,17 +81,14 @@ class Result:
             self.counts[bit_idx] = result[i]
 
         if self._dump_folder:
-            with open(f"{self.output_path}/result.log", "w") as of:
+            with open(f"{self._output_path}/result_{self.id}.log", "w") as of:
                 of.write(str(self.__dict__()))
 
-    def record_circuit(self, circuit, circuit_name):
+    def record_circuit(self, circuit):
         """ dump the circuit. """
-        self.id = circuit_name
-        if self._dump_folder:
-            self.output_path = self._prepare_output_file()
-
+        self.id = circuit.name
         if self._circuit_record:
-            with open(f"{self.output_path}/circuit.qasm", "w") as of:
+            with open(f"{self._output_path}/circuit_{self.id}.qasm", "w") as of:
                 of.write(circuit.qasm())
 
     def record_amplitude(self, amplitude):
@@ -97,7 +97,7 @@ class Result:
             amplitude = amplitude.get()
 
         if self._amplitude_record:
-            np.savetxt(f"{self.output_path}/amplitude.txt", amplitude)
+            np.savetxt(f"{self._output_path}/amp_{self.id}.txt", amplitude)
 
         if self.backend == "density_matrix":
             self.density_matrix = amplitude.copy()
