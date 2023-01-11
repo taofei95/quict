@@ -218,6 +218,7 @@ class ConstantStateVectorSimulator:
                 matrix,
                 *default_parameters
             )
+        # [Rzx]
         elif matrix_type == MatrixType.diag_normal:
             t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
             matrix = self._get_gate_matrix(gate)
@@ -477,7 +478,7 @@ class ConstantStateVectorSimulator:
         self._vector = cp.zeros_like(self.vector)
 
     def get_measured_prob(self, index: int, all_measured: bool = False) -> cp.ndarray:
-        """ Return the probability of measured qubit with given index to be 1
+        """ Return the probability of measured qubit with given index to be 0
 
         Args:
             index (int): The given qubit index

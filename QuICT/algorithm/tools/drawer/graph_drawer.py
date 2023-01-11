@@ -11,13 +11,11 @@ OPTIONS = {
     "font_weight": "bold",
     "font_color": "white",
     "node_size": 2000,
-    "width": 2,
+    "width": 3,
 }
 
 
-def draw_graph(
-    nodes, edges, title: str = "Graph", save_path=None,
-):
+def draw_graph(nodes, edges, title: str = "Graph", save_path=None):
     """Draw an undirected graph based on given nodes and edges.
 
     Args:
@@ -32,18 +30,22 @@ def draw_graph(
     G.add_nodes_from(nodes)
     G.add_edges_from(edges)
     pos = nx.circular_layout(G)
-    nx.draw_networkx(G, pos, **OPTIONS)
+    nx.draw_networkx(G, pos, node_color="#416DB6", **OPTIONS)
     ax = plt.gca()
     ax.margins(0.20)
     plt.axis("off")
     if save_path:
-        plt.savefig(save_path + "/{}.jpg".format(title))
+        plt.savefig(save_path + "/{}.png".format(title), transparent=True)
     plt.show()
     return
 
 
 def draw_maxcut_result(
-    nodes, edges, solution_bit, title: str = "The result of MaxCut", save_path=None,
+    nodes,
+    edges,
+    solution_bit,
+    title: str = "The result of MaxCut",
+    save_path=None,
 ):
     """Draw an undirected graph based on given nodes and edges.
 
@@ -61,18 +63,16 @@ def draw_maxcut_result(
     G.add_edges_from(edges)
     pos = nx.circular_layout(G)
 
-    node_color = ["red" if solution_bit[v] == "1" else "#1f78b4" for v in nodes]
+    node_color = ["red" if solution_bit[v] == "1" else "#416DB6" for v in nodes]
     edge_color = []
     edge_style = []
-    for u in nodes:
-        for v in range(u + 1, len(nodes)):
-            if (u, v) in edges or (v, u) in edges or [u, v] in edges or [v, u] in edges:
-                if solution_bit[u] == solution_bit[v]:
-                    edge_color.append("black")
-                    edge_style.append("solid")
-                else:
-                    edge_color.append("red")
-                    edge_style.append("dashed")
+    for (u, v) in G.edges:
+        if solution_bit[u] != solution_bit[v]:
+            edge_color.append("red")
+            edge_style.append("dashed")
+        else:
+            edge_color.append("black")
+            edge_style.append("solid")
 
     nx.draw(
         G,
@@ -86,5 +86,5 @@ def draw_maxcut_result(
     ax.margins(0.20)
     plt.axis("off")
     if save_path:
-        plt.savefig(save_path + "/{}.jpg".format(title))
+        plt.savefig(save_path + "/{}.png".format(title), transparent=True)
     plt.show()
