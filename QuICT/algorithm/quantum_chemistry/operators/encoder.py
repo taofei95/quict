@@ -21,7 +21,7 @@ class Encoder:
     def __init__(self, n_orbitals):
         self.n_orbitals = n_orbitals
 
-    def encoder(self, fermion_operator):
+    def encode(self, fermion_operator):
         """
         Encoders transform ladder operators to Qubit Operators.
 
@@ -36,11 +36,11 @@ class Encoder:
         for mono_f in fermion_operator.operators:
             mono_q = QubitOperator([], mono_f[1])
             for operator in mono_f[0]:
-                mono_q *= self.encoder_single(operator[0], operator[1], n_orbitals)
+                mono_q *= self.encode_single(operator[0], operator[1], n_orbitals)
             ans += mono_q
         return ans
 
-    def encoder_single(self, target, kind, n_orbitals):
+    def encode_single(self, target, kind, n_orbitals):
         """
         Encode a single ladder operator (To be overrided).
 
@@ -88,7 +88,7 @@ class JordanWigner(Encoder):
     def __init__(self, n_orbitals=None):
         super().__init__(n_orbitals)
 
-    def encoder_single(self, target, kind, n_orbitals):
+    def encode_single(self, target, kind, n_orbitals):
         Zlist = [(i, 3) for i in range(target)]
         ans = QubitOperator(Zlist)
         # annihilation
@@ -104,7 +104,7 @@ class Parity(Encoder):
     """
     Implement the parity encoding method.
     """
-    def encoder_single(self, target, kind, n_orbitals):
+    def encode_single(self, target, kind, n_orbitals):
         Xlist = [(i, 1) for i in range(target + 1, n_orbitals)]
         ans = QubitOperator(Xlist)
         # annihilation
@@ -164,7 +164,7 @@ class BravyiKitaev(Encoder):
     """
     Implement the Bravyi-Kitaev encoding method
     """
-    def encoder_single(self, target, kind, n_orbitals):
+    def encode_single(self, target, kind, n_orbitals):
         Xlist = [(i, 1) for i in flip(target, n_orbitals)]
         ans = QubitOperator(Xlist, 0.5)
         Zlist1 = [(i, 3) for i in sumup(target - 1)]

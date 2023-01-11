@@ -18,27 +18,27 @@ crea_5 = FermionOperator('5^')
 
 def test_JordanWigner():
     JW = JordanWigner()
-    assert JW.encoder(anni_0) == QubitOperator("X0", 0.5) + QubitOperator("Y0", 0.5j)
-    assert JW.encoder(crea_0) == QubitOperator("X0", 0.5) - QubitOperator("Y0", 0.5j)
-    assert JW.encoder(anni_2) == QubitOperator("Z0 Z1 X2", 0.5) + QubitOperator("Z0 Z1 Y2", 0.5j)
-    assert JW.encoder(crea_2) == QubitOperator("Z0 Z1 X2", 0.5) - QubitOperator("Z0 Z1 Y2", 0.5j)
-    assert JW.encoder(anni_5) == QubitOperator("Z0 Z1 Z2 Z3 Z4 X5", 0.5) \
+    assert JW.encode(anni_0) == QubitOperator("X0", 0.5) + QubitOperator("Y0", 0.5j)
+    assert JW.encode(crea_0) == QubitOperator("X0", 0.5) - QubitOperator("Y0", 0.5j)
+    assert JW.encode(anni_2) == QubitOperator("Z0 Z1 X2", 0.5) + QubitOperator("Z0 Z1 Y2", 0.5j)
+    assert JW.encode(crea_2) == QubitOperator("Z0 Z1 X2", 0.5) - QubitOperator("Z0 Z1 Y2", 0.5j)
+    assert JW.encode(anni_5) == QubitOperator("Z0 Z1 Z2 Z3 Z4 X5", 0.5) \
         + QubitOperator("Z0 Z1 Z2 Z3 Z4 Y5", 0.5j)
-    assert JW.encoder(crea_5) == QubitOperator("Z0 Z1 Z2 Z3 Z4 X5", 0.5) \
+    assert JW.encode(crea_5) == QubitOperator("Z0 Z1 Z2 Z3 Z4 X5", 0.5) \
         - QubitOperator("Z0 Z1 Z2 Z3 Z4 Y5", 0.5j)
-    assert JW.encoder(crea_2 * anni_2) == QubitOperator([], 0.5) - QubitOperator("Z2", 0.5)
-    assert JW.encoder(crea_5 * anni_5) == QubitOperator([], 0.5) - QubitOperator("Z5", 0.5)
+    assert JW.encode(crea_2 * anni_2) == QubitOperator([], 0.5) - QubitOperator("Z2", 0.5)
+    assert JW.encode(crea_5 * anni_5) == QubitOperator([], 0.5) - QubitOperator("Z5", 0.5)
 
 
 def test_Parity():
     PR = Parity(6)
-    assert PR.encoder(anni_2) == QubitOperator("Z1 X2 X3 X4 X5", 0.5) + QubitOperator("Y2 X3 X4 X5", 0.5j)
-    assert PR.encoder(crea_2) == QubitOperator("Z1 X2 X3 X4 X5", 0.5) - QubitOperator("Y2 X3 X4 X5", 0.5j)
-    assert PR.encoder(anni_5) == QubitOperator("Z4 X5", 0.5) + QubitOperator("Y5", 0.5j)
-    assert PR.encoder(crea_5) == QubitOperator("Z4 X5", 0.5) - QubitOperator("Y5", 0.5j)
-    assert PR.encoder(crea_2 * anni_2) == QubitOperator([], 0.5) - QubitOperator("Z1 Z2", 0.5)
-    assert PR.encoder(crea_5 * anni_5) == QubitOperator([], 0.5) - QubitOperator("Z4 Z5", 0.5)
-    assert PR.encoder(crea_5 + anni_5) == QubitOperator("Z4 X5")
+    assert PR.encode(anni_2) == QubitOperator("Z1 X2 X3 X4 X5", 0.5) + QubitOperator("Y2 X3 X4 X5", 0.5j)
+    assert PR.encode(crea_2) == QubitOperator("Z1 X2 X3 X4 X5", 0.5) - QubitOperator("Y2 X3 X4 X5", 0.5j)
+    assert PR.encode(anni_5) == QubitOperator("Z4 X5", 0.5) + QubitOperator("Y5", 0.5j)
+    assert PR.encode(crea_5) == QubitOperator("Z4 X5", 0.5) - QubitOperator("Y5", 0.5j)
+    assert PR.encode(crea_2 * anni_2) == QubitOperator([], 0.5) - QubitOperator("Z1 Z2", 0.5)
+    assert PR.encode(crea_5 * anni_5) == QubitOperator([], 0.5) - QubitOperator("Z4 Z5", 0.5)
+    assert PR.encode(crea_5 + anni_5) == QubitOperator("Z4 X5")
 
 
 def test_BravyiKitaev():
@@ -49,22 +49,22 @@ def test_BravyiKitaev():
     else:
         assert 0
 
-    assert BK.encoder(crea_0 + anni_0) == QubitOperator("X0 X1 X3 X7")
-    assert BK.encoder(crea_2 - anni_2) == QubitOperator("Z1 Y2 X3 X7", -1j)
-    assert BK.encoder(crea_5 + anni_5) == QubitOperator("Z3 Z4 X5 X7")
+    assert BK.encode(crea_0 + anni_0) == QubitOperator("X0 X1 X3 X7")
+    assert BK.encode(crea_2 - anni_2) == QubitOperator("Z1 Y2 X3 X7", -1j)
+    assert BK.encode(crea_5 + anni_5) == QubitOperator("Z3 Z4 X5 X7")
 
     BK50 = BravyiKitaev(50)
     BK100 = BravyiKitaev(100)
-    assert BK50.encoder(FermionOperator('0') + FermionOperator('0^')) \
+    assert BK50.encode(FermionOperator('0') + FermionOperator('0^')) \
         == QubitOperator("X0 X1 X3 X7 X15 X31")
-    assert BK100.encoder(FermionOperator('50') + FermionOperator('50^')) \
+    assert BK100.encode(FermionOperator('50') + FermionOperator('50^')) \
         == QubitOperator("Z31 Z47 Z49 X50 X51 X55 X63")
-    assert BK100.encoder(FermionOperator('62') - FermionOperator('62^')) \
+    assert BK100.encode(FermionOperator('62') - FermionOperator('62^')) \
         == QubitOperator("Z31 Z47 Z55 Z59 Z61 Y62 X63", 1j)
 
-    assert BK.encoder(anni_2) == QubitOperator("Z1 X2 X3 X7", 0.5) + QubitOperator("Z1 Y2 X3 X7", 0.5j)
-    assert BK.encoder(crea_2) == QubitOperator("Z1 X2 X3 X7", 0.5) - QubitOperator("Z1 Y2 X3 X7", 0.5j)
-    assert BK.encoder(anni_5) == QubitOperator("Z3 Z4 X5 X7", 0.5) + QubitOperator("Z3 Y5 X7", 0.5j)
-    assert BK.encoder(crea_5) == QubitOperator("Z3 Z4 X5 X7", 0.5) - QubitOperator("Z3 Y5 X7", 0.5j)
-    assert BK.encoder(crea_2 * anni_2) == QubitOperator([], 0.5) - QubitOperator("Z2", 0.5)
-    assert BK.encoder(crea_5 * anni_5) == QubitOperator([], 0.5) - QubitOperator("Z4 Z5", 0.5)
+    assert BK.encode(anni_2) == QubitOperator("Z1 X2 X3 X7", 0.5) + QubitOperator("Z1 Y2 X3 X7", 0.5j)
+    assert BK.encode(crea_2) == QubitOperator("Z1 X2 X3 X7", 0.5) - QubitOperator("Z1 Y2 X3 X7", 0.5j)
+    assert BK.encode(anni_5) == QubitOperator("Z3 Z4 X5 X7", 0.5) + QubitOperator("Z3 Y5 X7", 0.5j)
+    assert BK.encode(crea_5) == QubitOperator("Z3 Z4 X5 X7", 0.5) - QubitOperator("Z3 Y5 X7", 0.5j)
+    assert BK.encode(crea_2 * anni_2) == QubitOperator([], 0.5) - QubitOperator("Z2", 0.5)
+    assert BK.encode(crea_5 * anni_5) == QubitOperator([], 0.5) - QubitOperator("Z4 Z5", 0.5)
