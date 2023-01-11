@@ -83,7 +83,7 @@ class QuICTBenchmark:
         cir_qcda_list = []
         for circuit in circuits_list:
             qcda = QCDA()
-            if mapping == True and len(quantum_machine_info) > 1:
+            if mapping == True and len(quantum_machine_info) > 1 and circuit.width() > 1:
                 layout_file = quantum_machine_info[1].sub_layout(circuit.width())
                 qcda.add_default_mapping(layout_file)
             if gate_transform == True and len(quantum_machine_info) > 2:

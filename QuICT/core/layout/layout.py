@@ -280,13 +280,17 @@ class Layout:
             raise ValueError("Failure to find sub-layout.")
 
         max_idx = num_edges_subl.index(max_value)
-        sub_layout = self._get_layout(qubits_number, edges_subl[max_idx])
+        sub_layout = self._get_layout(all_combined[max_idx], edges_subl[max_idx])
 
         return sub_layout
 
-    def _get_layout(self, qubits_number: int, edges: list) -> Layout:
-        sub_layout = Layout(qubits_number)
+    def _get_layout(self, related_qubits: list, edges: list) -> Layout:
+        sub_layout = Layout(len(related_qubits))
+        index_mapping = {}
+        for idx, q in enumerate(related_qubits):
+            index_mapping[q] = idx
+
         for u, v in edges:
-            sub_layout.add_edge(u, v, directional=False)
+            sub_layout.add_edge(index_mapping[u], index_mapping[v], directional=False)
 
         return sub_layout
