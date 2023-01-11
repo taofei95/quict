@@ -11,16 +11,45 @@ import numpy as np
 from QuICT.algorithm.quantum_chemistry.operators.fermion_operator import FermionOperator
 
 
+class FermiHamiltonian:
+    """
+    Class for the parameters or Hamiltonian
+
+    Attributes:
+        nuclear_repulsion(complex): nuclear_repulsion
+        obi(numpy.ndarray): one_body_integrals, the coefficients of terms of the form
+            a^dagger_i a_j, i.e. (1, 0)
+        tbi(numpy.ndarray): two_body_integrals, the coefficients of terms of the form
+            a^dagger_i a^dagger_j a_k a_l, i.e. (1, 1, 0, 0)
+    """
+    def __init__(self, nuclear_repulsion, obi, tbi):
+        self.nuclear_repulsion = nuclear_repulsion
+        self.obi = obi
+        self.tbi = tbi
+
+    def get_fermion_operator(self):
+        """
+        Transform a Hamiltonian into a fermion-operator polymonial
+        """
+        n_qubits = self.obi.shape[0]
+        fermion_operator = FermionOperator([], self.nuclear_repulsion)
+        for index in it.product(range(n_qubits), repeat=2):
+            fermion_operator += FermionOperator(list(zip(index, (1, 0))), self.obi[index])
+        for index in it.product(range(n_qubits), repeat=4):
+            fermion_operator += FermionOperator(list(zip(index, (1, 1, 0, 0))), self.tbi[index])
+        return fermion_operator
+
+
 def obi_basis_rotation(obi, R):
     """
     Change the basis of a one-body integrals matrix
 
     Args:
-        obi(Ndarray: n*n): one-body integrals of i^ j
-        R(Ndarray: n*n): rotation matrix
+        obi(numpy.ndarray): one-body integrals of i^ j
+        R(numpy.ndarray): rotation matrix
 
     Returns:
-        Ndarray: n*n one-body integrals of i^ j after rotation
+        numpy.ndarray: n*n one-body integrals of i^ j after rotation
     """
     return np.einsum("pi,pq,qj->ij", R.conj(), obi, R)
 
@@ -30,43 +59,13 @@ def tbi_basis_rotation(tbi, R):
     Change the basis of a two-body integrals matrix
 
     Args:
-        tbi(Ndarray: n*n*n*n): two-body integrals of i^ j^ s t
-        R(Ndarray: n*n): rotation matrix
+        tbi(numpy.ndarray): two-body integrals of i^ j^ s t
+        R(numpy.ndarray): rotation matrix
 
     Returns:
-        Ndarray: n*n*n*n two-body integrals of i^ j^ s t after rotation
+        numpy.ndarray: n*n*n*n two-body integrals of i^ j^ s t after rotation
     """
     return np.einsum("pi,qj,pquv,us,vt->ijst", R.conj(), R.conj(), tbi, R, R)
-
-
-class ParameterTensor:
-    """
-    Class for the parameters or Hamiltonian
-
-    Attributes:
-        const(complex): For a parameter tensor, it should be set to 1
-            for multiplying with a Hamitonian
-        obi(n*n ndarray): Represent the coefficients of terms of the form
-            a^dagger_i a_j, i.e. (1, 0)
-        tbi(n*n*n*n ndarray): Represent the coefficients of terms of the form
-            a^dagger_i a^dagger_j a_k a_l, i.e. (1, 1, 0, 0)
-    """
-    def __init__(self, const, obi, tbi):
-        self.const = const
-        self.obi = obi
-        self.tbi = tbi
-
-    def get_fermion_operator(self):
-        """
-        Transform a Hamiltonian into a fermion-operator polymonial
-        """
-        n_qubits = self.obi.shape[0]
-        fermion_operator = FermionOperator([], self.const)
-        for index in it.product(range(n_qubits), repeat=2):
-            fermion_operator += FermionOperator(list(zip(index, (1, 0))), self.obi[index])
-        for index in it.product(range(n_qubits), repeat=4):
-            fermion_operator += FermionOperator(list(zip(index, (1, 1, 0, 0))), self.tbi[index])
-        return fermion_operator
 
 
 def generate_hamiltonian(const, obi, tbi, eps=1e-12):
@@ -99,4 +98,4 @@ def generate_hamiltonian(const, obi, tbi, eps=1e-12):
     new_obi[np.absolute(new_obi) < eps] = 0
     new_tbi[np.absolute(new_tbi) < eps] = 0
 
-    return ParameterTensor(const, new_obi, new_tbi)
+    return FermiHamiltonian(const, new_obi, new_tbi)
