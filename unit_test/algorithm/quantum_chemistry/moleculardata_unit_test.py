@@ -6,12 +6,12 @@
 
 import os
 
-from QuICT.chemistry.simulation.moleculardata import MolecularData
+from QuICT.algorithm.quantum_chemistry.simulation.moleculardata import MolecularData
 
 
 def test_load():
     data_dir = os.path.dirname(__file__) + \
-        "/../../QuICT/chemistry/simulation/molecular_data/hydrogen_chains/h_6_sto-3g/bond_distance_1.3"
+        "/../../../QuICT/algorithm/quantum_chemistry/simulation/molecular_data/hydrogen_chains/h_6_sto-3g/bond_distance_1.3"
     moldata = MolecularData(data_dir + "/H6_sto-3g_singlet_linear_r-1.3")
     assert moldata.n_orbitals == 6
     assert moldata.n_electrons == 6
@@ -20,7 +20,7 @@ def test_load():
     assert moldata.two_body_integrals is None
 
     data_dir = os.path.dirname(__file__) + \
-        "/../../QuICT/chemistry/simulation/molecular_data/hydrogen_chains/h_6_sto-3g/bond_distance_1.7"
+        "/../../../QuICT/algorithm/quantum_chemistry/simulation/molecular_data/hydrogen_chains/h_6_sto-3g/bond_distance_1.7"
     moldata = MolecularData(data_dir + "/H6_sto-3g_singlet_linear_r-1.7")
     assert moldata.n_orbitals == 6
     assert moldata.n_electrons == 6

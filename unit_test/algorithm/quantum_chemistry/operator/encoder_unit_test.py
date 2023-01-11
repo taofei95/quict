@@ -4,9 +4,9 @@
 # @Author  : Xiaoquan Xu
 # @File    : encoder_unit_test.py
 
-from QuICT.chemistry.operator.encoder import JordanWigner, Parity, BravyiKitaev
-from QuICT.chemistry.operator.fermion_operator import FermionOperator
-from QuICT.chemistry.operator.qubit_operator import QubitOperator
+from QuICT.algorithm.quantum_chemistry.operator.encoder import JordanWigner, Parity, BravyiKitaev
+from QuICT.algorithm.quantum_chemistry.operator.fermion_operator import FermionOperator
+from QuICT.algorithm.quantum_chemistry.operator.qubit_operator import QubitOperator
 
 anni_0 = FermionOperator('0')
 crea_0 = FermionOperator('0^')

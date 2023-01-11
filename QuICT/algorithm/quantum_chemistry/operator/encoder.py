@@ -8,7 +8,7 @@
 Encoders transform ladder operators to CompositeGate on zero state of qubits.
 """
 
-from QuICT.chemistry.operator.qubit_operator import QubitOperator
+from QuICT.algorithm.quantum_chemistry.operator.qubit_operator import QubitOperator
 
 
 class Encoder:

@@ -4,7 +4,7 @@
 # @Author  : Xiaoquan Xu
 # @File    : fermion_operator_unit_test.py
 
-from QuICT.chemistry.operator.fermion_operator import FermionOperator
+from QuICT.algorithm.quantum_chemistry.operator.fermion_operator import FermionOperator
 
 
 def test_construction():
