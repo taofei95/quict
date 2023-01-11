@@ -275,8 +275,8 @@ class QuICTBenchmark:
         angles = np.concatenate((angles,[angles[0]]))
         
         # Draw the first diagram
-        plt.figure(figsize=(13,5), dpi=80)
-        plt.figure(1)
+        plt.figure(figsize=(13,5), dpi=100)
+        plt.figure(1.8)
         ax1 = plt.subplot(121, polar=True)
         ax1.plot(angles,values,'y-',linewidth=2)
         ax1.fill(angles,values,'r',alpha=0.5)
@@ -284,6 +284,7 @@ class QuICTBenchmark:
         ax1.set_thetagrids(angles*180/np.pi,feature)
         ax1.set_ylim(0,np.floor(values.max())+1)
 
+        plt.tick_params(labelsize=12)
         plt.title('based circuits benchmark radar chart show')
         ax1.grid(True)
         ################################### algorithmic circuits benchmark ##############################
@@ -333,6 +334,7 @@ class QuICTBenchmark:
         ax2.set_thetagrids(angles*180/np.pi,feature_1)
         ax2.set_ylim(0, np.floor(values_2.max())+1)
 
+        plt.tick_params(labelsize=12)
         plt.title('algorithmic circuits benchmark radar chart show')
         ax2.grid(True)
 
