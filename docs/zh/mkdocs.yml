@@ -19,7 +19,7 @@ nav:
     - 经典量子算法:
       - 格罗弗算法: tutorials/algorithm/quantum_algorithm/grover.md
       - 秀尔算法: tutorials/algorithm/quantum_algorithm/shor.md
-      - 量子相位估计: tutorials/algorithm/quantum_algorithm/amplitude_estimate.md
+      - 量子振幅估计: tutorials/algorithm/quantum_algorithm/amplitude_estimate.md
       - 量子游走: tutorials/algorithm/quantum_algorithm/quantum_walk.md
     - 变分量子算法:
       - 量子近似优化算法: tutorials/algorithm/VQA/QAOA.md
