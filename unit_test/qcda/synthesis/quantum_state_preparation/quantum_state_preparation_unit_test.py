@@ -89,7 +89,7 @@ def test_sparse_qsp():
             circuit = Circuit(n)
             circuit.extend(gates)
             simulator = CircuitSimulator()
-            state = simulator.run(circuit).get()
+            state = simulator.run(circuit)
             assert np.allclose(state_vector, state)
 
 
@@ -108,6 +108,6 @@ def test_state_array():
             circuit = Circuit(n)
             circuit.extend(gates)
             simulator = CircuitSimulator()
-            state = simulator.run(circuit).get()
+            state = simulator.run(circuit)
             state_vector = sparseQSP.dict_to_statevector(dict(state_array), n)
             assert np.allclose(state_vector, state)

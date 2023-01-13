@@ -186,9 +186,9 @@ class CommutativeOptimization(object):
                 or could not be combined directly to a gate with the same type.
         """
         assert gate_x.type == gate_y.type,\
-            TypeError('Gates to be combined are not of the same type.')
+            TypeError('commu_opt', 'Gates with same type', 'different type.')
         assert gate_x.cargs == gate_y.cargs and gate_x.targs == gate_y.targs,\
-            ValueError('Gates to be combined are not operated on the same qubits in the same way.')
+            ValueError('commu_opt', 'same control and target qubits', 'different qubits.')
 
         if gate_x.type in elimination:
             # IDGates operating on all qubits are the same
@@ -209,9 +209,9 @@ class CommutativeOptimization(object):
             return gate
 
         if gate_x.type in other or gate_x.type in not_calculated:
-            raise ValueError('Gates to be combined could not be combined directly to a gate with the same type.')
+            raise ValueError('commu_opt', 'calculated', 'not')
 
-        raise TypeError('Gate {} of unknown type encountered'.format(gate_x.name))
+        raise TypeError('commu_opt', 'BasicGate', f'{gate_x.type}')
 
     @OutputAligner()
     def execute(self, gates):

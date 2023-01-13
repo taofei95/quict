@@ -10,7 +10,7 @@ from typing import List, Optional
 from QuICT.core.layout import Layout
 from QuICT.core.gate import *
 from QuICT.core.circuit import Circuit
-from QuICT.qcda.utility import OutputAligner
+# from QuICT.qcda.utility import OutputAligner
 
 
 class DAGNode:
@@ -64,7 +64,7 @@ class SABREMapping:
         self.phy2logic = None
         self.logic2phy = None
 
-    @OutputAligner()
+    # @OutputAligner()
     def execute(
         self,
         circuit: Union[Circuit, CompositeGate],

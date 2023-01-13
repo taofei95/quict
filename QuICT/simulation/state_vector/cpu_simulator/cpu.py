@@ -54,6 +54,7 @@ diag_1 = (
     GateType.t,
     GateType.tdg,
     GateType.phase,  # TODO: optimize this with special_phase
+    GateType.gphase,
 )
 
 # The unitary_x category is some gates treated as unitary.
