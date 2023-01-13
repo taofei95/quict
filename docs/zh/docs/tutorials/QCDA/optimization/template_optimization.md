@@ -1,4 +1,4 @@
-# Template Optimization
+# 模板优化
 
 模板优化 (Template optimization) 是一个基于电路模板匹配的优化算法 [<sup>[1]</sup>](#refer1)。该算法使用一些酉矩阵等于单位阵的小规模路作为模板，例如 $SS^\dagger, HH$ 等，通过将待优化电路与模板进行匹配来优化电路中的量子门的数量。
 
@@ -44,7 +44,7 @@
 
 `TemplateOptimization` 位于 `QuICT.qcda.optimization.template_optimization` 中。对于一个待优化的电路 `circ`，首先实例化一个优化器 `TO=TemplateOptimization()`，然后执行 `TO.execute(circ)` 得到优化后的电路。
 
-## 选择模板
+### 选择模板
 
 模板优化算法默认使用 `CircuitLib` 库中的模板，用户可以通过四个初始化参数选择合适的模板：
 
@@ -55,7 +55,7 @@
 
 优化器将会使用`CircuitLib` 库中所有满足限制条件的模板，上述任一参数为 `None` 时，对应的条件不受限制。
 
-如果用户希望使用自定义的模板，可以设置初始化参数 `template_list`，该参数接受一个 `Circuit` 列表。注意模板只能包含非参数门，且每一个模板都的酉矩阵应当等于单位阵，例如 $HH, SS^\dagger$。`template_list` 的默认值为 `None`，当它不为 `None` 时， `template_max_width` 等四个参数都将被忽略。
+如果用户希望使用自定义的模板，可以设置初始化参数 `template_list` ，该参数接受一个 `Circuit` 列表。注意模板只能包含非参数门，且每一个模板都的酉矩阵应当等于单位阵，例如 $HH,SS^\dagger$。`template_list` 的默认值为 `None`，当它不为 `None` 时，`template_max_width` 等四个参数都将被忽略。
 
 ## 高级用法
 
@@ -63,9 +63,10 @@
 
 1.  `qubit_fixing_num`: 枚举所有比特对应关系时，额外固定的比特数量，默认为 `1`。
 2.  `prune_step`: `BackwardMatch`的树搜索中剪枝的步长，默认为 `3`。
-3.  `prune_survivor_num`: `BackwardMatch`的树搜索中一次剪枝后保留的节点数量，默认为 `1`。
+3.  `prune_survivor_num`: `BackwardMatch`的树搜索中一次剪枝后剩余的叶节点数量，默认为 `1`。
 
-总体来说，如果用户希望加快优化器的执行速度，可以增加 `qubit_fixing_num` ，或者减小 `prune_step` 和`prune_survivor_num`，但这可能降低优化效果。这些参数的具体含义见算法原理章节。
+总体来说，如果用户希望加快优化器的执行速度，可以增加 `qubit_fixing_num` ，或者减小 `prune_step` 和`prune_survivor_num`，但这可能降低优化效果。这些参数的具体含义参考算法原理章节。
+
 
 ## 示例代码
 
@@ -109,16 +110,19 @@ if __name__ == '__main__':
 
 随机电路：
 
-![优化前的电路](../../../assets/images/tutorials/QCDA/optimization/to_0.jpg)
+![circuit before](../../../assets/images/tutorials/QCDA/optimization/to_0.jpg)
 
 优化后的电路：
 
-![优化后的电路](../../../assets/images/tutorials/QCDA/optimization/to_1.jpg)
+![circuit before](../../../assets/images/tutorials/QCDA/optimization/to_1.jpg)
 
+----
 
 ## 参考文献
 
 <div id="refer1"></div>
 <font size=3>
-[1] Iten, Raban, et al. Exact and practical pattern matching for quantum circuit optimization. ACM Transactions on Quantum Computing 3.1 (2022): 1-41.
+[1] Iten, Raban, et al. Exact and practical pattern matching for quantum circuit optimization. ACM Transactions on Quantum Computing 3.1 (2022): 1-41. [https://doi.org/10.1145/3498325](https://doi.org/10.1145/3498325)
 </font>
+
+---

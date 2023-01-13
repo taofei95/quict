@@ -28,7 +28,9 @@ nav:
   - QCDA:
     - 映射:
       - SABRE映射算法: tutorials/QCDA/mapping/SABRE.md
-    - 优化: tutorials/QCDA/optimization.md
+    - 优化:
+      -  Clifford+Rz优化: tutorials/QCDA/optimization/clifford_rz_optimization.md
+      -  模板优化: tutorials/QCDA/optimization/template_optimization.md
     - 合成: tutorials/QCDA/synthesis.md
   - 量子电路: tutorials/quantum_circuit.md
 - API:

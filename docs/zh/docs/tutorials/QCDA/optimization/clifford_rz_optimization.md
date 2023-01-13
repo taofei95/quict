@@ -1,4 +1,4 @@
-# Clifford+Rz Optimization
+# Clifford+Rz优化
 
 Clifford+Rz优化 (Clifford+Rz Optimization) 是一种优化大规模Clifford+Rz电路的启发式算法 [<sup>[1]</sup>](#refer1)。它有两种优化level——light和heavy。Light level的时间复杂度为 $O(g^2)$，其中 $g$ 是电路中的门数量。Heavy level的时间复杂度为 $O(g^3)$，它可能可以消去比light level更多的CNOT门。
 
@@ -82,7 +82,6 @@ Clifford+Rz优化算法也支持对CCX/CCZ门的优化，CCX/CCZ门有多种Clif
 
 由于 $CCX^\dagger=CCX$，将上述分解中的所有$T(T^\dagger)$ 门取共轭后依然是一个CCX门，这两种分解方式只有 $T(T^\dagger)$ 门的相对相位不同，算法事先并不确定用哪一种分解，而是对每个CCX门设一个相对相位变量 $x_i$，在上述优化流程中用符号计算记录每个Rz门关于相对相位变量的表达式。当优化流程执行完后，遍历每一个CCX $i$，贪心地选择当前能导致电路门数最小的 $x_i$ 取值。
 
-
 ## 基本用法
 
 `CliffordRzOptimization` 位于`QuICT.qcda.optimization.clifford_rz_optimization`，支持三个可选的初始化参数：
@@ -122,19 +121,19 @@ if __name__ == '__main__':
 
 随机电路：
 
-![优化前的电路](../../../assets/images/tutorials/QCDA/optimization/cro_0.jpg)
+![circuit before](../../../assets/images/tutorials/QCDA/optimization/cro_0.jpg)
 
 优化后的电路：
 
-![优化后的电路](../../../assets/images/tutorials/QCDA/optimization/cro_1.jpg)
+![circuit after](../../../assets/images/tutorials/QCDA/optimization/cro_1.jpg)
+
+---
 
 ## 参考文献
 
-
 <div id="refer1"></div>
 <font size=3>
-[1] Nam, Yunseong, et al. Automated optimization of large quantum
-    circuits with continuous parameters. npj Quantum Information 4.1
-    (2018): 1-12.
+[1] Nam, Y., Ross, N.J., Su, Y. et al. Automated optimization of large quantum circuits with continuous parameters. npj Quantum Inf 4, 23 (2018). [https://doi.org/10.1038/s41534-018-0072-4](https://doi.org/10.1038/s41534-018-0072-4)
 </font>
 
+---
