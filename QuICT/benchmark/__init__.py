@@ -1,2 +1,1 @@
 from .benchmark import QuICTBenchmark
-

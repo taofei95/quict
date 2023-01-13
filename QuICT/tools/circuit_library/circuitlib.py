@@ -165,8 +165,9 @@ class CircuitLib:
                         benchmark_depth = benchmark_circuit.depth()
 
                         if max_depth is None or benchmark_depth <= max_depth:
-                            benchmark_circuit.name = "+".join([type, classify, f"w{width}_s{size * width}_d{benchmark_depth}_v{paras[idx]}"])
-                            circuit_list.append(benchmark_circuit)       
+                            benchmark_circuit.name = "+".join([
+                                type, classify, f"w{width}_s{size * width}_d{benchmark_depth}_v{paras[idx]}"])
+                            circuit_list.append(benchmark_circuit)
                         else:
                             circuit.name = "+".join([type, classify, f"w{width}_s{size}_d{depth}"])
                             circuit_list.append(circuit)

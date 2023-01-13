@@ -150,11 +150,11 @@ class BenchmarkCircuitBuilder:
                     qubits_indexes = qubits_indexes[gate_size:]
 
             return cgate
-        
+
         cir_list, m_depth_list = [], []
         for i in range(size - 2 * width, size, 3):
             cir = Circuit(width)
-            for _ in range(int(i/width)):
+            for _ in range(int(i / width)):
                 flat_build() | cir
             m_depth_list.append(cir.depth())
             Measure | cir
