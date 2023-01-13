@@ -10,7 +10,7 @@ from QuICT.qcda.utility import OutputAligner
 
 # Categories of combination
 elimination = [
-    GateType.h, GateType.x, GateType.y, GateType.z, GateType.cx,
+    GateType.h, GateType.x, GateType.y, GateType.z, GateType.cx, GateType.hy,
     GateType.cy, GateType.cz, GateType.ch, GateType.ccx, GateType.swap
 ]
 addition = [
