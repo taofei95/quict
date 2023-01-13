@@ -89,7 +89,8 @@ class FermionOperator(PolynomialOperator):
         '''
         return FermionOperator(monomial, coefficient)
 
-    def analyze_single(self, single_operator):
+    @classmethod
+    def analyze_single(cls, single_operator):
         """
         Transform a string format of a single operator to a tuple.
         For example,

@@ -9,6 +9,8 @@ A Qubit operator is a polynomial of Pauli matrices {X, Y, Z} = {sigma_1, sigma_2
 which is a useful representation for circuits by second quantization.
 """
 
+import numpy as np
+
 from QuICT.algorithm.quantum_chemistry.operators.polynomial_operator import PolynomialOperator
 
 
@@ -125,3 +127,27 @@ class QubitOperator(PolynomialOperator):
             return 'Y' + str(single_operator[0]) + ' '
         elif single_operator[1] == 3:
             return 'Z' + str(single_operator[0]) + ' '
+
+    def to_hamiltonian(self, eps=1e-13):
+        """
+        Convert the QubitOperator to a list as follows, to be used in QML training
+            [[0.4, 'Y0', 'X1', 'Z2', 'I5'], [0.6]]
+            [[1, 'X0', 'I5'], [-3, 'Y3'], [0.01, 'Z5', 'Y0]]
+
+        Args:
+            eps(float): coefficient less than eps would be ignored
+
+        Returns:
+            list: Pauli list
+        """
+        pauli_list = []
+        for monomial in self.operators:
+            pauli, coefficient = monomial
+            if abs(coefficient) < eps:
+                continue
+            assert np.isclose(coefficient, coefficient.real)
+            mono = [coefficient.real]
+            for op in pauli:
+                mono.append(self.parse_single(op).strip())
+            pauli_list.append(mono)
+        return pauli_list
