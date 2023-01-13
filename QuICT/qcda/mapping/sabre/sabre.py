@@ -64,6 +64,7 @@ class SABREMapping:
         self.phy2logic = None
         self.logic2phy = None
 
+    @OutputAligner()
     def execute(
         self,
         circuit: Union[Circuit, CompositeGate],

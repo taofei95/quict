@@ -1,10 +1,9 @@
 import torch
 import torch.nn
-from typing import NamedTuple
 
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz, Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.VQA.model import VQENet
+from QuICT.algorithm.quantum_machine_learning.model.VQA import VQENet
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
@@ -37,11 +36,8 @@ class QAOANet(VQENet):
 
     def define_network(self):
         """Define the network parameters to be trained."""
-        self.beta = torch.nn.Parameter(
-            torch.rand(self.p, device=self.device), requires_grad=True
-        )
-        self.gamma = torch.nn.Parameter(
-            torch.rand(self.p, device=self.device), requires_grad=True
+        self.params = torch.nn.Parameter(
+            torch.rand(2, self.p, device=self.device), requires_grad=True
         )
 
     def forward(self, state=None):
@@ -55,7 +51,10 @@ class QAOANet(VQENet):
             torch.Tensor: The output state vector.
         """
         ansatz = self.construct_ansatz()
-        state = ansatz.forward(state)
+        if self.device.type == "cpu":
+            state = ansatz.forward(state)
+        else:
+            state = self.simulator.forward(ansatz, state)
         return state
 
     def _construct_U_gamma_layer(self, gamma):
@@ -76,21 +75,21 @@ class QAOANet(VQENet):
                 for i in range(len(qids)):
                     if gates[i] != "Z":
                         assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
-                        ansatz.add_gate(gate_dict[gates[i]]['mqids'], qids[i])
+                        ansatz.add_gate(gate_dict[gates[i]]["mqids"], qids[i])
                 ansatz = ansatz + self._Rnz_ansatz(2 * coeff * gamma, qids)
                 for i in range(len(qids)):
                     if gates[i] != "Z":
                         assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
-                        ansatz.add_gate(gate_dict[gates[i]]['mqids'], qids[i])
+                        ansatz.add_gate(gate_dict[gates[i]]["mqids"], qids[i])
 
             # Only Rx, Ry, Rz
             elif len(qids) == 1:
                 assert gates[0] in gate_dict.keys(), "Invalid Pauli gate."
-                ansatz.add_gate(gate_dict[gates[0]]['qid'], qids[0])
+                ansatz.add_gate(gate_dict[gates[0]]["qid"], qids[0])
 
             # Only coeff
             else:
-                ansatz.add_gate(RI_tensor(-coeff))
+                ansatz.add_gate(GPhase_tensor(-coeff))
 
         return ansatz
 
@@ -121,11 +120,11 @@ class QAOANet(VQENet):
 
         for p in range(self.p):
             # construct U_gamma
-            U_gamma = self._construct_U_gamma_layer(self.gamma[p])
+            U_gamma = self._construct_U_gamma_layer(self.params[0, p])
             ansatz = ansatz + U_gamma
 
             # construct U_beta
-            U_beta = Rx_tensor(2 * self.beta[p])
+            U_beta = Rx_tensor(2 * self.params[1, p])
             ansatz.add_gate(U_beta)
 
         return ansatz
@@ -148,22 +147,22 @@ class QAOANet(VQENet):
                 for i in range(len(qids)):
                     if gates[i] != "Z":
                         assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
-                        gate_dict[gates[i]]['mqids'] | circuit(qids[i])
+                        gate_dict[gates[i]]["mqids"] | circuit(qids[i])
                 Rnz_circuit = self._Rnz_circuit(2 * coeff * gamma, qids)
                 circuit.extend(Rnz_circuit.gates)
                 for i in range(len(qids)):
                     if gates[i] != "Z":
                         assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
-                        gate_dict[gates[i]]['mqids'] | circuit(qids[i])
+                        gate_dict[gates[i]]["mqids"] | circuit(qids[i])
 
             # Only Rx, Ry, Rz
             elif len(qids) == 1:
                 assert gates[0] in gate_dict.keys(), "Invalid Pauli gate."
-                gate_dict[gates[0]]['qid'] | circuit(qids[0])
+                gate_dict[gates[0]]["qid"] | circuit(qids[0])
 
             # Only coeff
             else:
-                RI | circuit
+                GPhase | circuit
 
         return circuit
 
@@ -188,8 +187,8 @@ class QAOANet(VQENet):
         Returns:
             Circuit: The QAOA circuit.
         """
-        gamma = self.gamma.cpu().detach().numpy()
-        beta = self.beta.cpu().detach().numpy()
+        gamma = self.params[0].cpu().detach().numpy()
+        beta = self.params[1].cpu().detach().numpy()
         circuit = Circuit(self.n_qubits)
         # initialize state vector
         H | circuit

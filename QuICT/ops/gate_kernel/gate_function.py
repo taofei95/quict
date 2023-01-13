@@ -681,7 +681,6 @@ Diagonal_Multiply_normal_single_kernel = cp.RawKernel(r'''
             gw = label >> t0 << (t0 + 1);
             _0 = (gw >> t1 << (t1 + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
         }
-
         int _1 = _0 + offset1;
         int _2 = _0 + offset2;
         int _3 = _1 + offset2;
@@ -689,7 +688,6 @@ Diagonal_Multiply_normal_single_kernel = cp.RawKernel(r'''
         complex<float> temp_0 = vec[_0];
         vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
         vec[_1] = temp_0*mat[4] + vec[_1]*mat[5];
-
         complex<float> temp_2 = vec[_2];
         vec[_2] = vec[_2]*mat[10] + vec[_3]*mat[11];
         vec[_3] =temp_2*mat[14] + vec[_3]*mat[15];
@@ -702,7 +700,6 @@ Diagonal_Multiply_normal_double_kernel = cp.RawKernel(r'''
     extern "C" __global__
     void DiagxNormal(int t0, int t1, const complex<double>* mat, complex<double>* vec) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
-
         const int offset1 = 1 << t0;
         const int offset2 = 1 << t1;
         const int mask1 = offset1 - 1;
@@ -1601,9 +1598,9 @@ prop_add_single_kernel = cp.RawKernel(r'''
     extern "C" __global__
     void ProbAddSingle(const int index, complex<float>* vec, complex<float>* out) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
-        int _1 = (label & ((1 << index) - 1))
+        int _0 = (label & ((1 << index) - 1))
                 + (label >> index << (index + 1));
-        out[label] = abs(vec[_1]) * abs(vec[_1]);
+        out[label] = abs(vec[_0]) * abs(vec[_0]);
     }
     ''', 'ProbAddSingle')
 
@@ -1613,9 +1610,9 @@ prop_add_double_kernel = cp.RawKernel(r'''
     extern "C" __global__
     void ProbAddDouble(const int index, complex<double>* vec, complex<double>* out) {
         int label = blockDim.x * blockIdx.x + threadIdx.x;
-        int _1 = (label & ((1 << index) - 1))
+        int _0 = (label & ((1 << index) - 1))
                 + (label >> index << (index + 1));
-        out[label] = abs(vec[_1]) * abs(vec[_1]);
+        out[label] = abs(vec[_0]) * abs(vec[_0]);
     }
     ''', 'ProbAddDouble')
 
