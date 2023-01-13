@@ -6,7 +6,7 @@ from QuICT.tools.cli.client import QuICTLocalManager, QuICTRemoteManager
 
 
 def create_job_through_JobCreator(save: bool = False):
-    path = os.path.join(os.path.dirname(__file__), "../tempcir")
+    path = os.path.join(os.path.dirname(__file__), "cli_example")
     path = os.path.abspath(path)
     job_example = JobCreator(
         name="quict-example",
@@ -22,7 +22,7 @@ def create_job_through_JobCreator(save: bool = False):
         ["Clifford", "GateTransform"],
         instruction_set="USTC",
         auto_mode="light",
-        layout_path=os.path.join(path, "../example/layout/ibmqx2_layout.json")
+        layout_path=os.path.join(path, "ibmqx2_layout.json")
     )
 
     # Save current job file into yaml file
@@ -37,13 +37,14 @@ def job_controller_in_local_mode():
     # Using JobCreator
     job_dict = create_job_through_JobCreator()
     job_name = job_dict["job_name"]
-    # Using Yaml file
-    file_path = os.path.join(os.path.dirname(__file__), "../tempcir/quict_job.yml")
+    # Using Yaml file [a example about how to write yml file for quict cli, need fixed the file path before using]
+    # file_path = os.path.join(os.path.dirname(__file__), "cli_example/quict_job.yml")
 
     # Start Job Through QuICTLocalManager
     job_manager = QuICTLocalManager()
     job_manager.start_job(job_dict)
-    job_manager.start_job(file_path)
+    # Start Job by yml file
+    # job_manager.start_job(file_path)
 
     # Check Job's Status
     job_manager.status_job(job_name)
@@ -61,7 +62,7 @@ def job_controller_in_remote_mode():
     job_dict = create_job_through_JobCreator()
     job_name = job_dict["job_name"]
     # Using Yaml file
-    file_path = os.path.join(os.path.dirname(__file__), "../tempcir/quict_job.yml")
+    file_path = os.path.join(os.path.dirname(__file__), "cli_example/quict_job.yml")
 
     # Start Job Through QuICTLocalManager
     job_manager = QuICTRemoteManager()
@@ -97,4 +98,4 @@ def add_shortcut_quict():
     shortcut_for_quict()
 
 
-job_controller_in_remote_mode()
+job_controller_in_local_mode()

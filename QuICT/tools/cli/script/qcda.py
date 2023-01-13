@@ -69,7 +69,7 @@ def qcda_start(
 
     if layout_path is not None:
         layout = Layout.load_file(layout_path)
-        qcda.add_default_mapping(layout)
+        qcda.add_mapping(layout)
 
     circuit_opt = qcda.compile(circuit)
     output_path = os.path.join(output_path, 'opt_circuit.qasm')
