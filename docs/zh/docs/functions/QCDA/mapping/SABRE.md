@@ -10,22 +10,22 @@ SABRE是一个通过启发式搜索进行量子电路映射的算法，其以待
 
 为了阐述的简便，先定义一系列符号：
 
-|符号|含义|
-| ------ | ------ |
-| $n$ | 量子电路逻辑比特数 |
-|$q_i$|量子电路的第i个逻辑比特|
-|$g$|量子电路的门个数|
-|$d$|量子电路的深度|
-|$N$|物理设备的比特数|
-|$Q_i$|物理设备的第$i$个物理设备|
-|$G(V, E)$|表示量子设备的拓扑图，$V$中的点表示物理比特，$G$中的边表示其所连接的点可直接作用二比特门|
-|$D[i][j]$|$Q_i$和$Q_j$之间的距离|
-|$\pi()$|从逻辑比特到物理比特的映射函数|
-|$\pi^{-1}()$|从物理比特到逻辑比特的映射函数|
+| 符号         | 含义                                                         |
+| ------------ | ------------------------------------------------------------ |
+| $n$          | 量子电路逻辑比特数                                           |
+| $q_i$        | 量子电路的第i个逻辑比特                                      |
+| $g$          | 量子电路的门个数                                             |
+| $d$          | 量子电路的深度                                               |
+| $N$          | 物理设备的比特数                                             |
+| $Q_i$        | 物理设备的第$i$个物理设备                                    |
+| $G(V, E)$    | 表示量子设备的拓扑图，$V$中的点表示物理比特，$G$中的边表示其所连接的点可直接作用二比特门 |
+| $D[i][j]$    | $Q_i$和$Q_j$之间的距离                                       |
+| $\pi()$      | 从逻辑比特到物理比特的映射函数                               |
+| $\pi^{-1}()$ | 从物理比特到逻辑比特的映射函数                               |
 
 ### 预处理流程
 
-- 根据$G(V,E)$，使用floyd算法计算距离矩阵$D[][]$。
+- 根据$G(V,E)$，使用floyd算法计算距离矩阵$D_{N \times N}$，其中$D[i][j]$表示$Q_i$和$Q_j$之间的距离。
 - 根据量子电路生成初始有向无环图（DAG），其中的点为二比特门，边表示执行顺序上的依赖关系。
 
 ### 启发式函数
@@ -34,19 +34,25 @@ SABRE是一个通过启发式搜索进行量子电路映射的算法，其以待
 
 则可以定义初始的启发式函数：
 
-\begin{equation}
-H=\frac{1}{|F|}\sum_{gate \in F}D[\pi(gate.q_1)][\pi(gate.q_2)]
-\end{equation}
+$$
+H_{base}=\frac{1}{|F|}\sum_{gate \in F}D[\pi(gate.q_1)][\pi(gate.q_2)]
+$$
 
 在实际操作时，考虑到两个因素：
 
-- 需要考虑后面一部分门，则定义除$F$外，以BFS序进行拓扑排序的前常数个门集合为$E$。
+- 需要考虑后面一部分门，则定义除$F$外，以BFS序进行拓扑排序的前常数个门集合为$E$，以类似的方式根据其距离计算函数值，但需要乘上权重系数$W(W<1)$。
 - 防止在一个比特位上连续进行Swap操作，在逻辑比特上定义衰减函数$decay(q_i)$，随着在其上插入Swap门个数的增加，衰减系数也增加，但过一定轮次后会回到初始值。
 
-获得新的启发式函数：
+那么，对于扩展的集合$E$，我们计算其函数值为：
 
 $$
- \Tiny H=max(decay(SWAP.q_1), decay(SWAP.q_2))*\{ \frac{1}{|F|}\sum_{gate\in F}D[\pi(gate.q_1)][\pi(gate.q_2)]+W*\frac{1}{|E|}\sum_{gate\in E}D[\pi(gate.q_1)][\pi(gate.q_2)]\}
+H_{ext}=W*\frac{1}{|E|}\sum_{gate\in E}D[\pi(gate.q_1)][\pi(gate.q_2)]
+$$
+
+最终的启发式函数值为：
+
+$$
+H=max(decay(SWAP.q_1), decay(SWAP.q_2))*(H_{base}+H_{ext})
 $$
 
 ### 主算法流程
@@ -54,8 +60,8 @@ $$
 当$F$不为空时，重复执行以下步骤：
 
 - 检查$F$中的所有门，执行所有可以执行的门，若有门可以执行，则：
-    - 执行这些门，并从$F$和$DAG$中删除这些门。
-    - 更新$F$，并跳转到循环开头。
+  - 执行这些门，并从$F$和$DAG$中删除这些门。
+  - 更新$F$，并跳转到循环开头。
 - 对于$F$中所有的门，设其涉及的所有逻辑比特对应的物理比特集合为$\hat{Q}$，以涉及$\hat{Q}$中任一比特的所有Swap门作为备选，计算执行这些门后，启发函数的值，选取使得启发式函数最小的Swap门。
 - 执行该Swap门，更新映射和衰减系数。
 
@@ -65,11 +71,51 @@ $$
 - 将量子电路反转，以$\pi$作为初始映射，重复以上步骤，获得新的最终映射$\hat{\pi}$。
 - 以$\hat{\pi}$作为生成的电路初始映射。
 
+### 示例代码
+
+以在一个5比特、50个量子门的随机电路为例，运行SABRE映射算法与初始映射生成
+
+```python
+layout = Layout.load_file("../layout/ibmqx2_layout.json")
+
+circuit = Circuit(5)
+circuit.random_append(50, typelist=[GateType.cx])
+circuit.draw(filename='0.jpg')
+
+sabre = SABREMapping(layout)
+circuit_map = sabre.execute(circuit)
+circuit_map.draw(filename='1.jpg')
+
+circuit_initial_map = sabre.execute_initialMapping(circuit)
+print(circuit_initial_map)
+```
+
+原电路为
+
+<figure markdown>
+![Resized Image](../../../assets/images/functions/QCDA/mapping/SABRE_origin.jpg){:width="400px"}
+</figure>
+
+
+执行SABRE算法后，电路形式为
+
+<figure markdown>
+![Resized Image](../../../assets/images/functions/QCDA/mapping/SABRE_final.jpg){:width="400px"}
+</figure>
+
+
+SABRE算法为其生成的初始映射为
+
+```
+[0, 2, 4, 3, 1]
+```
+
 ---
 
 ## 参考文献
 
 <div id="refer1"></div>
+
 <font size=3>
 [1] Li G, Ding Y, Xie Y. Tackling the qubit mapping problem for NISQ-era quantum devices. [Proceedings of the Twenty-Fourth International Conference on Architectural Support for Programming Languages and Operating Systems. 2019: 1001-1014.](https://arxiv.org/pdf/1809.02573)
 </font>
