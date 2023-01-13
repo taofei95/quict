@@ -7,7 +7,6 @@ from typing import Union, List
 import numpy as np
 
 from QuICT.core.qubit import Qubit, Qureg
-from QuICT.core.exception import TypeException
 from QuICT.core.layout import Layout, SupremacyLayout
 from QuICT.core.gate import BasicGate, H, Measure, build_random_gate, build_gate
 from QuICT.core.utils import (
@@ -37,14 +36,12 @@ class Circuit(CircuitBased):
     Circuit is the core part of the framework.
 
     Attributes:
-        wires(Union[Qureg, int]): the number of qubits for the circuit
-        name(str): the name of the circuit
+        wires(Union[Qureg, int]): the number of qubits for the circuit.
+        name(str): the name of the circuit.
         topology(list<tuple<int, int>>):
             The topology of the circuit. When the topology list is empty, it will be seemed as fully connected.
         fidelity(float): the fidelity of the circuit
-
-    Private Attributes:
-        _idmap(dictionary): the map from qubit's id to its index in the circuit
+        ancillae_qubits(list<int>): The indexes of ancilla qubits for current circuit.
     """
     @property
     def qubits(self) -> Qureg:
@@ -58,9 +55,10 @@ class Circuit(CircuitBased):
     def ancillae_qubits(self, ancillae_qubits: List[int]):
         for idx in ancillae_qubits:
             if idx < 0 or idx >= self.width():
-                raise CircuitQubitsError(
-                    f"Illegal qubit's index {idx}, index must within [0, {self.width()}]"
+                raise IndexExceedError(
+                    "circuit.ancillae_qubits", [0, self.width()], idx
                 )
+
             self._ancillae_qubits.append(idx)
 
     @property
@@ -74,11 +72,13 @@ class Circuit(CircuitBased):
             return
 
         if not isinstance(topology, Layout):
-            raise CircuitTypeError("Only support Layout as circuit topology.")
+            raise TypeError(
+                "Circuit.topology", "Layout", type(topology)
+            )
 
         if topology.qubit_number != self.width():
-            raise CircuitQubitsError(
-                f"The qubit number {self.width()} is not matched with topology {topology.qubit_number}."
+            raise ValueError(
+                "Circuit.topology.qubit_number", self.width(), topology.qubit_number
             )
 
         self._topology = topology
@@ -93,8 +93,15 @@ class Circuit(CircuitBased):
             self._fidelity = None
             return
 
-        if not isinstance(fidelity, float) or fidelity < 0 or fidelity > 1.0:
-            raise CircuitFidelityError(f"fidelity should be in [0, 1], not {fidelity}.")
+        if not isinstance(fidelity, float):
+            raise TypeError(
+                "Circuit.fidelity", "float", type(fidelity)
+            )
+
+        if fidelity < 0 or fidelity > 1.0:
+            raise ValueError(
+                "Circuit.fidelity", "within [0, 1]", {fidelity}
+            )
 
         self._fidelity = fidelity
 
@@ -123,7 +130,7 @@ class Circuit(CircuitBased):
         if ancillae_qubits is not None:
             self.ancillae_qubits = ancillae_qubits
 
-        logger.info(f"Initial Quantum Circuit {name} with {wires} qubits.")
+        logger.debug(f"Initial Quantum Circuit {name} with {len(self._qubits)} qubits.")
         if topology is not None:
             self.topology = topology
             logger.debug(f"The Layout for Quantum Circuit is {self._topology}.")
@@ -156,7 +163,9 @@ class Circuit(CircuitBased):
             TypeError: the type of targets is wrong
         """
         if not isinstance(targets, Circuit):
-            raise CircuitTypeError("Only support circuit | circuit.")
+            raise TypeError(
+                "Circuit.or", "Circuit", type(targets)
+            )
 
         if not self.qubits == targets.qubits:
             diff_qubits = targets.qubits.diff(self.qubits)
@@ -188,7 +197,9 @@ class Circuit(CircuitBased):
             indexes = Qureg(indexes)
 
         if not isinstance(indexes, Qureg):
-            raise CircuitTypeError("only accept int/list[int]/Qubit/Qureg")
+            raise TypeError(
+                "Circuit.call", "int/list[int]/Qubit/Qureg", type(indexes)
+            )
 
         self._pointer = indexes
         return self
@@ -214,7 +225,7 @@ class Circuit(CircuitBased):
         """
         if isinstance(qubits, int):
             if qubits <= 0:
-                raise CircuitQubitsError("Failure to add non-positive number of qubits.")
+                raise IndexExceedError("Circuit.add_qubit", ">= 0", {qubits})
 
             qubits = Qureg(qubits)
 
@@ -238,12 +249,10 @@ class Circuit(CircuitBased):
             circuit_update (bool, optional): whether rearrange the qubits in circuit. Defaults to False.
         """
         if not isinstance(qureg, Qureg):
-            raise CircuitTypeError("Qureg Only.", qureg)
+            raise TypeError("Circuit.remapping", "Qureg", type(qureg))
 
         if len(qureg) != len(mapping):
-            raise CircuitQubitsError(
-                f"the length of mapping {len(mapping)} must equal to the qubits' number {len(qureg)}."
-            )
+            raise ValueError("Circuit.remapping.mapping", len(qureg), len(mapping))
 
         current_index = [self.qubits.index(qubit) for qubit in qureg]
         remapping_index = [current_index[m] for m in mapping]
@@ -290,15 +299,12 @@ class Circuit(CircuitBased):
             idx (int): The index of replaced quantum gate in circuit.
             gate (BasicGate): The new quantum gate
         """
-        assert idx >= 0 and idx < len(self._gates), "The index of replaced gate is wrong."
-        assert isinstance(gate, (BasicGate, NoiseGate)), "The replaced gate must be a quantum gate or noised gate."
-        if idx < 0 or idx < len(self._gates):
-            raise CircuitReplaceError(
-                f"The index of replaced gate {idx} is wrong, please within [0, {len(self._gates)})."
-            )
-
-        if not isinstance(gate, (BasicGate, NoiseGate)):
-            raise CircuitReplaceError("The replaced gate must be a quantum gate or noised gate.")
+        assert idx >= 0 and idx < len(self._gates), IndexExceedError(
+            "Circuit.replace_gate.idx", [0, len(self._gates)], idx
+        )
+        assert isinstance(gate, (BasicGate, NoiseGate)), TypeError(
+            "Circuit.replace_gate.gate", "[BasicGate, NoiseGate]", type(gate)
+        )
 
         logger.debug(f"The origin gate {self._gates[idx]} is replaced by {gate}")
         self._gates[idx] = gate
@@ -383,8 +389,8 @@ class Circuit(CircuitBased):
             self._gates.append(op)
             logger.debug(f"Add an operator {type(op)}.")
         else:
-            raise CircuitAppendError(
-                f"Circuit can append a Trigger/BasicGate/NoiseGate, not {type(op)}."
+            raise TypeError(
+                "Circuit.append.gate", "Trigger/BasicGate/NoiseGate", {type(op)}
             )
 
     def _add_gate(self, gate: BasicGate, qureg: Qureg, insert_idx: int):
@@ -410,7 +416,7 @@ class Circuit(CircuitBased):
                 qureg = self.qubits[gate_ctargs] if gate_ctargs else gate.assigned_qubits
         else:
             if len(qureg) < args_num:
-                raise ValueError("Assigned qubits must larger or equal to gate size.")
+                raise CircuitAppendError("Assigned qubits must larger or equal to gate size.")
 
             if len(qureg) > args_num and gate_ctargs:
                 qureg = qureg[gate_ctargs]
@@ -482,9 +488,7 @@ class Circuit(CircuitBased):
 
         if probabilities is not None:
             if not np.isclose(sum(probabilities), 1, atol=1e-6):
-                raise CircuitSpecialAppendError(
-                    f"The probabilities for Random Append must sum to 1, not {sum(probabilities)}."
-                )
+                raise ValueError("Circuit.random_append.probabilities", "sum to 1", sum(probabilities))
 
             if len(probabilities) != len(typelist):
                 raise CircuitSpecialAppendError(
@@ -522,9 +526,7 @@ class Circuit(CircuitBased):
 
             current_pattern = pattern[i % (len(pattern))]
             if current_pattern not in "ABCD":
-                raise CircuitSpecialAppendError(
-                    f"Supremacy Append do not supported pattern {pattern[i]}, please use one of 'A', 'B', 'C', 'D'."
-                )
+                raise ValueError("Circuit.append_supremacy.pattern", "[A, B, C, D]", current_pattern)
 
             edges = supremacy_layout.get_edges_by_pattern(current_pattern)
             for e in edges:
@@ -559,7 +561,7 @@ class Circuit(CircuitBased):
             Circuit: the sub circuit
         """
         max_size_for_logger = max_size if max_size == -1 else len(self.gates) - start
-        logger.info(
+        logger.debug(
             f"Get {max_size_for_logger} gates from gate index {start}" +
             f" with target qubits {qubit_limit} and gate limit {gate_limit}."
         )
@@ -572,7 +574,7 @@ class Circuit(CircuitBased):
 
             for target in target_qubits:
                 if target < 0 or target >= self.width():
-                    raise CircuitQubitsError(f'The qubit_limit\'s idx {target} exceed the range [0, {self.width()}).')
+                    raise IndexExceedError("Circuit.sub_circuit.qubit_limit", [0, self.width()], target)
 
             set_tqubits = set(target_qubits)
 
@@ -657,7 +659,9 @@ class Circuit(CircuitBased):
                 save_file = False
                 show_inline = False
             else:
-                raise CircuitDrawError(f"Unsupported matp method {method}.")
+                raise ValueError(
+                    "Circuit.draw.matp_method", "[matp_auto, matp_file, matp_inline, matp_silent]", method
+                )
 
             silent = (not show_inline) and (not save_file)
             photo_drawer.run(circuit=self, filename=filename, save_file=save_file)
@@ -678,6 +682,6 @@ class Circuit(CircuitBased):
 
             text_drawer.dump(filename)
         else:
-            raise CircuitDrawError(
-                f"Unsupported draw method {method}. Please use one of [matp_*, command]."
+            raise ValueError(
+                "Circuit.draw.method", "[matp_auto, matp_file, matp_inline, matp_silent, command]", method
             )

@@ -127,7 +127,7 @@ class Ansatz:
             else:
                 assert len(act_bits) == new_gate.controls + new_gate.targets
                 new_gate.cargs = act_bits[: new_gate.controls]
-                new_gate.targs = act_bits[new_gate.controls :]
+                new_gate.targs = act_bits[new_gate.controls:]
             new_gate.update_name("ansatz", len(self._gates))
             if new_gate.pargs.requires_grad:
                 ptr = new_gate.pargs.data_ptr()

@@ -2,9 +2,10 @@
 Class for customizing the whole process of synthesis, optimization and mapping
 """
 
+
 from QuICT.qcda.synthesis import GateTransform
-from QuICT.qcda.optimization import CommutativeOptimization
-from QuICT.qcda.mapping import MCTSMapping
+from QuICT.qcda.optimization import CommutativeOptimization, CliffordRzOptimization
+from QuICT.qcda.mapping import MCTSMapping, SABREMapping
 from QuICT.tools import Logger
 
 
@@ -18,6 +19,7 @@ class QCDA(object):
     process by which they could transform a unitary matrix to a quantum circuit
     and/or optimize a quantum circuit.
     """
+
     def __init__(self, process=None):
         """ Initialize a QCDA process
 
@@ -52,24 +54,34 @@ class QCDA(object):
         assert target_instruction is not None, ValueError('No InstructionSet provided for Synthesis')
         self.add_method(GateTransform(target_instruction))
 
-    def add_default_optimization(self):
+    def add_default_optimization(self, level='light'):
         """ Generate the default optimization process
 
         The default optimization process contains the CommutativeOptimization.
-        TODO: Now TemplateOptimization only works for Clifford+T circuits, to be added.
-        """
-        self.add_method(CommutativeOptimization())
 
-    def add_default_mapping(self, layout=None):
+        Args:
+            level(str): Optimizing level. Support `light`, `heavy` level.
+        """
+
+        self.add_method(CommutativeOptimization())
+        self.add_method(CliffordRzOptimization(level=level))
+
+    def add_mapping(self, layout=None, method='mcts'):
         """ Generate the default mapping process
 
         The default mapping process contains the Mapping
 
         Args:
             layout(Layout): Topology of the target physical device
+            method(str, optional): used mapping method in ['mcts', 'sabre']
         """
         assert layout is not None, ValueError('No Layout provided for Mapping')
-        self.add_method(MCTSMapping(layout))
+        assert method in ['mcts', 'sabre'], ValueError('Invalid mapping method')
+        mapping_dict = {
+            'mcts': MCTSMapping(layout=layout),
+            'sabre': SABREMapping(layout=layout)
+        }
+        self.add_method(mapping_dict[method])
 
     def compile(self, circuit):
         """ Compile the circuit with the given process
@@ -80,7 +92,7 @@ class QCDA(object):
         Returns:
             CompositeGate/Circuit: the resulting CompositeGate or Circuit
         """
-        logger.info(f"QCDA Now processing GateDecomposition.")
+        logger.info("QCDA Now processing GateDecomposition.")
         circuit.gate_decomposition()
         for process in self.process:
             logger.info(f"QCDA Now processing {process.__class__.__name__}.")

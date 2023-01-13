@@ -13,6 +13,11 @@ class Hamiltonian:
     """The Hamiltonian class."""
 
     @property
+    def pauli_str(self):
+        """The coefficient of each term in the Hamiltonian, i.e. [0.4, 0.6]."""
+        return self._pauli_str
+
+    @property
     def coefficients(self):
         """The coefficient of each term in the Hamiltonian, i.e. [0.4, 0.6]."""
         return self._coefficients

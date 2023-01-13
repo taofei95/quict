@@ -5,23 +5,6 @@ import numpy as np
 import random
 
 
-OPTIMIZER_LIST = [
-    "Adadelta",
-    "Adagrad",
-    "Adam",
-    "AdamW",
-    "SparseAdam",
-    "Adamax",
-    "ASGD",
-    "LBFGS",
-    "NAdam",
-    "RAdam",
-    "RMSprop",
-    "Rprop",
-    "SGD",
-]
-
-
 def set_seed(seed: int):
     """Set random seed.
 
@@ -78,15 +61,9 @@ def restore_checkpoint(net, optim, model_path, device, resume):
     """
     assert resume and model_path
     try:
-        model_name = (
-            "{0}/model.ckpt".format(model_path)
-            if resume is True
-            else "{0}/{1}_{2}.ckpt".format(model_path, resume["ep"], resume["it"])
-        )
+        checkpoint = torch.load(model_path, map_location=device)
     except:
         raise Exception("Cannot find the model.")
-
-    checkpoint = torch.load(model_name, map_location=device)
     try:
         net.load_state_dict(checkpoint["graph"])
         if optim:
@@ -94,25 +71,8 @@ def restore_checkpoint(net, optim, model_path, device, resume):
     except:
         raise Exception("Cannot load the model correctly.")
 
-    ep = checkpoint["ep"]
+    ep = checkpoint["epoch"]
     it = checkpoint["iter"]
     assert resume is True or (resume["ep"] == ep and resume["it"] == it)
 
     return ep, it
-
-
-def set_optimizer(optimizer, net, lr):
-    """Initialize the optimizer according to the its name.
-
-    Args:
-        optimizer (str): The name of the optimizer.
-        net (torch.nn.Module): The network that need to update parameters.
-        lr (float): The learning rate.
-
-    Returns:
-        torch.optim: The optimizer that to be used.
-    """
-    assert optimizer in OPTIMIZER_LIST
-    optimizer = getattr(torch.optim, optimizer)
-    optim = optimizer([dict(params=net.parameters(), lr=lr)])
-    return optim

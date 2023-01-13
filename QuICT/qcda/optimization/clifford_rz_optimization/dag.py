@@ -1,8 +1,7 @@
-import numpy as np
-from typing import Tuple, List, Set, Dict
-from collections.abc import Iterable
 from collections import deque
+from collections.abc import Iterable
 from itertools import chain
+from typing import Dict, List, Set, Tuple
 
 from QuICT.core import *
 from QuICT.core.gate import *
@@ -71,7 +70,8 @@ class DAG(Iterable):
             Returns:
                 BasicGate: corresponding gate
             """
-            return GATE_TYPE_TO_CLASS[self.gate_type](*self.params) & self.qubit_loc \
+
+            return GATE_TYPE_TO_CLASS[self.gate_type]()(*self.params) & self.qubit_loc \
                 if self.gate_type is not None else None
 
         def add_forward_edge(self, qubit_, node):
@@ -145,7 +145,7 @@ class DAG(Iterable):
             self.predecessors = predecessors
             self.successors = successors
 
-    def __init__(self, gates: Circuit):
+    def __init__(self, gates: Circuit, build_toffoli=True):
         """
         Args:
             gates(Circuit): Circuit represented by this DAG
@@ -157,7 +157,8 @@ class DAG(Iterable):
         self.end_nodes = [self.Node(qubit_=i) for i in range(self._width)]
         self.global_phase = 0
         self.has_symbolic_rz = False
-        self.init_size = self._build_graph(gates)
+        self.init_size = self._build_graph(gates, build_toffoli)
+        self.build_toffoli = build_toffoli
 
     def width(self):
         """
@@ -191,14 +192,14 @@ class DAG(Iterable):
             cgate & args
         return cgate.gates
 
-    def _build_graph(self, gates: Circuit):
+    def _build_graph(self, gates: Circuit, build_toffoli):
         node_cnt = 0
         cur_nodes = self.start_nodes.copy()
 
         var_cnt = 0
         for idx, gate_ in enumerate(gates.gates):
             # decouple ccx building with dag
-            if gate_.type == GateType.ccx or gate_.type == GateType.ccz:
+            if build_toffoli and (gate_.type == GateType.ccx or gate_.type == GateType.ccz):
                 self.has_symbolic_rz = True
                 gate_list = self._build_ccz(gate_)
                 if gate_.type == GateType.ccx:
@@ -393,7 +394,6 @@ class DAG(Iterable):
             for neighbors in ['predecessors', 'successors']:
                 for qubit_ in range(u.size):
                     u_nxt, u_qubit = getattr(u, neighbors)[qubit_]
-                    assert u_nxt, "u_nxt == None should not happen"
                     if not u_nxt.gate_type:
                         continue
 
@@ -405,7 +405,6 @@ class DAG(Iterable):
                             return None
                         continue
 
-                    assert v_nxt, "v_nxt == None should not happen"
                     # v_nxt fails to match u_nxt
                     if not v_nxt.gate_type or (v_nxt.flag and flag_enabled) or \
                             u_nxt.gate_type != v_nxt.gate_type or u_qubit != v_qubit:
@@ -610,23 +609,6 @@ class DAG(Iterable):
         for each in gates:
             self.append(each)
 
-    @staticmethod
-    def copy_sub_circuit(prev_node: List[Tuple[Node, int]], succ_node: List[Tuple[Node, int]]):
-        """
-        Get a copy of a sub circuit.
-
-        Args:
-            prev_node(List[Tuple[DAG.Node, int]]): left bound of the sub circuit.
-            succ_node(List[Tuple[DAG.Node, int]]): right bound of the sub circuit.
-
-        Returns:
-            DAG: a copy of the sub circuit
-        """
-        circ = Circuit(len(prev_node))
-        for node in DAG.topological_sort_sub_circuit(prev_node, succ_node):
-            node.get_gate() | circ(node.qubit_loc)
-        return DAG(circ)
-
     def __iter__(self):
         """
         Iterate over gates in this DAG in topological order
@@ -645,7 +627,7 @@ class DAG(Iterable):
         Returns:
             DAG: a copy
         """
-        return DAG(self.get_circuit())
+        return DAG(self.get_circuit(), build_toffoli=self.build_toffoli)
 
     def destroy(self):
         """

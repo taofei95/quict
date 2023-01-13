@@ -5,6 +5,8 @@ import numpy as np
 from .gate_type import MatrixType
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 
+from QuICT.tools.exception.core import TypeError
+
 
 def get_gates_order_by_depth(gates: list) -> list:
     """ Order the gates of circuit by its depth layer
@@ -73,7 +75,9 @@ class CircuitMatrix:
         for layer_gates in gates_order_by_depth:
             for gate in layer_gates:
                 if gate.controls + gate.targets >= 3:
-                    raise Exception("only support 2-qubit gates and 1-qubit gates.")
+                    raise TypeError(
+                        "CircuitMatrix.get_unitary_matrix.gates", "1 or 2-qubits gates", gate.controls + gate.targets
+                    )
 
                 if gate.matrix_type == MatrixType.special:
                     continue
