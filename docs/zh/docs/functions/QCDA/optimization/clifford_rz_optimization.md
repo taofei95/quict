@@ -43,11 +43,11 @@ if __name__ == '__main__':
 
 随机电路：
 
-![circuit before](../../../assets/images/tutorials/QCDA/optimization/cro_0.jpg)
+![circuit before](../../../assets/images/functions/QCDA/cro_0.jpg)
 
 优化后的电路：
 
-![circuit after](../../../assets/images/tutorials/QCDA/optimization/cro_1.jpg)
+![circuit after](../../../assets/images/functions/QCDA/cro_1.jpg)
 
 ---
 

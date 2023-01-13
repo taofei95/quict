@@ -74,11 +74,11 @@ if __name__ == '__main__':
 
 随机电路：
 
-![circuit before](../../../assets/images/tutorials/QCDA/optimization/to_0.jpg)
+![circuit before](../../../assets/images/functions/QCDA/to_0.jpg)
 
 优化后的电路：
 
-![circuit before](../../../assets/images/tutorials/QCDA/optimization/to_1.jpg)
+![circuit before](../../../assets/images/functions/QCDA/to_1.jpg)
 
 ----
 
