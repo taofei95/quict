@@ -1,9 +1,8 @@
 import torch
 import numpy as np
 
-from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, Rz, sqiSwap, X
-from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
+from QuICT.algorithm.quantum_machine_learning.utils import Ansatz, Rz_tensor, sqiSwap_tensor, X_tensor
 
 
 class Thouless:
@@ -32,10 +31,28 @@ class Thouless:
         Returns:
             Ansatz: thouless ansatz
         """
-        gates = self.build_gates(orbitals, electrons, angles)
-        circ = Circuit(orbitals)
-        gates | circ
-        ansatz = Ansatz(orbitals, circ, device=self._device)
+        ansatz = Ansatz(orbitals, device=self._device)
+        assert len(angles) == electrons * (orbitals - electrons), ValueError("Incorrect number of parameters")
+
+        # The first X gates
+        for k in range(electrons):
+            ansatz.add_gate(X_tensor, k)
+
+        # Givens rotations
+        param = 0
+        for layer in range(orbitals):
+            for k in range(
+                abs(electrons - layer),
+                orbitals - abs(orbitals - (electrons + layer)),
+                2
+            ):
+                ansatz.add_gate(sqiSwap_tensor, [k, k + 1])
+                ansatz.add_gate(Rz_tensor(-angles[param]), k)
+                ansatz.add_gate(Rz_tensor(np.pi + angles[param]), k + 1)
+                ansatz.add_gate(sqiSwap_tensor, [k, k + 1])
+                ansatz.add_gate(Rz_tensor(np.pi), k + 1)
+                param += 1
+
         return ansatz
 
     @staticmethod

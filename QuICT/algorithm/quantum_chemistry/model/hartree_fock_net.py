@@ -34,7 +34,7 @@ class HartreeFockVQENet(VQENet):
 
     def define_network(self):
         self.params = torch.nn.Parameter(
-            torch.rand(self.electrons * (self.orbitals - self.electrons), device=self.device),
+            torch.zeros(self.electrons * (self.orbitals - self.electrons), device=self.device),
             requires_grad=True
         )
 
