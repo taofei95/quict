@@ -12,14 +12,14 @@ def get_from_file(item, molfile, set_type=None):
     Args:
         item(str): the name of the target dataset
         molfile(dict): the read pointer of the molecular file
-        set_type(str): the target type of data
+        set_type(type): the target type of data
     """
     try:
         data = molfile[item][...]
         if data.dtype.num == 0:
             data = None
         elif set_type is not None:
-            data = data.astype(set_type)
+            data = set_type(data)
     except Exception:
         raise ValueError('Invalid ' + item)
     return data
@@ -49,9 +49,9 @@ class MolecularData:
             self.molfile = molfile
 
         with h5py.File(self.molfile, "r") as f:
-            self.n_orbitals = get_from_file("n_orbitals", f, 'int')
-            self.n_electrons = get_from_file("n_electrons", f, 'int')
-            self.nuclear_repulsion = get_from_file("nuclear_repulsion", f, 'float')
+            self.n_orbitals = get_from_file("n_orbitals", f, int)
+            self.n_electrons = get_from_file("n_electrons", f, int)
+            self.nuclear_repulsion = get_from_file("nuclear_repulsion", f, float)
             self.one_body_integrals = get_from_file("one_body_integrals", f)
             self.two_body_integrals = get_from_file("two_body_integrals", f)
 
