@@ -8,7 +8,7 @@
 
 模板优化算法分为模板匹配和模板替换两个过程，其基本原理为：对于一个n比特电路 $T=T_1T_2\cdots T_m$，如果 $T=I_{2^n}$，我们称 $T$ 是一个模板。设待优化的电路为 $C$，如果我们能在 $C$ 中找到子电路 $S=T_iT_{i+1}\cdots T_j$ ，则 $S$ 可以被替换为 $S'=T_{i-1}^\dagger T_{i-2}^\dagger \cdots T_1^\dagger T_m^\dagger T_{m-1}^\dagger \cdots, T_{j+1}^\dagger$。如果 $S'$ 的代价小于 $S$，则该替换优化了 $C$ 的执行代价。
 
-![模板$T$和电路$C$的匹配](../../../assets/images/tutorials/QCDA/optimization/to_match.png)
+![模板$T$和电路$C$的匹配](../../../assets/images/functions/QCDA/to_match.png)
 
 上图为一个匹配的例子，注意到找到的子电路 $S$ 在 $C$ 中可能并不相邻，但
 一定可以通过交换对易的相邻门将 $S$ 中的所有门变换到相邻的位置，这是因为模板匹配算法是在电路的 `DAGCircuit` 表示上执行的。
@@ -37,7 +37,7 @@
 
 容易知道一些平凡的模板 $HH$, $SS^\dagger$, $CNOT\cdot CNOT$ 等，下面是一个非平凡的3比特模板：
 
-![模板示例](../../../assets/images/tutorials/QCDA/optimization/to_template.png)
+![模板示例](../../../assets/images/functions/QCDA/to_template.png)
 
 
 ## 基本用法
@@ -110,11 +110,11 @@ if __name__ == '__main__':
 
 随机电路：
 
-![circuit before](../../../assets/images/tutorials/QCDA/optimization/to_0.jpg)
+![circuit before](../../../assets/images/functions/QCDA/to_0.jpg)
 
 优化后的电路：
 
-![circuit before](../../../assets/images/tutorials/QCDA/optimization/to_1.jpg)
+![circuit before](../../../assets/images/functions/QCDA/to_1.jpg)
 
 ----
 

@@ -4,14 +4,17 @@ nav:
 - 概览: home.md
 - 安装: installation.md
 - 功能模块:
-  - 算法: functions/algorithms.md
-  - 核心: functions/core.md
   - 量子比特: functions/qubit.md
   - 量子门: functions/gates.md
   - 量子电路: functions/circuit.md
-  - 噪声模拟: functions/noise.md
-  - 布局: functions/layout.md
-  - QCDA: functions/qcda.md
+  - 量子噪声: functions/noise.md
+  - QCDA:
+    - 映射:
+      - SABRE映射算法: functions/QCDA/mapping/SABRE.md
+    - 优化:
+      -  Clifford+Rz优化: functions/QCDA/optimization/clifford_rz_optimization.md
+      -  模板优化: functions/QCDA/optimization/template_optimization.md
+    - 合成: functions/QCDA/synthesis/synthesis.md
   - 量子模拟: functions/simulation.md
   - 工具: functions/tools.md
 - 教程:
@@ -19,19 +22,13 @@ nav:
     - 经典量子算法:
       - 格罗弗算法: tutorials/algorithm/quantum_algorithm/grover.md
       - 秀尔算法: tutorials/algorithm/quantum_algorithm/shor.md
-      - 量子相位估计: tutorials/algorithm/quantum_algorithm/amplitude_estimate.md
+      - 量子振幅估计: tutorials/algorithm/quantum_algorithm/amplitude_estimate.md
       - 量子游走: tutorials/algorithm/quantum_algorithm/quantum_walk.md
     - 变分量子算法:
+      - 变分量子本征求解器: tutorials/algorithm/VQA/VQE.md
       - 量子近似优化算法: tutorials/algorithm/VQA/QAOA.md
       - 量子神经网络: tutorials/algorithm/VQA/QNN.md
-      - 变分量子本征求解器: tutorials/algorithm/VQA/VQE.md
-  - QCDA:
-    - 映射:
-      - SABRE映射算法: tutorials/QCDA/mapping/SABRE.md
-    - 优化:
-      -  Clifford+Rz优化: tutorials/QCDA/optimization/clifford_rz_optimization.md
-      -  模板优化: tutorials/QCDA/optimization/template_optimization.md
-    - 合成: tutorials/QCDA/synthesis.md
+  - QCDA: tutorials/QCDA.md
   - 量子电路: tutorials/quantum_circuit.md
 - API:
   - Algorithm:

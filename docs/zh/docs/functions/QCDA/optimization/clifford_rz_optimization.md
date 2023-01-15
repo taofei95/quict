@@ -26,7 +26,7 @@ Clifford+Rz优化算法也支持对CCX/CCZ门的优化，CCX/CCZ门有各种不�
 
 该子算法在电路中寻找如下子电路模板：
 
-![H门替换模板](../../../assets/images/tutorials/QCDA/optimization/cro_h_reduce.png)
+![H门替换模板](../../../assets/images/functions/QCDA/cro_h_reduce.png)
 
 通过将这些子电路替换为等式右边的电路来减少H门数量，这是因为H门会妨碍之后的Rotation merging优化方法。
 
@@ -36,7 +36,7 @@ Clifford+Rz优化算法也支持对CCX/CCZ门的优化，CCX/CCZ门有各种不�
 
 该算法枚举电路中的每一个Rz门 $g$，考虑如下对易关系：
 
-![Rz门对易关系](../../../assets/images/tutorials/QCDA/optimization/cro_rz_cancel.png)
+![Rz门对易关系](../../../assets/images/functions/QCDA/cro_rz_cancel.png)
 
 
 通过贪心地将 $g$ 不断与可交换的相邻电路块交换，当碰到了另一个Rz门时，就可以进行合并。
@@ -46,13 +46,13 @@ Clifford+Rz优化算法也支持对CCX/CCZ门的优化，CCX/CCZ门有各种不�
 
 使用子算法2完全相同的思路来消去CNOT门，考虑的对易关系如下图：
 
-![CNOT门对易关系](../../../assets/images/tutorials/QCDA/optimization/cro_cnot_cancel.png)
+![CNOT门对易关系](../../../assets/images/functions/QCDA/cro_cnot_cancel.png)
 
 ### 4. Rotation merging
 
 在一个n比特的CNOT+Rz电路块中，每一个Rz门可以被看做在 $\mathbb{F}_2[x_1,x_2\cdots, x_n]$ 的某个单项式 $x_{i_1}\oplus x_{i_2}\oplus \cdots \oplus x_{i_k} (1\leq x_i\leq n)$ 上的相位变换，故可以被写作一个相位多项式（Phase polynomial）。
 
-![Rotation merging示例电路](../../../assets/images/tutorials/QCDA/optimization/cro_merge.png)
+![Rotation merging示例电路](../../../assets/images/functions/QCDA/cro_merge.png)
 
 例如在上图中，左边的电路的相位多项式为 
 
@@ -67,7 +67,7 @@ $$|x,y\rangle \to e^{i p(x,y)}|x\oplus y,y\rangle$$
 
 在一个CNOT+Rz子电路中，一个Rz可以被移动到其他位置，使得CNOT门可以得到进一步的合并，例如：
 
-![Float rotations示例电路](../../../assets/images/tutorials/QCDA/optimization/cro_float.png)
+![Float rotations示例电路](../../../assets/images/functions/QCDA/cro_float.png)
 
 子算法5执行类似于子算法3的步骤，在所有CNOT+Rz电路块中合并CNOT门，不同之处是子算法5考虑了每一个Rz门在电路中所有可能的位置，当遇到一个可以被移走的Rz门，会将它移动到其他的地方。
 
@@ -78,7 +78,7 @@ $$|x,y\rangle \to e^{i p(x,y)}|x\oplus y,y\rangle$$
 
 Clifford+Rz优化算法也支持对CCX/CCZ门的优化，CCX/CCZ门有多种Clifford+Rz分解方法，不同的分解方法的优化效果可能不同。以CCX为例，CCX可以被分解为：
 
-![CCX的一种分解方法](../../../assets/images/tutorials/QCDA/optimization/cro_ccx.png)
+![CCX的一种分解方法](../../../assets/images/functions/QCDA/cro_ccx.png)
 
 由于 $CCX^\dagger=CCX$，将上述分解中的所有$T(T^\dagger)$ 门取共轭后依然是一个CCX门，这两种分解方式只有 $T(T^\dagger)$ 门的相对相位不同，算法事先并不确定用哪一种分解，而是对每个CCX门设一个相对相位变量 $x_i$，在上述优化流程中用符号计算记录每个Rz门关于相对相位变量的表达式。当优化流程执行完后，遍历每一个CCX $i$，贪心地选择当前能导致电路门数最小的 $x_i$ 取值。
 
@@ -121,11 +121,11 @@ if __name__ == '__main__':
 
 随机电路：
 
-![circuit before](../../../assets/images/tutorials/QCDA/optimization/cro_0.jpg)
+![circuit before](../../../assets/images/functions/QCDA/cro_0.jpg)
 
 优化后的电路：
 
-![circuit after](../../../assets/images/tutorials/QCDA/optimization/cro_1.jpg)
+![circuit after](../../../assets/images/functions/QCDA/cro_1.jpg)
 
 ---
 
