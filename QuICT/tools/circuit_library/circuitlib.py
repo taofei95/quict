@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 from typing import Union, List
 
@@ -120,15 +121,15 @@ class CircuitLib:
 
     def _get_circuit_from_benchmark(self, classify, width, size):
         if classify == "highly_parallelized":
-            circuits_list, void_gates_list = BenchmarkCircuitBuilder.parallelized_circuit_build(width, size)
+            circuits_list = BenchmarkCircuitBuilder.parallelized_circuit_build(width, size)
         elif classify == "highly_entangled":
-            circuits_list, void_gates_list = BenchmarkCircuitBuilder.entangled_circuit_build(width, size)
+            circuits_list = BenchmarkCircuitBuilder.entangled_circuit_build(width, size)
         elif classify == "highly_serialized":
-            circuits_list, void_gates_list = BenchmarkCircuitBuilder.serialized_circuit_build(width, size)
+            circuits_list = BenchmarkCircuitBuilder.serialized_circuit_build(width, size)
         else:
-            circuits_list, void_gates_list = BenchmarkCircuitBuilder.mediate_measure_circuit_build(width, size)
+            circuits_list = BenchmarkCircuitBuilder.mediate_measure_circuit_build(width, size)
 
-        return circuits_list, void_gates_list
+        return circuits_list
 
     def _get_all_from_generator(
         self,
@@ -154,23 +155,16 @@ class CircuitLib:
                     circuit = Circuit(width)
                     circuit.random_append(size * width, gateset, True, prob)
                     depth = circuit.depth()
-
                     if max_depth is None or depth <= max_depth:
                         circuit.name = "+".join([type, classify, f"w{width}_s{size}_d{depth}"])
                         circuit_list.append(circuit)
                 else:
-                    circuits, paras = self._get_circuit_from_benchmark(classify, width, size * width)
-                    for idx in range(len(circuits)):
-                        benchmark_circuit = circuits[idx]
-                        benchmark_depth = benchmark_circuit.depth()
-
-                        if max_depth is None or benchmark_depth <= max_depth:
-                            benchmark_circuit.name = "+".join([
-                                type, classify, f"w{width}_s{size * width}_d{benchmark_depth}_v{paras[idx]}"])
+                    circuits_list = self._get_circuit_from_benchmark(classify, width, size * width)
+                    for idx in range(len(circuits_list)):
+                        benchmark_circuit = circuits_list[idx]
+                        benchmark_circuit_depth = re.findall(r"\d+", benchmark_circuit.name)[2]
+                        if max_depth is None or benchmark_circuit_depth <= max_depth:
                             circuit_list.append(benchmark_circuit)
-                        else:
-                            circuit.name = "+".join([type, classify, f"w{width}_s{size}_d{depth}"])
-                            circuit_list.append(circuit)
 
         if self._output_type == "circuit":
             return circuit_list

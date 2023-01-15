@@ -8,11 +8,10 @@ import numpy as np
 import scipy.stats
 from collections import defaultdict
 from matplotlib import pyplot as plt
-from QuICT.core.layout.layout import Layout
 
 from QuICT.qcda.qcda import QCDA
 from QuICT.tools.circuit_library.circuitlib import CircuitLib
-from QuICT.simulation.state_vector.gpu_simulator.constant_statevector_simulator import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import CircuitSimulator
 
 
 class QuICTBenchmark:
@@ -20,8 +19,8 @@ class QuICTBenchmark:
     def __init__(
         self,
         output_path: str = "./benchmark",
-        show_type: str = "Txt",
-        simulator=ConstantStateVectorSimulator()
+        output_file_type: str = "Txt",
+        simulator = CircuitSimulator(),
     ):
         """
         Initial circuit library
@@ -32,13 +31,13 @@ class QuICTBenchmark:
             simulator (Union, optional): The simulator for simulating quantum circuit.
         """
         self._output_path = os.path.abspath(output_path)
-        self._show_type = show_type
+        self._output_file_type = output_file_type
         self.simulator = simulator
 
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path)
 
-    def _level_selection(self, qubit_num, level):
+    def _circuit_selection(self, qubit_num, level):
         based_circuits_list = []
         based_fields_list = ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"]
         for field in based_fields_list:
@@ -89,8 +88,10 @@ class QuICTBenchmark:
         Returns:
             (List[Circuit | String] | None): Return the list of output circuit order by output_type.
         """
+        # whether quantum_machine_info is valid or not
+        
         # Step 1: get circuits from circuitlib
-        circuits_list = self._level_selection(quantum_machine_info[0], level)
+        circuits_list = self._circuit_selection(quantum_machine_info[0], level)
         if mapping is False and gate_transform is False:
             return circuits_list
 
@@ -101,12 +102,11 @@ class QuICTBenchmark:
             if mapping is True and len(quantum_machine_info) > 1 and circuit.width() > 1:
                 layout_file = quantum_machine_info[1].sub_layout(circuit.width())
                 qcda.add_default_mapping(layout_file)
-            if gate_transform is True and len(quantum_machine_info) > 2:
-                if circuit.name.split("+")[-2] != "mediate_measure":
-                    qcda.add_gate_transform(quantum_machine_info[2])
+            if gate_transform is True and len(quantum_machine_info) > 2 and circuit.name.split("+")[-2] != "mediate_measure":
+                qcda.add_gate_transform(quantum_machine_info[2])
 
             cir_qcda = qcda.compile(circuit)
-            cir_qcda.name = circuit.name
+            # cir_qcda.name = "+".join([f"{circuit.name.split("+")[:-1][0]}", f"{circuit.name.split("+")[:-1][1]}", f"w{cir_qcda.width()}_s{cir_qcda.size()}_d{cir_qcda.depth()}_v{void_gates}"])
             cir_qcda_list.append(cir_qcda)
 
         return cir_qcda_list
@@ -191,7 +191,10 @@ class QuICTBenchmark:
             l2 = self._l2_cal(quict_result, machine_result)
             entropy_value = round((abs(kl) + abs(cross_en) + abs(l2)) / 3, 3)
             entropy_score = self._entropy_cal(entropy_value)
-            VQ_value = min(circuit_list[index].width(), circuit_list[index].depth())
+
+            circuit_info = re.findall(r"\d+", circuit_list[index].name)
+            m, n = circuit_info[0], circuit_info[2]
+            VQ_value = min(m, n)
 
             # Step 3: return entropy values and quantum volumn values
             entropy_VQ_score.append([circuit_list[index], entropy_value, entropy_score, VQ_value])
@@ -207,18 +210,13 @@ class QuICTBenchmark:
             if field == "highly_parallelized":
                 P = abs((int(cir_attribute[1]) / int(cir_attribute[2]) - 1) / (int(cir_attribute[0]) - 1) * VQ)
                 eigenvalue_VQ_score.append([valid_circuits_list[i], P])
-
-            elif field == "highly_serialized":
-                S = (1 - int(cir_attribute[3]) / int(cir_attribute[1])) * VQ
-                eigenvalue_VQ_score.append([valid_circuits_list[i], S])
-
-            elif field == "highly_entangled":
-                E = (1 - int(cir_attribute[3]) / int(cir_attribute[1])) * VQ
-                eigenvalue_VQ_score.append([valid_circuits_list[i], E])
-
             elif field == "mediate_measure":
                 M = (int(cir_attribute[3]) / int(cir_attribute[2])) * VQ
                 eigenvalue_VQ_score.append([valid_circuits_list[i], M])
+            else:
+                S = (1 - int(cir_attribute[3]) / int(cir_attribute[1])) * VQ
+                eigenvalue_VQ_score.append([valid_circuits_list[i], S])
+
         return eigenvalue_VQ_score
 
     def _kl_cal(self, p, q):
@@ -256,12 +254,12 @@ class QuICTBenchmark:
         """ show benchmark result. """
         if eigenvalue_VQ_score != []:
             self._graph_show(entropy_VQ_score, eigenvalue_VQ_score, valid_circuits_list)
-            if self._show_type == "Txt":
+            if self._output_file_type == "Txt":
                 self._txt_show(entropy_VQ_score)
             else:
                 self._excel_show(entropy_VQ_score)
         else:
-            if self._show_type == "Txt":
+            if self._output_file_type == "Txt":
                 self._txt_show(entropy_VQ_score)
             else:
                 self._excel_show(entropy_VQ_score)
@@ -318,28 +316,12 @@ class QuICTBenchmark:
         ################################### algorithmic circuits benchmark ##############################
         # Construct the data
         value_list, feature, values_2 = [], [], []
+        field_list = ["adder", "clifford", "cnf", "grover", "maxcut", "qft", "qnn", "quantum_walk", "vqe"]
         for i in range(len(valid_circuits_list)):
             field = valid_circuits_list[i].name.split("+")[-2]
             cir_attribute = re.findall(r"\d+", valid_circuits_list[i].name)
             VQ = min(int(cir_attribute[0]), int(cir_attribute[2]))
-            if field == "adder":
-                value_list.append([field, VQ])
-            if field == "clifford":
-                value_list.append([field, VQ])
-            if field == "grover":
-                value_list.append([field, VQ])
-            if field == "qft":
-                value_list.append([field, VQ])
-            if field == "vqe":
-                value_list.append([field, VQ])
-            if field == "cnf":
-                value_list.append([field, VQ])
-            if field == "maxcut":
-                value_list.append([field, VQ])
-            if field == "qnn":
-                value_list.append([field, VQ])
-            if field == "quantum_walk":
-                value_list.append([field, VQ])
+            value_list.append([field, VQ])
 
         field_VQ_map = defaultdict(list)
         for field, VQ in value_list:

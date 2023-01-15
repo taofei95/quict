@@ -15,7 +15,7 @@ class BenchmarkCircuitBuilder:
         random_params (bool, optional): whether random parameter or use default parameter. Defaults to True.
     """
     @staticmethod
-    def parallelized_circuit_build(width: int, size: int, random_params: bool = True):
+    def parallelized_circuit_build(width: int, size: int):
         typelist = [GateType.rz, GateType.cx]
         prob = [0.8, 0.2]
 
@@ -25,7 +25,7 @@ class BenchmarkCircuitBuilder:
         random.shuffle(shuffle_qindexes)
 
         random_para = [0.4, 0.6, 0.8, 1]
-        cirs_list, void_gates_list = [], []
+        cirs_list = []
 
         for i in range(len(random_para)):
             cir = Circuit(width)
@@ -34,7 +34,7 @@ class BenchmarkCircuitBuilder:
                 gate_type = typelist[rand_type]
                 gate = GATE_TYPE_TO_CLASS[gate_type]()
 
-                if random_params and gate.params:
+                if gate.params:
                     gate.pargs = list(np.random.uniform(0, 2 * np.pi, gate.params))
 
                 gsize = gate.controls + gate.targets
@@ -48,13 +48,14 @@ class BenchmarkCircuitBuilder:
                 else:
                     shuffle_qindexes = shuffle_qindexes[gsize:]
 
+            depth = cir.depth()
+            cir.name = "+".join(["benchmark", "highly_parallelized", f"w{width}_s{size}_d{depth}_v{depth}"])
             cirs_list.append(cir)
-            void_gates_list.append(cir.depth())
-        return cirs_list, void_gates_list
+        return cirs_list
 
     @staticmethod
-    def serialized_circuit_build(width: int, size: int, random_params: bool = True):
-        cirs_list, void_gates_list = [], []
+    def serialized_circuit_build(width: int, size: int):
+        cirs_list = []
         random_para = [0.4, 0.6, 0.8, 1]
         void_gates = 0
         for i in range(len(random_para)):
@@ -70,13 +71,13 @@ class BenchmarkCircuitBuilder:
                 if random.random() > random_para[i]:
                     CX & (random.sample(list(range(width)), 2)) | cir
             void_gates += 1
-            void_gates_list.append(void_gates)
+            cir.name = "+".join(["benchmark", "highly_serialized", f"w{width}_s{size}_d{cir.depth()}_v{void_gates}"])
             cirs_list.append(cir)
 
-        return cirs_list, void_gates_list
+        return cirs_list
 
     @staticmethod
-    def entangled_circuit_build(width: int, size: int, random_params: bool = True):
+    def entangled_circuit_build(width: int, size: int):
         def _pattern1():
             cgate = CompositeGate()
             qubit_indexes = list(range(width))
@@ -125,13 +126,14 @@ class BenchmarkCircuitBuilder:
                 if random.random() > random_para[i]:
                     cir.random_append(5, [GateType.cx])
                     void_gates += 1
+            cir.name = "+".join(["benchmark", "highly_entangled", f"w{width}_s{size}_d{cir.depth()}_v{void_gates}"])
             void_gates_list.append(void_gates)
             cirs_list.append(cir)
 
-        return cirs_list, void_gates_list
+        return cirs_list
 
     @staticmethod
-    def mediate_measure_circuit_build(width: int, size: int, random_params: bool = True):
+    def mediate_measure_circuit_build(width: int, size: int):
         typelist = [GateType.rz, GateType.cx]
         prob = [0.8, 0.2]
 
@@ -151,14 +153,16 @@ class BenchmarkCircuitBuilder:
 
             return cgate
 
-        cir_list, m_depth_list = [], []
-        for i in range(size - 2 * width, size, 3):
+        cir_list = []
+        for i in range(size - width, size, 3):
             cir = Circuit(width)
+            void_gates = 0
             for _ in range(int(i / width)):
                 flat_build() | cir
-            m_depth_list.append(cir.depth())
+                void_gates += 1
             Measure | cir
             while cir.size() < size:
                 flat_build() | cir
+            cir.name = "+".join(["benchmark", "mediate_measure", f"w{width}_s{size}_d{cir.depth()}_v{void_gates}"])
             cir_list.append(cir)
-        return cir_list, m_depth_list
+        return cir_list
