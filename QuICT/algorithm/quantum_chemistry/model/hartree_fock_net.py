@@ -39,7 +39,7 @@ class HartreeFockVQENet(VQENet):
         )
 
     def forward(self, state=None):
-        """The forward propagation process of QAOANet.
+        """The forward propagation process of HartreeFockVQENet.
 
         Args:
             state (np.array/torch.Tensor, optional): The input state vector.
