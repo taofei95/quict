@@ -8,8 +8,8 @@ from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 class QuantumWalkSearch(QuantumWalk):
     """ Search algorithm on a hypercube based on quantum walk and Grover.
 
-        https://arxiv.org/pdf/quant-ph/0210064.pdf
-        http://dx.doi.org/10.4236/jqis.2015.51002
+    https://arxiv.org/pdf/quant-ph/0210064.pdf
+    http://dx.doi.org/10.4236/jqis.2015.51002
     """
 
     def __init__(self, simulator=ConstantStateVectorSimulator()):
@@ -65,6 +65,7 @@ class QuantumWalkSearch(QuantumWalk):
         a_r: float = 1,
         a_nr: float = 0,
         switched_time: int = -1,
+        shots: int = 1000,
     ):
         """ Execute the quantum walk search with given number of index qubits.
 
@@ -77,6 +78,7 @@ class QuantumWalkSearch(QuantumWalk):
             a_nr (float, optional): Parameter of the asymmetry degree of the coin. Defaults to 0.
             switched_time (int, optional): The number of steps of each coin operator in the vector.
                 Defaults to -1, means not switch coin operator.
+            shots (int, optional): The repeated times. Defaults to 1000.
 
         Returns:
             Union[np.ndarray, List]: The state vector or measured states.
@@ -111,6 +113,7 @@ class QuantumWalkSearch(QuantumWalk):
         # Build random walk circuit
         self._circuit_construct()
 
-        # Return final state vector
-        self.sv = self._simulator.run(self._circuit)
-        return self.sv
+        # Simulate the circuit
+        _ = self._simulator.run(self._circuit)
+
+        return self._simulator.sample(shots)
