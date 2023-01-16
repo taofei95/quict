@@ -37,13 +37,13 @@ def job_controller_in_local_mode():
     # Using JobCreator
     job_dict = create_job_through_JobCreator()
     job_name = job_dict["job_name"]
-    # Using Yaml file [a example about how to write yml file for quict cli, need fixed the file path before using]
-    # file_path = os.path.join(os.path.dirname(__file__), "cli_example/quict_job.yml")
 
     # Start Job Through QuICTLocalManager
     job_manager = QuICTLocalManager()
     job_manager.start_job(job_dict)
-    # Start Job by yml file
+
+    # Using Yaml file [a example about how to write yml file for quict cli, need fixed the file path before using]
+    # file_path = os.path.join(os.path.dirname(__file__), "cli_example/quict_job.yml")
     # job_manager.start_job(file_path)
 
     # Check Job's Status
