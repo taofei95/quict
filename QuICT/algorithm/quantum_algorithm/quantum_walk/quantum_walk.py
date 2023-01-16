@@ -149,7 +149,7 @@ class QuantumWalk:
         operators: Union[List, Dict] = None,
         coin_operator: np.ndarray = None,
         switched_time: int = -1,
-        shots: int = 1,
+        shots: int = 1000,
     ) -> Union[np.ndarray, List]:
         """ Execute the quantum random walk with given steps, graph and coin operator.
 
@@ -161,7 +161,7 @@ class QuantumWalk:
             switched_time (int, optional): The number of steps of each coin operator in the vector.
                 Defaults to -1, means not switch coin operator.
             coin_operator (np.ndarray, optional): The coin operators, the unitary matrix. Defaults to None.
-            shots (int, optional): The repeated times. Defaults to 1.
+            shots (int, optional): The repeated times. Defaults to 1000.
 
         Returns:
             Union[np.ndarray, List]: The state vector or measured states.
