@@ -16,24 +16,25 @@ OPTIONS = {
 }
 
 
-def draw_prob_with_auxiliary(sv, qubits, anxiliary, title: str = "Probability", save_path=None):
-    """ Draw the probability distribution of the state vector.
+def draw_samples_with_auxiliary(
+    sample, qubits, anxiliary, title: str = "Sample Distribution", save_path=None
+):
+    """Draw the sample distribution.
 
     Args:
-        sv (np.array): The state vector.
+        sample (list): The sample list.
         qubits (int): The number of data qubits.
         anxiliary (int): The number of auxiliary qubits.
-        title (str, optional): The title of the figure. Defaults to "Probability".
+        title (str, optional): The title of the figure. Defaults to "Sample Distribution".
         save_path (str, optional): The path to save the figure. Defaults to None.
     """
-    p = sv.real * sv.real
-    prob = np.zeros(2 ** qubits)
+    distribution = np.zeros(1 << qubits)
     idx = 0
-    for i in range(0, 1 << qubits + anxiliary, 2 ** anxiliary):
+    for i in range(0, 1 << qubits + anxiliary, 1 << anxiliary):
         for j in range(qubits):
-            prob[idx] += p[i + j]
+            distribution[idx] += sample[i + j]
         idx += 1
-    plt.bar(range(2 ** qubits), prob)
+    plt.bar(range(1 << qubits), distribution)
     if save_path:
         plt.savefig(save_path + "/{}.png".format(title), transparent=True)
     plt.show()
