@@ -400,8 +400,8 @@ class SquareRootiSwapGate(BasicGateTensor):
         self.matrix = torch.tensor(
             [
                 [1, 0, 0, 0],
-                [0, 0, (1 + 1j) / np.sqrt(2), 0],
-                [0, (1 + 1j) / np.sqrt(2), 0, 0],
+                [0, 1 / np.sqrt(2), 1j / np.sqrt(2), 0],
+                [0, 1j / np.sqrt(2), 1 / np.sqrt(2), 0],
                 [0, 0, 0, 1]
             ], dtype=self._precision
         ).to(self.device)

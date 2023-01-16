@@ -73,7 +73,7 @@ class HartreeFockVQENet(torch.nn.Module):
         if isinstance(state, np.ndarray):
             state = torch.from_numpy(state).to(self.device)
         assert state.shape[0] == 1 << self.orbitals
-        state = self._expand_state(state)
+        expanded_state = self._expand_state(state)
 
         ansatz_list = self.hamiltonian.construct_hamiton_ansatz(
             2 * self.orbitals, self.device
@@ -83,9 +83,9 @@ class HartreeFockVQENet(torch.nn.Module):
             self.device
         )
         for coeff, ansatz in zip(coefficients, ansatz_list):
-            sv = ansatz.forward(state)
+            sv = ansatz.forward(expanded_state)
             state_vector += coeff * sv
-        loss = torch.sum(state.conj() * state_vector).real
+        loss = torch.sum(expanded_state.conj() * state_vector).real
 
         return loss
 
@@ -101,11 +101,12 @@ class HartreeFockVQENet(torch.nn.Module):
         """
         size = state.shape[0]
         expanded = torch.zeros(size * size, dtype=torch.complex128, device=self.device)
+        idx = []
         for i in range(size):
             i_bin = np.binary_repr(i, width=self.orbitals)
             i_double = ''
             for n in i_bin:
                 i_double += (n + n)
-            i_double = int(i_double, 2)
-            expanded[i_double] = state[i]
+            idx.append(int(i_double, 2))
+        expanded[idx] = state
         return expanded
