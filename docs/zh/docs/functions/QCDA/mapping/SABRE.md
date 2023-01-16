@@ -93,14 +93,14 @@ print(circuit_initial_map)
 原电路为
 
 <figure markdown>
-![Resized Image](../../../assets/images/functions/QCDA/mapping/SABRE_origin.jpg){:width="400px"}
+![Resized Image](../../../assets/images/functions/QCDA/mapping/SABRE_origin.jpg)
 </figure>
 
 
 执行SABRE算法后，电路形式为
 
 <figure markdown>
-![Resized Image](../../../assets/images/functions/QCDA/mapping/SABRE_final.jpg){:width="400px"}
+![Resized Image](../../../assets/images/functions/QCDA/mapping/SABRE_final.jpg)
 </figure>
 
 
