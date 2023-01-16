@@ -1,7 +1,6 @@
 import os
 from QuICT.core import Circuit
 from QuICT.algorithm.quantum_algorithm.CNF.cnf import CNFSATOracle
-import pathlib
 
 
 filename_test = os.path.join(os.path.dirname(__file__), "test.cnf")
