@@ -10,8 +10,9 @@ from collections import defaultdict
 from matplotlib import pyplot as plt
 
 from QuICT.qcda.qcda import QCDA
+from QuICT.simulation.simulator import Simulator
+from QuICT.simulation.state_vector.cpu_simulator.cpu import CircuitSimulator
 from QuICT.tools.circuit_library.circuitlib import CircuitLib
-from QuICT.simulation.state_vector import CircuitSimulator
 
 
 class QuICTBenchmark:
@@ -20,7 +21,7 @@ class QuICTBenchmark:
         self,
         output_path: str = "./benchmark",
         output_file_type: str = "Txt",
-        simulator = CircuitSimulator(),
+        simulator: str = "CPU",
     ):
         """
         Initial circuit library
@@ -33,6 +34,10 @@ class QuICTBenchmark:
         self._output_path = os.path.abspath(output_path)
         self._output_file_type = output_file_type
         self.simulator = simulator
+        if simulator == "CPU":
+            self.simulator = CircuitSimulator()
+        else:
+            self.simulator = Simulator("GPU")
 
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path)
@@ -68,7 +73,7 @@ class QuICTBenchmark:
 
     def get_circuits(
         self,
-        quantum_machine_info: list,
+        quantum_machine_info: list or dict,
         level: int = 1,
         mapping: bool = False,
         gate_transform: bool = False
@@ -77,9 +82,9 @@ class QuICTBenchmark:
         Get circuit from CircuitLib and Get the circuit after qcda.
 
         Args:
-            quantum_machine_info(list[str]): Gives physical machine properties, for example:[qubits scale,
-                layout_file, InSet], layout_file is the topology of the target physical device,
-                InSetis The instruction set, only one single-bit gate can be included.
+            quantum_machine_info(list[str]): Gives physical machine properties, for example:[qubits_scale,
+                layout_file, InSet] or {"qubits_scale": qubits scale, "layout_file": layout_file, "InSet": InSet}, 
+                layout_file is the topology of the target physical device, InSetis The instruction set, only one single-bit gate can be included.
             level (int): Get the corresponding level circuits, one of [1, 2, 3], default 1.
             mapping(bool): whether the circuit is mapped according to the topology, default False.
             gate_transform(bool): whether the circuit is gate transformed according to the instruction set,
@@ -89,24 +94,34 @@ class QuICTBenchmark:
             (List[Circuit | String] | None): Return the list of output circuit order by output_type.
         """
         # whether quantum_machine_info is valid or not
-        
+        assert quantum_machine_info is not None, ValueError('please gives the physical machine properties!')
+
         # Step 1: get circuits from circuitlib
         circuits_list = self._circuit_selection(quantum_machine_info[0], level)
         if mapping is False and gate_transform is False:
             return circuits_list
-
+            
         # Step 2: Whether it goes through QCDA or not
-        cir_qcda_list = []
+        cir_qcda_list, layout_width_mapping = [], {}
+        for i in range(2, quantum_machine_info[0]+1):
+            layout_file = quantum_machine_info[1].sub_layout(i)
+            layout_width_mapping[i] = layout_file
+
         for circuit in circuits_list:
+            cir_width = int(re.findall(r"\d+", circuit.name)[0])
             qcda = QCDA()
-            if mapping is True and len(quantum_machine_info) > 1 and circuit.width() > 1:
-                layout_file = quantum_machine_info[1].sub_layout(circuit.width())
-                qcda.add_default_mapping(layout_file)
+            if mapping is True and len(quantum_machine_info) > 1 and cir_width > 1:
+                qcda.add_mapping(layout_width_mapping[cir_width])
             if gate_transform is True and len(quantum_machine_info) > 2 and circuit.name.split("+")[-2] != "mediate_measure":
                 qcda.add_gate_transform(quantum_machine_info[2])
 
             cir_qcda = qcda.compile(circuit)
-            # cir_qcda.name = "+".join([f"{circuit.name.split("+")[:-1][0]}", f"{circuit.name.split("+")[:-1][1]}", f"w{cir_qcda.width()}_s{cir_qcda.size()}_d{cir_qcda.depth()}_v{void_gates}"])
+            type, classify = circuit.name.split("+")[:-1][0], circuit.name.split("+")[:-1][1]
+            if type != "benchmark":
+                cir_qcda.name = "+".join([type, classify, f"w{cir_qcda.width()}_s{cir_qcda.size()}_d{cir_qcda.depth()}"])
+            else:
+                void_value = int(re.findall(r"\d+", circuit.name)[3])
+                cir_qcda.name = "+".join([type, classify, f"w{cir_qcda.width()}_s{cir_qcda.size()}_d{cir_qcda.depth()}_v{void_value}"])
             cir_qcda_list.append(cir_qcda)
 
         return cir_qcda_list
@@ -141,7 +156,7 @@ class QuICTBenchmark:
         # Step 2: physical machine simulation
         amp_results_list = []
         for circuit in circuits_list:
-            sim_result = simulator_interface(circuit)
+            sim_result = simulator_interface(circuit).get()
             amp_results_list.append(sim_result)
         # Step 3: evaluate all circuits
         self.evaluate(circuits_list, amp_results_list)
@@ -178,9 +193,9 @@ class QuICTBenchmark:
             return data
         # Step 1: simulate circuit by QuICT simulator
         entropy_VQ_score = []
-
+        print(circuit_list)
         for index in range(len(circuit_list)):
-            sim_result = self.simulator.run(circuit_list[index]).get()
+            sim_result = self.simulator.run(circuit_list[index])
 
             quict_result = normalization(abs(sim_result))
             machine_result = normalization(abs(amp_results_list[index]))
@@ -316,7 +331,6 @@ class QuICTBenchmark:
         ################################### algorithmic circuits benchmark ##############################
         # Construct the data
         value_list, feature, values_2 = [], [], []
-        field_list = ["adder", "clifford", "cnf", "grover", "maxcut", "qft", "qnn", "quantum_walk", "vqe"]
         for i in range(len(valid_circuits_list)):
             field = valid_circuits_list[i].name.split("+")[-2]
             cir_attribute = re.findall(r"\d+", valid_circuits_list[i].name)
