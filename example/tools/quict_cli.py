@@ -1,7 +1,7 @@
 import os
 import time
 
-from QuICT.tools.cli import JobCreator, shortcut_for_quict
+from QuICT.tools.cli import JobCreator
 from QuICT.tools.cli.client import QuICTLocalManager, QuICTRemoteManager
 
 
@@ -92,10 +92,6 @@ def job_controller_in_remote_mode():
     job_manager.delete_job(job_name)
     time.sleep(15)
     job_manager.list_jobs()
-
-
-def add_shortcut_quict():
-    shortcut_for_quict()
 
 
 job_controller_in_local_mode()

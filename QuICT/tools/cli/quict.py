@@ -176,11 +176,11 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     get_algorithm = subparser.add_parser(
         name="get_algorithm",
         description="Get quantum algorithm's circuit.",
-        help="get quantum algorithm's circuit"
+        help="get quantum algorithm's circuit, for some algorithm, may have qubits limitation."
     )
     get_algorithm.add_argument(
         "alg", nargs="?",
-        choices=["adder", "clifford", "grover", "qft", "vqe", "cnf", "maxcut"], default="QFT",
+        choices=["adder", "clifford", "cnf", "grover", "maxcut", "qft", "qnn", "quantum_walk", "vqe"], default="qft",
         help="The quantum algorithm."
     )
     get_algorithm.add_argument(
@@ -345,44 +345,13 @@ def benchmark_cli_construct(benchmark_sp: ArgumentParser):
     Args:
         benchmark_sp (ArgumentParser): Benchmark Parser
     """
-    from QuICT.tools.cli.blueprint.benchmark import qcda, algorithm, simulation
+    from QuICT.tools.cli.blueprint.benchmark import benchmark
 
-    subparser = benchmark_sp.add_subparsers()
-    # quict benchmark algorithm
-    alg_parser = subparser.add_parser(
-        name="algorithm",
-        description="show the benchmarks about Algorithm.",
-        help="show the benchmarks about Algorithm."
-    )
-    alg_parser.set_defaults(func=algorithm)
-
-    # quict benchmark qcda
-    qcda_parser = subparser.add_parser(
-        name="qcda",
-        description="show the benchmarks about QCDA.",
-        help="show the benchmarks about QCDA."
-    )
-    qcda_parser.add_argument(
-        "circuit_path", type=str, nargs="?", default=None,
-        help="The path of circuit's qasm file.",
-    )
-    qcda_parser.set_defaults(func=qcda)
-
-    # quict benchmark simulation
-    simu_parser = subparser.add_parser(
-        name="simulation",
-        description="show the benchmarks about Simulation.",
-        help="show the benchmarks about Simulation."
-    )
-    simu_parser.add_argument(
-        "circuit_path", type=str, nargs="?", default=None,
-        help="The path of circuit's qasm file.",
-    )
-    simu_parser.add_argument(
+    benchmark_sp.add_argument(
         "--gpu", action="store_true",
         help="The name of target job."
     )
-    simu_parser.set_defaults(func=simulation)
+    benchmark_sp.set_defaults(func=benchmark)
 
 
 def _decompose_namespace(args: Namespace):
@@ -392,7 +361,11 @@ def _decompose_namespace(args: Namespace):
     return mapping_args
 
 
-if __name__ == "__main__":
+def main():
     args = cli_construct()
     map_args = _decompose_namespace(args)
     args.func(**map_args)
+
+
+if __name__ == "__main__":
+    main()

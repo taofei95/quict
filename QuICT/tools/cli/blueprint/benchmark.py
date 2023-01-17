@@ -8,19 +8,7 @@ command_file_path = os.path.join(
 )
 
 
-def algorithm():
+def benchmark(gpu: bool):
     _ = subprocess.call(
-        f"python {command_file_path} algorithm", shell=True
-    )
-
-
-def qcda(circuit_path):
-    _ = subprocess.call(
-        f"python {command_file_path} qcda {circuit_path}", shell=True
-    )
-
-
-def simulation(circuit_path, gpu):
-    _ = subprocess.call(
-        f"python {command_file_path} simulation {circuit_path} {gpu}", shell=True
+        f"python {command_file_path} {gpu}", shell=True
     )

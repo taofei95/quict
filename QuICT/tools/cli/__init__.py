@@ -1,2 +1,2 @@
-from .utils import JobCreator, shortcut_for_quict
+from .utils import JobCreator
 from .client import QuICTLocalManager, QuICTRemoteManager
