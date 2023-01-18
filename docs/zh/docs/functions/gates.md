@@ -1,27 +1,49 @@
 # 量子门 (Quantum Gate)
 量子门是设计用来操作量子比特的状态，基于量子门的线性性质，量子门通常表示为矩阵形式.
-> 例如：考虑一个经典的单比特逻辑门 - 非门，非门的操作是将 $0$ 态和 $1$ 态交换。根据非门的定义，我们可以来定义一个量子非门，即把状态
-> $$\alpha |0⟩ + \beta |1⟩$$
-> 变换到$|0⟩$和$|1⟩$互换角色的新状态
-> $$\alpha |1⟩ + \beta |0⟩$$
-> 量子非门可以很方便地用矩阵表示，定义矩阵 X 来表示非门如下:
-> $$X = \begin{bmatrix}
-0&1\\
-1&0\\
-\end{bmatrix}$$
-> 再将量子态$\alpha |0⟩ + \beta |1⟩$写成向量模式为
-> $$\begin{bmatrix}
-\alpha \\
-\beta \\
-\end{bmatrix}$$
-> 其中上面一项对应 |0⟩ 的振幅，下面一项对应 |1⟩ 的振幅，故量子非门的输出为
-> $$X\begin{bmatrix}
-\alpha \\
-\beta \\
-\end{bmatrix} = \begin{bmatrix}
-\beta \\
-\alpha \\
-\end{bmatrix}$$
+
+!!! example
+
+    例如：考虑一个经典的单比特逻辑门 - 非门，非门的操作是将 $0$ 态和 $1$ 态交换。根据非门的定义，我们可以来定义一个量子非门，即把状态
+
+    $$
+    \alpha |0⟩ + \beta |1⟩
+    $$
+
+    变换到$|0⟩$和$|1⟩$互换角色的新状态
+    
+    $$
+    \alpha |1⟩ + \beta |0⟩
+    $$
+
+    量子非门可以很方便地用矩阵表示，定义矩阵 X 来表示非门如下:
+
+    $$
+    X = \begin{bmatrix}
+    0&1\\
+    1&0\\
+    \end{bmatrix}
+    $$
+
+    再将量子态$\alpha |0⟩ + \beta |1⟩$写成向量模式为
+    
+    $$
+    \begin{bmatrix}
+    \alpha \\
+    \beta \\
+    \end{bmatrix}
+    $$
+
+    其中上面一项对应 |0⟩ 的振幅，下面一项对应 |1⟩ 的振幅，故量子非门的输出为
+
+    $$
+    X\begin{bmatrix}
+    \alpha \\
+    \beta \\
+    \end{bmatrix} = \begin{bmatrix}
+    \beta \\
+    \alpha \\
+    \end{bmatrix}
+    $$
 
 在QuICT中，我们使用BasicGate类来实现量子门，包括单/多量子比特门和参数/非参数门。
 对于 QuICT 中的每个量子门，它都具有以下属性(以CX门为例)：
@@ -73,6 +95,16 @@ other_gate = CX & [3, 4]
 my_CXGate.commutative(other_gate)   # 当前量子门是否能和目标量子门交换
 inverse_gate = my_CXGate.inverse()  # 得到当前量子门的反转量子门
 ```
+
+### 当前QuICT所支持的量子门种类
+|  量子门种类  |   名称   |
+|   ------    | ------- |
+|    单比特门    | H, HY, S, S_dagger, X, Y, Z, SX, SY, SW, ID, U1, U2, U3, Rx, Ry, Rz, Ri, T, T_dagger, Phase |
+|    双比特门    | FSim, Rxx, Ryy, Rzz, Rzx, Swap |
+|  受控双比特门  | CZ, CX, CY, CH, CRz, CU1, CU3 |
+|  多比特门(>=3) | CCX, CCZ, CCRz, QFT, IQFT, CSwap |
+|  特殊量子门    | Measure, Reset, Barrier, Perm, Unitary, Multi-Control Toffoli, uniformly control gate |
+
 
 ## 组合量子门 (Composite Gate)
 ----
