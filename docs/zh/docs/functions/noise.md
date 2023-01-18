@@ -12,36 +12,53 @@ QuICT 目前支持自定义量子噪声，也实现了三种量子噪声模型�
 ### 泡利信道
 
 - 比特翻转信道以概率 $1 − \rho$ 从 $|0⟩$ 到 $|1⟩$ (或者倒过来) 翻转一个量子比特。它具有操作元
-    $E_0 = \sqrt \rho I = \sqrt \rho \begin{bmatrix}
+
+    $$
+    E_0 = \sqrt \rho I = \sqrt \rho \begin{bmatrix}
     1 & 0\\
     0 & 1\\
     \end{bmatrix}\ \ \  and \ \ \ E_1 = \sqrt{1 - \rho} X = \sqrt{1 - \rho} \begin{bmatrix}
     0 & 1\\
     1 & 0\\
-    \end{bmatrix}$
+    \end{bmatrix}
+    $$
+
 - 相位翻转信道具有操作元
-    $E_0 = \sqrt \rho I = \sqrt \rho \begin{bmatrix}
+
+    $$
+    E_0 = \sqrt \rho I = \sqrt \rho \begin{bmatrix}
     1 & 0\\
     0 & 1\\
     \end{bmatrix}\ \ \  and \ \ \ E_1 = \sqrt{1 - \rho} Z = \sqrt{1-\rho} \begin{bmatrix}
     1 & 0\\
     0 & -1\\
-    \end{bmatrix}$
+    \end{bmatrix}
+    $$
+
 - 比特相位翻转信道具有操作元
-    $E_0 = \sqrt \rho I = \sqrt \rho \begin{bmatrix}
+
+    $$
+    E_0 = \sqrt \rho I = \sqrt \rho \begin{bmatrix}
     1 & 0\\
     0 & 1\\
     \end{bmatrix}\ \ \  and \ \ \ E_1 = \sqrt{1 - \rho} Y = \sqrt{1 - \rho} \begin{bmatrix}
     0 & -i\\
     i & 0\\
-    \end{bmatrix}$
+    \end{bmatrix}
+    $$
+
 - 退极化信道是量子噪声的一种重要的类型。它表示量子比特有概率 $\rho$ 被一个完全混态 $I / 2$ 所替代，有概率 $1 − \rho$ 是不变的。它（单比特）具有操作元
-    ${\sqrt {1 − \frac{3\rho}{4}} I , \frac{\sqrt {\rho}}{2}X, \frac{\sqrt {\rho}}{2}Y, \frac{\sqrt {\rho}}{2}Z}$
+    
+    $$
+    {\sqrt {1 − \frac{3\rho}{4}} I , \frac{\sqrt {\rho}}{2}X, \frac{\sqrt {\rho}}{2}Y, \frac{\sqrt {\rho}}{2}Z}
+    $$
 
 ### 振幅和相位阻尼
 
 - 振幅阻尼是对能量耗散的描述，即由量子系统的能量损失带来的影响。它具有操作元
-    $E_0 = \begin{bmatrix}
+
+    $$
+    E_0 = \begin{bmatrix}
     1 & 0\\
     0 & \sqrt{1 - \rho}\\
     \end{bmatrix}
@@ -49,10 +66,16 @@ QuICT 目前支持自定义量子噪声，也实现了三种量子噪声模型�
     E_1 = \begin{bmatrix}
     0 & \sqrt \rho\\
     0 & 0\\
-    \end{bmatrix}$
-    > QuICT 同样支持广义振幅阻尼
+    \end{bmatrix}
+    $$
+
+    !!! note
+        QuICT 同样支持广义振幅阻尼
+
 - 相位阻尼是一种独特的量子力学噪声过程，描述了量子信息损失而没有能量损失。它具有操作元
-    $E_0 = \sqrt \rho \begin{bmatrix}
+
+    $$
+    E_0 = \sqrt \rho \begin{bmatrix}
     1 & 0\\
     0 & 1\\
     \end{bmatrix}
@@ -60,23 +83,24 @@ QuICT 目前支持自定义量子噪声，也实现了三种量子噪声模型�
     E_1 = \sqrt {1 - \rho} \begin{bmatrix}
     1 & 0\\
     0 & -1\\
-    \end{bmatrix}$
+    \end{bmatrix}
+    $$
 
 ### 测量噪声
 
 - 测量噪声表示分别以一定概率 $\rho(n|m)$ 来输出真实测量值， 以 $1 - \rho (n|m)$ 概率来输出错误的测量结果。
   
     > 单比特测量噪声模型：
-    $\rho = \begin{bmatrix}
+    > $\rho = \begin{bmatrix}
         \rho(0|0) & \rho(1|0)\\
         \rho(1|0) & \rho(1|1)\\
         \end{bmatrix} = \begin{bmatrix}
         \rho(测量值为0，输出值为0) & \rho(测量值为0，输出值为1)\\
         \rho(测量值为1，输出值为0) & \rho(测量值为1，输出值为1)\\
         \end{bmatrix}$
-    > !!! warning
-        $\rho$ 的每一行的和必须为1
 
+    !!! warning
+        $\rho$ 的每一行的和必须为1
 
 ## 构建含噪声量子电路
 

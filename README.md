@@ -62,6 +62,12 @@ pip install quict
     python3 .\setup.py bdist_wheel
     ```
 
+- QuICT 命令行界面
+    > please pip install quict firstly.
+    ```sh
+    quict --help
+    ```
+
 - Docker 构建指令
     ```sh
     # Build QuICT docker for target device [cpu/gpu]
