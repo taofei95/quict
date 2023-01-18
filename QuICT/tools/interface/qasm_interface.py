@@ -106,6 +106,13 @@ class OPENQASMInterface(BasicInterface):
         instance.analyse_circuit_from_ast(instance.ast)
         return instance
 
+    @staticmethod
+    def load_string(qasm: str):
+        instance = OPENQASMInterface()
+        instance.ast = Qasm(data=qasm).parse()
+        instance.analyse_circuit_from_ast(instance.ast)
+        return instance
+
     def __init__(self):
         super().__init__()
         self.circuit = None

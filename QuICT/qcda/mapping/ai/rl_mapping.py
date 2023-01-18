@@ -1,6 +1,6 @@
 from typing import Union
 
-from data_def import TrainConfig
+from .data_def import TrainConfig
 from train.learner import Learner
 
 from QuICT.core import *

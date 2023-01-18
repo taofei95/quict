@@ -66,7 +66,7 @@ class QCDA(object):
         self.add_method(CommutativeOptimization())
         self.add_method(CliffordRzOptimization(level=level))
 
-    def add_mapping(self, layout=None, method='mcts'):
+    def add_mapping(self, layout=None, method='sabre'):
         """ Generate the default mapping process
 
         The default mapping process contains the Mapping

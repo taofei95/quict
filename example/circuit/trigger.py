@@ -11,14 +11,16 @@ cgate1 = CompositeGate()
 X | cgate1(2)
 X | cgate1(2)
 
-gates = [cgate0, cgate1]
+gates = [
+    cgate0,     # related gates if measured 0
+    cgate1      # related gates if measured 1
+]
 
 trigger = Trigger(1, gates)  # notice that indices of gates accord to circuit
 
 c = Circuit(3)
 H | c([0])
 trigger | c([0])  # trigger measure its target and then switch on the result to construct gates
-
 
 sim = CircuitSimulator()
 amp = sim.run(c)
