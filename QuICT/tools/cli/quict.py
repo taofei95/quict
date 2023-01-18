@@ -1,5 +1,3 @@
-#!/home/likaiqi/.conda/envs/env_kq/bin/python
-
 from argparse import ArgumentParser, Namespace, RawTextHelpFormatter
 from copy import deepcopy
 
