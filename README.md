@@ -70,14 +70,7 @@ It is recommended to use clang-cl.exe, which is the clang compiler with MSVC CLI
     ```
 
 - Using Command Line Interface
-    > please run following command firstly.
-    ```python
-    from QuICT.tools.cli import JobCreator, shortcut_for_quict
-
-    shortcut_for_quict()
-    ```
-
-    > how to using QuICT CLI
+    > please pip install quict firstly.
     ```sh
     quict --help
     ```

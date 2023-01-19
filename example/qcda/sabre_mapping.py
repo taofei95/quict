@@ -11,11 +11,11 @@ if __name__ == '__main__':
 
     circuit = Circuit(5)
     circuit.random_append(50, typelist=[GateType.cx])
-    circuit.draw(filename='0.jpg')
+    circuit.draw(filename='before_sabremapping')
 
     sabre = SABREMapping(layout)
     circuit_map = sabre.execute(circuit)
-    circuit_map.draw(filename='1.jpg')
+    circuit_map.draw(filename='after_sabremapping')
 
     circuit_initial_map = sabre.execute_initialMapping(circuit)
     print(circuit_initial_map)

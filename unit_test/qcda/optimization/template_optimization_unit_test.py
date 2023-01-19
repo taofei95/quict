@@ -81,7 +81,7 @@ def test_ccx():
     CCX | circ([0, 1, 2])
     CCX | circ([1, 0, 2])
 
-    TO = TemplateOptimization(CircuitLib().get_template_circuit())
+    TO = TemplateOptimization()
     circ_optim = TO.execute(circ)
     assert circ_optim.size() == 0
 
