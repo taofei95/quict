@@ -2,6 +2,8 @@
 
 QAE算法计算一个量子态在目标空间上的振幅。更详细地，输入是期望精度$\epsilon$、oracle电路$S_\chi$（与Grover算法中的输入相同）、状态制备电路$S_0$；以高概率输出振幅估计$\tilde a,|a-\tilde a|<\epsilon$，其中$S_0\ket{x}=\sqrt{a}\ket{\Psi_1}+\sqrt{1-a}\ket{\Psi_0}$，$\ket{\Psi_1}$是归一化的解空间向量。
 
+振幅估计可以作为其他算法的组件，例如在量子蒙特卡洛方法[^4]中。
+
 框架中实现了三个振幅估计问题的算法（canonical QAE[<sup>[1]</sup>](#refer1)、MLAE[<sup>[2]</sup>](#refer2)、FQAE[<sup>[3]</sup>](#refer3)）。查询复杂度上第一个算法最优；而电路宽度上第二个算法最优；第三个算法在电路宽度与第二个算法基本一致（常数差距）的同时有更小的查询复杂度，而且在实际应用中表现较好。
 
 ## 基本用法
@@ -78,3 +80,7 @@ print(f"success rate {pr_success:.2f} with {n_sample:4} samples")
 [3] Nakaji, K. (2020). Faster amplitude estimation. Quantum Inf. Comput., 20, 1109-1122.
 </font>
 
+<div id="refer4"></div>
+<font size=3>
+[4] Montanaro, A. (2015). Quantum speedup of Monte Carlo methods. Proceedings. Mathematical, Physical, and Engineering Sciences / The Royal Society, 471.
+</font>
