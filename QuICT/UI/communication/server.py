@@ -36,6 +36,12 @@ import functools
 import flask_login
 from flask_login import current_user, login_required
 
+
+from common.script.redis_controller import RedisController
+from common.script.sql_controller import SQLManger
+from common.utils.file_manage import create_user_folder
+from common.utils.get_config import get_default_user_config
+
 UPLOAD_FOLDER = './temp'
 ALLOWED_EXTENSIONS = {'txt', 'log', 'qasm'}
 port = 5000
@@ -171,7 +177,7 @@ def login(content):
     content = content['content']
     usr = content['user']
     psw = content['psw']
-    if psw == users[usr]['password']:
+    if SQLManger().validation_password(usr, psw) : #psw == users[usr]['password']:
         user = User()
         user.id = usr
         flask_login.login_user(user)
@@ -185,6 +191,43 @@ def testLogin(content):
         emit('login_success', {'uuid': uid,}, namespace="/api/pty")
     else:
         emit('need_login', {'uuid': uid,}, namespace="/api/pty")
+
+
+@socketio.on("register", namespace="/api/pty")
+def register(content):
+    uid = content['uuid']
+    content = content['content']
+    usr = content['user']
+    psw = content['psw']
+    email = content['email']
+    json_dict = {
+            'username': usr,
+            'password': psw,
+            'email': email,
+            'level': 0,
+            }
+
+    # Create user folder
+    create_user_folder(usr)
+
+    # Update user info for SQL and Redis
+    SQLManger().add_user(json_dict)
+    RedisController().update_user_dynamic_info(usr, get_default_user_config(usr))
+
+def unsubscribe(username, **kwargs):
+    """ Delete an user. """
+    redis_controller = RedisController()
+    job_list = redis_controller.list_jobs(username, name_only=True)
+    for job_name in job_list:
+        redis_controller.add_operator(job_name, JobOperatorType.delete)
+
+    # Delete user in Redis, need to wait all jobs delete first.
+    redis_controller.add_operator(username, JobOperatorType.user_delete)
+
+    # Delete user information in database
+    SQLManger().delete_user(username)
+
+    return True
 
 # QCDA PART
 

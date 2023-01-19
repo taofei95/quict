@@ -55,6 +55,31 @@
         <template #footer>
           <span class="dialog-footer">
             <el-button type="primary" @click="login()">OK</el-button>
+            <el-button type="primary" @click="Go2Register()">Register</el-button>
+          </span>
+        </template>
+      </el-dialog>
+      <el-dialog
+        title="Register"
+        v-model="dialogRegister"
+        width="30%"
+        :close-on-click-modal="false"
+        :close-on-press-escape="false"
+        :show-close="false"
+      >
+        <label>USER<el-input v-model="reg_user"></el-input></label>
+        <label>E-Mail<el-input v-model="reg_email"></el-input></label>
+        <label
+          >PASSWORD<el-input
+            v-model="reg_psw"
+            type="password"
+            show-password
+          ></el-input
+        ></label>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button type="primary" @click="Register()">OK</el-button>
+            <el-button type="primary" @click="Back2Login()">Cancel</el-button>
           </span>
         </template>
       </el-dialog>
@@ -97,8 +122,12 @@ export default {
   data: function () {
     return {
       dialogLogin: false,
+      dialogRegister: false,
       user: "",
       psw: "",
+      reg_user: "",
+      reg_psw: "",
+      reg_email: "",
       CurrentPage: "QuCompuser",
 
       AllPages: ["QuCompuser", "QCDA"],
@@ -143,6 +172,24 @@ export default {
         content: {},
       });
     },
+    Go2Register(){
+      this.dialogLogin = false;
+      this.dialogRegister = true;
+    },
+    Back2Login(){
+      this.dialogRegister = false;
+      this.dialogLogin = true;
+    },
+    Register() {
+      this.socket.emit("register", {
+        uuid: this.uuid,
+        content: {
+          user: this.reg_user,
+          psw: this.reg_psw,
+          email: this.reg_email,
+        },
+      });
+    },
   },
   mounted: function () {
     d3.select("#page_QCDA").attr("class", "page_not_selected");
@@ -164,6 +211,16 @@ export default {
         return;
       }
       this.dialogLogin = true;
+    });
+
+    this.socket.on("register_ok", (content) => {
+      // 收到后端处理好的qasm，显示到前端qasm编辑区域
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      this.dialogRegister = false;
+      this.socket.emit("testLogin", { uuid: this.uuid });
     });
   },
   watch: {},

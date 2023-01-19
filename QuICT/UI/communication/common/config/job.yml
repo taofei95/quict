@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: Job_Name
+  namespace: User_Name
+
+spec:
+  completions: 1
+  parallelism: 1
+  ttlSecondsAfterFinished: 10
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:  
+      - name: quict
+        image: quict:v1.0
+        imagePullPolicy: IfNotPresent #[Always、Never、IfNotPresen]
+        command: ['python']
+        env:
+        - name: circuit
+          value: "/data/circuit.qasm"
+        - name: layout
+          value: "/data/layout.json"
+
+        resources:
+          requests:
+            cpu: 0.1
+            memory: 32Mi
+          limits:
+            cpu: 0.5  
+            memory: 32Mi
+
+        volumeMounts:
+        - name: origincircuit
+          mountPath: /data
+          readOnly: False
+
+      volumes:
+      - name: origincircuit
+        hostPath:
+          path: /data/UserName/JobName
