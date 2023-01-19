@@ -14,7 +14,7 @@ DEFAULT_YML_PATH = os.path.join(
 def get_default_user_config(username: str):
     user_info_path = os.path.join(DEFAULT_YML_PATH, "user_info.yml")
     with open(user_info_path, encoding='utf-8') as yml:
-        yaml_dict = yaml.load(yml)
+        yaml_dict = yaml.load(yml, Loader=yaml.FullLoader)
 
     # Get user info from SQL database
     user_info = SQLManger().get_user_info(username)

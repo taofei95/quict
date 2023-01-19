@@ -212,17 +212,18 @@ def register(content):
 
     # Update user info for SQL and Redis
     SQLManger().add_user(json_dict)
-    RedisController().update_user_dynamic_info(usr, get_default_user_config(usr))
+    # RedisController().update_user_dynamic_info(usr, get_default_user_config(usr))
+    emit('register_ok', {'uuid': uid,}, namespace="/api/pty")
 
 def unsubscribe(username, **kwargs):
     """ Delete an user. """
-    redis_controller = RedisController()
-    job_list = redis_controller.list_jobs(username, name_only=True)
-    for job_name in job_list:
-        redis_controller.add_operator(job_name, JobOperatorType.delete)
+    # redis_controller = RedisController()
+    # job_list = redis_controller.list_jobs(username, name_only=True)
+    # for job_name in job_list:
+    #     redis_controller.add_operator(job_name, JobOperatorType.delete)
 
-    # Delete user in Redis, need to wait all jobs delete first.
-    redis_controller.add_operator(username, JobOperatorType.user_delete)
+    # # Delete user in Redis, need to wait all jobs delete first.
+    # redis_controller.add_operator(username, JobOperatorType.user_delete)
 
     # Delete user information in database
     SQLManger().delete_user(username)

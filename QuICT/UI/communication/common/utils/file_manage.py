@@ -4,7 +4,7 @@ import shutil
 
 # Default User Path
 file_path = os.path.dirname(__file__)
-USER_ROOT_PATH = f"{file_path}/../../../User"
+USER_ROOT_PATH = f"{file_path}/../../User"
 
 
 def create_user_folder(user_name):
