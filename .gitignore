@@ -2,7 +2,7 @@
 /build/
 **/build
 venv/
-/QuICT.egg-info/
+/quict.egg-info/
 __pycache__/
 /tbb-2020.1/
 *.so
