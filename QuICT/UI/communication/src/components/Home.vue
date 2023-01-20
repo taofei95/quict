@@ -3,26 +3,17 @@
     <el-header style="height: 50px">
       <!-- <el-row>
       <el-col :span="12"> -->
-      <el-space
-        style="height: 50px; font-size: var(--el-font-size-large); width: 100%"
-        size="large"
-        direction="horizontal"
-      >
-        <div
-          style="
+      <el-space style="height: 50px; font-size: var(--el-font-size-large); width: 100%" size="large"
+        direction="horizontal">
+        <div style="
             background-image: url('/assets/logo.png');
             background-repeat: no-repeat;
             background-position: left;
             width: 160px;
             height: 45px;
-          "
-        ></div>
+          "></div>
 
-        <span
-          class="span_selected"
-          id="span_QuCompuser"
-          @click="SelectPageQuCompuser"
-        >
+        <span class="span_selected" id="span_QuCompuser" @click="SelectPageQuCompuser">
           QuCompuser
         </span>
 
@@ -36,49 +27,38 @@
     <el-main class="page_zone">
       <QuCompuser class="page_selected" id="page_QuCompuser"></QuCompuser>
       <QCDA class="page_not_selected" id="page_QCDA"></QCDA>
-      <el-dialog
-        title="Login"
-        v-model="dialogLogin"
-        width="30%"
-        :close-on-click-modal="false"
-        :close-on-press-escape="false"
-        :show-close="false"
-      >
+      <el-dialog title="Login" v-model="dialogLogin" width="30%" :close-on-click-modal="false"
+        :close-on-press-escape="false" :show-close="false">
         <label>USER<el-input v-model="user"></el-input></label>
-        <label
-          >PASSWORD<el-input
-            v-model="psw"
-            type="password"
-            show-password
-          ></el-input
-        ></label>
+        <label>PASSWORD<el-input v-model="psw" type="password" show-password></el-input></label>
         <template #footer>
           <span class="dialog-footer">
             <el-button type="primary" @click="login()">OK</el-button>
             <el-button type="primary" @click="Go2Register()">Register</el-button>
+            <el-button type="primary" @click="Go2Forget()">Forget</el-button>
           </span>
         </template>
       </el-dialog>
-      <el-dialog
-        title="Register"
-        v-model="dialogRegister"
-        width="30%"
-        :close-on-click-modal="false"
-        :close-on-press-escape="false"
-        :show-close="false"
-      >
+      <el-dialog title="Register" v-model="dialogRegister" width="30%" :close-on-click-modal="false"
+        :close-on-press-escape="false" :show-close="false">
         <label>USER<el-input v-model="reg_user"></el-input></label>
         <label>E-Mail<el-input v-model="reg_email"></el-input></label>
-        <label
-          >PASSWORD<el-input
-            v-model="reg_psw"
-            type="password"
-            show-password
-          ></el-input
-        ></label>
+        <label>PASSWORD<el-input v-model="reg_psw" type="password" show-password></el-input></label>
         <template #footer>
           <span class="dialog-footer">
             <el-button type="primary" @click="Register()">OK</el-button>
+            <el-button type="primary" @click="Back2Login()">Cancel</el-button>
+          </span>
+        </template>
+      </el-dialog>
+      <el-dialog title="Forget" v-model="dialogForget" width="30%" :close-on-click-modal="false"
+        :close-on-press-escape="false" :show-close="false">
+        <label>USER<el-input v-model="for_user"></el-input></label>
+        <label>E-Mail<el-input v-model="for_email"></el-input></label>
+
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button type="primary" @click="Forget()">OK</el-button>
             <el-button type="primary" @click="Back2Login()">Cancel</el-button>
           </span>
         </template>
@@ -123,11 +103,14 @@ export default {
     return {
       dialogLogin: false,
       dialogRegister: false,
+      dialogForget: false,
       user: "",
       psw: "",
       reg_user: "",
       reg_psw: "",
       reg_email: "",
+      for_user: "",
+      for_email: "",
       CurrentPage: "QuCompuser",
 
       AllPages: ["QuCompuser", "QCDA"],
@@ -172,12 +155,13 @@ export default {
         content: {},
       });
     },
-    Go2Register(){
+    Go2Register() {
       this.dialogLogin = false;
       this.dialogRegister = true;
     },
-    Back2Login(){
+    Back2Login() {
       this.dialogRegister = false;
+      this.dialogForget = false;
       this.dialogLogin = true;
     },
     Register() {
@@ -187,6 +171,19 @@ export default {
           user: this.reg_user,
           psw: this.reg_psw,
           email: this.reg_email,
+        },
+      });
+    },
+    Go2Forget() {
+      this.dialogLogin = false;
+      this.dialogForget = true;
+    },
+    Forget() {
+      this.socket.emit("forget", {
+        uuid: this.uuid,
+        content: {
+          user: this.for_user,
+          email: this.for_email,
         },
       });
     },
@@ -220,6 +217,16 @@ export default {
         return;
       }
       this.dialogRegister = false;
+      this.socket.emit("testLogin", { uuid: this.uuid });
+    });
+
+    this.socket.on("forget_ok", (content) => {
+      // 收到后端处理好的qasm，显示到前端qasm编辑区域
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      this.dialogForget = false;
       this.socket.emit("testLogin", { uuid: this.uuid });
     });
   },

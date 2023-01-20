@@ -36,7 +36,7 @@ import functools
 import flask_login
 from flask_login import current_user, login_required
 
-
+from common.utils.email_sender import send_reset_password_email
 from common.script.redis_controller import RedisController
 from common.script.sql_controller import SQLManger
 from common.utils.file_manage import create_user_folder
@@ -229,6 +229,24 @@ def unsubscribe(username, **kwargs):
     SQLManger().delete_user(username)
 
     return True
+
+@socketio.on("forget", namespace="/api/pty")
+def forget_password(content):
+    uid = content['uuid']
+    content = content['content']
+    usr = content['user']
+    email = content['email']
+    """ Send email for user for activate new password. """
+    user_info = SQLManger().get_user_info(usr)
+    user_email = user_info[1]
+    if user_email != email:
+        raise KeyError("Unmatched Email address with user.")
+
+    # Send email to user
+    reset_password = send_reset_password_email(user_email)
+    SQLManger().update_password(usr, reset_password)
+
+    emit('forget_ok', {'uuid': uid,}, namespace="/api/pty")
 
 # QCDA PART
 
