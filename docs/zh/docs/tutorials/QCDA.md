@@ -4,7 +4,7 @@
 
 ## 核心逻辑
 
-QCDA模块实质上连缀了一系列以```execute()```函数为主执行函数的电路合成、优化、映射方法，其中```execute()```函数以```CompositeGate```对象或```Circuit```对象为输入和输出。依据这一规则用户可以按照自己的需求构建新的电路变换方法并接入QCDA中。
+QCDA模块实质上连缀了一系列以`execute()`函数为主执行函数的电路合成、优化、映射方法，其中`execute()`函数以`CompositeGate`对象或`Circuit`对象为输入和输出。依据这一规则用户可以按照自己的需求构建新的电路变换方法并接入QCDA中。
 
 ## 使用例
 
@@ -34,7 +34,7 @@ qcda.add_default_optimization()
 ``` python
 qcda.add_default_mapping(layout)
 ```
-将电路映射到给定的```Layout```上，
+将电路映射到给定的`Layout`上，
 
 ``` python
 qcda.add_gate_transform(USTCSet)
@@ -44,4 +44,4 @@ qcda.add_gate_transform(USTCSet)
 ``` python
 circuit_phy = qcda.compile(circuit)
 ```
-执行以上安排的QCDA流程获得给定指令集和```Layout```的物理电路。
+执行以上安排的QCDA流程获得给定指令集和`Layout`的物理电路。
