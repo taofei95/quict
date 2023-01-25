@@ -44,4 +44,4 @@ qcda.add_gate_transform(USTCSet)
 ``` python
 circuit_phy = qcda.compile(circuit)
 ```
-执行以上安排的QCDA流程获得给定指令集和`Layout`的物理电路。
+执行以上安排的QCDA流程获得原电路`circuit`给定指令集和`Layout`得到的物理电路`circuit_phy`。
