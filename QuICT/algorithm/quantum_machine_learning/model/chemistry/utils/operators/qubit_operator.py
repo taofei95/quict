@@ -11,7 +11,7 @@ which is a useful representation for circuits by second quantization.
 
 import numpy as np
 
-from QuICT.algorithm.quantum_chemistry.operators.polynomial_operator import PolynomialOperator
+from .polynomial_operator import PolynomialOperator
 
 
 class QubitOperator(PolynomialOperator):

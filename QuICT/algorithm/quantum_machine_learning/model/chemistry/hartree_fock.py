@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import tqdm
 
-from QuICT.algorithm.quantum_chemistry.model.hartree_fock_net import HartreeFockVQENet
+from QuICT.algorithm.quantum_machine_learning.model.chemistry.hartree_fock_net import HartreeFockVQENet
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 
 OPTIMIZER_LIST = [
