@@ -28,6 +28,7 @@ from QuICT.qcda.synthesis.gate_transform import GateTransform, USTCSet
 gt = GateTransform(USTCSet)
 circ_syn = gt.execute(circ)
 ```
+
 如此即可将输入的`circ`转化为用给定指令集表达的等价电路`circ_syn`。
 
 ## 转换原理
