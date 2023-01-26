@@ -17,4 +17,6 @@ UD = UnitaryDecomposition()
 gates, _ = UD.execute(mat)
 ```
 
-所得`gates`即对应于酉矩阵`mat`的量子电路，这里以`CompositeGate`的形式返回。
+所得`gates`即对应于酉矩阵`mat`的量子电路，这里以`CompositeGate`的形式返回，以下给出了一个随机$SU(8)$矩阵对应的3-qubit量子电路。
+
+![合成电路](../../../assets/images/functions/QCDA/ud_0.png)

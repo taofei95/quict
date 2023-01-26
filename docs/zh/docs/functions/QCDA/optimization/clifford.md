@@ -16,4 +16,10 @@ circ_syn = CUS.execute(circ)
 circ_opt = SCO.execute(circ_syn)
 ```
 
-如此即可先将Clifford电路`circ`先重新合成为等价电路`circ_syn`，再通过symbolic优化将合成后的电路优化为`circ_opt`。这两个方法亦均可独立使用。
+如此即可先将Clifford电路`circ`先重新合成为等价电路`circ_syn`，再通过symbolic优化将合成后的电路优化为`circ_opt`，以下给出了一个随机Clifford电路及其经过合成和优化后得到的电路。自然，这两个方法亦均可独立使用。
+
+![原电路](../../../assets/images/functions/QCDA/clifford.png)
+
+![合成电路](../../../assets/images/functions/QCDA/clifford_syn.png)
+
+![优化电路](../../../assets/images/functions/QCDA/clifford_opt.png)

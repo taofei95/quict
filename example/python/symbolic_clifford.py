@@ -6,7 +6,8 @@ from QuICT.qcda.optimization.symbolic_clifford_optimization import SymbolicCliff
 if __name__ == '__main__':
     n = 5
     circuit = Circuit(n)
-    circuit.random_append(20 * n, CLIFFORD_GATE_SET)
+    prob_list = [1 / 9 for _ in range(6)] + [1 / 3]
+    circuit.random_append(20 * n, CLIFFORD_GATE_SET, probabilities=prob_list)
     CUS = CliffordUnidirectionalSynthesizer()
     SCO = SymbolicCliffordOptimization()
     circuit_opt = CUS.execute(circuit)

@@ -10,7 +10,11 @@ from QuICT.qcda.optimization import CommutativeOptimization
 CO = CommutativeOptimization()
 circ_opt = CO.execute(circ)
 ```
-获得的`circ_opt`即原电路`circ`经过交换优化后的等价电路，类型上会保持`CompositeGate`或是`Circuit`的一致性。
+获得的`circ_opt`即原电路`circ`经过交换优化后的等价电路，类型上会保持`CompositeGate`或是`Circuit`的一致性，以下给出了一组随机原电路及其优化后的结果。
+
+![随机原电路](../../../assets/images/functions/QCDA/co_0.png)
+
+![优化后电路](../../../assets/images/functions/QCDA/co_1.png)
 
 ## 原理：电路的有向无圈图表示
 

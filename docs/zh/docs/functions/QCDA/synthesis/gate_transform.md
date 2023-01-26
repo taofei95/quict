@@ -29,7 +29,11 @@ gt = GateTransform(USTCSet)
 circ_syn = gt.execute(circ)
 ```
 
-如此即可将输入的`circ`转化为用给定指令集表达的等价电路`circ_syn`。
+如此即可将输入的`circ`转化为用给定指令集表达的等价电路`circ_syn`，以下给出了一组随机原电路及其转换后的结果。
+
+![原电路](../../../assets/images/functions/QCDA/gt_0.png)
+
+![合成电路](../../../assets/images/functions/QCDA/gt_1.png)
 
 ## 转换原理
 

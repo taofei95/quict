@@ -15,6 +15,10 @@ QSP = QuantumStatePreparation('uniformly_gates')
 gates = QSP.execute(state_vector)
 ```
 
+4-qubit随机初态获得的制备电路如下
+
+![制备电路](../../../assets/images/functions/QCDA/qsp_ug.png)
+
 Plesch, M., & Brukner, V. (2011). Quantum-state preparation with universal gate decompositions. Physical Review A, 83, 032302.
 
 ``` python
@@ -23,6 +27,10 @@ from QuICT.qcda.synthesis import QuantumStatePreparation
 QSP = QuantumStatePreparation('unitary_decomposition')
 gates = QSP.execute(state_vector)
 ```
+
+4-qubit随机初态获得的制备电路如下
+
+![制备电路](../../../assets/images/functions/QCDA/qsp_ud.png)
 
 ## 稀疏量子态制备
 
@@ -34,3 +42,7 @@ from QuICT.qcda.synthesis import SparseQuantumStatePreparation
 sparseQSP = SparseQuantumStatePreparation('state_vector')
 gates = sparseQSP.execute(state_vector)
 ```
+
+4-qubit随机初态，其中只有4个非零元素获得的制备电路如下
+
+![制备电路](../../../assets/images/functions/QCDA/qsp_sp.png)
