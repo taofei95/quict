@@ -50,7 +50,7 @@ class Thouless:
                 ansatz.add_gate(Rz_tensor(-angles[param]), k)
                 ansatz.add_gate(Rz_tensor(np.pi + angles[param]), k + 1)
                 ansatz.add_gate(sqiSwap_tensor, [k, k + 1])
-                ansatz.add_gate(Rz_tensor(np.pi), k + 1)
+                ansatz.add_gate(Rz_tensor(-np.pi), k + 1)
                 param += 1
 
         return ansatz
@@ -66,7 +66,7 @@ class Thouless:
         Rz(-angle) & 0 | gates
         Rz(np.pi + angle) & 1 | gates
         sqiSwap & [0, 1] | gates
-        Rz(np.pi) & 1 | gates
+        Rz(-np.pi) & 1 | gates
         return gates
 
     @staticmethod
