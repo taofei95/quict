@@ -28,9 +28,8 @@ class HartreeFockVQENet(torch.nn.Module):
                 Defaults to torch.device("cuda:0").
         """
         super().__init__()
-        # In restricted Hartree-Fock VQE, we assert the electrons are always in pairs.
-        self.orbitals = orbitals // 2
-        self.electrons = electrons // 2
+        self.orbitals = orbitals
+        self.electrons = electrons
         # Thouless ansatz
         self.ansatz = Thouless(device)
         self.hamiltonian = hamiltonian
@@ -73,40 +72,17 @@ class HartreeFockVQENet(torch.nn.Module):
         if isinstance(state, np.ndarray):
             state = torch.from_numpy(state).to(self.device)
         assert state.shape[0] == 1 << self.orbitals
-        expanded_state = self._expand_state(state)
 
         ansatz_list = self.hamiltonian.construct_hamiton_ansatz(
-            2 * self.orbitals, self.device
+            self.orbitals, self.device
         )
         coefficients = self.hamiltonian.coefficients
-        state_vector = torch.zeros(1 << (2 * self.orbitals), dtype=torch.complex128).to(
+        state_vector = torch.zeros(1 << (self.orbitals), dtype=torch.complex128).to(
             self.device
         )
         for coeff, ansatz in zip(coefficients, ansatz_list):
-            sv = ansatz.forward(expanded_state)
+            sv = ansatz.forward(state)
             state_vector += coeff * sv
-        loss = torch.sum(expanded_state.conj() * state_vector).real
+        loss = torch.sum(state.conj() * state_vector).real
 
         return loss
-
-    def _expand_state(self, state: torch.Tensor):
-        """
-        Expand the restricted state back to the original one
-
-        Args:
-            state(torch.Tensor): the restricted state vector
-
-        Returns:
-            torch.Tensor: expanded state vector
-        """
-        size = state.shape[0]
-        expanded = torch.zeros(size * size, dtype=torch.complex128, device=self.device)
-        idx = []
-        for i in range(size):
-            i_bin = np.binary_repr(i, width=self.orbitals)
-            i_double = ''
-            for n in i_bin:
-                i_double += (n + n)
-            idx.append(int(i_double, 2))
-        expanded[idx] = state
-        return expanded
