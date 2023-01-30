@@ -76,9 +76,11 @@ class QuICTBenchmark:
         return based_circuits_list
 
     def _validate_quantum_machine_info(self, quantum_machine_info):
-        isinstance(quantum_machine_info["qubits_number"], int)
-        isinstance(quantum_machine_info["layout_file"], Layout)
-        isinstance(quantum_machine_info["Ins_Set"], InstructionSet)
+        assert isinstance(quantum_machine_info["qubits_number"], int)
+        if "layout_file" in quantum_machine_info:
+            assert isinstance(quantum_machine_info["layout_file"], Layout)
+        if "Instruction_Set" in quantum_machine_info:
+            assert isinstance(quantum_machine_info["Instruction_Set"], InstructionSet)
 
     def get_circuits(
         self,
@@ -91,17 +93,23 @@ class QuICTBenchmark:
         Get circuit from CircuitLib and Get the circuit after qcda.
 
         Args:
-            quantum_machine_info(list[str]): Gives physical machine properties,
-                for example:{"qubits_number": qubits number, "layout_file": layout file, "Ins_Set": Instruction Set},
-                layout_file is the topology of the target physical device, InSetis The instruction set,
-                only one single-bit gate can be included.
-            level (int): Get the corresponding level circuits, one of [1, 2, 3], default 1.
-            mapping(bool): whether the circuit is mapped according to the topology, default False.
-            gate_transform(bool): whether the circuit is gate transformed according to the instruction set,
+            quantum_machine_info(list[str]): Gives the sub-physical machine properties to be measured, include:
+                {"qubits_number": str, the number of physical machine bits, "layout_file": layout, the physical machine
+                topology, "Instruction_Set": InstructionSet, Physical machine instruction set type,only one double-bit
+                gate can be included}.
+                for example:
+
+                layout_file = Layout.load_file(f"grid_3x3.json")
+                Instruction_Set = InstructionSet(GateType.cx, [GateType.h])
+
+            level (int): Get the type of benchmark circuit group, include different circuits, one of [1, 2, 3],
+                default 1.
+            mapping(bool): Mapping according to the physical machine topology or not, default False.
+            gate_transform(bool): Gate transform according to the physical machine Instruction Set or not,
                 default False.
 
         Returns:
-            (List[Circuit | String] | None): Return the list of output circuit order by output_type.
+            (List[Circuit]): Return the list of output circuit order by output_type.
         """
         # whether quantum_machine_info is valid or not
         self._validate_quantum_machine_info(quantum_machine_info)
@@ -123,7 +131,7 @@ class QuICTBenchmark:
                     layout_width_mapping[i] = layout_file
                     qcda.add_mapping(layout_width_mapping[cir_width])
             if gate_transform is True and circuit.name.split("+")[-2] != "mediate_measure":
-                qcda.add_gate_transform(quantum_machine_info["Ins_Set"])
+                qcda.add_gate_transform(quantum_machine_info["Instruction_Set"])
             cir_qcda = qcda.compile(circuit)
 
             type, classify = circuit.name.split("+")[:-1][0], circuit.name.split("+")[:-1][1]
@@ -149,21 +157,28 @@ class QuICTBenchmark:
         gate_transform: bool = False
     ):
         """
-        Get circuit from CircuitLib and Get the circuit after qcda and get the simulation amplitude results by physical
-            machine.
+        Connect real-time benchmarking to the sub-physical machine to be measured.
 
         Args:
-            simulator_interface : Interface for machine machine simulation
-            quantum_machine_info(list[str]): Gives physical machine properties, for example:[qubits scale,
-                layout_file, InSet], layout_file is the topology of the target physical device,
-                InSetis The instruction set, only one single-bit gate can be included.
-            level (int): Get the corresponding level circuits, one of [1, 2, 3], default 1.
-            mapping(bool): whether the circuit is mapped according to the topology, default False.
-            gate_transform(bool): whether the circuit is gate transformed according to the instruction set,
+            simulator_interface(optional): Interface for the sub-physical machine to be measured, that is a function for
+                realize the output quantum physics machine amplitude of the input circuit, saving circuit and amplitude input and output.
+                for example:
+
+                def sim_interface(circuit):
+                    simulation(circuit)
+                    return amplitude
+
+            quantum_machine_info(list[str]): Gives the sub-physical machine properties to be measured,for example:
+                {"qubits_number": the number of physical machine bits, "layout_file": the physical machine topology,
+                "Instruction_Set": Physical machine instruction set type, only one double-bit gate can be included}.
+            level (int): Get the type of benchmark circuit group, include different circuits, one of [1, 2, 3],
+                default 1.
+            mapping(bool): Mapping according to the physical machine topology or not, default False.
+            gate_transform(bool): Gate transform according to the physical machine Instruction Set or not,
                 default False.
 
         Returns:
-            (List[Circuit | String] | None): Return the analysis of benchmarking.
+            Return the analysis of benchmarking.
         """
         # Step1 : get circuits from circuitlib
         circuits_list = self.get_circuits(quantum_machine_info, level, mapping, gate_transform)
@@ -176,16 +191,16 @@ class QuICTBenchmark:
         # Step 3: evaluate all circuits
         self.evaluate(circuits_list, amp_results_list)
 
-    def evaluate(self, circuits_list, amp_results_list):
+    def evaluate(self, circuits_list: list, amp_results_list: list):
         """
         Evaluate all circuits in circuit list group by fields
 
         Args:
             circuit_list (List): The list of circuits.
-            mac_results_list (List[str]): Physical machine simulation amplitude results
+            mac_results_list (List[ndarray]): Physical machine simulation amplitude results.
 
         Returns:
-            from: Return the analysis of benchmarking.
+            Return the analysis of benchmarking.
         """
         # Step 1: Entropy measures the difference between the physical machine
         entropy_VQ_score = self._entropy_VQ_score(circuits_list, amp_results_list)

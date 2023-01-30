@@ -1,5 +1,4 @@
 import os
-import random
 import unittest
 
 from QuICT.benchmark.benchmark import QuICTBenchmark
@@ -25,13 +24,13 @@ class TestBenchmark(unittest.TestCase):
 
         QuICTBenchmark(device="GPU", output_file_type="txt").run(
             simulator_interface=sim,
-            quantum_machine_info={"qubits_number": 3, "layout_file": [], "Ins_Set": []}
+            quantum_machine_info={"qubits_number": 3}
         )
         file_name_txt = os.listdir("./benchmark")
 
         QuICTBenchmark(device="GPU", output_file_type="excel").run(
             simulator_interface=sim,
-            quantum_machine_info={"qubits_number": 3, "layout_file": [], "Ins_Set": []}
+            quantum_machine_info={"qubits_number": 3}
         )
         file_name_excel = os.listdir("./benchmark")
 
@@ -42,26 +41,26 @@ class TestBenchmark(unittest.TestCase):
         Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
 
         # no mapping and no gate transform
-        QuICTBenchmark().get_circuits(quantum_machine_info={"qubits_number": 2, "layout_file": [], "Ins_Set": []})
+        QuICTBenchmark().get_circuits(quantum_machine_info={"qubits_number": 2})
         assert True
 
         # mapping and no gate transform
         QuICTBenchmark().get_circuits(
-            quantum_machine_info={"qubits_number": 2, "layout_file": layout, "Ins_Set": []},
+            quantum_machine_info={"qubits_number": 2, "layout_file": layout},
             mapping=True
         )
         assert True
 
         # no mapping and gate transform
         QuICTBenchmark().get_circuits(
-            quantum_machine_info={"qubits_number": 2, "layout_file": [], "Ins_Set": Inset},
+            quantum_machine_info={"qubits_number": 2, "Instruction_Set": Inset},
             gate_transform=True
         )
         assert True
 
         # mapping and gate transform
         QuICTBenchmark().get_circuits(
-            quantum_machine_info={"qubits_number": 2, "layout_file": layout, "Ins_Set": Inset},
+            quantum_machine_info={"qubits_number": 2, "layout_file": layout, "Instruction_Set": Inset},
             mapping=True,
             gate_transform=True
         )
