@@ -3,7 +3,7 @@ import numpy as np
 from functools import reduce
 from math import gcd
 from QuICT.core.gate import X
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 from QuICT.tools import Logger
 from QuICT.tools.exception.core import *
@@ -153,7 +153,7 @@ def run_twice_order_finding_constructor(order_finding):
         N: int,
         demo: str = None,
         eps: float = 1 / 10,
-        simulator=CircuitSimulator(),
+        simulator=StateVectorSimulator(),
     ):
         r1 = order_finding(a, N, eps, simulator)
         r2 = order_finding(a, N, eps, simulator)

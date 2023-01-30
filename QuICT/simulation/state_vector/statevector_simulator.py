@@ -21,7 +21,7 @@ from QuICT.tools.exception.simulation import (
 )
 
 
-class ConstantStateVectorSimulator:
+class StateVectorSimulator:
     """
     The simulator for qubits' vector state.
 

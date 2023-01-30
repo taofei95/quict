@@ -3,10 +3,8 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.core.noise.utils import NoiseChannel
 from QuICT.core.operator import *
-from QuICT.core.noise import BitflipError
-from QuICT.simulation.state_vector import CircuitSimulator, ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 class TestOperator(unittest.TestCase):
@@ -58,7 +56,7 @@ class TestOperator(unittest.TestCase):
         trigger = Trigger(1, [None, cgate])
         trigger | cir(0)
 
-        sim = CircuitSimulator()
+        sim = StateVectorSimulator()
         sv = sim.run(cir)
 
         if cir[0].measured:

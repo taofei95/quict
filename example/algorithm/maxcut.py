@@ -4,7 +4,7 @@ from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 from QuICT.algorithm.quantum_machine_learning.model.VQA import QAOANet
 from QuICT.algorithm.tools.drawer.graph_drawer import *
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 def maxcut_hamiltonian(edges):
@@ -55,7 +55,7 @@ for it in loader:
     loader.set_postfix(loss=loss.item())
 
 qaoa_cir = qaoa_net.construct_circuit()
-simulator = ConstantStateVectorSimulator()
+simulator = StateVectorSimulator()
 simulator.vector = state.cpu().detach().numpy()
 simulator.circuit = qaoa_cir
 simulator._qubits = qaoa_cir.width()

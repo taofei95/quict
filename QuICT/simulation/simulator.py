@@ -8,7 +8,7 @@ from typing import Union
 
 from QuICT.core import Circuit
 from QuICT.core.noise import NoiseModel
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.simulation.density_matrix import DensityMatrixSimulation
 from QuICT.simulation.utils import Result, options_validation
@@ -66,11 +66,11 @@ class Simulator:
     def _load_simulator(self):
         """ Initial simulator. """
         if self._device == "GPU":
-            from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+            from QuICT.simulation.state_vector import StateVectorSimulator
 
         if self._backend == "state_vector":
-            simulator = ConstantStateVectorSimulator(precision=self._precision, **self._options) \
-                if self._device == "GPU" else CircuitSimulator(precision=self._precision)
+            simulator = StateVectorSimulator(precision=self._precision, **self._options) \
+                if self._device == "GPU" else StateVectorSimulator(precision=self._precision)
         else:
             if self._backend == "unitary":
                 simulator = UnitarySimulator(device=self._device, precision=self._precision)
