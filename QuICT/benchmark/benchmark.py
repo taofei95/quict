@@ -77,9 +77,9 @@ class QuICTBenchmark:
 
     def _validate_quantum_machine_info(self, quantum_machine_info):
         assert isinstance(quantum_machine_info["qubits_number"], int)
-        if "layout_file" in quantum_machine_info:
+        if "layout_file" in quantum_machine_info.keys():
             assert isinstance(quantum_machine_info["layout_file"], Layout)
-        if "Instruction_Set" in quantum_machine_info:
+        if "Instruction_Set" in quantum_machine_info.keys():
             assert isinstance(quantum_machine_info["Instruction_Set"], InstructionSet)
 
     def get_circuits(
