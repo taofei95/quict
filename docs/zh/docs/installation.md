@@ -11,8 +11,17 @@ hide:
         ```sh
         sudo apt install build-essential clang llvm
         ```
-- GPU Support
-    - cupy: [cupy installation](https://docs.cupy.dev/en/stable/install.html)
+- GPU required
+    - Cupy: [Installing Cupy](https://docs.cupy.dev/en/stable/install.html)
+        ```sh
+        nvcc -V     # 获得cuda版本号
+
+        pip install cupy-cuda{version}      # 根据cuda版本号进行安装
+        ```
+
+- Quantum Machine Learning required
+    - PyTorch: [Installing PyTorch](https://pytorch.org/get-started/locally/)
+
 
 ### 从 pypi 安装
 ```
@@ -43,14 +52,14 @@ pip install quict
     .\build.ps1
     ```
 
-- QuICT 命令行界面
-    > pip install quict firstly
-    ```sh
-    quict --help
-    ```
-
 - Docker 构建指令
     ```sh
     # Build QuICT docker for target device [cpu/gpu]
     sudo docker build -t quict/{device} -f dockerfile/{device}.quict.df .
     ```
+
+### QuICT 命令行界面
+
+```sh
+quict --help
+```
