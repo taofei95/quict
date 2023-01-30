@@ -111,9 +111,3 @@ QuICT平台benchmark是针对于QuICT量子计算云平台本身的量子算法�
 由2~10量子比特、20~100量子门数、随机指令集构造的的量子电路，测试用密度矩阵模拟器模拟量子电路运行过程中量子比特的状态时的运行时间，以测试结果作为模拟速度的基准。
 
 ![simulation benchmark](assets/images/QuICTbenchmark/simulation_benchmark/QuICT_density_maxtix_simulation_test.png)
-
-#### 单双精度模拟基准测试
-
-由5~25量子比特、50~250量子门数、随机指令集构造的的量子电路、状态向量模拟器模拟，测试单精度双精度下量子电路运行过程中量子比特的状态时的运行时间，以测试结果作为不同精度下模拟速度的基准。
-
-![simulation benchmark](assets/images/QuICTbenchmark/simulation_benchmark/QuICT_simulation_precision_test.png)
