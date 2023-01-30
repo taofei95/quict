@@ -4,13 +4,13 @@
 # @Author  : Xiaoquan Xu
 # @File    : encoder_unit_test.py
 
-from QuICT.algorithm.quantum_machine_learning.model.chemistry.utils.operators.encoder import(
+from QuICT.algorithm.quantum_machine_learning.model.VQE.utils.operators.encoder import(
     JordanWigner,
     Parity,
     BravyiKitaev
 )
-from QuICT.algorithm.quantum_machine_learning.model.chemistry.utils.operators.fermion_operator import FermionOperator
-from QuICT.algorithm.quantum_machine_learning.model.chemistry.utils.operators.qubit_operator import QubitOperator
+from QuICT.algorithm.quantum_machine_learning.model.VQE.utils.operators.fermion_operator import FermionOperator
+from QuICT.algorithm.quantum_machine_learning.model.VQE.utils.operators.qubit_operator import QubitOperator
 
 anni_0 = FermionOperator('0')
 crea_0 = FermionOperator('0^')
