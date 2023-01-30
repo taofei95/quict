@@ -40,8 +40,8 @@ nav:
   - Algorithm:
     - Quantum Machine Learning:
       - QAOA: API_qaoa.md
-- Benchmark: QuICTbenchmark.md
-- Contribution: contribution.md
+- QuICT平台基准测试: QuICTbenchmark.md
+- 贡献: contribution.md
     
 theme:
   name: material
