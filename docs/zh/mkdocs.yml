@@ -14,6 +14,7 @@ nav:
   - QCDA: functions/qcda.md
   - 量子模拟: functions/simulation.md
   - 工具: functions/tools.md
+  - 量子物理机基准测试: functions/Machinebenchmark.md
 - 教程:
   - 算法:
     - 经典量子算法:
@@ -37,7 +38,7 @@ nav:
   - Algorithm:
     - Quantum Machine Learning:
       - QAOA: API_qaoa.md
-- Benchmark: benchmark.md
+- Benchmark: QuICTbenchmark.md
 - Contribution: contribution.md
     
 theme:
