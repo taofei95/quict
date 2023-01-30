@@ -268,11 +268,11 @@ setup(
         ],
     },
     install_requires=[
+        "llvmlite",
         "contourpy==1.0.5",
         "cycler==0.11.0",
         "fonttools==4.37.4",
         "kiwisolver==1.4.4",
-        "llvmlite==0.39.1",
         "matplotlib==3.6.1",
         "networkx==2.8.7",
         "numba==0.56.3",

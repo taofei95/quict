@@ -33,14 +33,26 @@ pip install quict
 
     - Linux: `clang/LLVM`
     ```sh
-    sudo apt install build-essential clang llvm.
+    sudo apt install build-essential clang llvm
     ```
+
+  - GPU environment required
+    - Cupy: [Installing Cupy](https://docs.cupy.dev/en/stable/install.html)
+    ```sh
+    nvcc -V     # 获得cuda版本号
+
+    pip install cupy-cuda[*]      # 根据cuda版本号进行安装
+    ```
+
+  - Quantum Machine Learning required
+    - PyTorch: [Installing PyTorch](https://pytorch.org/get-started/locally/)
 
 - Clone QuICT from Gitee
     ```sh
     # git clone
     git clone https://gitee.com/quictucas/quict.git
     ```
+
 - For Ubuntu \
 Python venv is recommended. Installing packages system-wide may lead permission errors. Following commands would build QuICT and install it. If you are facing permission errors when installing, try venv instead or append `--user` flag for `install.sh`.
 
