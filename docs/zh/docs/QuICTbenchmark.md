@@ -16,9 +16,9 @@ QuICT平台benchmark是针对于QuICT量子计算云平台本身的量子算法�
 
 #### 映射基准测试
 
-选择3×3网状拓扑和5比特ibmq_lima拓扑结构、18量子比特、36~180量子门数的量子电路，对SABRE、MCTS、RL量子电路映射后量子电路中新增的交换门门数进行对比，以衡量映射算法的结果作为映射基准。
-![qcda benchmark](assets/images/QuICTbenchmark/qcda_benchmark/mapping_benchmark/mapping_test_grid.png)
-![qcda benchmark](assets/images/QuICTbenchmark/qcda_benchmark/mapping_benchmark/mapping_test_tshape.png)
+选择3×3网状拓扑和5比特T型拓扑结构、18量子比特、36~180量子门数的量子电路，对SABRE、MCTS、RL量子电路映射后量子电路中新增的交换门门数进行对比，以衡量映射算法的结果作为映射基准。
+![qcda benchmark](assets/images/QuICTbenchmark/qcda_benchmark/mapping_benchmark/QuICT_mapping_test_grid.png)
+![qcda benchmark](assets/images/QuICTbenchmark/qcda_benchmark/mapping_benchmark/QuICT_mapping_test_T.png)
 
 #### 优化基准测试
 
@@ -27,12 +27,6 @@ QuICT平台benchmark是针对于QuICT量子计算云平台本身的量子算法�
 由5~25量子比特、50~250量子门数、随机指令集构造的量子电路，对Clifford+Rz电路优化前后量子电路的门数、深度、可控非门门数进行对比，以测试结果作为优化基准。
 
 ![qcda benchmark](assets/images/QuICTbenchmark/qcda_benchmark/optimization_benchmark/QuICT%20Clifford_Rz_Optimization%20test.png)
-
-##### 局部暴力搜索电路优化
-
-由5~ 25量子比特、50~250量子门数、单一可控非门构造的的量子电路，对局部暴力搜索电路优化前后量子电路的门数、深度、可控非门门数进行对比，以测试结果作为优化基准。
-
-![qcda benchmark](assets/images/QuICTbenchmark/qcda_benchmark/optimization_benchmark/QuICT%20cnot_local_force%20test.png)
 
 ##### 无辅助比特合成电路优化
 
