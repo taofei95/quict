@@ -1,7 +1,0 @@
-# QCDA
-
-## Mapping
-
-## Synthesis
-
-## Optimization
