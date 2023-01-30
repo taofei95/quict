@@ -268,11 +268,11 @@ setup(
         ],
     },
     install_requires=[
+        "llvmlite",
         "contourpy==1.0.5",
         "cycler==0.11.0",
         "fonttools==4.37.4",
         "kiwisolver==1.4.4",
-        "llvmlite==0.39.1",
         "matplotlib==3.6.1",
         "networkx==2.8.7",
         "numba==0.56.3",
@@ -287,7 +287,10 @@ setup(
         "six==1.16.0",
         "ujson==5.5.0",
         "pyjwt==2.6.0",
-        "pycryptodome==3.16.0"
+        "pycryptodome==3.16.0",
+        "psutil==5.9.4",
+        "pyyaml==6.0",
+        "requests==2.28.2"
     ],
     ext_modules=[
         CMakeExtension(
