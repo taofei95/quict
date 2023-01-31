@@ -2,6 +2,7 @@ import cupy as cp
 import random
 import numpy as np
 import torch
+import warnings
 
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.utils import apply_gate
@@ -322,11 +323,24 @@ class Ansatz:
                     state = self._apply_gate_cpu(state, gate_tensor, act_bits)
                 # GPU
                 else:
-                    assert (
-                        len(self._trainable_pargs)
-                        == len(self._trainable_pargs_ptr)
-                        == 0
-                    ), "Only ansatz without trainable parameters could use ansatz.forward()."
+                    warnings.warn(
+                        "If the ansatz contains trainable parameters, ansatz.forward() will cause the gradient to be lost. Use GpuSimulator.forward() instead to propagate the gradient"
+                    )
                     state = self._apply_gate_gpu(state, gate)
 
         return state
+
+    def sample(self, shots):
+        state = self.forward()
+        theor_prob = (state * state.conj()).real
+        theor_prob = theor_prob.cpu().numpy()
+        theor_prob = theor_prob / np.sum(theor_prob)
+        sample = np.random.choice(
+            a=range(len(theor_prob)), size=shots, replace=True, p=theor_prob
+        )
+        idx, counts = np.unique(sample, return_counts=True)
+        prob = np.zeros(len(theor_prob))
+        for i, count in zip(idx, counts):
+            prob[i] = count
+
+        return prob.tolist()

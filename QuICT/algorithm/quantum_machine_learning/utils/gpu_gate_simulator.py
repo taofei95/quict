@@ -72,9 +72,9 @@ def _apply_normal_matrix(
     args_num = gate.controls + gate.targets
     gate_args = gate.cargs + gate.targs
     matrix = (
-        cp.from_dlpack(gate.matrix.clone())
+        cp.from_dlpack(gate.matrix.detach().clone())
         if fp
-        else cp.from_dlpack(gate.gradient.clone())
+        else cp.from_dlpack(gate.gradient.detach().clone())
     )
 
     # Deal with 1-qubit normal gate e.g. H
@@ -99,9 +99,9 @@ def _apply_normal_normal_matrix(
     assert gate.matrix_type == MatrixType.normal_normal
     t_indexes = [n_qubits - 1 - targ for targ in gate.targs]
     matrix = (
-        cp.from_dlpack(gate.matrix.clone())
+        cp.from_dlpack(gate.matrix.detach().clone())
         if fp
-        else cp.from_dlpack(gate.gradient.clone())
+        else cp.from_dlpack(gate.gradient.detach().clone())
     )
     algorithm.normal_normal_targs(t_indexes, matrix, *default_parameters)
 
@@ -112,9 +112,9 @@ def _apply_diagonal_normal_matrix(
     assert gate.matrix_type == MatrixType.diag_normal
     t_indexes = [n_qubits - 1 - targ for targ in gate.targs]
     matrix = (
-        cp.from_dlpack(gate.matrix.clone())
+        cp.from_dlpack(gate.matrix.detach().clone())
         if fp
-        else cp.from_dlpack(gate.gradient.clone())
+        else cp.from_dlpack(gate.gradient.detach().clone())
     )
     algorithm.diagonal_normal_targs(t_indexes, matrix, *default_parameters)
 
@@ -127,9 +127,9 @@ def _apply_diagonal_matrix(
     args_num = gate.controls + gate.targets
     gate_args = gate.cargs + gate.targs
     matrix = (
-        cp.from_dlpack(gate.matrix.clone())
+        cp.from_dlpack(gate.matrix.detach().clone())
         if fp
-        else cp.from_dlpack(gate.gradient.clone())
+        else cp.from_dlpack(gate.gradient.detach().clone())
     )
 
     # Deal with 1-qubit diagonal gate, e.g. Rz
@@ -177,7 +177,7 @@ def _apply_reverse_matrix(
     assert gate.matrix_type == MatrixType.reverse
     args_num = gate.controls + gate.targets
     gate_args = gate.cargs + gate.targs
-    matrix = cp.from_dlpack(gate.matrix.clone())
+    matrix = cp.from_dlpack(gate.matrix.detach().clone())
 
     if args_num == 1:  # Deal with 1-qubit reverse gate, e.g. Y
         index = n_qubits - 1 - gate_args[0]
@@ -199,7 +199,7 @@ def _apply_control_matrix(
     assert gate.matrix_type == MatrixType.control
     args_num = gate.controls + gate.targets
     gate_args = gate.cargs + gate.targs
-    matrix = cp.from_dlpack(gate.matrix.clone()).get()
+    matrix = cp.from_dlpack(gate.matrix.detach().clone()).get()
 
     if args_num == 1:  # Deal with 1-qubit control gate, e.g. S
         index = n_qubits - 1 - gate_args[0]
@@ -231,7 +231,7 @@ def apply_gate(gate, default_parameters, algorithm, fp):
         gate.type in [GateType.unitary, GateType.qft, GateType.iqft]
         and gate.targets >= 3
     ):
-        matrix = cp.from_dlpack(gate.matrix.clone())
+        matrix = cp.from_dlpack(gate.matrix.detach().clone())
         matrix = matrix.reshape(
             1 << (gate.controls + gate.targets), 1 << (gate.controls + gate.targets)
         )
