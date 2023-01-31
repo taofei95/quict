@@ -84,7 +84,7 @@ class QuICTBenchmark:
 
     def get_circuits(
         self,
-        quantum_machine_info: list,
+        quantum_machine_info: dict,
         level: int = 1,
         mapping: bool = False,
         gate_transform: bool = False
@@ -93,7 +93,7 @@ class QuICTBenchmark:
         Get circuit from CircuitLib and Get the circuit after qcda.
 
         Args:
-            quantum_machine_info(list[str]): Gives the sub-physical machine properties to be measured, include:
+            quantum_machine_info(dict[str]): Gives the sub-physical machine properties to be measured, include:
                 {"qubits_number": str, the number of physical machine bits, "layout_file": layout, the physical machine
                 topology, "Instruction_Set": InstructionSet, Physical machine instruction set type,only one double-bit
                 gate can be included}.
@@ -151,7 +151,7 @@ class QuICTBenchmark:
     def run(
         self,
         simulator_interface,
-        quantum_machine_info: list,
+        quantum_machine_info: dict,
         level: int = 1,
         mapping: bool = False,
         gate_transform: bool = False
@@ -161,14 +161,14 @@ class QuICTBenchmark:
 
         Args:
             simulator_interface(optional): Interface for the sub-physical machine to be measured, that is a function for
-                realize the output quantum physics machine amplitude of the input circuit, saving circuit and amplitude input and output.
-                for example:
+                realize the output quantum physics machine amplitude of the input circuit, saving circuit and amplitude
+                input and output.for example:
 
                 def sim_interface(circuit):
                     simulation(circuit)
                     return amplitude
 
-            quantum_machine_info(list[str]): Gives the sub-physical machine properties to be measured,for example:
+            quantum_machine_info(dict[str]): Gives the sub-physical machine properties to be measured,for example:
                 {"qubits_number": the number of physical machine bits, "layout_file": the physical machine topology,
                 "Instruction_Set": Physical machine instruction set type, only one double-bit gate can be included}.
             level (int): Get the type of benchmark circuit group, include different circuits, one of [1, 2, 3],
@@ -240,8 +240,7 @@ class QuICTBenchmark:
             entropy_score = self._entropy_cal(entropy_value)
 
             circuit_info = re.findall(r"\d+", circuit_list[index].name)
-            m, n = circuit_info[0], circuit_info[2]
-            VQ_value = min(m, n)
+            VQ_value = min(int(circuit_info[0]), int(circuit_info[2]))
 
             # Step 3: return entropy values and quantum volumn values
             entropy_VQ_score.append([circuit_list[index].name, entropy_value, entropy_score, VQ_value])
@@ -260,7 +259,10 @@ class QuICTBenchmark:
             elif field == "mediate_measure":
                 M = (int(cir_attribute[3]) / int(cir_attribute[2])) * VQ
                 eigenvalue_VQ_score.append([valid_circuits_list[i], M])
-            elif field == "highly_entangled" and "highly_serialized":
+            elif field == "highly_entangled":
+                E = (1 - int(cir_attribute[3]) / int(cir_attribute[1])) * VQ
+                eigenvalue_VQ_score.append([valid_circuits_list[i], E])
+            elif field == "highly_serialized":
                 S = (1 - int(cir_attribute[3]) / int(cir_attribute[1])) * VQ
                 eigenvalue_VQ_score.append([valid_circuits_list[i], S])
 
@@ -313,17 +315,11 @@ class QuICTBenchmark:
         ################################ based circuits benchmark #####################################
         # Construct the data
         feature_name = ['parallelized', 'entangled', 'serialized', 'measure', 'VQ']
-        random_fields_list = [
-            "aspen-4", "ourense", "rochester", "sycamore", "tokyo", "ctrl_unitary", "diag", "single_bit",
-            "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"
-        ]
-        P, E, S, M, VQ, values, feature = [], [], [], [], [], [], []
 
+        P, E, S, M, VQ, values, feature = [], [], [], [], [], [], []
         for i in range(len(eigenvalue_VQ_score)):
             field = eigenvalue_VQ_score[i][0].split("+")[-2]
-            if field in random_fields_list:
-                VQ.append(entropy_VQ_score[i][3])
-            elif field == "highly_parallelized":
+            if field == "highly_parallelized":
                 P.append(eigenvalue_VQ_score[i][1])
             elif field == "highly_serialized":
                 S.append(eigenvalue_VQ_score[i][1])
@@ -331,10 +327,16 @@ class QuICTBenchmark:
                 E.append(eigenvalue_VQ_score[i][1])
             elif field == "mediate_measure":
                 M.append(eigenvalue_VQ_score[i][1])
-        for j in [P, E, S, M, VQ]:
-            if len(j) > 0:
-                values.append(max(j))
-                feature.append(feature_name[[P, E, S, M, VQ].index(j)])
+
+        for j in range(len(entropy_VQ_score)):
+            field_random = entropy_VQ_score[j][0].split("+")[-3]
+            if field_random == "random":
+                VQ.append(float(entropy_VQ_score[j][3]))
+
+        for x in [P, E, S, M, VQ]:
+            if len(x) > 0:
+                values.append(max(x))
+                feature.append(feature_name[[P, E, S, M, VQ].index(x)])
         N = len(values)
 
         # Sets the angle of the radar chart to bisect a plane
