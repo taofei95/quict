@@ -8,7 +8,7 @@ import itertools as it
 
 import numpy as np
 
-from ..operators.fermion_operator import FermionOperator
+from QuICT.algorithm.quantum_machine_learning.model.VQE.operators.fermion_operator import FermionOperator
 
 
 class FermiHamiltonian:

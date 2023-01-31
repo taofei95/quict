@@ -1,2 +1,5 @@
-from .hartree_fock import HartreeFockVQE
+"""
+Where the trip to chemistry begins
+"""
+
 from .hartree_fock_net import HartreeFockVQENet
