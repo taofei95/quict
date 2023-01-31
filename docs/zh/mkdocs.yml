@@ -12,11 +12,17 @@ nav:
     - 映射:
       - SABRE映射算法: functions/QCDA/mapping/SABRE.md
     - 优化:
-      -  Clifford+Rz优化: functions/QCDA/optimization/clifford_rz_optimization.md
-      -  模板优化: functions/QCDA/optimization/template_optimization.md
-    - 合成: functions/QCDA/synthesis/synthesis.md
+      - Clifford+Rz优化: functions/QCDA/optimization/clifford_rz_optimization.md
+      - Clifford电路合成与symbolic优化: functions/QCDA/optimization/clifford.md
+      - 交换优化: functions/QCDA/optimization/commutative_optimization.md
+      - 模板优化: functions/QCDA/optimization/template_optimization.md
+    - 合成:
+      - 门转换: functions/QCDA/synthesis/gate_transform.md
+      - 量子态制备: functions/QCDA/synthesis/quantum_state_preparation.md
+      - 酉矩阵分解: functions/QCDA/synthesis/unitary_decomposition.md
   - 量子模拟: functions/simulation.md
   - 工具: functions/tools.md
+  - 量子物理机基准测试: functions/Machinebenchmark.md
 - 教程:
   - 算法:
     - 经典量子算法:
@@ -34,8 +40,8 @@ nav:
   - Algorithm:
     - Quantum Machine Learning:
       - QAOA: API_qaoa.md
-- Benchmark: benchmark.md
-- Contribution: contribution.md
+- QuICT平台基准测试: QuICTbenchmark.md
+- 贡献: contribution.md
     
 theme:
   name: material

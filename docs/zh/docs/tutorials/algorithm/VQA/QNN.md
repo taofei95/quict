@@ -293,8 +293,8 @@ set_seed(SEED)  # 设置全局随机种子
 ``` python
 train_dataset = data.TensorDataset(train_X, train_Y)
 test_dataset = data.TensorDataset(test_X, test_Y)
-train_loader = data.DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-test_loader = data.DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=True)
+train_loader = data.DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
+test_loader = data.DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
 ```
 
 定义待训练的QNN网络和经典优化器：
