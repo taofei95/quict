@@ -1,6 +1,7 @@
 # 量子神经网络（QNN）
 
 本教程旨在介绍如何使用经典机器学习库Pytorch和QuICT中内置的量子神经网络层构建一个用于分类MNIST手写数据集的量子神经网络（Quantum Neural Network, QNN）。
+
 ## 导入运行库
 
 首先，导入必要的运行库及相关依赖：
@@ -292,8 +293,8 @@ set_seed(SEED)  # 设置全局随机种子
 ``` python
 train_dataset = data.TensorDataset(train_X, train_Y)
 test_dataset = data.TensorDataset(test_X, test_Y)
-train_loader = data.DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-test_loader = data.DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=True)
+train_loader = data.DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
+test_loader = data.DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
 ```
 
 定义待训练的QNN网络和经典优化器：

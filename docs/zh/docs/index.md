@@ -48,7 +48,7 @@ pip install mkdocs-glightbox
 ```
 
 <figure markdown>
-![Max-Cut Result](../../../assets/images/tutorials/algorithm/VQA/QAOA/maxcut_result.png){width="400"}
+![Max-Cut Result](/assets/images/tutorials/algorithm/VQA/QAOA/maxcut_result.png){width="400"}
 <figcaption>图1：最大割结果。</figcaption>
 </figure>
 
