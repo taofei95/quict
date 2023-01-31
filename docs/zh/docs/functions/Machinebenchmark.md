@@ -8,7 +8,7 @@
 
 通过图中框架流程设计可以清晰的观察到基准测试每一步的操作。
 
-![benchmark framework](../assets/images/functions/Machinebenchmark/benchmark_framework.jpg)
+![benchmark framework](../assets/images/functions/Machinebenchmark/benchmark_framework.png)
 
 ## 基准测试流程说明
 
