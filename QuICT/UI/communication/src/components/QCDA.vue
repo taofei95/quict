@@ -167,6 +167,16 @@
             <div id="o_histogram_state_vector"></div>
           </el-tab-pane>
         </el-tabs>
+        <el-tabs type="border-card" style="background: transparent !important; border: 0px solid"
+            v-if="(Output_type == 2)">
+            <el-tab-pane label="Table">
+              <table style="width: 100%;">
+                <tr style="height: 40px" v-for="result in OutputContent_density_matrix" :key="result">
+                  <td style="height: 40px" v-for="elem in result" :key="elem">{{elem}}</td>
+                </tr>
+              </table>
+            </el-tab-pane>
+          </el-tabs>
         <el-button size="large" type="primary" plain @click="back_r_QCDA"
           style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
           Back
@@ -229,6 +239,7 @@ export default {
       NewConfirmBtnEnable: false,
       OutputContent: {},
       OutputContent_state_vector: {},
+      OutputContent_density_matrix: {},
       Output_type: 0,
       Route: "N",
       n_all_sets: [],
@@ -898,6 +909,9 @@ export default {
       });
       histogram_zone.node().appendChild(chart);
     },
+    DrawHistogram_density_matrix(result) {
+      console.log("DrawHistogram", result);
+    },
     BarChart( // 用d3绘制barchart
       data,
       {
@@ -1057,6 +1071,9 @@ export default {
           break;
         case 1:
           this.DrawHistogram_state_vector(this.OutputContent_state_vector);
+          break;
+        case 2:
+          this.DrawHistogram_density_matrix(this.OutputContent_density_matrix);
           break;
         default:
           break;
@@ -1235,6 +1252,7 @@ export default {
       }
       this.OutputContent = content.run_result.data.counts;
       this.OutputContent_state_vector = content.run_result.data.state_vector;
+      this.OutputContent_density_matrix = content.run_result.data.density_matrix;
       this.DrawOutput(this.Output_type);
       this.confirm_o_QCDA();
     });

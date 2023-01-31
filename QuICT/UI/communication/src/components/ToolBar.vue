@@ -158,7 +158,7 @@ TpConfirm();
         <el-checkbox v-model="mapSwitch" size="small" label="Mapping"></el-checkbox>
       </el-space>
       <span style="color: #409eff; font-size: large; margin: 0px 0px 0px 10px">|</span>
-      <el-button v-if="show_save_run_load" size="small" type="primary" @click="dialogBeVisible = true" style="
+      <el-button size="small" type="primary" @click="dialogBeVisible = true" style="
           margin: 0px 10px;
           font-family: 'Segoe UI Symbol';
           background: transparent !important;
