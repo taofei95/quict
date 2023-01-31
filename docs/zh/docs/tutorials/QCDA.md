@@ -47,6 +47,10 @@ circuit_phy = qcda.compile(circuit)
 ```
 执行以上安排的QCDA流程获得原电路`circuit`给定指令集和`Layout`得到的物理电路`circuit_phy`。以下给出了一组原电路及其对应的物理电路。
 
-![逻辑电路](../assets/images/tutorials/qcda_0.png)
+<figure markdown>
+![逻辑电路](../assets/images/tutorials/QCDA/qcda_0.png)
+</figure>
 
-![物理电路](../assets/images/tutorials/qcda_1.png)
+<figure markdown>
+![物理电路](../assets/images/tutorials/QCDA/qcda_1.png)
+</figure>

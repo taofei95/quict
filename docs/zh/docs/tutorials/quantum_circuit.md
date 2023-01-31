@@ -3,7 +3,7 @@
 量子电路 (Circuit) 是 QuICT 中最为基础的模块，无论是量子算法，还是优化映射，都需要构建相对应的量子电路。本文将介绍如何使用 QuICT 构建我们所需要的量子电路，以及如何通过量子计算模拟器得到相对应的结果。
 
 <figure markdown>
-![circuit_relationship](../../../assets/images/tutorials/circuit_relationship.png){:width="350px"}
+![circuit_relationship](../assets/images/tutorials/circuit_relationship.png){:width="350px"}
 </figure>
 
 
@@ -151,7 +151,7 @@ circuit.draw()
 ```
 
 <figure markdown>
-![circuit_demo](../../../assets/images/tutorials/circuit_demo.jpg){:width="500px"}
+![circuit_demo](../assets/images/tutorials/circuit_demo.jpg){:width="500px"}
 </figure>
 
 ## 量子电路与 OPENQASM

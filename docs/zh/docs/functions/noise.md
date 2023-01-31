@@ -157,7 +157,7 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
     ```
 
 <figure markdown>
-![circuit_demo](../../../assets/images/functions/circuit_demo.jpg){:width="500px"}
+![circuit_demo](../assets/images/functions/circuit_demo.jpg){:width="500px"}
 </figure>
 
 

@@ -3,7 +3,7 @@
 量子计算机是由包含电路和基本量子门的量子电路构造的，类似于经典计算机是由包含连线和逻辑门的电路构造的。电路的读法是从左到右。电路中的每一条线代表量子电路的连线。这些连线不一定对应到物理的连线；它可能对应时间段，或者从空间的一处移动到另一处的物理粒子，比如光子。
 
 <figure markdown>
-![Random](../../../assets/images/functions/random.jpg){:width="500px"}
+![Random](../assets/images/functions/circuit/random.jpg){:width="500px"}
 </figure>
 
 一些经典电路的特征在量子电路中通常不会出现：
@@ -67,5 +67,5 @@ dag_circuit.draw()                          # DAGCircuit 可视化
 ```
 
 <figure markdown>
-![Dag Circuit](../../../assets/images/functions/dag_circuit.jpg){:width="450px"}
+![Dag Circuit](../assets/images/functions/circuit/dag_circuit.jpg){:width="450px"}
 </figure>
