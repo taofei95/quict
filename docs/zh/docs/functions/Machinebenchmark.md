@@ -4,6 +4,12 @@
 
 量子计算机是一种基于量子理论而工作的计算机。追根溯源，是对可逆机的不断探索促进了量子计算机的发展，它是不断迭代并不断受到评估的，QuICT物理机benchmark是这样一个依据量子电路的属性、物理机模拟振幅以及测试环境等因素通过设计科学的测试方法和测试系统对执行各项任务的能力进行排名，实现对量子物理设备的基准测试。
 
+## 基准测试框架
+
+通过图中框架流程设计可以清晰的观察到基准测试每一步的操作。
+
+![benchmark framework](../assets/images/functions/Machinebenchmark/benchmark_framework.jpg)
+
 ## 基准测试流程说明
 
 ### 1. 获得电路
@@ -56,24 +62,23 @@
 
 #### 对特殊基准电路进行指标值分析
 
-!!! info
-    特殊基准电路介绍
+!!!  特殊基准电路介绍
 
-    - 高度并行化电路
-        - 不同量子算法的结构允许不同程度的并行化，通过比较量子门数量，门数和电路深度的比率高度并行的应用将大量运算放入相对较小的电路深度中。
-        - P = （ng / nd -1）/ (nw - 1) 其中ng表示门的总数，nd表示电路深度，nw表示电路宽度，P越接近1的电路并行化程度越高。
-  
-    - 高度串行化电路
-        - 设置电路深度的最长路径上两个量子位相互作用的数量接近总的双比特数量。
-        - S = 1 - ns / ng 其中ng表示门的总数，ns表示不在最长路径上的双比特门数，S越接近1的电路串行化程度越高。
-  
-    - 高度纠缠电路
-        - 通过计算两个量子位相互作用的所有门操作的比例，测试电路种两个量子位相互作用程度。
-        - E = 1 - ne / ng 其中ng表示门的总数，ne表示电路完全纠缠下多余的双比特门数，E越接近1的电路纠缠程度越高。
-  
-    - 中间态测量电路
-        - 对于多个连续层的门操作组成的电路，测量门在不同层数为程序执行期间和之后提取信息
-        - M = md / nd 其中md表示电路中测量门所在的层数，nd表示电路深度，E越接近1的电路测量性能越完整。
+- 高度并行化电路
+    - 不同量子算法的结构允许不同程度的并行化，通过比较量子门数量，门数和电路深度的比率高度并行的应用将大量运算放入相对较小的电路深度中。
+    - P = （ng / nd -1）/ (nw - 1) 其中ng表示门的总数，nd表示电路深度，nw表示电路宽度，P越接近1的电路并行化程度越高。
+
+- 高度串行化电路
+    - 设置电路深度的最长路径上两个量子位相互作用的数量接近总的双比特数量。
+    - S = 1 - ns / ng 其中ng表示门的总数，ns表示不在最长路径上的双比特门数，S越接近1的电路串行化程度越高。
+
+- 高度纠缠电路
+    - 通过计算两个量子位相互作用的所有门操作的比例，测试电路种两个量子位相互作用程度。
+    - E = 1 - ne / ng 其中ng表示门的总数，ne表示电路完全纠缠下多余的双比特门数，E越接近1的电路纠缠程度越高。
+
+- 中间态测量电路
+    - 对于多个连续层的门操作组成的电路，测量门在不同层数为程序执行期间和之后提取信息
+    - M = md / nd 其中md表示电路中测量门所在的层数，nd表示电路深度，E越接近1的电路测量性能越完整。
 
 #### 对算法电路进行量子体积分析
 
@@ -94,17 +99,7 @@ V_{Q} = 2^n
 文本文件和表格展示对截止于有效电路筛选之前对所有电路组的熵值以及量子体积的评判结果。雷达图（左）展示有效电路中特殊基准电路指标值最优指标值×该电路的量子体积值，随机电路量子体积的最优值，雷达图（右）展示有效电路中各个算法赛道中算法电路的量子体积最优值。
 
 #### 结果展示示例——雷达图
-
-!!! note
-    该基准测试的结果展示是QuICT的模拟结果之间的展示，没有真实物理机参与。
-
 ![radar graph](../assets/images/functions/Machinebenchmark/benchmark_radar_chart_show.jpg)
-
-## 基准测试框架以及流程
-
-通过图中框架流程设计可以清晰的观察到基准测试每一步的操作。
-
-![benchmark framework](../assets/images/functions/Machinebenchmark/benchmark_framework.png)
 
 ## 基准测试基本用法
 
@@ -116,9 +111,9 @@ V_{Q} = 2^n
 
 - show_type: 基准测试结果展示形式。
 
-- simulator_interface: 物理机接口，使后端串联。
+- simulator_interface: 待测物理机接口，使后端串联。
 
-- quantum_machine_info：包含量子比特数、拓扑结构、特定指令集。
+- quantum_machine_info：包含待测物理机量子比特数、拓扑结构、特定指令集。
 
 - mapping: 是否根据物理机的拓扑结构对每一个电路执行映射。
 
@@ -131,13 +126,13 @@ V_{Q} = 2^n
 
 ``` python
 #初始化
-benchmark = QuICTBenchmark(output_path="./benchmark", show_type="Txt")
+benchmark = QuICTBenchmark(output_path="./benchmark", show_type="txt")
 # 传入拓扑结构
 layout_file = Layout.load_file("./layout/grid_3x3.json")
 #传入指令集
 Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
 #传入物理机接口, 直接进入评分系统
-results = benchmark.run(simulator_interface=sim_interface，quantum_machine_info=[5, layout_file, Inset], mapping=True, gate_transform=True)
+results = benchmark.run(simulator_interface=machine_interface，quantum_machine_info={"qubits_number":5, "layout_file":layout_file, "Instruction_Set":Inset}, mapping=True, gate_transform=True)
 ```
 
 ### 用电路进行基准测试
@@ -150,7 +145,7 @@ results = benchmark.run(simulator_interface=sim_interface，quantum_machine_info
 
 - show_type: 基准测试结果展示形式。
 
-- quantum_machine_info：包含量子比特数、拓扑结构、特定指令集。
+- quantum_machine_info：包含待测物理机量子比特数、拓扑结构、特定指令集。
 
 - mapping: 是否根据物理机的拓扑结构对每一个电路执行映射。
 
@@ -164,13 +159,13 @@ results = benchmark.run(simulator_interface=sim_interface，quantum_machine_info
 
 ``` python
 #初始化
-benchmark = QuICTBenchmark(output_path="./benchmark", show_type="Txt")
+benchmark = QuICTBenchmark(output_path="./benchmark", show_type="txt")
 # 传入拓扑结构
 layout_file = Layout.load_file("./layout/grid_3x3.json")
 #传入指令集
 Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
 #获得电路
-circuits = benchmark.get_circuits(quantum_machine_info=[5, layout_file, Inset], mapping=True, gate_transform=True)
+circuits = benchmark.get_circuits(quantum_machine_info={"qubits_number":5, "layout_file":layout_file, "Instruction_Set":Inset}, mapping=True, gate_transform=True)
 #传入电路组以及物理机模拟结果，进入评分系统
 results = benchmark.evaluate(circuits_list, amp_results_list)
 ```
