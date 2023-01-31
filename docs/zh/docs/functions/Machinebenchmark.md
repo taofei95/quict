@@ -142,7 +142,7 @@ layout_file = Layout.load_file("./layout/grid_3x3.json")
 #传入指令集
 Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
 #传入物理机接口, 直接进入评分系统
-results = benchmark.run(simulator_interface=machine_interface，quantum_machine_info={"qubits_number":5, "layout_file":layout_file, "Instruction_Set":Inset}, mapping=True, gate_transform=True)
+results = benchmark.run(simulator_interface=machine_interface, quantum_machine_info={"qubits_number":5, "layout_file":layout_file, "Instruction_Set":Inset}, mapping=True, gate_transform=True)
 ```
 
 ### 用电路进行基准测试
