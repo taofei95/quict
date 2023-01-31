@@ -2,7 +2,7 @@
 
 酉矩阵分解 (Unitary Decomposition) 算法针对给定的酉矩阵返回对应的量子电路。应用这一方法原则上可以实现对量子态的任意可容许操作，但其电路规模和深度均较高，请斟酌使用。
 
-## 使用例
+## 代码实例
 
 此部分具体原理请参见对应的原论文。
 
@@ -19,4 +19,6 @@ gates, _ = UD.execute(mat)
 
 所得`gates`即对应于酉矩阵`mat`的量子电路，这里以`CompositeGate`的形式返回，以下给出了一个随机$SU(8)$矩阵对应的3-qubit量子电路。
 
+<figure markdown>
 ![合成电路](../../../assets/images/functions/QCDA/ud_0.png)
+</figure>

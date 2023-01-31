@@ -24,6 +24,8 @@ nav:
   - 工具: functions/tools.md
   - 量子物理机基准测试: functions/Machinebenchmark.md
 - 教程:
+  - 量子电路: tutorials/quantum_circuit.md
+  - QCDA: tutorials/QCDA.md
   - 算法:
     - 经典量子算法:
       - 格罗弗算法: tutorials/algorithm/quantum_algorithm/grover.md
@@ -34,13 +36,11 @@ nav:
       - 变分量子本征求解器: tutorials/algorithm/VQA/VQE.md
       - 量子近似优化算法: tutorials/algorithm/VQA/QAOA.md
       - 量子神经网络: tutorials/algorithm/VQA/QNN.md
-  - QCDA: tutorials/QCDA.md
-  - 量子电路: tutorials/quantum_circuit.md
 - API:
   - Algorithm:
     - Quantum Machine Learning:
       - QAOA: API_qaoa.md
-- QuICT平台基准测试: QuICTbenchmark.md
+- 基准测试: QuICTbenchmark.md
 - 贡献: contribution.md
     
 theme:
