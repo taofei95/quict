@@ -28,13 +28,13 @@
 
     - 四种特殊benchmark电路【高度并行化电路、高度串行化电路、高度纠缠电路、中间态测量电路】
 
-    - 若干种随机电路【aspen-4, ourense, rochester, sycamore, tokyo, ctrl_unitary, diag, single_bit, ctrl_diag, google, ibmq, ionq, ustc, nam, origin】
+    - 若干种随机电路【ctrl_unitary, diag, single_bit, ctrl_diag, google, ibmq, ionq, ustc, nam, origin】
 
 - 第二种
 
     - 四种特殊benchmark电路【高度并行化电路、高度串行化电路、高度纠缠电路、中间态测量电路】
 
-    - 若干种随机电路【aspen-4, ourense, rochester, sycamore, tokyo, ctrl_unitary, diag, single_bit, ctrl_diag, google, ibmq, ionq, ustc, nam, origin】
+    - 若干种随机电路【ctrl_unitary, diag, single_bit, ctrl_diag, google, ibmq, ionq, ustc, nam, origin】
 
     - 部分算法电路【adder, clifford, qft】
 
@@ -42,7 +42,7 @@
 
     - 四种特殊benchmark电路【高度并行化电路、高度串行化电路、高度纠缠电路、中间态测量电路】
     
-    - 五种随机电路【aspen-4, ourense, rochester, sycamore, tokyo, ctrl_unitary, diag, single_bit, ctrl_diag, google, ibmq, ionq, ustc, nam, origin】
+    - 五种随机电路【ctrl_unitary, diag, single_bit, ctrl_diag, google, ibmq, ionq, ustc, nam, origin】
     
     - 所有算法电路【adder, clifford, qft, grover, cnf, maxcut, qnn, quantum_walk, vqe】
 
