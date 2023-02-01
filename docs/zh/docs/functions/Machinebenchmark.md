@@ -66,7 +66,7 @@
 
 #### 对特殊基准电路进行指标值分析
 
-!!! note "特殊基准电路介绍"
+!!! note 特殊基准电路介绍
 
     - 高度并行化电路
         - 不同量子算法的结构允许不同程度的并行化，通过比较量子门数量，门数和电路深度的比率高度并行的应用将大量运算放入相对较小的电路深度中。
@@ -134,13 +134,17 @@ V_{Q} = 2^n
 
 #### 代码实例
 
-!!! tip
+!!! tip Attention!
 
     执行之前，请选择结果分析的存储路径，选择结构分析的类型（雷达图是默认生成的，需要选择Txt文本文件或者Excel表格），如果按照下述构建步骤操作，此库将位于当前目录下的benchmark文件夹下。
 
 具体代码实现如下：
-
 ``` python
+from QuICT.benchmark.benchmark import QuICTBenchmark
+from QuICT.core.layout.layout import Layout
+from QuICT.core.utils.gate_type import GateType
+from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
+
 #初始化
 benchmark = QuICTBenchmark(output_path="./benchmark", show_type="txt")
 # 传入拓扑结构
@@ -176,6 +180,11 @@ results = benchmark.run(simulator_interface=machine_interface, quantum_machine_i
 具体代码实现如下：
 
 ``` python
+from QuICT.benchmark.benchmark import QuICTBenchmark
+from QuICT.core.layout.layout import Layout
+from QuICT.core.utils.gate_type import GateType
+from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
+
 #初始化
 benchmark = QuICTBenchmark(output_path="./benchmark", show_type="txt")
 # 传入拓扑结构
