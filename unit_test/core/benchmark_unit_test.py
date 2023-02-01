@@ -17,22 +17,6 @@ class TestBenchmark(unittest.TestCase):
     def tearDownClass(cls) -> None:
         print("The QuICT benchmark unit test finished!")
 
-    def test_qcda_choice(self):
-        layout = Layout.load_file(os.path.dirname(os.path.abspath(__file__)) + "/../../example/layout/grid_3x3.json")
-        Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
-
-        # no mapping and no gate transform
-        QuICTBenchmark().get_circuits(quantum_machine_info={"qubits_number": 2})
-        assert True
-
-        # mapping and gate transform
-        QuICTBenchmark().get_circuits(
-            quantum_machine_info={"qubits_number": 2, "layout_file": layout, "Instruction_Set": Inset},
-            mapping=True,
-            gate_transform=True
-        )
-        assert True
-
     def test_validate_circuits(self):
         benchmark = QuICTBenchmark()
         circuits_list = benchmark.get_circuits(quantum_machine_info={"qubits_number": 5})
@@ -50,8 +34,15 @@ class TestBenchmark(unittest.TestCase):
         assert circuits_list[5].name == valid_circuits_list[5]
 
     def test_circuits_number(self):
+        layout = Layout.load_file(os.path.dirname(os.path.abspath(__file__)) + "/../../example/layout/grid_3x3.json")
+        Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
+
         benchmark = QuICTBenchmark()
-        circuits_list = benchmark.get_circuits(quantum_machine_info={"qubits_number": 5})
+        circuits_list = benchmark.get_circuits(
+            quantum_machine_info={"qubits_number": 5, "layout_file": layout, "Instruction_Set": Inset},
+            mapping=True,
+            gate_transform=True
+        )
         assert len(circuits_list) == 296
 
         circuits_list = benchmark.get_circuits(quantum_machine_info={"qubits_number": 10})

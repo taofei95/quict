@@ -25,7 +25,7 @@ def simulation(circuit):
     return sim_results
 
 
-def Step_benchmark():
+def step_benchmark():
     # First method: Initialize -> Get the circuits -> Results Analysis.
 
     # Step1: initialize QuICTBenchmark.
@@ -58,7 +58,7 @@ def Step_benchmark():
     print(os.listdir("./benchmark"))
 
 
-def Run():
+def run():
     # Second method: Initialize -> Connect physical machines to perform benchmarks.
 
     # Step1: initialize QuICTBenchmark.
@@ -80,5 +80,4 @@ def Run():
 
 
 if __name__ == "__main__":
-    Step_benchmark()
-    Run()
+    step_benchmark()
