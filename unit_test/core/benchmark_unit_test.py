@@ -27,8 +27,8 @@ class TestBenchmark(unittest.TestCase):
             sim_results = simulator.run(circuit)
             amp_results_list.append(sim_results)
 
-        entropy_VQ_score = benchmark._entropy_VQ_score(circuits_list, amp_results_list)
-        valid_circuits_list = benchmark._filter_system(entropy_VQ_score)
+        entropy_QV_score = benchmark._entropy_QV_score(circuits_list, amp_results_list)
+        valid_circuits_list = benchmark._filter_system(entropy_QV_score)
 
         assert len(circuits_list) == len(valid_circuits_list)
         assert circuits_list[5].name == valid_circuits_list[5]

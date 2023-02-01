@@ -202,26 +202,26 @@ class QuICTBenchmark:
             Return the analysis of benchmarking.
         """
         # Step 1: Entropy measures the difference between the physical machine
-        entropy_VQ_score = self._entropy_VQ_score(circuits_list, amp_results_list)
+        entropy_QV_score = self._entropy_QV_score(circuits_list, amp_results_list)
 
         # Step 2: Filter according to certain conditions to obtain valid circuits.
-        valid_circuits_list = self._filter_system(entropy_VQ_score)
+        valid_circuits_list = self._filter_system(entropy_QV_score)
         if valid_circuits_list == []:
             print("There is no valid circuit, please select again !")
 
         # Step 3: It is a score for the special benchmark circuit index value and the quantum volume of all circuits.
-        eigenvalue_VQ_score = self._eigenvalue_VQ_score(valid_circuits_list)
+        eigenvalue_QV_score = self._eigenvalue_QV_score(valid_circuits_list)
 
         # Step 4: Data analysis
-        self.show_result(entropy_VQ_score, eigenvalue_VQ_score, valid_circuits_list)
+        self.show_result(entropy_QV_score, eigenvalue_QV_score, valid_circuits_list)
 
-    def _entropy_VQ_score(self, circuit_list, amp_results_list):
+    def _entropy_QV_score(self, circuit_list, amp_results_list):
         def normalization(data):
             data = np.array(data)
             data = data / np.sum(data)
             return data
         # Step 1: simulate circuit by QuICT simulator
-        entropy_VQ_score = []
+        entropy_QV_score = []
         for index in range(len(circuit_list)):
             if self._device == "CPU":
                 sim_result = self.simulator.run(circuit_list[index])
@@ -239,33 +239,33 @@ class QuICTBenchmark:
             entropy_score = self._entropy_cal(entropy_value)
 
             circuit_info = re.findall(r"\d+", circuit_list[index].name)
-            VQ_value = min(int(circuit_info[0]), int(circuit_info[2]))
+            QV_value = min(int(circuit_info[0]), int(circuit_info[2]))
 
             # Step 3: return entropy values and quantum volumn values
-            entropy_VQ_score.append([circuit_list[index].name, entropy_value, entropy_score, VQ_value])
+            entropy_QV_score.append([circuit_list[index].name, entropy_value, entropy_score, QV_value])
 
-        return entropy_VQ_score
+        return entropy_QV_score
 
-    def _eigenvalue_VQ_score(self, valid_circuits_list):
-        eigenvalue_VQ_score = []
+    def _eigenvalue_QV_score(self, valid_circuits_list):
+        eigenvalue_QV_score = []
         for i in range(len(valid_circuits_list)):
             field = valid_circuits_list[i].split("+")[-2]
             cir_attribute = re.findall(r"\d+", valid_circuits_list[i])
-            VQ = min(int(cir_attribute[0]), int(cir_attribute[2]))
+            QV = min(int(cir_attribute[0]), int(cir_attribute[2]))
             if field == "highly_parallelized":
-                P = abs((int(cir_attribute[1]) / int(cir_attribute[2]) - 1) / (int(cir_attribute[0]) - 1) * VQ)
-                eigenvalue_VQ_score.append([valid_circuits_list[i], P])
+                P = abs((int(cir_attribute[1]) / int(cir_attribute[2]) - 1) / (int(cir_attribute[0]) - 1) * QV)
+                eigenvalue_QV_score.append([valid_circuits_list[i], P])
             elif field == "mediate_measure":
-                M = (int(cir_attribute[3]) / int(cir_attribute[2])) * VQ
-                eigenvalue_VQ_score.append([valid_circuits_list[i], M])
+                M = (int(cir_attribute[3]) / int(cir_attribute[2])) * QV
+                eigenvalue_QV_score.append([valid_circuits_list[i], M])
             elif field == "highly_entangled":
-                E = (1 - int(cir_attribute[3]) / int(cir_attribute[1])) * VQ
-                eigenvalue_VQ_score.append([valid_circuits_list[i], E])
+                E = (1 - int(cir_attribute[3]) / int(cir_attribute[1])) * QV
+                eigenvalue_QV_score.append([valid_circuits_list[i], E])
             elif field == "highly_serialized":
-                S = (1 - int(cir_attribute[3]) / int(cir_attribute[1])) * VQ
-                eigenvalue_VQ_score.append([valid_circuits_list[i], S])
+                S = (1 - int(cir_attribute[3]) / int(cir_attribute[1])) * QV
+                eigenvalue_QV_score.append([valid_circuits_list[i], S])
 
-        return eigenvalue_VQ_score
+        return eigenvalue_QV_score
 
     def _kl_cal(self, p, q):
         # calculate KL
@@ -291,51 +291,51 @@ class QuICTBenchmark:
         counts = round((1 - entropy_value) * 100, 2)
         return counts
 
-    def _filter_system(self, entropy_VQ_score):
+    def _filter_system(self, entropy_QV_score):
         valid_circuits_list = []
-        for i in range(len(entropy_VQ_score)):
-            if entropy_VQ_score[i][2] >= round(2 / 3 * 100, 3):
-                valid_circuits_list.append(entropy_VQ_score[i][0])
+        for i in range(len(entropy_QV_score)):
+            if entropy_QV_score[i][2] >= round(2 / 3 * 100, 3):
+                valid_circuits_list.append(entropy_QV_score[i][0])
         return valid_circuits_list
 
-    def show_result(self, entropy_VQ_score, eigenvalue_VQ_score, valid_circuits_list):
+    def show_result(self, entropy_QV_score, eigenvalue_QV_score, valid_circuits_list):
         """ show benchmark result. """
-        if len(eigenvalue_VQ_score) > 0:
-            self._graph_show(entropy_VQ_score, eigenvalue_VQ_score, valid_circuits_list)
+        if len(eigenvalue_QV_score) > 0:
+            self._graph_show(entropy_QV_score, eigenvalue_QV_score, valid_circuits_list)
 
         if self._output_file_type == "txt":
-            self._txt_show(entropy_VQ_score)
+            self._txt_show(entropy_QV_score)
         else:
-            self._excel_show(entropy_VQ_score)
+            self._excel_show(entropy_QV_score)
 
-    def _graph_show(self, entropy_VQ_score, eigenvalue_VQ_score, valid_circuits_list):
+    def _graph_show(self, entropy_QV_score, eigenvalue_QV_score, valid_circuits_list):
         plt.rcParams['axes.unicode_minus'] = False
         plt.style.use('ggplot')
         ################################ based circuits benchmark #####################################
         # Construct the data
-        feature_name = ['parallelized', 'entangled', 'serialized', 'measure', 'VQ']
+        feature_name = ['parallelized', 'entangled', 'serialized', 'measure', 'QV']
 
-        P, E, S, M, VQ, values, feature = [], [], [], [], [], [], []
-        for i in range(len(eigenvalue_VQ_score)):
-            field = eigenvalue_VQ_score[i][0].split("+")[-2]
+        P, E, S, M, QV, values, feature = [], [], [], [], [], [], []
+        for i in range(len(eigenvalue_QV_score)):
+            field = eigenvalue_QV_score[i][0].split("+")[-2]
             if field == "highly_parallelized":
-                P.append(eigenvalue_VQ_score[i][1])
+                P.append(eigenvalue_QV_score[i][1])
             elif field == "highly_serialized":
-                S.append(eigenvalue_VQ_score[i][1])
+                S.append(eigenvalue_QV_score[i][1])
             elif field == "highly_entangled":
-                E.append(eigenvalue_VQ_score[i][1])
+                E.append(eigenvalue_QV_score[i][1])
             elif field == "mediate_measure":
-                M.append(eigenvalue_VQ_score[i][1])
+                M.append(eigenvalue_QV_score[i][1])
 
-        for j in range(len(entropy_VQ_score)):
-            field_random = entropy_VQ_score[j][0].split("+")[-3]
+        for j in range(len(entropy_QV_score)):
+            field_random = entropy_QV_score[j][0].split("+")[-3]
             if field_random == "random":
-                VQ.append(float(entropy_VQ_score[j][3]))
+                QV.append(float(entropy_QV_score[j][3]))
 
-        for x in [P, E, S, M, VQ]:
+        for x in [P, E, S, M, QV]:
             if len(x) > 0:
                 values.append(max(x))
-                feature.append(feature_name[[P, E, S, M, VQ].index(x)])
+                feature.append(feature_name[[P, E, S, M, QV].index(x)])
         N = len(values)
 
         # Sets the angle of the radar chart to bisect a plane
@@ -366,17 +366,17 @@ class QuICTBenchmark:
             field = valid_circuits_list[i].split("+")[-2]
             if field in field_list:
                 cir_attribute = re.findall(r"\d+", valid_circuits_list[i])
-                VQ = min(int(cir_attribute[0]), int(cir_attribute[2]))
-                value_list.append([field, VQ])
+                QV = min(int(cir_attribute[0]), int(cir_attribute[2]))
+                value_list.append([field, QV])
         if len(value_list) > 0:
-            field_VQ_map = defaultdict(list)
-            for field, VQ in value_list:
-                field_VQ_map[field].append(VQ)
+            field_QV_map = defaultdict(list)
+            for field, QV in value_list:
+                field_QV_map[field].append(QV)
                 feature.append(field)
             feature_1 = list(set(feature))
             feature_1.sort(key=feature.index)
             for value in feature_1:
-                values_2.append(max(field_VQ_map[value]))
+                values_2.append(max(field_QV_map[value]))
             # Sets the angle of the radar chart to bisect a plane
             N = len(values_2)
             angles = np.linspace(0, 2 * np.pi, N, endpoint=False)
@@ -397,35 +397,35 @@ class QuICTBenchmark:
         plt.savefig(self._output_path + "/benchmark_radar_chart_show.jpg")
         plt.show()
 
-    def _txt_show(self, entropy_VQ_score):
+    def _txt_show(self, entropy_QV_score):
         result_file = open(self._output_path + '/benchmark_txt_show.txt', mode='w+', encoding='utf-8')
         tb = pt.PrettyTable()
         tb.field_names = [
-            'field', 'circuit width', 'circuit size', 'circuit depth', 'entropy value', 'entropy score', 'VQ value'
+            'field', 'circuit width', 'circuit size', 'circuit depth', 'entropy value', 'entropy score', 'QV value'
         ]
-        for i in range(len(entropy_VQ_score)):
-            field = entropy_VQ_score[i][0].split("+")[-2]
-            cir_attribute = re.findall(r"\d+", entropy_VQ_score[i][0])
+        for i in range(len(entropy_QV_score)):
+            field = entropy_QV_score[i][0].split("+")[-2]
+            cir_attribute = re.findall(r"\d+", entropy_QV_score[i][0])
             tb.add_row([
-                field, cir_attribute[0], cir_attribute[1], cir_attribute[2], entropy_VQ_score[i][1],
-                entropy_VQ_score[i][2], entropy_VQ_score[i][3]
+                field, cir_attribute[0], cir_attribute[1], cir_attribute[2], entropy_QV_score[i][1],
+                entropy_QV_score[i][2], entropy_QV_score[i][3]
             ])
         result_file.write(str(tb))
         result_file.close()
 
-    def _excel_show(self, entropy_VQ_score):
+    def _excel_show(self, entropy_QV_score):
         dfData_list = []
-        for i in range(len(entropy_VQ_score)):
-            field = entropy_VQ_score[i][0].split("+")[-2]
-            cir_attribute = re.findall(r"\d+", entropy_VQ_score[i][0])
+        for i in range(len(entropy_QV_score)):
+            field = entropy_QV_score[i][0].split("+")[-2]
+            cir_attribute = re.findall(r"\d+", entropy_QV_score[i][0])
             dfData = {
                 'field': field,
                 'circuit width': cir_attribute[0],
                 'circuit size': cir_attribute[1],
                 'circuit depth': cir_attribute[2],
-                'entropy value': entropy_VQ_score[i][1],
-                'entropy score': entropy_VQ_score[i][2],
-                'VQ value': entropy_VQ_score[i][3]
+                'entropy value': entropy_QV_score[i][1],
+                'entropy score': entropy_QV_score[i][2],
+                'QV value': entropy_QV_score[i][3]
             }
             dfData_list.append(dfData)
 
