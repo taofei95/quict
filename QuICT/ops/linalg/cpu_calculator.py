@@ -161,27 +161,24 @@ def matrix_dot_vector(
     """
     # Deal with special case when matrix's qubit == vector's qubit
     if mat_bit == vec_bit:
-        return np.dot(mat, vec)
+        return dot(mat, vec)
 
     repeat = 1 << (vec_bit - mat_bit)
     arg_len = 1 << mat_bit
     sorted_args = mat_args.copy()
     sorted_args = np.sort(sorted_args)
-    aux = np.zeros_like(vec)
-    for i in range(repeat):
+    for i in prange(repeat):
         for sarg_idx in range(mat_bit):
             less = i & ((1 << sorted_args[sarg_idx]) - 1)
-            i = i >> sorted_args[sarg_idx] << (sorted_args[sarg_idx] + 1) + less
+            i = (i >> sorted_args[sarg_idx] << (sorted_args[sarg_idx] + 1)) + less
 
         indexes = np.array([i] * arg_len, dtype=np.int32)
-        for i in range(1, arg_len, 1):
+        for ii in prange(1, arg_len):
             for j in range(mat_bit):
-                if i & (1 << j):
-                    indexes[i] += 1 << mat_args[j]
+                if ii & (1 << j):
+                    indexes[ii] += 1 << mat_args[j]
 
-        aux[indexes] = dot(mat, vec[indexes])
-
-    return aux
+        vec[indexes] = dot(mat, vec[indexes])
 
 
 @njit()
