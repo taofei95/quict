@@ -1,9 +1,8 @@
 import os
-import numpy as np
 
+from QuICT.benchmark.benchmark import QuICTBenchmark
 from QuICT.core.layout.layout import Layout
 from QuICT.core.utils.gate_type import GateType
-from QuICT.benchmark.benchmark import QuICTBenchmark
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 from QuICT.simulation.state_vector.cpu_simulator.cpu import CircuitSimulator
 
@@ -26,7 +25,7 @@ def simulation(circuit):
     return sim_results
 
 
-def benchmark():
+def Step_benchmark():
     # First method: Initialize -> Get the circuits -> Results Analysis.
 
     # Step1: initialize QuICTBenchmark.
@@ -35,8 +34,9 @@ def benchmark():
         output_path="./benchmark",    # The path of the Analysis of the results.
         output_file_type="txt"        # The type of the Analysis of the results.
     )
-    # Step2: Get the circuits.
-    cirs = benchmark.get_circuits(
+
+    # Step2: Get the circuits group.
+    circuits_list = benchmark.get_circuits(
         quantum_machine_info={"qubits_number": 3, "layout_file": layout, "Instruction_Set": Inset},
         # The sub-physical machine properties to be measured.
         # qubits_number is The number of physical machine bits, layout_file is Physical machine topology,
@@ -45,9 +45,30 @@ def benchmark():
         mapping=True,         # Mapping according to the physical machine topology or not.
         gate_transform=True   # Gate transform according to the physical machine Instruction Set or not.
     )
-    print(len(cirs))
+    print(len(circuits_list))
 
+    # Here the sub-physical machine to be measured is simulated.
+    amp_results_list = []
+    for circuit in circuits_list:
+        amp_results_list.append(simulation(circuit))
+
+    # Step3: Enter the evalute system
+    benchmark.evaluate(circuits_list, amp_results_list)
+
+    print(os.listdir("./benchmark"))
+
+
+def Run():
     # Second method: Initialize -> Connect physical machines to perform benchmarks.
+
+    # Step1: initialize QuICTBenchmark.
+    benchmark = QuICTBenchmark(
+        device="CPU",                 # choose simulation device, one of [CPU, GPU]
+        output_path="./benchmark",    # The path of the Analysis of the results.
+        output_file_type="txt"        # The type of the Analysis of the results.
+    )
+
+    # Step2: Connect physical machines to perform benchmarking.
     benchmark.run(
         simulator_interface=simulation,  # Perform simulation of amplitude for each circuit.
         quantum_machine_info={"qubits_number": 3, "layout_file": layout, "Instruction_Set": Inset},
@@ -59,4 +80,5 @@ def benchmark():
 
 
 if __name__ == "__main__":
-    benchmark()
+    Step_benchmark()
+    Run()

@@ -53,8 +53,7 @@ class QuICTBenchmark:
             circuits = CircuitLib().get_benchmark_circuit(str(field), qubits_interval=qubit_num)
             based_circuits_list.extend(circuits)
         alg_fields_list = [
-            "aspen-4", "ourense", "rochester", "sycamore", "tokyo", "ctrl_unitary", "diag",
-            "single_bit", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"
+            "ctrl_unitary", "diag", "single_bit", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"
         ]
         random_fields_list = random.sample(alg_fields_list, 5)
         for field in random_fields_list:
@@ -353,7 +352,7 @@ class QuICTBenchmark:
         ax1.fill(angles, values, 'r', alpha=0.5)
 
         ax1.set_thetagrids(angles * 180 / np.pi, feature)
-        ax1.set_ylim(0, np.floor(values.max()) + 1)
+        ax1.set_ylim(0, np.floor(values.max()) + 0.5)
 
         plt.tick_params(labelsize=12)
         plt.title('based circuits benchmark radar chart show')
@@ -389,7 +388,7 @@ class QuICTBenchmark:
             ax2.plot(angles, values_2, 'c-', linewidth=2)
             ax2.fill(angles, values_2, 'b', alpha=0.5)
             ax2.set_thetagrids(angles * 180 / np.pi, feature_1)
-            ax2.set_ylim(0, np.floor(values_2.max()) + 1)
+            ax2.set_ylim(0, np.floor(values_2.max()) + 0.5)
 
             plt.tick_params(labelsize=12)
             plt.title('algorithmic circuits benchmark radar chart show')
