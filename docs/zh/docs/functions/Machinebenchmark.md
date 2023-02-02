@@ -147,7 +147,7 @@ from QuICT.core.utils.gate_type import GateType
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 
 #初始化
-benchmark = QuICTBenchmark(output_path="./benchmark", show_type="txt")
+benchmark = QuICTBenchmark(device="CPU", output_path="./benchmark", output_file_type="txt")
 # 传入拓扑结构
 layout_file = Layout.load_file("./layout/grid_3x3.json")
 #传入指令集
@@ -187,7 +187,7 @@ from QuICT.core.utils.gate_type import GateType
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 
 #初始化
-benchmark = QuICTBenchmark(output_path="./benchmark", show_type="txt")
+benchmark = QuICTBenchmark(device="CPU", output_path="./benchmark", output_file_type="txt")
 # 传入拓扑结构
 layout_file = Layout.load_file("./layout/grid_3x3.json")
 #传入指令集
