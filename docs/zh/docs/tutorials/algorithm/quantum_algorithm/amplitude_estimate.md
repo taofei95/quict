@@ -1,4 +1,4 @@
-# QAE算法
+# 量子振幅估计算法（Quantum Amplitude Estimation Algorithm, QAE）
 
 ## 概要
 

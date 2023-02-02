@@ -293,8 +293,12 @@ set_seed(SEED)  # 设置全局随机种子
 ``` python
 train_dataset = data.TensorDataset(train_X, train_Y)
 test_dataset = data.TensorDataset(test_X, test_Y)
-train_loader = data.DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
-test_loader = data.DataLoader(dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True)
+train_loader = data.DataLoader(
+    dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True
+)
+test_loader = data.DataLoader(
+    dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True
+)
 ```
 
 定义待训练的QNN网络和经典优化器：
@@ -318,7 +322,6 @@ def loss_func(y_true, y_pred):
 开始训练：
 
 ``` python
-
 # train epoch
 for ep in range(EPOCH):
     net.train()
@@ -360,20 +363,18 @@ for ep in range(EPOCH):
     avg_loss = np.mean(loss_val_list)
     avg_acc = total_correct / (len(loader_val) * BATCH_SIZE)
     print("Validation Average Loss: {}, Accuracy: {}".format(avg_loss, avg_acc))
-
-
 ```
 
 ```
-Training epoch 1: 100%|██████████| 323/323 [33:47<00:00,  6.28s/it, accuracy=0.812, it=322, loss=0.570]
-Validating epoch 1: 100%|██████████| 56/56 [05:47<00:00,  6.20s/it, accuracy=0.781, it=55, loss=0.611]
-Validation Average Loss: 0.5802477598190308, Accuracy: 0.8337053571428571
-Training epoch 2: 100%|██████████| 323/323 [33:27<00:00,  6.21s/it, accuracy=0.938, it=322, loss=0.417]
-Validating epoch 2: 100%|██████████| 56/56 [05:31<00:00,  5.91s/it, accuracy=0.781, it=55, loss=0.518]
-Validation Average Loss: 0.43216872215270996, Accuracy: 0.8325892857142857
-Training epoch 3: 100%|██████████| 323/323 [32:50<00:00,  6.10s/it, accuracy=0.781, it=322, loss=0.506]
-Validating epoch 3: 100%|██████████| 56/56 [05:54<00:00,  6.33s/it, accuracy=0.844, it=55, loss=0.426]
-Validation Average Loss: 0.39801928400993347, Accuracy: 0.8348214285714286
+Training epoch 1: 100%|██████████| 323/323 [29:21<00:00,  5.45s/it, accuracy=0.906, it=322, loss=0.543]
+Validating epoch 1: 100%|██████████| 56/56 [05:00<00:00,  5.37s/it, accuracy=0.750, it=55, loss=0.724]
+Validation Average Loss: 0.5847752690315247, Accuracy: 0.8448660714285714
+Training epoch 2: 100%|██████████| 323/323 [29:30<00:00,  5.48s/it, accuracy=0.812, it=322, loss=0.469]
+Validating epoch 2: 100%|██████████| 56/56 [05:01<00:00,  5.38s/it, accuracy=0.844, it=55, loss=0.446]
+Validation Average Loss: 0.4316808879375458, Accuracy: 0.8325892857142857
+Training epoch 3: 100%|██████████| 323/323 [29:10<00:00,  5.42s/it, accuracy=0.938, it=322, loss=0.370]
+Validating epoch 3: 100%|██████████| 56/56 [05:07<00:00,  5.49s/it, accuracy=0.781, it=55, loss=0.472]
+Validation Average Loss: 0.3986954092979431, Accuracy: 0.8364955357142857
 ```
 
 ### 3. 用QuICT提供的模型进行测试
@@ -403,8 +404,8 @@ print("Testing Average Accuracy: {}".format(qnn_avg_acc))
 ```
 
 ```
-Testing: 100%|██████████| 56/56 [05:39<00:00,  6.07s/it, correct=True, it=55, loss=0.595]
-Testing Average Accuracy: 0.8348214285714286
+Testing: 100%|██████████| 56/56 [05:39<00:00,  6.07s/it, correct=True, it=55, loss=0.310]
+Testing Average Accuracy: 0.8364955357142857
 ```
 
 ## 与经典卷积神经网络对比
