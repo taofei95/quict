@@ -269,6 +269,9 @@ class QuICTBenchmark:
 
     def _kl_cal(self, p, q):
         # calculate KL
+        delta = 1e-7
+        p += delta
+        q += delta
         KL_divergence = 0.5 * scipy.stats.entropy(p, q) + 0.5 * scipy.stats.entropy(q, p)
         return KL_divergence
 
@@ -276,7 +279,9 @@ class QuICTBenchmark:
         # calculate cross E
         sum = 0.0
         delta = 1e-7
-        for x in map(lambda y, p: (1 - y) * math.log(1 - p + delta) + y * math.log(p + delta), p, q):
+        p += delta
+        q += delta
+        for x in map(lambda y, p: (1 - y) * math.log(1 - p) + y * math.log(p), p, q):
             sum += x
         cross_entropy = -sum / len(p)
         return cross_entropy
@@ -284,7 +289,9 @@ class QuICTBenchmark:
     def _l2_cal(self, p, q):
         # calculate L2
         delta = 1e-7
-        L2_loss = np.sum(np.square(p + delta - q + delta))
+        p += delta
+        q += delta
+        L2_loss = np.sum(np.square(p- q))
         return L2_loss
 
     def _entropy_cal(self, entropy_value):
