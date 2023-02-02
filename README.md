@@ -19,22 +19,33 @@ QuICT (Quantum Computer of Institute of Computing Technology)是一个开源量�
 - UI：http://49.235.108.172:8080/
 
 ## How to Install QuICT
+
 ### Install from Pypi
 ```
 pip install quict
 ```
 
-### Install from Source
+### Build from Source
+
 - Prerequisites
   - C++ Compiler
     - Windows: [Installing Clang/LLVM for use with Visual Studio](https://devblogs.microsoft.com/cppblog/clang-llvm-support-in-visual-studio/)
 
     - Linux: `clang/LLVM`
     ```sh
-    sudo apt install build-essential libtbb2 libtbb-dev clang llvm python3 python3-setuptools python3-numpy python3-scipy
-    # if you handle python parts in another way, just install
-    sudo apt install build-essential libtbb2 libtbb-dev clang llvm.
+    sudo apt install build-essential clang llvm
     ```
+
+  - GPU environment required
+    - Cupy: [Installing Cupy](https://docs.cupy.dev/en/stable/install.html)
+    ```sh
+    nvcc -V     # 获得cuda版本号
+
+    pip install cupy-cuda[*]      # 根据cuda版本号进行安装
+    ```
+
+  - Quantum Machine Learning required
+    - PyTorch: [Installing PyTorch](https://pytorch.org/get-started/locally/)
 
 - Clone QuICT from Gitee
     ```sh
@@ -43,24 +54,21 @@ pip install quict
     ```
 
 - For Ubuntu \
-Following commands would build QuICT and install it system-wide. You might need "sudo" privileges to install QuICT into system python package path.
+Python venv is recommended. Installing packages system-wide may lead permission errors. Following commands would build QuICT and install it. If you are facing permission errors when installing, try venv instead or append `--user` flag for `install.sh`.
 
     > Due to some missing features in low version GCC (<=11), current QuICT is recommended to be built with clang. In future versions, GCC will be supported.
     ```sh
     export CC=clang && export CXX=clang++ && ./build.sh && ./install.sh
 
-    # If you are encountered with permission issues during installing, try
+    # If you encounter with permission issues during installing, try
     export CC=clang && export CXX=clang++ && ./build.sh && ./install.sh --user
     ```
 
 - For Windows \
-It is recommended to use clang-cl.exe, which is the clang compiler with MSVC CLI. Other compilers may work but not tested. Open "Developer PowerShell for VS", changing the working directory to QuICT repository root. Then build with following commands:
+It is recommended to use clang-cl.exe, which is the clang compiler with MSVC CLI. Other compilers may work but not tested. Enable PowerShell script execution in Windows. And open PowerShell, then build with following commands:
 
     ```powershell
-    $ENV:CC="clang-cl.exe"
-    $ENV:CXX="clang-cl.exe"
-    $ENV:ComSpec="powershell.exe"
-    python3 .\setup.py bdist_wheel
+    .\build.ps1
     ```
 
 - In case that you have a favor over Docker
@@ -70,14 +78,7 @@ It is recommended to use clang-cl.exe, which is the clang compiler with MSVC CLI
     ```
 
 - Using Command Line Interface
-    > please run following command firstly.
-    ```python
-    from QuICT.tools.cli import JobCreator, shortcut_for_quict
-
-    shortcut_for_quict()
-    ```
-
-    > how to using QuICT CLI
+    > please pip install quict firstly.
     ```sh
     quict --help
     ```

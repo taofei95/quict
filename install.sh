@@ -15,6 +15,6 @@ print_magenta() {
 
 prj_root="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-cd $prj_root && pip install ./dist/QuICT*.whl "$@"
+cd $prj_root && pip install ./dist/quict*.whl "$@"
 
 print_magenta "Done."

@@ -10,7 +10,6 @@ from typing import List, Optional
 from QuICT.core.layout import Layout
 from QuICT.core.gate import *
 from QuICT.core.circuit import Circuit
-from QuICT.qcda.utility import OutputAligner
 
 
 class DAGNode:
@@ -64,7 +63,6 @@ class SABREMapping:
         self.phy2logic = None
         self.logic2phy = None
 
-    @OutputAligner()
     def execute(
         self,
         circuit: Union[Circuit, CompositeGate],
@@ -274,6 +272,7 @@ class SABREMapping:
                 exe_gates.append((Swap & ([theSwap.u, theSwap.v])))
                 decay[p2l[theSwap.u]] += decay_parameter
                 decay[p2l[theSwap.v]] += decay_parameter
+
         circuit = Circuit(len(l2p))
         for g in exe_gates:
             g | circuit

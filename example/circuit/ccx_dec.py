@@ -1,6 +1,5 @@
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import CircuitSimulator
 
 
 # Build quantum circuit
@@ -36,8 +35,4 @@ X        | circuit(1)
 H        | circuit(2)
 H        | circuit(1)
 
-# Simulate the quantum circuit by state vector simulator
-simulator = CircuitSimulator()
-amplitude = simulator.run(circuit=circuit)
-
-print(amplitude)
+circuit.draw(filename="ccx_dec")
