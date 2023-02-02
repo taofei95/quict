@@ -49,11 +49,11 @@ class TestGPUSimulator(unittest.TestCase):
         assert np.allclose(u["data"]["state_vector"], TestGPUSimulator.sv_data_single, atol=1e-6)
 
     def test_state_vector(self):
-        sim = StateVectorSimulator("double")
+        sim = StateVectorSimulator("GPU", "double")
         SV = sim.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(SV, TestGPUSimulator.sv_data)
 
-        sim = StateVectorSimulator("single")
+        sim = StateVectorSimulator("GPU", "single")
         SV = sim.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(SV, TestGPUSimulator.sv_data_single, atol=1e-6)
 
@@ -61,7 +61,7 @@ class TestGPUSimulator(unittest.TestCase):
         sv = sv_sim.run(deepcopy(TestGPUSimulator.circuit))
         assert np.allclose(sv["data"]["state_vector"], TestGPUSimulator.sv_data)
 
-        sv_sim = Simulator(device="GPU", precision="single")
+        sv_sim = Simulator(device="GPU", precision="single", matrix_aggregation=False, gpu_device_id=2)
         sv = sv_sim.run(deepcopy(TestGPUSimulator.circuit))
         assert np.allclose(sv["data"]["state_vector"], TestGPUSimulator.sv_data_single, atol=1e-6)
 
@@ -83,19 +83,19 @@ class TestGPUSimulator(unittest.TestCase):
         assert np.allclose(dm["data"]["density_matrix"], TestGPUSimulator.dm_data_single, atol=1e-6)
 
     def test_matrix_aggregation(self):
-        t = StateVectorSimulator(matrix_aggregation=True)
+        t = StateVectorSimulator(device="GPU", matrix_aggregation=True)
         T = t.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(T, TestGPUSimulator.sv_data)
 
-        t = StateVectorSimulator(matrix_aggregation=True, precision="single")
+        t = StateVectorSimulator(device="GPU", matrix_aggregation=True, precision="single")
         T = t.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(T, TestGPUSimulator.sv_data_single, atol=1e-6)
 
-        f = StateVectorSimulator(matrix_aggregation=False)
+        f = StateVectorSimulator(device="GPU", matrix_aggregation=False)
         F = f.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(F, TestGPUSimulator.sv_data)
 
-        f = StateVectorSimulator(matrix_aggregation=False, precision="single")
+        f = StateVectorSimulator(device="GPU", matrix_aggregation=False, precision="single")
         F = f.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(F, TestGPUSimulator.sv_data_single, atol=1e-6)
 

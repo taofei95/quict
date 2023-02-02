@@ -12,7 +12,6 @@ PRJ_ROOT_RELATIVE = "." if getcwd() == PY_FILE_PATH else ".."
 # static file
 file_data = [
     ("QuICT/lib/qasm/libs", [f"{PRJ_ROOT_RELATIVE}/QuICT/lib/qasm/libs/qelib1.inc"]),
-    ("QuICT/simulation/utils", [f"{PRJ_ROOT_RELATIVE}/QuICT/simulation/utils/simulator_parameters.json"]),
     ("QuICT/tools/cli/template", [f"{PRJ_ROOT_RELATIVE}/QuICT/tools/cli/template/quict_job.yml"]),
     ("QuICT/lib/circuitlib", [f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/circuit_library.db"]),
     ("QuICT/lib/circuitlib/template", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/template/*")),

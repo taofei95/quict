@@ -512,7 +512,9 @@ class Circuit(CircuitBased):
         qubits = len(self.qubits)
         supremacy_layout = SupremacyLayout(qubits)
         supremacy_typelist = [GateType.sx, GateType.sy, GateType.sw]
-        self._logger.debug(f"Append Supremacy Circuit with mapping pattern sequence {pattern} and repeat {repeat} times.")
+        self._logger.debug(
+            f"Append Supremacy Circuit with mapping pattern sequence {pattern} and repeat {repeat} times."
+        )
 
         self._add_gate_to_all_qubits(H)
 

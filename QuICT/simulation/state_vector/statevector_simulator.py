@@ -80,7 +80,7 @@ class StateVectorSimulator:
         self._device = device
         self._precision = np.complex128 if precision == "double" else np.complex64
         self._device_id = gpu_device_id
-        
+
         if self._device == "GPU":
             import cupy as cp
 
@@ -148,7 +148,7 @@ class StateVectorSimulator:
                 StateVectorUnmatchedError("The state vector should has the same qubits with the circuit.")
             self.vector = self._array_helper.array(state_vector, dtype=self._precision)
         elif not use_previous:
-            self.initial_state_vector()            
+            self.initial_state_vector()
 
         idx = 0
         while idx < len(self._pipeline):
