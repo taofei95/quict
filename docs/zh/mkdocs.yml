@@ -40,7 +40,11 @@ nav:
   - Algorithm:
     - Quantum Machine Learning:
       - QAOA: API_qaoa.md
-- 基准测试: QuICTbenchmark.md
+- 基准测试:
+  - 简介: QuICTbenchmark/QuICTbenchmark.md
+  - 模拟基准测试: QuICTbenchmark/simulation_benchmark.md
+  - 算法基准测试: QuICTbenchmark/algorithm_benchmark.md
+  - QCDA基准测试: QuICTbenchmark/qcda_benchmark.md
 - 贡献: contribution.md
     
 theme:
