@@ -8,6 +8,7 @@ from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.utils import apply_gate
 from QuICT.core.gate import *
 from QuICT.ops.utils import LinAlgLoader
+from QuICT.tools.exception.algorithm import *
 
 
 class Ansatz:
@@ -105,10 +106,15 @@ class Ansatz:
             act_bits (Union[int, list], optional): The targets the gate acts on.
                 Defaults to None, which means the gate will act on each qubit of the ansatz.
         """
-        assert isinstance(gate.type, GateType)
+        assert isinstance(gate.type, GateType), TypeError(
+            "Ansatz.add_gate", GateType, gate.type
+        )
         if gate.type == GateType.unitary:
-            assert isinstance(gate.matrix, torch.Tensor)
-            assert self._gate_validation(gate)
+            assert isinstance(gate.matrix, torch.Tensor), TypeError(
+                "Ansatz.add_gate", torch.Tensor, gate.matrix
+            )
+            if not self._gate_validation(gate):
+                raise AnsatzAppendError("Illegal Unitary Gate.")
 
         if act_bits is None:
             for qid in range(self._n_qubits):
@@ -124,11 +130,23 @@ class Ansatz:
         else:
             new_gate = gate.to(self._device)
             if isinstance(act_bits, int):
+                if act_bits >= self._n_qubits:
+                    raise AnsatzAppendError(
+                        "Unable to assign qubits exceeding the width of the ansatz."
+                    )
                 new_gate.targs = act_bits
             else:
-                assert len(act_bits) == new_gate.controls + new_gate.targets
+                if len(act_bits) != new_gate.controls + new_gate.targets:
+                    raise AnsatzAppendError(
+                        "The numbers of control and target qubits of the gates must match the action qubits."
+                    )
+                for act_bit in act_bits:
+                    if act_bit >= self._n_qubits:
+                        raise AnsatzAppendError(
+                            "Unable to assign qubits exceeding the width of the ansatz."
+                        )
                 new_gate.cargs = act_bits[: new_gate.controls]
-                new_gate.targs = act_bits[new_gate.controls:]
+                new_gate.targs = act_bits[new_gate.controls :]
             new_gate.update_name("ansatz", len(self._gates))
             if new_gate.pargs.requires_grad:
                 ptr = new_gate.pargs.data_ptr()
@@ -139,7 +157,6 @@ class Ansatz:
 
     def _gate_validation(self, gate):
         """Validate the gate."""
-
         gate_matrix = gate.matrix
         shape = gate_matrix.shape
         log2_shape = int(np.ceil(np.log2(shape[0])))
@@ -163,7 +180,8 @@ class Ansatz:
         Returns:
             torch.Tensor: The state vector.
         """
-        assert state.is_cuda, "Must use GPU."
+        if not state.is_cuda:
+            raise AnsatzForwardError("Must use GPU.")
         cupy_state = cp.from_dlpack(state.detach().clone())
         default_parameters = (cupy_state, self._n_qubits, True)
         state_out = apply_gate(gate, default_parameters, self._algorithm, True)
@@ -309,7 +327,10 @@ class Ansatz:
                 state = torch.from_numpy(state_vector).to(self._device)
             else:
                 state = state_vector.clone()
-        assert state.shape[0] == 1 << self._n_qubits
+        if state.shape[0] != 1 << self._n_qubits:
+            raise AnsatzForwardError(
+                "The input state vector must match the number of qubits."
+            )
 
         for gate in self._gates:
             # Measure gate
