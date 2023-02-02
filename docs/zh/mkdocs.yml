@@ -11,6 +11,7 @@ nav:
   - QCDA:
     - 映射:
       - SABRE映射算法: functions/QCDA/mapping/SABRE.md
+      - 基于图学习及强化学习的量子电路映射算法: functions/QCDA/mapping/RL_mapping.md
     - 优化:
       - Clifford+Rz优化: functions/QCDA/optimization/clifford_rz_optimization.md
       - Clifford电路合成与symbolic优化: functions/QCDA/optimization/clifford.md
