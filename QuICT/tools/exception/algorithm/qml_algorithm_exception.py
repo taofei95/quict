@@ -9,14 +9,14 @@ class HamiltonianError(QuICTException):
 
 
 class VQEModelError(QuICTException):
-    """Hamiltonian Error."""
+    """VQE Model Error."""
 
     def __init__(self, msg: str = None):
         super().__init__(3007, msg)
 
 
 class QNNModelError(QuICTException):
-    """Hamiltonian Error."""
+    """QNN Model Error."""
 
     def __init__(self, msg: str = None):
         super().__init__(3008, msg)

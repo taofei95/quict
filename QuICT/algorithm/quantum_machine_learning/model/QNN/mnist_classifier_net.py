@@ -8,6 +8,7 @@ from QuICT.algorithm.quantum_machine_learning.utils.encoding import *
 from QuICT.algorithm.quantum_machine_learning.utils import GpuSimulator
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.tools.exception.algorithm import *
 
 
 class QuantumNet(nn.Module):
@@ -30,7 +31,8 @@ class QuantumNet(nn.Module):
                 Defaults to torch.device("cuda:0").
         """
         super(QuantumNet, self).__init__()
-        assert encoding in ["qubit", "amplitude"]
+        if encoding not in ["qubit", "amplitude"]:
+            raise QNNModelError("The encoding method should be 'qubit' or 'amplitude'")
         self._layers = layers
         self._device = device
         self._data_qubits = data_qubits
@@ -66,7 +68,8 @@ class QuantumNet(nn.Module):
             else:
                 state = self._simulator.forward(ansatz)
                 prob = self._simulator.measure_prob(self._data_qubits, state)
-            assert prob is not None, "There is no Measure Gate on the readout qubit."
+            if prob is None:
+                raise QNNModelError("There is no Measure Gate on the readout qubit.")
             Y_pred[i] = prob[1]
         return Y_pred
 

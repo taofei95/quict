@@ -5,6 +5,7 @@ from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.tools.exception.algorithm import *
 
 
 class QNNLayer:
@@ -20,9 +21,12 @@ class QNNLayer:
                 Defaults to "cuda:0".
         """
         self._n_qubits = len(data_qubits) + 1
-        assert (
-            result_qubit < self._n_qubits and result_qubit not in data_qubits
-        ), "Wrong result qubit."
+        if (
+            result_qubit < 0
+            or result_qubit >= self._n_qubits
+            or result_qubit in data_qubits
+        ):
+            raise QNNModelError("Wrong result qubit.")
         self._data_qubits = data_qubits
         self._result_qubit = result_qubit
         self._device = device
@@ -41,9 +45,10 @@ class QNNLayer:
         if not isinstance(two_qubit_gates, list):
             two_qubit_gates = [two_qubit_gates]
         n_layers = len(two_qubit_gates)
-        assert (
-            params.shape[0] == n_layers and params.shape[1] == self._n_qubits - 1
-        ), "The shape of the parameters should be [n_layers, n_data_qubits]."
+        if params.shape[0] != n_layers or params.shape[1] != self._n_qubits - 1:
+            raise QNNModelError(
+                "The shape of the parameters should be [n_layers, n_data_qubits]."
+            )
 
         gate_dict = {
             "XX": Rxx_tensor,
@@ -53,9 +58,10 @@ class QNNLayer:
         }
         ansatz = Ansatz(self._n_qubits, device=self._device)
         for l, gate in zip(range(n_layers), two_qubit_gates):
-            assert (
-                gate in gate_dict.keys()
-            ), "Invalid Two Qubit Gate. Should be XX, YY, ZZ or ZX."
+            if gate not in gate_dict.keys():
+                raise QNNModelError(
+                    "Invalid Two Qubit Gate. Should be XX, YY, ZZ or ZX."
+                )
 
             for i in range(self._n_qubits - 1):
                 ansatz.add_gate(
@@ -79,16 +85,18 @@ class QNNLayer:
             two_qubit_gates = [two_qubit_gates]
         n_layers = len(two_qubit_gates)
         params = params.cpu().detach().numpy().astype(np.float64)
-        assert (
-            params.shape[0] == n_layers and params.shape[1] == self._n_qubits - 1
-        ), "The shape of the parameters should be [n_layers, n_data_qubits]."
+        if params.shape[0] != n_layers or params.shape[1] != self._n_qubits - 1:
+            raise QNNModelError(
+                "The shape of the parameters should be [n_layers, n_data_qubits]."
+            )
 
         gate_dict = {"XX": Rxx, "YY": Ryy, "ZZ": Rzz, "ZX": Rzx}
         circuit = Circuit(self._n_qubits)
         for l, gate in zip(range(n_layers), two_qubit_gates):
-            assert (
-                gate in gate_dict.keys()
-            ), "Invalid Two Qubit Gate. Should be XX, YY, ZZ or ZX."
+            if gate not in gate_dict.keys():
+                raise QNNModelError(
+                    "Invalid Two Qubit Gate. Should be XX, YY, ZZ or ZX."
+                )
 
             for i in range(self._n_qubits - 1):
                 gate_dict[gate](params[l][i]) | circuit(
