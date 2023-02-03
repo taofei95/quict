@@ -1,6 +1,0 @@
-build/
-.pytest_cache
-.idea/
-docs/
-new_docs/
-QuICT.egg-info/
