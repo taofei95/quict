@@ -4,6 +4,11 @@ import shutil
 import numpy as np
 import random
 
+from QuICT.tools.exception.algorithm import *
+from QuICT.tools.logger import *
+
+logger = Logger("ML_utils")
+
 
 def set_seed(seed: int):
     """Set random seed.
@@ -44,7 +49,7 @@ def save_checkpoint(net, optim, model_path, ep, it, latest=False):
         )
 
 
-def restore_checkpoint(net, optim, model_path, device, resume):
+def restore_checkpoint(net, optim, model_path, device):
     """Restore the model and optimizer from a checkpoint.
 
     Args:
@@ -52,27 +57,24 @@ def restore_checkpoint(net, optim, model_path, device, resume):
         optim (torch.optim): The optimizer that to be restored.
         model_path (str): The path to the saved checkpoint.
         device (torch.device): The device to which the model is assigned.
-        resume (int/bool): If resume is True, restore the latest checkpoint.
-            Or users can specify a checkpoint saved in an iteration to restore.
 
     Returns:
         int: The number of the restored epoch.
         int: The number of the restored iteration.
     """
-    assert resume and model_path
     try:
         checkpoint = torch.load(model_path, map_location=device)
     except:
-        raise Exception("Cannot find the model.")
+        raise ModelRestoreError("Cannot find the model.")
     try:
         net.load_state_dict(checkpoint["graph"])
         if optim:
             optim.load_state_dict(checkpoint["optimizer"])
     except:
-        raise Exception("Cannot load the model correctly.")
+        raise ModelRestoreError("Cannot load the model correctly.")
 
     ep = checkpoint["epoch"]
     it = checkpoint["iter"]
-    assert resume is True or (resume["ep"] == ep and resume["it"] == it)
 
+    logger.info(f"Successfully restored checkpoint at ep: {ep} it: {it}")
     return ep, it

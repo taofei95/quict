@@ -68,7 +68,9 @@ class BasicGateTensor(object):
 
     @controls.setter
     def controls(self, controls: int):
-        assert isinstance(controls, int)
+        assert isinstance(controls, int), TypeError(
+            "BasicGateTensor.controls", "int", type(controls)
+        )
         self._controls = controls
 
     @property
@@ -80,7 +82,9 @@ class BasicGateTensor(object):
         if isinstance(cargs, int):
             cargs = [cargs]
 
-        assert len(cargs) == len(set(cargs)), "Duplicated control qubit indexes."
+        assert len(cargs) == len(set(cargs)), ValueError(
+            "BasicGateTensor.cargs", "not have duplicated value", cargs
+        )
         self._cargs = cargs
 
     @property
@@ -89,7 +93,9 @@ class BasicGateTensor(object):
 
     @targets.setter
     def targets(self, targets: int):
-        assert isinstance(targets, int)
+        assert isinstance(targets, int), TypeError(
+            "BasicGateTensor.targets", "int", type(targets)
+        )
         self._targets = targets
 
     @property
@@ -101,10 +107,14 @@ class BasicGateTensor(object):
         if isinstance(targs, int):
             targs = [targs]
 
-        assert len(targs) == len(set(targs)), "Duplicated target qubit indexes."
-        assert not set(self._cargs) & set(
-            targs
-        ), "Same qubit indexes in control and target."
+        assert len(targs) == len(set(targs)), ValueError(
+            "BasicGateTensor.targs", "not have duplicated value", targs
+        )
+        assert not set(self._cargs) & set(targs), ValueError(
+            "BasicGateTensor.targs",
+            "have no same index with control qubits",
+            set(self._cargs) & set(targs),
+        )
         self._targs = targs
 
     @property
@@ -129,7 +139,12 @@ class BasicGateTensor(object):
             self._pargs = torch.from_numpy(pargs).to(self.device)
         else:
             self._pargs = torch.tensor([pargs]).to(self.device)
-        assert self._pargs.shape[0] == self.params
+        if len(self._pargs) != self.params:
+            raise ValueError(
+                "BasicGateTensor.pargs:length",
+                f"equal to gate's parameter number {self._pargs}",
+                len(pargs),
+            )
 
     @property
     def parg(self):
@@ -170,7 +185,9 @@ class BasicGateTensor(object):
         self._targs = []  # list of int
         self._pargs = torch.tensor([]).to(device)
 
-        assert isinstance(type, GateType)
+        assert isinstance(type, GateType), TypeError(
+            "BasicGateTensor.type", "GateType", type(type)
+        )
         self._type = type
         self._matrix_type = matrix_type
         self._precision = torch.complex128
@@ -193,7 +210,9 @@ class BasicGateTensor(object):
         return self.copy()
 
     def __eq__(self, other):
-        assert isinstance(other, BasicGateTensor)
+        assert isinstance(other, BasicGateTensor), TypeError(
+            "BasicGateTensor.==", "BasicGateTensor", type(other)
+        )
         if (
             self.type != other.type
             or (self.cargs + self.targs) != (other.cargs + other.targs)
@@ -611,7 +630,7 @@ class GlobalPhaseGate(BasicGateTensor):
             TypeError: param not one of int/float/complex
 
         Returns:
-            BasicGate: The gate with parameters
+            BasicGateTensor: The gate with parameters
         """
         self.permit_element(alpha)
 

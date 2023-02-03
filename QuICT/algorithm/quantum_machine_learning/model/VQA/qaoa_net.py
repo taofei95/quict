@@ -74,17 +74,14 @@ class QAOANet(VQENet):
             if len(qids) > 1:
                 for i in range(len(qids)):
                     if gates[i] != "Z":
-                        assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
                         ansatz.add_gate(gate_dict[gates[i]]["mqids"], qids[i])
                 ansatz = ansatz + self._Rnz_ansatz(2 * coeff * gamma, qids)
                 for i in range(len(qids)):
                     if gates[i] != "Z":
-                        assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
                         ansatz.add_gate(gate_dict[gates[i]]["mqids"], qids[i])
 
             # Only Rx, Ry, Rz
             elif len(qids) == 1:
-                assert gates[0] in gate_dict.keys(), "Invalid Pauli gate."
                 ansatz.add_gate(gate_dict[gates[0]]["qid"], qids[0])
 
             # Only coeff
@@ -146,18 +143,15 @@ class QAOANet(VQENet):
             if len(qids) > 1:
                 for i in range(len(qids)):
                     if gates[i] != "Z":
-                        assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
                         gate_dict[gates[i]]["mqids"] | circuit(qids[i])
                 Rnz_circuit = self._Rnz_circuit(2 * coeff * gamma, qids)
                 circuit.extend(Rnz_circuit.gates)
                 for i in range(len(qids)):
                     if gates[i] != "Z":
-                        assert gates[i] in gate_dict.keys(), "Invalid Pauli gate."
                         gate_dict[gates[i]]["mqids"] | circuit(qids[i])
 
             # Only Rx, Ry, Rz
             elif len(qids) == 1:
-                assert gates[0] in gate_dict.keys(), "Invalid Pauli gate."
                 gate_dict[gates[0]]["qid"] | circuit(qids[0])
 
             # Only coeff

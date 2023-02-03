@@ -9,6 +9,10 @@ from QuICT.algorithm.quantum_machine_learning.utils import apply_gate
 from QuICT.core.gate import *
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.tools.exception.algorithm import *
+from QuICT.tools.exception.core import *
+from QuICT.tools.logger import *
+
+logger = Logger("ansatz")
 
 
 class Ansatz:
@@ -130,9 +134,9 @@ class Ansatz:
         else:
             new_gate = gate.to(self._device)
             if isinstance(act_bits, int):
-                if act_bits >= self._n_qubits:
-                    raise AnsatzAppendError(
-                        "Unable to assign qubits exceeding the width of the ansatz."
+                if act_bits < 0 or act_bits >= self._n_qubits:
+                    raise IndexExceedError(
+                        "Ansatz.add_gate", "in the range of [0, n_qubit)", {act_bits}
                     )
                 new_gate.targs = act_bits
             else:
@@ -141,9 +145,11 @@ class Ansatz:
                         "The numbers of control and target qubits of the gates must match the action qubits."
                     )
                 for act_bit in act_bits:
-                    if act_bit >= self._n_qubits:
-                        raise AnsatzAppendError(
-                            "Unable to assign qubits exceeding the width of the ansatz."
+                    if act_bit < 0 or act_bit >= self._n_qubits:
+                        raise IndexExceedError(
+                            "Ansatz.add_gate",
+                            "in the range of [0, n_qubit)",
+                            {act_bit},
                         )
                 new_gate.cargs = act_bits[: new_gate.controls]
                 new_gate.targs = act_bits[new_gate.controls :]
@@ -344,9 +350,6 @@ class Ansatz:
                     state = self._apply_gate_cpu(state, gate_tensor, act_bits)
                 # GPU
                 else:
-                    warnings.warn(
-                        "If the ansatz contains trainable parameters, ansatz.forward() will cause the gradient to be lost. Use GpuSimulator.forward() instead to propagate the gradient"
-                    )
                     state = self._apply_gate_gpu(state, gate)
 
         return state

@@ -5,6 +5,8 @@ import torch
 
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
+from QuICT.tools.exception.algorithm import *
+from QuICT.tools.exception.core import *
 
 
 class GpuSimulator:
@@ -39,8 +41,15 @@ class GpuSimulator:
                 state = torch.from_numpy(state).to(ansatz.device)
             else:
                 state = state.clone()
-        assert state.shape[0] == 1 << n_qubits
+        if state.shape[0] != 1 << n_qubits:
+            raise GpuSimulatorForwardError(
+                "The input state vector must match the number of qubits."
+            )
 
+        if len(ansatz.trainable_pargs) == 0:
+            raise GpuSimulatorForwardError(
+                "There must be trainable parameters in the ansatz."
+            )
         params = torch.stack(ansatz.trainable_pargs)
         state = Applygate.apply(state, ansatz, params, self.algorithm, n_qubits)
 
@@ -57,7 +66,11 @@ class GpuSimulator:
             list: The probabilities of qubit with given index to be 0 and 1.
         """
         n_qubits = int(np.log2(state.shape[0]))
-        assert 0 <= qid <= n_qubits
+        if qid < 0 or qid >= n_qubits:
+            raise IndexExceedError(
+                "GpuSimulator.measure_prob", "in the range of [0, n_qubit)", {qid}
+            )
+
         index = n_qubits - 1 - qid
         prob_1 = MeasureProb.apply(index, state, self.algorithm, n_qubits)
         prob = [1 - prob_1, prob_1]
@@ -68,7 +81,6 @@ def _apply_normal_matrix(
     gate: BasicGateTensor, default_parameters, algorithm, n_qubits, fp
 ):
     # Get gate's parameters
-    assert gate.matrix_type == MatrixType.normal
     args_num = gate.controls + gate.targets
     gate_args = gate.cargs + gate.targs
     matrix = (
@@ -96,7 +108,6 @@ def _apply_normal_matrix(
 def _apply_normal_normal_matrix(
     gate: BasicGateTensor, default_parameters, algorithm, n_qubits, fp
 ):
-    assert gate.matrix_type == MatrixType.normal_normal
     t_indexes = [n_qubits - 1 - targ for targ in gate.targs]
     matrix = (
         cp.from_dlpack(gate.matrix.detach().clone())
@@ -109,7 +120,6 @@ def _apply_normal_normal_matrix(
 def _apply_diagonal_normal_matrix(
     gate: BasicGateTensor, default_parameters, algorithm, n_qubits, fp
 ):
-    assert gate.matrix_type == MatrixType.diag_normal
     t_indexes = [n_qubits - 1 - targ for targ in gate.targs]
     matrix = (
         cp.from_dlpack(gate.matrix.detach().clone())
@@ -123,7 +133,6 @@ def _apply_diagonal_matrix(
     gate: BasicGateTensor, default_parameters, algorithm, n_qubits, fp
 ):
     # Get gate's parameters
-    assert gate.matrix_type in [MatrixType.diagonal, MatrixType.diag_diag]
     args_num = gate.controls + gate.targets
     gate_args = gate.cargs + gate.targs
     matrix = (
@@ -154,7 +163,6 @@ def _apply_diagonal_matrix(
 
 def _apply_swap_matrix(gate: BasicGateTensor, default_parameters, algorithm, n_qubits):
     # Get gate's parameters
-    assert gate.matrix_type == MatrixType.swap
     args_num = gate.controls + gate.targets
     gate_args = gate.cargs + gate.targs
 
@@ -174,7 +182,6 @@ def _apply_reverse_matrix(
     gate: BasicGateTensor, default_parameters, algorithm, n_qubits
 ):
     # Get gate's parameters
-    assert gate.matrix_type == MatrixType.reverse
     args_num = gate.controls + gate.targets
     gate_args = gate.cargs + gate.targs
     matrix = cp.from_dlpack(gate.matrix.detach().clone())
@@ -196,7 +203,6 @@ def _apply_control_matrix(
     gate: BasicGateTensor, default_parameters, algorithm, n_qubits
 ):
     # Get gate's parameters
-    assert gate.matrix_type == MatrixType.control
     args_num = gate.controls + gate.targets
     gate_args = gate.cargs + gate.targs
     matrix = cp.from_dlpack(gate.matrix.detach().clone()).get()
@@ -250,15 +256,24 @@ def apply_gate(gate, default_parameters, algorithm, fp):
         _apply_diagonal_matrix(gate, default_parameters, algorithm, n_qubits, fp)
     # [X] 2-bits [swap] 3-bits [CSWAP]
     elif matrix_type == MatrixType.swap:
-        assert fp is True
+        if not fp:
+            raise GpuSimulatorBackwardError(
+                "Unable to perform back-propagation on non-parametric gates."
+            )
         _apply_swap_matrix(gate, default_parameters, algorithm, n_qubits)
     # [Y] 2-bits [CX, CY] 3-bits: [CCX]
     elif matrix_type == MatrixType.reverse:
-        assert fp is True
+        if not fp:
+            raise GpuSimulatorBackwardError(
+                "Unable to perform back-propagation on non-parametric gates."
+            )
         _apply_reverse_matrix(gate, default_parameters, algorithm, n_qubits)
     # [S, sdg, Z, U1, T, tdg] # 2-bits [CZ, CU1]
     elif matrix_type == MatrixType.control:
-        assert fp is True
+        if not fp:
+            raise GpuSimulatorBackwardError(
+                "Unable to perform back-propagation on non-parametric gates."
+            )
         _apply_control_matrix(gate, default_parameters, algorithm, n_qubits)
     # [Rxx, Ryy]
     elif matrix_type == MatrixType.normal_normal:

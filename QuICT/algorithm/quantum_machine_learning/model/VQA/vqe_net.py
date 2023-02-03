@@ -3,6 +3,7 @@ import torch
 
 from QuICT.algorithm.quantum_machine_learning.utils import GpuSimulator
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
+from QuICT.tools.exception.algorithm import *
 
 
 class VQENet(torch.nn.Module):
@@ -55,7 +56,10 @@ class VQENet(torch.nn.Module):
         """
         if isinstance(state, np.ndarray):
             state = torch.from_numpy(state).to(self.device)
-        assert state.shape[0] == 1 << self.n_qubits
+        if state.shape[0] != 1 << self.n_qubits:
+            raise VQEModelError(
+                "The input state vector must match the number of qubits."
+            )
 
         ansatz_list = self.hamiltonian.construct_hamiton_ansatz(
             self.n_qubits, self.device
