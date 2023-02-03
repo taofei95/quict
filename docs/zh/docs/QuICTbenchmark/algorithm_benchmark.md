@@ -13,7 +13,7 @@
 
 ## Grover搜索算法
 
-编译规则：在3~6位的MCT oracle上运行Grover搜索算法得到搜索结果
+编译规则：在5~8量子比特的MCT oracle上运行Grover搜索算法得到搜索结果
 基准度量：Grover搜索算法运行的时间对比
 
 <figure markdown>
