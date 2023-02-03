@@ -71,7 +71,7 @@ $$\phi=\frac{s}{r},s\in [0,r-1]$$
 1. `mode`：字符串，可以指定为`BEA`[<sup>[1]</sup>](#refer1)、`HRS`[<sup>[2]</sup>](#refer2)、`BEA_zip`、`HRS_zip`中的一个。`*_zip`指使用了iterative QPE[<sup>[3]</sup>](#refer3)（也就是原论文中所说的one-bit trick）
 2. `eps`：相位估计的精度
 3. `max_rd`：order-finding子程序的最大可执行次数。默认为2
-4. `simulator`：模拟器。默认为`CircuitSimulator()`
+4. `simulator`：模拟器。默认为`StateVectorSimulator()`
 
 调用`circuit`方法可以得到order-finding部分的电路；调用`run`方法可以直接执行整个算法。
 

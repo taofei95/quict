@@ -118,7 +118,7 @@ $$\mathcal{G}=U_s U_f, \quad U_s = I-2|s⟩⟨s|s⟩, \quad U_f = I-2|\omega⟩�
 ```python
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.core.gate.backend import MCTOneAux
 
 def main_oracle(n, f):
@@ -144,7 +144,7 @@ n = 4
 target = 0b0110
 f = [target]
 k, oracle = main_oracle(n, f)
-grover = Grover(simulator=ConstantStateVectorSimulator())
+grover = Grover(simulator=StateVectorSimulator())
 result = grover.run(n, k, oracle)
 print(result)
 ```

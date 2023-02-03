@@ -50,14 +50,14 @@
 ``` python
 from QuICT.algorithm.quantum_algorithm import QuantumWalk
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.algorithm.tools.drawer.graph_drawer import *
 ```
 
 初始化状态向量模拟器和`QuantumWalk`模块：
 
 ``` python
-simulator = ConstantStateVectorSimulator()
+simulator = StateVectorSimulator()
 qw = QuantumWalk(simulator)
 ```
 
@@ -126,11 +126,11 @@ draw_samples_with_auxiliary(sample, 2, 1)
 ``` python
 # 导入运行库
 from QuICT.algorithm.quantum_algorithm import QuantumWalkSearch
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.algorithm.tools.drawer.graph_drawer import *
 
 # 初始化状态向量模拟器和QuantumWalkSearch模块：
-simulator = ConstantStateVectorSimulator()
+simulator = StateVectorSimulator()
 qws = QuantumWalkSearch(simulator)
 
 # 开始搜索

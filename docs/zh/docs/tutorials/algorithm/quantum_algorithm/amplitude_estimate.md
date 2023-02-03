@@ -74,7 +74,7 @@ MLAE与FQAE的原理稍有不同：两者不使用相位估计。前者使用最
 
 1. `mode`：字符串，可以是`canonical`，`fast`，`max_likely`中的一个
 2. `eps`：输出的期望精度。默认为0.1
-3. `simulator`：模拟器。默认值`CircuitSimulator()`
+3. `simulator`：模拟器。默认值`StateVectorSimulator()`
 
 `circuit`方法用于输出电路（只在`canonical`模式可用）；`run`方法用于直接执行算法。为了准备算法所需的输入，需要构造`OracleInfo`对象和`StatePreparationInfo`对象（可选，默认为一层H门）。
 
@@ -85,7 +85,7 @@ MLAE与FQAE的原理稍有不同：两者不使用相位估计。前者使用最
 ```python
 from QuICT.algorithm.quantum_algorithm import QAE, StatePreparationInfo, OracleInfo
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 def example_oracle(n):

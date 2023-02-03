@@ -68,14 +68,14 @@ $$
 
 ```python
 from QuICT.core import Circuit
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 # Build circuit with 100 random gates and 5 qubits
 circuit = Circuit(5)
 circuit.random_append(rand_size=100)
 
 # Simulate Quantum Circuit
-simulator = CircuitSimulator()
+simulator = StateVectorSimulator()
 result = simulator.run(circuit)
 ```
 
