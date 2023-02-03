@@ -30,3 +30,4 @@ unit_test/**/*.jpg
 .history
 /QAOA_model*
 /del
+/docs/zh/nopub.out
