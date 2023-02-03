@@ -105,7 +105,7 @@ from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 from QuICT.algorithm.quantum_machine_learning.model.VQA import QAOANet
 from QuICT.algorithm.tools.drawer.graph_drawer import *
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 ```
 
 接下来，生成最大割问题的图 $G$ ，其中 $n$ 为图 $G$ 的顶点数：

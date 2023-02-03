@@ -21,7 +21,7 @@ from QuICT.algorithm.quantum_machine_learning.ansatz_library import QNNLayer
 from QuICT.algorithm.quantum_machine_learning.utils.encoding import *
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 from QuICT.algorithm.quantum_machine_learning.model.QNN import QuantumNet
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 ```
 
 ## 加载和预处理MNIST数据
