@@ -4,7 +4,7 @@ from QuICT.benchmark.benchmark import QuICTBenchmark
 from QuICT.core.layout.layout import Layout
 from QuICT.core.utils.gate_type import GateType
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
-from QuICT.simulation.state_vector.cpu_simulator.cpu import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 layout = Layout.load_file(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/layout/grid_3x3.json")
 Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
@@ -19,7 +19,7 @@ def simulation(circuit):
     Returns:
         List: Amplitude results or Sample results for circuits.
     """
-    simulator = CircuitSimulator()
+    simulator = StateVectorSimulator()
     sim_results = simulator.run(circuit)
     # sim_sample = simulator.sample(circuit)
     return sim_results

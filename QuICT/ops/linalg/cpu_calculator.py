@@ -161,7 +161,8 @@ def matrix_dot_vector(
     """
     # Deal with special case when matrix's qubit == vector's qubit
     if mat_bit == vec_bit:
-        return dot(mat, vec)
+        vec[:] = dot(mat, vec)
+        return
 
     repeat = 1 << (vec_bit - mat_bit)
     arg_len = 1 << mat_bit

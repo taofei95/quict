@@ -189,7 +189,11 @@ class StateVectorSimulator:
         # CPU simulator here
         # TODO: only consider as unitary for all gates currently
         if self._device == "CPU":
-            self._apply_gate_cpu(gate)
+            if gate.type == GateType.measure:
+                index = self._qubits - 1 - gate.targ
+                self._measured_cpu(index)
+            else:
+                self._apply_gate_cpu(gate)
 
             return
 
@@ -478,13 +482,16 @@ class StateVectorSimulator:
         """
         for targ in op.targs:
             index = self._qubits - 1 - targ
-            prob = self.get_measured_prob(index).get()
-            _ = self.apply_specialgate(index, GateType.measure, prob)
+            if self._device == "GPU":
+                prob = self.get_measured_prob(index).get()
+                _ = self.apply_specialgate(index, GateType.measure, prob)
+            else:
+                self._measured_cpu(index)
 
         mapping_cgate = op.mapping(int(self._circuit[op.targs]))
         if isinstance(mapping_cgate, CompositeGate):
             # optimized composite gate's matrix
-            if self._using_matrix_aggregation:
+            if self._device == "GPU" and self._using_matrix_aggregation:
                 self.gateM_optimizer.build(mapping_cgate.gates)
 
             # Check for checkpoint

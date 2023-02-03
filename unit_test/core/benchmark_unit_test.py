@@ -5,7 +5,7 @@ from QuICT.benchmark.benchmark import QuICTBenchmark
 from QuICT.core.layout.layout import Layout
 from QuICT.core.utils.gate_type import GateType
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
-from QuICT.simulation.state_vector.cpu_simulator.cpu import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 class TestBenchmark(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestBenchmark(unittest.TestCase):
 
         amp_results_list = []
         for circuit in circuits_list:
-            simulator = CircuitSimulator()
+            simulator = StateVectorSimulator()
             sim_results = simulator.run(circuit)
             amp_results_list.append(sim_results)
 
