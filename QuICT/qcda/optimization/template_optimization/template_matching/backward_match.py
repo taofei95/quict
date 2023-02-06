@@ -2,7 +2,8 @@ import heapq
 from collections import deque
 from typing import List, Tuple
 
-from .matching_dag_circuit import Match, MatchingDAGCircuit, MatchingDAGNode, NodeInfo
+from .matching_dag_circuit import (Match, MatchingDAGCircuit, MatchingDAGNode,
+                                   NodeInfo)
 
 
 class MatchingScenario:

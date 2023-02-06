@@ -1,0 +1,7 @@
+torch_runs/
+*model*/
+tmp/
+data/
+!data/topo
+*.log
+*.jpg
