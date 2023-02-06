@@ -183,6 +183,41 @@ def matrix_dot_vector(
 
 
 @njit()
+def diagonal_matrix(
+    vec: np.ndarray,
+    vec_bit: int,
+    mat: np.ndarray,
+    mat_bit: int,
+    control_args: np.ndarray,
+    target_args: np.ndarray,
+    is_control: bool
+):
+    pass
+
+
+@njit()
+def swap_matrix(
+    vec: np.ndarray,
+    vec_bit: int,
+    mat: np.ndarray,
+    mat_bit: int,
+    mat_args: np.ndarray
+):
+    pass
+
+
+@njit()
+def reverse_matrix(
+    vec: np.ndarray,
+    vec_bit: int,
+    mat: np.ndarray,
+    mat_bit: int,
+    mat_args: np.ndarray
+):
+    pass
+
+
+@njit()
 def measure_gate_apply(
     index: int,
     vec: np.array
@@ -217,3 +252,24 @@ def measure_gate_apply(
         vec[vec_idx_1] = np.complex128(0)
 
     return _1
+
+
+@njit()
+def reset_gate_apply(
+    index: int,
+    vec: np.array
+):
+    target_index = 1 << index
+    vec_idx_0 = [idx for idx in range(len(vec)) if not idx & target_index]
+    vec_idx_0 = np.array(vec_idx_0, dtype=np.int32)
+    vec_idx_1 = [idx for idx in range(len(vec)) if idx & target_index]
+    vec_idx_1 = np.array(vec_idx_1, dtype=np.int32)
+    prob = np.sum(np.square(np.abs(vec[vec_idx_0])))
+
+    alpha = np.float64(np.sqrt(prob))
+    if alpha < 1e-6:
+        vec[vec_idx_0] = vec[vec_idx_1]
+        vec[vec_idx_1] = np.complex128(0)
+    else:
+        vec[vec_idx_0] = vec[vec_idx_0] / alpha
+        vec[vec_idx_1] = np.complex128(0)
