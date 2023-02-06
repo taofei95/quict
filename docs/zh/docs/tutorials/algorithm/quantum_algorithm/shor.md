@@ -51,7 +51,7 @@ $$
 
 而迭代相位估计（iterative QPE）则减少了所需要的量子比特：
 
-![semi_classical_IQFT_circuit](semi_classical_IQFT_circuit.png)
+![semi_classical_IQFT_circuit](semi_classical_IQFT_circuit.png)[<sup>[3]</sup>](#refer3)
 
 ### ...到因数分解
 
@@ -82,7 +82,7 @@ $$
 
 1. 使用经典算法判断$N$是否存在非平凡因子，在$O(poly(n))$时间内完成。如果不存在则算法失败。
 2. 如果$N$是偶数，返回因子$2$。
-3. 使用经典算法判断$N=a^b, \exist a\geq 1,b\geq 2$，如果是则返回$a$。在$O(poly(n))$时间内完成。
+3. 使用经典算法判断$N=a^b, \exists a\geq 1,b\geq 2$，如果是则返回$a$。在$O(poly(n))$时间内完成。
 4. 在$1$到$N-1$的范围内随机选择$x$。如果$gcd(x, N)>1$则返回因子$gcd(x, N)$。
 5. 在$x,N$上运行周期查找子程序$k$次，得到相位$s_i/r_i,i=1...k$，然后运行连分数算法（丢弃零结果）得到$r_i,i=1...{k'}$，然后用$r=lcm(r_1...r_{k'})$作为$ord_N(x)$。
 6. 如果$r$是偶数，并且$x^{r/2}=-1 \bmod N$，那么计算$gcd(x^{r/2}-1, N)$和$gcd(x^{r/2 + 1}, N)$，并测试其中一个是否为非平凡因子，如果是则返回该因子。否则，转到第3步，直到达到最大迭代限制。在这种情况下，该算法就会失败。
