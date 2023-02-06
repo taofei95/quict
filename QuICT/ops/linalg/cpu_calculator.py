@@ -192,7 +192,38 @@ def diagonal_matrix(
     target_args: np.ndarray,
     is_control: bool
 ):
-    pass
+    # Step 1: Get diagonal value from gate_matrix
+    diagonal_value = np.diag(mat)
+
+    # Step 2: Deal with mat_bit == vec_bit
+    if mat_bit == vec_bit:
+        vec = multiply(diagonal_value, vec)
+        return
+
+    # Step 3: diagonal matrix * vec
+    repeat = 1 << (vec_bit - mat_bit)
+    arg_len = 1 << mat_bit - len(control_args)
+    sorted_args = target_args.copy()
+    sorted_args = np.sort(sorted_args)
+    for i in prange(repeat):
+        for sarg_idx in range(mat_bit):
+            less = i & ((1 << sorted_args[sarg_idx]) - 1)
+            i = (i >> sorted_args[sarg_idx] << (sorted_args[sarg_idx] + 1)) + less
+
+        for carg_idx in control_args:
+            i += 1 << carg_idx
+
+        if is_control:
+            i += 1 << target_args[0]
+            vec[i] = vec[i] * diagonal_value[-1]
+        else:
+            for ii in range(1, arg_len):
+                index = i
+                for j in len(target_args):
+                    if ii & (1 << j):
+                        index += 1 << target_args[j]
+
+                    vec[index] = vec[index] * diagonal_value[1 << len(control_args) + ii]
 
 
 @njit()
