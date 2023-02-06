@@ -6,7 +6,7 @@
 
 Grover搜索算法是一种无结构量子搜索算法，对于单个目标的情况，其查询复杂度是 $O(\sqrt{N})$ ，其中 $N$ 是状态空间大小。
 
-这里实现了教科书版本[<sup>[1]</sup>](#refer1)的Grover算子，此外还支持多解情况，支持bit-flip和phase-flip oracle（前者是$O\ket{x}\ket{y}=\ket{x}\ket{f(x)\oplus y}$，后者是$O\ket{x}=(-1)^{f(x)}\ket{x}$）。当解的数目所占比例较大（超过一半）时，Grover迭代次数为0，算法退化为均匀随机采样。
+这里实现了教科书版本[<sup>[1]</sup>](#refer1)的Grover算子，此外还支持多解情况，支持bit-flip和phase-flip oracle（前者是$O|x\rangle|y\rangle=|x\rangle|f(x)\oplus y\rangle$，后者是$O|x\rangle=(-1)^{f(x)}|x\rangle$）。当解的数目所占比例较大（超过一半）时，Grover迭代次数为0，算法退化为均匀随机采样。
 
 Grover搜索算法的实际运行时间取决于谕示（oracle）电路的复杂程度。对于20个变量，解数目比例为 $2.2\times10^{-3}$ 的SAT问题，算法在单块GPU上可以在一小时内完成。
 
@@ -26,7 +26,7 @@ Grover搜索算法的实际运行时间取决于谕示（oracle）电路的复�
 
 ### 谕示电路的构造
 
-对于本教科书中的例子，我们的“数据库”是由我们的量子比特可能处于的所有计算基础状态组成的。例如，如果我们有3个量子比特，我们的列表是 $|000\rangle, |001\rangle, \dots |111\rangle$ （即 $|0\rangle \rightarrow |7\rangle$ 的状态）。
+对于本教程的例子，我们的“数据库”是由我们的量子比特可能处于的所有计算基状态组成的。例如，如果我们有3个量子比特，我们的列表是 $|000\rangle, |001\rangle, \dots |111\rangle$ （即 $|0\rangle \rightarrow |7\rangle$ 的状态）。
 
 Grover算法需要的谕示电路输入翻转了标记状态的相位。也就是说，对于计算基础中的任何状态 $|x\rangle$ ，有：
 
@@ -92,7 +92,9 @@ $$\mathcal{G}=U_s U_f, \quad U_s = I-2|s⟩⟨s|s⟩, \quad U_f = I-2|\omega⟩�
 
 <figure markdown>
 ![grover_step3](../../../assets/images/tutorials/algorithm/quantum_algorithm/grover_step3.jpg)
-</figure>[<sup>[2]</sup>](#refer2)
+</figure>
+
+[<sup>[2]</sup>](#refer2)
 
 两个反射总是对应于一个旋转。Grover算子使初始状态 $|s\rangle$ 向标记状态 $|w\rangle$ 旋转。振幅条形图中的反射 $U_s$ 的作用可以理解为对平均振幅的反射，而 $U_f$ 则是对非标记状态的反射。这个过程将重复数次，以锁定标记状态。经过 $t$ 步，我们将处于 $|\psi_t\rangle$ 状态，其中 $| \psi_t \rangle = (U_s U_f)^t | s \rangle$ 。事实证明，大约 $\sqrt{N}$ 的旋转就足够了。这一点在观察状态 $| \psi \rangle$ 的振幅时就很清楚了。我们可以看到，$| w\rangle$ 的振幅随着应用次数 $\sim t N^{-1/2}$ 线性增长。然而，由于我们处理的是振幅而不是概率，矢量空间的维数以平方根的形式进入。因此，在这个过程中，被放大的是振幅，而不仅仅是概率。
 
@@ -187,7 +189,7 @@ from QuICT.simulation.state_vector import ConstantStateVectorSimulator, CircuitS
 
 $$f(x)=[(x_0\oplus x_1) \& (x_2\oplus x_3) \& (x_0\oplus x_2) \& (x_1\oplus x_3)]$$
 
-首先我们需要构造谕示电路$O\ket{x}=(-1)^{f(x)}\ket{x}$:
+首先我们需要构造谕示电路$O|x\rangle=(-1)^{f(x)}|x\rangle$:
 
 
 ```python
@@ -217,45 +219,6 @@ def sudoku_oracle():
         X & result_q[0]
     return 6, cgate
 ```
-```
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b729f8ea5c311ed91250242ac110007 with 1 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b72f632a5c311ed91250242ac110007 with 1 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b731946a5c311ed91250242ac110007 with 1 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b73472ca5c311ed91250242ac110007 with 1 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b73730aa5c311ed91250242ac110007 with 1 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b7398c6a5c311ed91250242ac110007 with 1 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b73ca6ca5c311ed91250242ac110007 with 2 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b74013aa5c311ed91250242ac110007 with 2 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b7428f4a5c311ed91250242ac110007 with 2 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b745aaea5c311ed91250242ac110007 with 2 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b748c18a5c311ed91250242ac110007 with 2 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b74bdbea5c311ed91250242ac110007 with 2 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b74f2c0a5c311ed91250242ac110007 with 1 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b751520a5c311ed91250242ac110007 with 1 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b753b5ea5c311ed91250242ac110007 with 2 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b756e9ea5c311ed91250242ac110007 with 2 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b759bdaa5c311ed91250242ac110007 with 2 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b75b8fea5c311ed91250242ac110007 with 3 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b75df5aa5c311ed91250242ac110007 with 1 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b761c72a5c311ed91250242ac110007 with 2 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b764170a5c311ed91250242ac110007 with 2 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b76668ca5c311ed91250242ac110007 with 1 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b768496a5c311ed91250242ac110007 with 2 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b76abcea5c311ed91250242ac110007 with 1 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b76d626a5c311ed91250242ac110007 with 3 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b77086ca5c311ed91250242ac110007 with 3 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b777612a5c311ed91250242ac110007 with 4 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b77b230a5c311ed91250242ac110007 with 4 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b77f4caa5c311ed91250242ac110007 with 4 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b78334aa5c311ed91250242ac110007 with 4 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b789916a5c311ed91250242ac110007 with 4 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b78dd40a5c311ed91250242ac110007 with 4 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b797d7ca5c311ed91250242ac110007 with 4 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b79d4b6a5c311ed91250242ac110007 with 4 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b7a362ca5c311ed91250242ac110007 with 4 qubits.
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b7b3a2ca5c311ed91250242ac110007 with 4 qubits.
-```
-
 谕示电路如图所示：
 
 

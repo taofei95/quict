@@ -96,33 +96,6 @@ print(f"output = {output}")
 ```
 
 ```
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_8938e19aa5cd11ed81140242ac110007 with 1 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893934eca5cd11ed81140242ac110007 with 1 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_89394ca2a5cd11ed81140242ac110007 with 1 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_89396980a5cd11ed81140242ac110007 with 1 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_8939883ea5cd11ed81140242ac110007 with 1 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_8939a18ea5cd11ed81140242ac110007 with 1 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_8939c2eaa5cd11ed81140242ac110007 with 2 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_8939fb3ea5cd11ed81140242ac110007 with 2 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893a156aa5cd11ed81140242ac110007 with 2 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893a3ba8a5cd11ed81140242ac110007 with 2 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893a59bca5cd11ed81140242ac110007 with 2 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893a81c6a5cd11ed81140242ac110007 with 2 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893a9f62a5cd11ed81140242ac110007 with 1 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893abe3ea5cd11ed81140242ac110007 with 1 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893ad392a5cd11ed81140242ac110007 with 2 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893aefd0a5cd11ed81140242ac110007 with 2 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893b0b5aa5cd11ed81140242ac110007 with 2 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893b26e4a5cd11ed81140242ac110007 with 3 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893b5826a5cd11ed81140242ac110007 with 1 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893b7374a5cd11ed81140242ac110007 with 2 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893b8972a5cd11ed81140242ac110007 with 2 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893baddaa5cd11ed81140242ac110007 with 1 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893bc50ea5cd11ed81140242ac110007 with 2 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893be17ea5cd11ed81140242ac110007 with 1 qubits.
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893bf9e8a5cd11ed81140242ac110007 with 3 qubits.
-...
-2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_89413930a5cd11ed81140242ac110007 with 15 qubits.
 2023-02-06 11:22:57 | Shor | INFO | round = 0
 2023-02-06 11:22:57 | Shor | INFO | forced quantum approach, looking for coprime number...
 2023-02-06 11:22:57 | Shor | INFO | Quantumly determine the order of the randomly chosen a = 22
