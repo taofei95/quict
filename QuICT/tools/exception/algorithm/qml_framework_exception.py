@@ -30,7 +30,7 @@ class GpuSimulatorBackwardError(QuICTException):
 
 
 class ModelRestoreError(QuICTException):
-    """Model Restor Operator Error."""
+    """Model Restore Operator Error."""
 
     def __init__(self, msg: str = None):
         super().__init__(3005, msg)
