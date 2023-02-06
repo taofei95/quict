@@ -1,8 +1,10 @@
 # Shor因子分解算法
 
+本教程将讲解QuICT中Shor模块的算法设置、基本用法以及代码示例。
+
 ## 概要
 
-Shor因子分解算法相对最好的经典算法实现了指数加速，在$O(n^3)$的时间内以高概率给出输入的非平凡因子（如果有）。本框架实现了四个Shor因数分解算法的变体（根据量子部分中使用的乘幂电路/是否使用iterative QPE），在电路宽度与深度上有常数上的差别。
+Shor算法是一个解决因数分解问题的量子算法，在时间复杂度上该算法相对最好的经典算法实现了指数加速，在$O(n^3)$的时间内以高概率给出输入的非平凡因子（如果有）。本框架实现了四个Shor因数分解算法的变体（根据量子部分中使用的乘幂电路/是否使用iterative QPE），在电路宽度与深度上有常数上的差别。
 
 下列表格中，$n$是输入数的位数，$t$是求阶算法中QPE的精度位数。默认$t=2n+1$。
 
@@ -13,7 +15,14 @@ Shor因子分解算法相对最好的经典算法实现了指数加速，在$O(n
 | BEA-zip | 2n+3     | $O(n^2 t)$ | $O(n^3 t)$ | 慢                 |
 | HRS-zip | 2n+2     | $O(n^2 t)$ | $O(n^3 t)$ | 慢                 |
 
-Shor因子分解算法包含了经典部分（素数判定、求最大公约数等等）与量子部分（求阶算法）。如果在量子部分，对于待分解数$N$，我们使用数$a$满足$(a,N)=1,\text{ord}_N(a)=r,2|r,a^{r/2}\neq -1\bmod N$，那么$\gcd(a^{r/2}-1,N),\gcd(a^{r/2}+1,N)$中必然包含$N$的非平凡因子。更详细的成功概率分析可以参考教科书。我们只考虑对于量子部分的时间开销，对于$n=11$的输入，求阶算法在单块GPU上可以在一小时内完成。
+Shor因子分解算法包含了经典部分（素数判定、求最大公约数等等）与量子部分（求阶算法）。如果在量子部分，对于待分解数$N$，我们使用满足以下条件的数$a$
+$$
+(a,N)=1 \\
+\text{ord}_N(a)=r \\
+r=0\bmod 2 \\
+a^{r/2}\neq -1\bmod N
+$$
+那么$\gcd(a^{r/2}-1,N),\gcd(a^{r/2}+1,N)$中必然包含$N$的非平凡因子。更详细的成功概率分析可以参考教科书。我们只考虑对于量子部分的时间开销，对于$n=11$的输入，求阶算法在单块GPU上可以在一小时内完成。
 
 ## 算法设置
 
@@ -46,10 +55,37 @@ $$
 
 ### ...到因数分解
 
-量子部分成功运行返回的结果$r$满足$a^r=1\bmod N \land a^{r'}\neq 1\bmod N \forall 0\leq r'<r$。以下两个事实保证了算法以高概率得到待分解数的非平凡因子（如果有）：
+量子部分成功运行返回的结果$r$满足
+$$
+a^r=1\bmod N \land a^{r'}\neq 1\bmod N \forall 0\leq r'<r
+$$
+以下两个事实保证了算法以高概率得到待分解数的非平凡因子（如果有）：
 
-1. 对于合数$N$，如果$x\in[0,N]$满足$x^2=1\bmod N$，则$\gcd(x-1,N)$与$\gcd(x+1,N)$中至少有一个是$N$的非平凡因子
-2. 考虑$N=\Pi_{i=1}^{m} p_i^{\alpha_i}$，$x$从$\{x|x\in[1,N-1]\land \gcd(x,N)=1\}$中随机选取，则$2|r=\text{ord}_N(x),x^{r/2}\neq -1\bmod N$的概率至少是$1-\frac{1}{2^m}$
+一是对于合数$N$，如果
+$$
+x^2=1\bmod N, x\in[0,N]
+$$
+则$\gcd(x-1,N)$与$\gcd(x+1,N)$中至少有一个是$N$的非平凡因子；二是考虑
+$$
+N=\Pi_{i=1}^{m} p_i^{\alpha_i}, C=\{x|x\in[1,N-1]\land \gcd(x,N)=1\}
+$$
+$x$从集合$C$中随机选取，则
+$$
+Pr(2|r=\text{ord}_N(x),x^{r/2}\neq -1\bmod N)\geq 1-\frac{1}{2^m}
+$$
+
+此外在使用周期寻找子程序之前还需要经典地求解一系列问题，包括素性判定、最小公因数、乘幂判定等等，这些问题都可以找到多项式时间的算法来解决。
+
+### 算法
+
+完整算法如下：
+
+1. 使用经典算法判断$N$是否存在非平凡因子，在$O(poly(n))$时间内完成。如果不存在则算法失败。
+2. 如果$N$是偶数，返回因子$2$。
+3. 使用经典算法判断$N=a^b, \exist a\geq 1,b\geq 2$，如果是则返回$a$。在$O(poly(n))$时间内完成。
+4. 在$1$到$N-1$的范围内随机选择$x$。如果$gcd(x, N)>1$则返回因子$gcd(x, N)$。
+5. 在$x,N$上运行周期查找子程序$k$次，得到相位$s_i/r_i,i=1...k$，然后运行连分数算法（丢弃零结果）得到$r_i,i=1...{k'}$，然后用$r=lcm(r_1...r_{k'})$作为$ord_N(x)$。
+6. 如果$r$是偶数，并且$x^{r/2}=-1 \bmod N$，那么计算$gcd(x^{r/2}-1, N)$和$gcd(x^{r/2 + 1}, N)$，并测试其中一个是否为非平凡因子，如果是则返回该因子。否则，转到第3步，直到达到最大迭代限制。在这种情况下，该算法就会失败。
 
 ## 基本用法
 
@@ -64,7 +100,84 @@ $$
 
 ## 代码示例
 
-参考`example/demo/tutorial_shor.ipynb`。
+使用`ShorFactor(mode, N).run()`来通过QuICT内置的Shor算法实现来寻找一个数字$N$的因子：
+
+
+```python
+from QuICT.simulation.state_vector.cpu_simulator import CircuitSimulator
+from QuICT.algorithm.quantum_algorithm import ShorFactor
+
+input  = 35
+sf = ShorFactor(mode="BEA_zip", max_rd=2)
+circ, indices = sf.circuit(N=input)
+
+output = sf.run(N=input, circuit=circ, indices=indices, forced_quantum_approach=True)
+print(f"input  = {input}")
+print(f"output = {output}")
+```
+
+```
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_8938e19aa5cd11ed81140242ac110007 with 1 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893934eca5cd11ed81140242ac110007 with 1 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_89394ca2a5cd11ed81140242ac110007 with 1 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_89396980a5cd11ed81140242ac110007 with 1 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_8939883ea5cd11ed81140242ac110007 with 1 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_8939a18ea5cd11ed81140242ac110007 with 1 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_8939c2eaa5cd11ed81140242ac110007 with 2 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_8939fb3ea5cd11ed81140242ac110007 with 2 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893a156aa5cd11ed81140242ac110007 with 2 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893a3ba8a5cd11ed81140242ac110007 with 2 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893a59bca5cd11ed81140242ac110007 with 2 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893a81c6a5cd11ed81140242ac110007 with 2 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893a9f62a5cd11ed81140242ac110007 with 1 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893abe3ea5cd11ed81140242ac110007 with 1 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893ad392a5cd11ed81140242ac110007 with 2 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893aefd0a5cd11ed81140242ac110007 with 2 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893b0b5aa5cd11ed81140242ac110007 with 2 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893b26e4a5cd11ed81140242ac110007 with 3 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893b5826a5cd11ed81140242ac110007 with 1 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893b7374a5cd11ed81140242ac110007 with 2 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893b8972a5cd11ed81140242ac110007 with 2 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893baddaa5cd11ed81140242ac110007 with 1 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893bc50ea5cd11ed81140242ac110007 with 2 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893be17ea5cd11ed81140242ac110007 with 1 qubits.
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_893bf9e8a5cd11ed81140242ac110007 with 3 qubits.
+...
+2023-02-06 11:22:50 | circuit | INFO | Initial Quantum Circuit circuit_89413930a5cd11ed81140242ac110007 with 15 qubits.
+2023-02-06 11:22:57 | Shor | INFO | round = 0
+2023-02-06 11:22:57 | Shor | INFO | forced quantum approach, looking for coprime number...
+2023-02-06 11:22:57 | Shor | INFO | Quantumly determine the order of the randomly chosen a = 22
+2023-02-06 11:24:02 | Shor | INFO | phi: 0.000
+2023-02-06 11:24:02 | Shor | INFO | Shor failed: found odd order r = 1 of a = 22
+2023-02-06 11:24:02 | Shor | INFO | round = 1
+2023-02-06 11:24:02 | Shor | INFO | forced quantum approach, looking for coprime number...
+2023-02-06 11:24:02 | Shor | INFO | Quantumly determine the order of the randomly chosen a = 2
+2023-02-06 11:25:25 | Shor | INFO | phi: 0.250
+2023-02-06 11:25:25 | Shor | INFO | Shor succeed: found factor 5, with the help of a = 2, r = 4
+input  = 35
+output = 5
+```
+
+
+### 错误率
+
+周期寻找算法的行为与理论预测一致。 
+
+| mode    | original | reinforced(MAX_ROUND=3) | $Pr(r\neq 0\text{ and }r\nmid\text{order}(a,N))$ | repetitions |
+| ------- | -------- | ----------------------- | ------------------------------------------------ | ----------- |
+| BEA     | 0.47     | 0.12                    | 0                                                | 108         |
+| BEA_zip | 0.48     | 0.11                    | 0                                                | 108         |
+| HRS     | 0.44     | 0.06                    | 0                                                | 108         |
+| HRS_zip | 0.44     | 0.03                    | 0                                                | 108         |
+
+该数据集是$[4,54)$中的合数，共36个，其中9个是奇合数。
+
+`original`指的是上面给出的**原始**程序，`forced`只在第3步不同，我们挑选一个随机数$x$，即$gcd(x,N)=1$来**强制**执行周期寻找子程序。数字指第4步中重复子程序的次数。
+
+| mode    | original-2 | forced-2 | original-3 | forced-3 |
+| ------- | ---------- | -------- | ---------- | :------- |
+| BEA_zip | 0.028      | 0.028    | 0.0        | 0.0      |
+| HRS_zip | 0.028      | 0.028    | 0.0        | 0.0      |
 
 ## 参考文献
 

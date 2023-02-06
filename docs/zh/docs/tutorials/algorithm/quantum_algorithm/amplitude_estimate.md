@@ -1,5 +1,7 @@
 # QAE算法
 
+本教程将讲解QuICT中QAE模块的算法设置、基本用法以及代码示例。
+
 ## 概要
 
 QAE算法计算一个量子态在目标空间上的振幅。更详细地，输入是期望精度$\epsilon$、oracle电路$S_\chi$（与Grover算法中的输入相同）、状态制备电路$\mathcal{A}$；以高概率输出振幅估计$\tilde a,|a-\tilde a|<\epsilon$，其中$\mathcal{A}\ket{0}=\sqrt{a}\ket{\Psi_1}+\sqrt{1-a}\ket{\Psi_0}$，$\ket{\Psi_1}$是归一化的解空间向量。
@@ -128,6 +130,35 @@ for i in range(n_sample):
 pr_success /= n_sample
 print(f"success rate {pr_success:.2f} with {n_sample:4} samples")
 ```
+```
+2023-02-06 11:48:56 | circuit | INFO | Initial Quantum Circuit circuit_2e454b6ca5d111edba740242ac110007 with 4 qubits.
+2023-02-06 11:48:56 | circuit | INFO | Initial Quantum Circuit circuit_2e45cb96a5d111edba740242ac110007 with 4 qubits.
+2023-02-06 11:48:56 | circuit | INFO | Initial Quantum Circuit circuit_2e469382a5d111edba740242ac110007 with 4 qubits.
+0.252 from 0.250
+2023-02-06 11:48:56 | circuit | INFO | Initial Quantum Circuit circuit_2ea0eaeea5d111edba740242ac110007 with 4 qubits.
+2023-02-06 11:48:56 | circuit | INFO | Initial Quantum Circuit circuit_2ea170a4a5d111edba740242ac110007 with 4 qubits.
+2023-02-06 11:48:56 | circuit | INFO | Initial Quantum Circuit circuit_2ea237bea5d111edba740242ac110007 with 4 qubits.
+0.248 from 0.250
+...
+2023-02-06 11:49:48 | circuit | INFO | Initial Quantum Circuit circuit_4d4d6e18a5d111edba740242ac110007 with 4 qubits.
+2023-02-06 11:49:48 | circuit | INFO | Initial Quantum Circuit circuit_4d4dfd74a5d111edba740242ac110007 with 4 qubits.
+2023-02-06 11:49:48 | circuit | INFO | Initial Quantum Circuit circuit_4d4ec2b8a5d111edba740242ac110007 with 4 qubits.
+0.241 from 0.250
+2023-02-06 11:49:48 | circuit | INFO | Initial Quantum Circuit circuit_4da39996a5d111edba740242ac110007 with 4 qubits.
+2023-02-06 11:49:48 | circuit | INFO | Initial Quantum Circuit circuit_4da419e8a5d111edba740242ac110007 with 4 qubits.
+2023-02-06 11:49:48 | circuit | INFO | Initial Quantum Circuit circuit_4da4de96a5d111edba740242ac110007 with 4 qubits.
+0.251 from 0.250
+2023-02-06 11:49:49 | circuit | INFO | Initial Quantum Circuit circuit_4df67198a5d111edba740242ac110007 with 4 qubits.
+2023-02-06 11:49:49 | circuit | INFO | Initial Quantum Circuit circuit_4df6f140a5d111edba740242ac110007 with 4 qubits.
+2023-02-06 11:49:49 | circuit | INFO | Initial Quantum Circuit circuit_4df7b68ea5d111edba740242ac110007 with 4 qubits.
+0.253 from 0.250
+2023-02-06 11:49:49 | circuit | INFO | Initial Quantum Circuit circuit_4e4b640aa5d111edba740242ac110007 with 4 qubits.
+2023-02-06 11:49:49 | circuit | INFO | Initial Quantum Circuit circuit_4e4be31ca5d111edba740242ac110007 with 4 qubits.
+2023-02-06 11:49:49 | circuit | INFO | Initial Quantum Circuit circuit_4e4ca7c0a5d111edba740242ac110007 with 4 qubits.
+0.248 from 0.250
+success rate 1.00 with  100 samples
+```
+
 
 ## 参考文献
 
