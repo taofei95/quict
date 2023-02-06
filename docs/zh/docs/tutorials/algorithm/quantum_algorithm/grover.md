@@ -108,7 +108,7 @@ $$\mathcal{G}=U_s U_f, \quad U_s = I-2|s⟩⟨s|s⟩, \quad U_f = I-2|\omega⟩�
 具体而言，算法使用$\lceil\frac{\pi}{4}\sqrt{N}\rceil$次谕示电路，其整体结构与Grover算子的构造如图所示：
 
 <center>
-<img src='./basic_Grover_circuit.png'>
+<img src='../../../assets/images/tutorials/algorithm/quantum_algorithm/basic_Grover_circuit.png'>
 </center>
 
 [<sup>[1]</sup>](#refer1)
@@ -186,7 +186,7 @@ from QuICT.simulation.state_vector import ConstantStateVectorSimulator, CircuitS
 - 每一行不能出现相同值
 
 <center>
-<img src='./binary_sudoku.png'>
+<img src='../../../assets/images/tutorials/algorithm/quantum_algorithm/binary_sudoku.png'>
 </center>
 
 也就是
@@ -491,7 +491,7 @@ plt.show()
 
 
 
-![png](tutorial_grover.nbconvert_files/tutorial_grover.nbconvert_11_1.png)
+![png](../../../assets/images/tutorials/algorithm/quantum_algorithm/tutorial_grover.nbconvert_11_1.png)
     
 
 
@@ -533,7 +533,7 @@ plt.show()
 
 
 
-![png](tutorial_grover.nbconvert_files/tutorial_grover.nbconvert_13_3.png)
+![png](../../../assets/images/tutorials/algorithm/quantum_algorithm/tutorial_grover.nbconvert_13_3.png)
     
 
 
