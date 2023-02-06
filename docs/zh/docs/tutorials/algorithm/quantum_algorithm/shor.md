@@ -57,7 +57,10 @@ $$\phi=\frac{s}{r},s\in [0,r-1]$$
 
 <figure markdown>
 ![semi_classical_IQFT_circuit](../../../assets/images/tutorials/algorithm/quantum_algorithm/semi_classical_IQFT_circuit.png){:width="600px"}
-</figure>[<sup>[3]</sup>](#refer3)
+</figure>
+
+[<sup>[3]</sup>](#refer3)
+
 
 ### ...到因数分解
 

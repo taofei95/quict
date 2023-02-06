@@ -20,7 +20,10 @@ Grover搜索算法的实际运行时间取决于谕示（oracle）电路的复�
 
 <figure markdown>
 ![grover_list](../../../assets/images/tutorials/algorithm/quantum_algorithm/grover_list.png)
-</figure>[<sup>[2]</sup>](#refer2)
+</figure>
+
+[<sup>[2]</sup>](#refer2)
+
 
 为了找到紫色的盒子——*标记的项目*——使用经典计算，我们必须平均检查 $N/2$ 的这些盒子，在最坏的情况下，必须检查所有 $N$ 的盒子。然而，在量子计算机上，我们可以用Grover的振幅放大技巧在大约 $\sqrt{N}$ 的步骤中找到标记的项目。二次加速对于在长列表中寻找有标记的项目来说确实是一个可观的时间节省。此外，该算法不使用列表的内部结构，这使它成为*通用的；*这就是为什么它对许多经典问题立即提供了二次量子化的加速。
 
@@ -107,6 +110,7 @@ $$\mathcal{G}=U_s U_f, \quad U_s = I-2|s⟩⟨s|s⟩, \quad U_f = I-2|\omega⟩�
 <center>
 <img src='./basic_Grover_circuit.png'>
 </center>
+
 [<sup>[1]</sup>](#refer1)
 
 $U_s$门可以由$O(n)=O(\log N)$基础门实现，该实现已包含在QuICT的qcda部分中。
