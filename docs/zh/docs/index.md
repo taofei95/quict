@@ -48,7 +48,7 @@ pip install mkdocs-glightbox
 ```
 
 <figure markdown>
-![Max-Cut Result](../../../assets/images/tutorials/algorithm/VQA/QAOA/maxcut_result.png){width="400"}
+![Max-Cut Result](/assets/images/tutorials/algorithm/VQA/QAOA/maxcut_result.png){width="400"}
 <figcaption>图1：最大割结果。</figcaption>
 </figure>
 
@@ -216,8 +216,42 @@ if __name__ == '__main__':
 
 ## 参考文献
 
-(格式参考)
+### 引用部分格式
 
+QAOA[<sup>[1]</sup>](#refer1)
+
+``` markdown
+QAOA[<sup>[1]</sup>](#refer1)
+```
+
+### 文献部分格式
+
+<div id="refer1"></div>
+<font size=3>
 [1] Farhi, E., Goldstone, J. & Gutmann, S. A Quantum Approximate Optimization Algorithm. [arXiv:1411.4028 (2014)](https://arxiv.org/abs/1411.4028)
+</font>
+
+<div id="refer2"></div>
+<font size=3>
+[2] Farhi, E., Goldstone, J. & Gutmann, S. A Quantum Approximate Optimization Algorithm. [arXiv:1411.4028 (2014)](https://arxiv.org/abs/1411.4028)
+</font>
+
+``` markdown
+---
+
+## 参考文献
+
+<div id="refer1"></div>
+<font size=3>
+[1] Farhi, E., Goldstone, J. & Gutmann, S. A Quantum Approximate Optimization Algorithm. [arXiv:1411.4028 (2014)](https://arxiv.org/abs/1411.4028)
+</font>
+
+<div id="refer2"></div>
+<font size=3>
+[2] Farhi, E., Goldstone, J. & Gutmann, S. A Quantum Approximate Optimization Algorithm. [arXiv:1411.4028 (2014)](https://arxiv.org/abs/1411.4028)
+</font>
+
+---
+```
 
 ---

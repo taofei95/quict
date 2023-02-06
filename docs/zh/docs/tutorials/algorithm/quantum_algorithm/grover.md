@@ -4,11 +4,11 @@
 
 ## 概要
 
-Grover搜索算法是一种无结构量子搜索算法。对于单个目标的情况，其查询复杂度是$O(\sqrt{N})$，其中$N$是状态空间大小。
+Grover搜索算法是一种无结构量子搜索算法，对于单个目标的情况，其查询复杂度是 $O(\sqrt{N})$ ，其中 $N$ 是状态空间大小。
 
 这里实现了教科书版本[<sup>[1]</sup>](#refer1)的Grover算子，此外还支持多解情况，支持bit-flip和phase-flip oracle（前者是$O\ket{x}\ket{y}=\ket{x}\ket{f(x)\oplus y}$，后者是$O\ket{x}=(-1)^{f(x)}\ket{x}$）。当解的数目所占比例较大（超过一半）时，Grover迭代次数为0，算法退化为均匀随机采样。
 
-Grover搜索算法的实际运行时间取决于谕示（oracle）电路的复杂程度。对于20个变量，解数目比例为$2.2\times10^{-3}$的SAT问题，算法在单块GPU上可以在一小时内完成。
+Grover搜索算法的实际运行时间取决于谕示（oracle）电路的复杂程度。对于20个变量，解数目比例为 $2.2\times10^{-3}$ 的SAT问题，算法在单块GPU上可以在一小时内完成。
 
 ## 算法设置[<sup>[2]</sup>](#refer2)
 
@@ -16,17 +16,19 @@ Grover搜索算法的实际运行时间取决于谕示（oracle）电路的复�
 
 ### 无结构搜索问题
 
-考虑一个有$N$个项目的列表。在这些项目中，有一个项目具有我们希望找到的独特属性，我们将这个称为赢家w。将列表中的每个项目视为特定颜色的框。假设列表中除获胜者外的所有项目均为灰色w，是紫色的。
+考虑一个有 $N$ 个项目的列表。在这些项目中，有一个项目具有我们希望找到的独特属性，我们将这个称为赢家w。将列表中的每个项目视为特定颜色的框。假设列表中除获胜者外的所有项目均为灰色w，是紫色的。
 
-![](grover_list.png)[<sup>[2]</sup>](#refer2)
+<figure markdown>
+![grover_list](../../../assets/images/tutorials/algorithm/quantum_algorithm/grover_list.png)
+</figure>[<sup>[2]</sup>](#refer2)
 
-为了找到紫色的盒子——*标记的项目*——使用经典计算，我们必须平均检查$N/2$的这些盒子，在最坏的情况下，必须检查所有$N$的盒子。然而，在量子计算机上，我们可以用Grover的振幅放大技巧在大约$\sqrt{N}$的步骤中找到标记的项目。二次加速对于在长列表中寻找有标记的项目来说确实是一个可观的时间节省。此外，该算法不使用列表的内部结构，这使它成为*通用的；*这就是为什么它对许多经典问题立即提供了二次量子化的加速。
+为了找到紫色的盒子——*标记的项目*——使用经典计算，我们必须平均检查 $N/2$ 的这些盒子，在最坏的情况下，必须检查所有 $N$ 的盒子。然而，在量子计算机上，我们可以用Grover的振幅放大技巧在大约 $\sqrt{N}$ 的步骤中找到标记的项目。二次加速对于在长列表中寻找有标记的项目来说确实是一个可观的时间节省。此外，该算法不使用列表的内部结构，这使它成为*通用的；*这就是为什么它对许多经典问题立即提供了二次量子化的加速。
 
 ### 谕示电路的构造
 
-对于本教科书中的例子，我们的“数据库”是由我们的量子比特可能处于的所有计算基础状态组成的。例如，如果我们有3个量子比特，我们的列表是$|000\rangle, |001\rangle, \dots |111\rangle$（即$|0\rangle \rightarrow |7\rangle$的状态）。
+对于本教科书中的例子，我们的“数据库”是由我们的量子比特可能处于的所有计算基础状态组成的。例如，如果我们有3个量子比特，我们的列表是 $|000\rangle, |001\rangle, \dots |111\rangle$ （即 $|0\rangle \rightarrow |7\rangle$ 的状态）。
 
-Grover算法需要的谕示电路输入翻转了标记状态的相位。也就是说，对于计算基础中的任何状态$|x\rangle$，有
+Grover算法需要的谕示电路输入翻转了标记状态的相位。也就是说，对于计算基础中的任何状态 $|x\rangle$ ，有：
 
 $$
 U_\omega|x\rangle = \bigg\{
@@ -64,11 +66,9 @@ U_\omega =
 \end{aligned}
 $$
 
-Grover算法的强大之处在于，它很容易将一个问题转换为这种形式的谕示电路。有许多计算问题很难_找到_一个解决方案，但相对来说却很容易_验证_一个解决方案。例如，我们可以通过检查所有的规则是否被满足来轻松验证[数独](https://en.wikipedia.org/wiki/Sudoku)的解决方案。对于这些问题，我们可以创建一个函数$f$，它接收一个解决方案$x$，如果$x$不是一个解决方案（$x\neq\omega$），则返回$f(x)=0$，如果是一个有效的解决方案（$x=\omega$），则返回$f(x)=1$。那么我们的神谕可以描述为
+Grover算法的强大之处在于，它很容易将一个问题转换为这种形式的谕示电路。有许多计算问题很难_找到_一个解决方案，但相对来说却很容易_验证_一个解决方案。例如，我们可以通过检查所有的规则是否被满足来轻松验证[数独](https://en.wikipedia.org/wiki/Sudoku)的解决方案。对于这些问题，我们可以创建一个函数 $f$ ，它接收一个解决方案 $x$ ，如果 $x$ 不是一个解决方案（ $x\neq\omega$ ），则返回 $f(x)=0$ ，如果是一个有效的解决方案（ $x=\omega$ ），则返回 $f(x)=1$ 。那么我们的神谕可以描述为
 
-$$
-U_\omega|x\rangle = (-1)^{f(x)}|x\rangle
-$$
+$$U_\omega|x\rangle = (-1)^{f(x)}|x\rangle$$
 
 而神谕的矩阵将是一个对角线矩阵的形式。
 
@@ -85,16 +85,18 @@ $$
 ### Grover算子
 
 考虑这样的一个电路：
-$$
-\mathcal{G}=U_s U_f,U_s = I-2\ket{s}\bra{s},U_f = I-2\ket{\omega}\bra{\omega}
-$$
-其中$\ket{s}$是均匀叠加态而$\ket{\omega}$是标记状态。在$\ket{\omega}$与$\frac{1}{N-1}\sum_{x\neq\omega}\ket{x}$构成的平面上，这个电路将状态做了一个逆时针旋转。
 
-![grover_step3](grover_step3.jpg)[<sup>[2]</sup>](#refer2)
+$$\mathcal{G}=U_s U_f, \quad U_s = I-2|s⟩⟨s|s⟩, \quad U_f = I-2|\omega⟩⟨\omega|\omega⟩$$
 
-两个反射总是对应于一个旋转。Grover算子使初始状态$|s\rangle$向标记状态$|w\rangle$旋转。振幅条形图中的反射$U_s$的作用可以理解为对平均振幅的反射，而$U_f$则是对非标记状态的反射。这个过程将重复数次，以锁定标记状态。经过$t$步，我们将处于$|\psi_t\rangle$状态，其中$| \psi_t \rangle = (U_s U_f)^t | s \rangle$。事实证明，大约$\sqrt{N}$的旋转就足够了。这一点在观察状态$| \psi \rangle$的振幅时就很清楚了。我们可以看到，$| w\rangle$的振幅随着应用次数$\sim t N^{-1/2}$线性增长。然而，由于我们处理的是振幅而不是概率，矢量空间的维数以平方根的形式进入。因此，在这个过程中，被放大的是振幅，而不仅仅是概率。
+其中 $|s⟩$ 是均匀叠加态而 $|\omega⟩$ 是标记状态。在 $|\omega⟩$ 与 $\frac{1}{N-1}\sum_{x\neq\omega}|x⟩$ 构成的平面上，这个电路将状态做了一个逆时针旋转。
 
-在有多个解决方案的情况下，可以证明大约$\sqrt{(N/M)}$的旋转就足够了，其中$M$是解的数目。
+<figure markdown>
+![grover_step3](../../../assets/images/tutorials/algorithm/quantum_algorithm/grover_step3.jpg)
+</figure>[<sup>[2]</sup>](#refer2)
+
+两个反射总是对应于一个旋转。Grover算子使初始状态 $|s\rangle$ 向标记状态 $|w\rangle$ 旋转。振幅条形图中的反射 $U_s$ 的作用可以理解为对平均振幅的反射，而 $U_f$ 则是对非标记状态的反射。这个过程将重复数次，以锁定标记状态。经过 $t$ 步，我们将处于 $|\psi_t\rangle$ 状态，其中 $| \psi_t \rangle = (U_s U_f)^t | s \rangle$ 。事实证明，大约 $\sqrt{N}$ 的旋转就足够了。这一点在观察状态 $| \psi \rangle$ 的振幅时就很清楚了。我们可以看到，$| w\rangle$ 的振幅随着应用次数 $\sim t N^{-1/2}$ 线性增长。然而，由于我们处理的是振幅而不是概率，矢量空间的维数以平方根的形式进入。因此，在这个过程中，被放大的是振幅，而不仅仅是概率。
+
+在有多个解决方案的情况下，可以证明大约 $\sqrt{(N/M)}$ 的旋转就足够了，其中 $M$ 是解的数目。
 
 ### 算法细节
 
@@ -129,7 +131,7 @@ $U_s$门可以由$O(n)=O(\log N)$基础门实现，该实现已包含在QuICT的
 ```python
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.core.gate.backend import MCTOneAux
 
 def main_oracle(n, f):
@@ -155,7 +157,7 @@ n = 4
 target = 0b0110
 f = [target]
 k, oracle = main_oracle(n, f)
-grover = Grover(simulator=ConstantStateVectorSimulator())
+grover = Grover(simulator=StateVectorSimulator())
 result = grover.run(n, k, oracle)
 print(result)
 ```
