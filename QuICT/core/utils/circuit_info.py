@@ -3,13 +3,13 @@
 # @TIME    : 2022/1/15 10:31
 # @Author  : Han Yu, Li Kaiqi
 # @File    : _circuit_computing.py
-from collections import Iterable
-from typing import List
-import numpy as np
 from enum import Enum
+from typing import List
 
-from .gate_type import GateType
+import numpy as np
+
 from .circuit_matrix import CircuitMatrix, get_gates_order_by_depth
+from .gate_type import GateType
 
 
 class CircuitBased(object):

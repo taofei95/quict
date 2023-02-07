@@ -1,10 +1,14 @@
-from collections import Iterable
 from functools import cached_property
 from itertools import chain
 from typing import List
 
-from QuICT.core.utils import GateType
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
+
 from QuICT.core import Circuit
+from QuICT.core.utils import GateType
 
 from .matching_dag_circuit import Match, MatchingDAGCircuit, MatchingDAGNode
 

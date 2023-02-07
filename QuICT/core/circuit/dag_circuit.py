@@ -1,5 +1,10 @@
-from collections import Iterable, deque
+from collections import deque
 from typing import Set
+
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 import matplotlib.pyplot as plt
 import networkx as nx
