@@ -5,26 +5,36 @@
 #include <memory>
 
 #include "../gate/gate.hpp"
+#include "./backends.hpp"
 #include "apply_gate/delegate.hpp"
 #include "apply_gate/impl/naive.hpp"
 
 namespace sim {
 template <class DType>
 class Simulator {
+ private:
+  inline void BuildBackend(BackendTag tag) {
+    switch (tag) {
+      default: {
+        d_ = std::make_unique<NaiveApplyGateDelegate<DType>>();
+      }
+    }
+  }
+
  public:
-  Simulator(size_t q_num) : q_num_(q_num) {
+  Simulator(size_t q_num, BackendTag tag) : q_num_(q_num) {
     size_t len = 1ULL << q_num_;
     data_ = std::shared_ptr<DType[]>(new DType[len]);
     std::fill(data_.get(), data_.get() + len, 0);
     data_[0] = DType(1);
 
-    // TODO: replace with a factory pattern, which detects platform
-    // features at runtime to select proper implementation.
-    d_ = std::make_unique<NaiveApplyGateDelegate<DType>>();
+    BuildBackend(tag);
   }
 
-  Simulator(size_t q_num, std::shared_ptr<DType[]> data)
-      : q_num_(q_num), data_(std::move(data)) {}
+  Simulator(size_t q_num, std::shared_ptr<DType[]> data, BackendTag tag)
+      : q_num_(q_num), data_(std::move(data)) {
+    BuildBackend(tag);
+  }
 
   virtual ~Simulator() = default;
 

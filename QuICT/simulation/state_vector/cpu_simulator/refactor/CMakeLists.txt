@@ -1,4 +1,5 @@
-project(quict_cpu_sim_backend LANGUAGES C CXX)
+cmake_policy(SET CMP0048 NEW)
+project(quict_cpu_sim_backend VERSION 1.0.0 LANGUAGES C CXX )
 
 cmake_minimum_required(VERSION 3.0)
 
@@ -24,13 +25,19 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-enable_testing()
+if(NOT BUILD_TESTS)
+  message(STATUS "Skip all tests.")
+else()
+  message(STATUS "Build all tests.")
 
-set(U_GATE_TEST_SRC ${SIMULATOR_SRC} tests/gates/apply_unitary_gates.cc)
-add_executable(apply_unitary_gates ${U_GATE_TEST_SRC})
-target_link_libraries(apply_unitary_gates GTest::gtest_main)
+  enable_testing()
 
-include(GoogleTest)
-gtest_discover_tests(apply_unitary_gates)
+  set(U_GATE_TEST_SRC ${SIMULATOR_SRC} tests/gates/unitary/apply_unitary_gates.cc)
+  add_executable(apply_unitary_gates ${U_GATE_TEST_SRC})
+  target_link_libraries(apply_unitary_gates GTest::gtest_main)
 
+  include(GoogleTest)
+  gtest_discover_tests(apply_unitary_gates)
+
+endif()
 

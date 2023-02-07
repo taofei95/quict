@@ -5,20 +5,22 @@
 #include <iostream>
 #include <regex>
 
-#include "../../simulator/simulator.hpp"
-#include "../common/data_reader.hpp"
+#include "../../../simulator/simulator.hpp"
+#include "../../common/data_reader.hpp"
 
 namespace fs = std::filesystem;
+using namespace sim;
 
 template <class T, class Str>
-void TestPair(size_t q_num, Str desc_f_name, Str vec_f_name, double eps) {
+void TestPair(size_t q_num, Str desc_f_name, Str vec_f_name, double eps,
+              BackendTag tag) {
   auto desc = test::ReadDesc<T>(desc_f_name);
   auto cmp_vec = test::ReadVec<T>(vec_f_name);
   ASSERT_TRUE(desc.size() > 0) << "desc f name: " << desc_f_name << "\n";
   ASSERT_TRUE(cmp_vec.size() == (1ULL << q_num))
       << "vec f name: " << vec_f_name << "\n";
 
-  sim::Simulator<T> simulator(q_num);
+  Simulator<T> simulator(q_num, tag);
 
   for (auto &gate : desc) {
     simulator.ApplyGate(gate);
@@ -46,7 +48,7 @@ size_t GetQubitNum(const std::string &f_name) {
 }
 
 template <class DType>
-void TestDType(double eps) {
+void TestDType(double eps, BackendTag tag) {
   auto data_dir = GetDataPath();
   for (auto &it : fs::directory_iterator(data_dir)) {
     auto desc_f_name = it.path().filename().string();
@@ -57,9 +59,13 @@ void TestDType(double eps) {
     desc_f_name = (data_dir / desc_f_name).string();
     vec_f_name = (data_dir / vec_f_name).string();
     size_t q_num = GetQubitNum(desc_f_name);
-    TestPair<DType>(q_num, desc_f_name, vec_f_name, eps);
+    TestPair<DType>(q_num, desc_f_name, vec_f_name, eps, tag);
   }
 }
 
-TEST(ApplyUnitaryGate, ComplexF32) { TestDType<std::complex<float>>(5e-7); }
-TEST(ApplyUnitaryGate, ComplexF64) { TestDType<std::complex<double>>(1e-7); }
+TEST(ApplyUnitaryGate, NaiveComplexF32) {
+  TestDType<std::complex<float>>(5e-7, BackendTag::NAIVE);
+}
+TEST(ApplyUnitaryGate, NaiveComplexF64) {
+  TestDType<std::complex<double>>(1e-7, BackendTag::NAIVE);
+}
