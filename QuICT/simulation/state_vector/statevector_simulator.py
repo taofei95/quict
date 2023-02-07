@@ -13,7 +13,6 @@ from QuICT.core.gate import BasicGate, CompositeGate
 from QuICT.core.utils import GateType, MatrixType
 from QuICT.ops.linalg.cpu_calculator import measure_gate_apply, matrix_dot_vector
 from QuICT.ops.utils import LinAlgLoader
-from QuICT.ops.gate_kernel import float_multiply, complex_multiply
 from QuICT.simulation.utils import GateMatrixs
 from QuICT.tools.exception.core import ValueError, TypeError, GateQubitAssignedError
 from QuICT.tools.exception.simulation import (
@@ -506,6 +505,8 @@ class StateVectorSimulator:
         Args:
             value (Union[float, complex]): The multiply value apply to state vector.
         """
+        from QuICT.ops.gate_kernel import float_multiply, complex_multiply
+
         default_parameters = (self._vector, self._qubits, self._sync)
         if isinstance(value, float):
             float_multiply(value, *default_parameters)
