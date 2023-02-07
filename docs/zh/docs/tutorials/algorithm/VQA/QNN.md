@@ -17,11 +17,10 @@ from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from QuICT.algorithm.quantum_machine_learning.ansatz_library import QNNLayer
-from QuICT.algorithm.quantum_machine_learning.utils.encoding import *
-from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
-from QuICT.algorithm.quantum_machine_learning.model.QNN import QuantumNet
-from QuICT.simulation.state_vector import StateVectorSimulator
+from QuICT_ml.ansatz_library import QNNLayer
+from QuICT_ml.utils.encoding import *
+from QuICT_ml.utils.ml_utils import *
+from QuICT_ml.model.QNN import QuantumNet
 ```
 
 ## 加载和预处理MNIST数据
