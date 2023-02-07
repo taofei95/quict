@@ -9,7 +9,7 @@ class NaiveApplyGateDelegate : public ApplyGateDelegate<DType> {
   void ApplyGate(size_t q_num, DType *data,
                  const gate::Gate<DType> &gate) override {
     size_t gq_num = gate.Qnum();
-    int64_t iter_cnt = 1LL << (q_num - gq_num);
+    int64_t iter_cnt = int64_t(1) << (q_num - gq_num);
     if (gq_num == 1) {
       size_t t = gate.Get1Targ();
       size_t pos = q_num - t - 1LL;
@@ -27,7 +27,7 @@ class NaiveApplyGateDelegate : public ApplyGateDelegate<DType> {
 
       // normal unitary
 #pragma omp parallel for
-      for (int64_t iter = 0; iter < iter_cnt; ++iter) {
+      for (size_t iter = 0; iter < iter_cnt; ++iter) {
         size_t base_ind = ((iter & mask1) << 1) | (iter & mask0);
         size_t inds[2] = {base_ind, base_ind | (1LL << pos)};
         DType vec[2], res[2];
@@ -42,7 +42,7 @@ class NaiveApplyGateDelegate : public ApplyGateDelegate<DType> {
       auto [t0, t1] = gate.Get2Targ();
 
       // sorted index.
-      int s0 = t0, s1 = t1;
+      size_t s0 = t0, s1 = t1;
       if (s0 > s1) {
         std::swap(s0, s1);
       }
@@ -51,7 +51,7 @@ class NaiveApplyGateDelegate : public ApplyGateDelegate<DType> {
       size_t spos1 = q_num - s1 - 1LL, pos1 = q_num - t1 - 1LL;
       size_t mask0 = (1LL << spos1) - 1LL;
       size_t mask1 = ((1LL << spos0) - 1LL) ^ mask0;
-      size_t mask2 = (~0) ^ (mask0 | mask1);
+      size_t mask2 = size_t(~0) ^ (mask0 | mask1);
 
       // 0 ... s0 ... s1 ... q-1
       // [     ][     ][     ] (q-2 len)
@@ -66,7 +66,7 @@ class NaiveApplyGateDelegate : public ApplyGateDelegate<DType> {
 
       // normal unitary
 #pragma omp parallel for
-      for (int64_t iter = 0; iter < iter_cnt; ++iter) {
+      for (size_t iter = 0; iter < iter_cnt; ++iter) {
         size_t base_ind =
             ((iter & mask2) << 2) | ((iter & mask1) << 1) | (iter & mask0);
         size_t inds[4];

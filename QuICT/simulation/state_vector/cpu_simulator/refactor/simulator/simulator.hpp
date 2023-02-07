@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <stdexcept>
 
 #include "../gate/gate.hpp"
 #include "apply_gate/delegate.hpp"
