@@ -1,7 +1,11 @@
 from collections import namedtuple
-from collections.abc import Iterable
 from functools import cached_property
 from typing import List, Set
+
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 from QuICT.core import Circuit
 from QuICT.core.circuit.dag_circuit import DAGCircuit, DAGNode

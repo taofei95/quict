@@ -1,7 +1,11 @@
 from collections import deque
-from collections.abc import Iterable
 from itertools import chain
 from typing import Dict, List, Set, Tuple
+
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 from QuICT.core import *
 from QuICT.core.gate import *
