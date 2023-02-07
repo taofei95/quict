@@ -36,7 +36,7 @@ class Simulator {
     BuildBackend(tag);
   }
 
-  virtual ~Simulator() = default;
+  ~Simulator() = default;
 
   inline void ApplyGate(gate::Gate<DType> &gate) {
     // Use `data_.get()` directly to save 1 call of shared_ptr ctor because we
