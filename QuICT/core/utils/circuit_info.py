@@ -3,7 +3,7 @@
 # @TIME    : 2022/1/15 10:31
 # @Author  : Han Yu, Li Kaiqi
 # @File    : _circuit_computing.py
-
+from collections import Iterable
 from typing import List
 import numpy as np
 from enum import Enum
@@ -35,6 +35,7 @@ class CircuitBased(object):
         self._gates = []
         self._gate_type = {}        # gate_type: # of gates
         self._pointer = None
+        self._precision = np.complex128
 
     def size(self) -> int:
         """ the number of gates in the circuit/CompositeGate
@@ -186,11 +187,11 @@ class CircuitBased(object):
 
         if self.size() == 0:
             if device == "CPU":
-                circuit_matrix = np.identity(1 << self.width(), dtype=np.complex128)
+                circuit_matrix = np.identity(1 << self.width(), dtype=self._precision)
             else:
                 import cupy as cp
 
-                circuit_matrix = cp.identity(1 << self.width(), dtype=np.complex128)
+                circuit_matrix = cp.identity(1 << self.width(), dtype=self._precision)
 
             return circuit_matrix
 
@@ -204,6 +205,8 @@ class CircuitBased(object):
         for gate in self.gates:
             if hasattr(gate, "convert_precision"):
                 gate.convert_precision()
+
+        self._precision = np.complex64 if self._precision == np.complex128 else np.complex128
 
     def gate_decomposition(self):
         added_idxes = 0     # The number of gates which add from gate.build_gate()
@@ -221,3 +224,6 @@ class CircuitBased(object):
 
 class CircuitMode(Enum):
     Clifford = "Clifford"
+    CliffordRz = "CliffordRz"
+    Arithmetic = 'Arithmetic'
+    Misc = "Misc"

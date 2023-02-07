@@ -9,6 +9,7 @@ import subprocess
 import sys
 from os import getcwd, path
 from typing import List, Tuple
+from glob import glob
 
 import pybind11
 from setuptools import Extension, find_packages, setup
@@ -231,11 +232,29 @@ class ExtensionBuild(build_ext):
 # static file
 file_data = [
     ("QuICT/lib/qasm/libs", [f"{PRJ_ROOT_RELATIVE}/QuICT/lib/qasm/libs/qelib1.inc"]),
+    ("QuICT/simulation/utils", [f"{PRJ_ROOT_RELATIVE}/QuICT/simulation/utils/simulator_parameters.json"]),
+    ("QuICT/tools/cli/template", [f"{PRJ_ROOT_RELATIVE}/QuICT/tools/cli/template/quict_job.yml"]),
+    ("QuICT/lib/circuitlib", [f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/circuit_library.db"]),
+    ("QuICT/lib/circuitlib/template", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/template/*")),
+    ("QuICT/lib/circuitlib/algorithm/adder", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/algorithm/adder/*")),
+    ("QuICT/lib/circuitlib/algorithm/clifford", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/algorithm/clifford/*")),
+    ("QuICT/lib/circuitlib/algorithm/cnf", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/algorithm/cnf/*")),
+    ("QuICT/lib/circuitlib/algorithm/grover", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/algorithm/grover/*")),
+    ("QuICT/lib/circuitlib/algorithm/maxcut", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/algorithm/maxcut/*")),
+    ("QuICT/lib/circuitlib/algorithm/qft", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/algorithm/qft/*")),
+    ("QuICT/lib/circuitlib/algorithm/qnn", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/algorithm/qnn/*")),
+    ("QuICT/lib/circuitlib/algorithm/quantum_walk", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/algorithm/quantum_walk/*")),
+    ("QuICT/lib/circuitlib/algorithm/vqe", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/algorithm/vqe/*")),
+    ("QuICT/lib/circuitlib/random/aspen-4", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/random/aspen-4/*")),
+    ("QuICT/lib/circuitlib/random/ourense", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/random/ourense/*")),
+    ("QuICT/lib/circuitlib/random/rochester", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/random/rochester/*")),
+    ("QuICT/lib/circuitlib/random/sycamore", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/random/sycamore/*")),
+    ("QuICT/lib/circuitlib/random/tokyo", glob(f"{PRJ_ROOT_RELATIVE}/QuICT/lib/circuitlib/random/tokyo/*")),
 ]
 
 setup(
     name="quict",
-    version="0.5.3",
+    version="0.9.2",
     description="Quantum Compute Platform of Institute of Computing Technology",
     author="Library for Quantum Computation and Theoretical Computer Science, ICT, CAS",
     author_email="likaiqi@ict.ac.cn",
@@ -243,12 +262,17 @@ setup(
     platforms=["Windows", "Linux", "macOS"],
     url="https://e.gitee.com/quictucas/repos/quictucas/quict",
     package_dir={"QuICT": f"{PRJ_ROOT_RELATIVE}/QuICT"},
+    entry_points={
+        "console_scripts": [
+            "quict = QuICT.tools.cli.quict:main",
+        ],
+    },
     install_requires=[
+        "llvmlite",
         "contourpy==1.0.5",
         "cycler==0.11.0",
         "fonttools==4.37.4",
         "kiwisolver==1.4.4",
-        "llvmlite==0.39.1",
         "matplotlib==3.6.1",
         "networkx==2.8.7",
         "numba==0.56.3",
@@ -262,6 +286,11 @@ setup(
         "scipy==1.9.2",
         "six==1.16.0",
         "ujson==5.5.0",
+        "pyjwt==2.6.0",
+        "pycryptodome==3.16.0",
+        "psutil==5.9.4",
+        "pyyaml==6.0",
+        "requests==2.28.2"
     ],
     ext_modules=[
         CMakeExtension(

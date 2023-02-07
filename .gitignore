@@ -2,7 +2,7 @@
 /build/
 **/build
 venv/
-/QuICT.egg-info/
+/quict.egg-info/
 __pycache__/
 /tbb-2020.1/
 *.so
@@ -24,10 +24,15 @@ cmake-build*/
 callgrind.out*
 *qubit_cnot.json
 *qubit_cnot.inf
-*qubit_cnot_depth.inf
+*qubit_cnot_depth.inf/
 cmake-build*/
 cmake-vsc*/
 unit_test/**/*.jpg
 .history
 /QAOA_model*
 /del
+/data/
+.log/
+/demo/
+/QNN_MNIST*
+/docs_

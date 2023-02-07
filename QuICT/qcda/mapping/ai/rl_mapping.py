@@ -1,10 +1,9 @@
 from typing import Union
 
-from QuICT.qcda.mapping.ai.data_def import TrainConfig
-from QuICT.qcda.mapping.ai.train.learner import Learner
-
 from QuICT.core import *
 from QuICT.core.gate import CompositeGate
+from QuICT.qcda.mapping.ai.data_def import TrainConfig
+from QuICT.qcda.mapping.ai.train.learner import Learner
 from QuICT.qcda.utility import OutputAligner
 
 
