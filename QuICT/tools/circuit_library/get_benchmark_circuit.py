@@ -169,6 +169,3 @@ class BenchmarkCircuitBuilder:
             cir.name = "+".join(["benchmark", "mediate_measure", f"w{width}_s{size}_d{cir.depth()}_v{void_gates}"])
             cir_list.append(cir)
         return cir_list
-
-cir = BenchmarkCircuitBuilder.entangled_circuit_build(5, 10)
-cir[0].draw(filename = "bingxinghua")
