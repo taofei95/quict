@@ -41,7 +41,7 @@ class QuICTBenchmark:
 
     def _circuit_selection(self, qubit_num, level):
         based_circuits_list = []
-        based_fields_list = ["highly_entangled", "highly_parallelized", "highly_serialized"]
+        based_fields_list = ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"]
         for field in based_fields_list:
             circuits = CircuitLib().get_benchmark_circuit(str(field), qubits_interval=qubit_num)
             based_circuits_list.extend(circuits)
