@@ -27,9 +27,6 @@ from QuICT.tools import Logger
 from QuICT.tools.exception.core import *
 
 
-logger = Logger("circuit")
-
-
 class Circuit(CircuitBased):
     """ Implement a quantum circuit
 
@@ -121,6 +118,7 @@ class Circuit(CircuitBased):
         self._topology = None
         self._fidelity = None
         self._checkpoints = []
+        self._logger = Logger("circuit")
 
         if isinstance(wires, Qureg):
             self._qubits = wires
@@ -130,14 +128,14 @@ class Circuit(CircuitBased):
         if ancillae_qubits is not None:
             self.ancillae_qubits = ancillae_qubits
 
-        logger.debug(f"Initial Quantum Circuit {name} with {len(self._qubits)} qubits.")
+        self._logger.debug(f"Initial Quantum Circuit {name} with {len(self._qubits)} qubits.")
         if topology is not None:
             self.topology = topology
-            logger.debug(f"The Layout for Quantum Circuit is {self._topology}.")
+            self._logger.debug(f"The Layout for Quantum Circuit is {self._topology}.")
 
         if fidelity is not None:
             self.fidelity = fidelity
-            logger.debug(f"The Fidelity for Quantum Circuit is {self.fidelity}.")
+            self._logger.debug(f"The Fidelity for Quantum Circuit is {self.fidelity}.")
 
     def __del__(self):
         """ release the memory """
@@ -145,7 +143,6 @@ class Circuit(CircuitBased):
         self._qubits = None
         self.topology = None
         self.fidelity = None
-        logger.debug(f"Delete Quantum Circuit {self._name}.")
 
     def __or__(self, targets):
         """deal the operator '|'
@@ -233,12 +230,12 @@ class Circuit(CircuitBased):
         if is_ancillary_qubit:
             self._ancillae_qubits += list(range(self.width() - len(qubits), self.width()))
 
-        logger.debug(f"Quantum Circuit {self._name} add {len(qubits)} qubits.")
+        self._logger.debug(f"Quantum Circuit {self._name} add {len(qubits)} qubits.")
 
     def reset_qubits(self):
         """ Reset all qubits in current circuit. """
         self._qubits.reset_qubits()
-        logger.debug(f"Reset qubits' measured result in the Quantum Circuit {self._name}.")
+        self._logger.debug(f"Reset qubits' measured result in the Quantum Circuit {self._name}.")
 
     def remapping(self, qureg: Qureg, mapping: list, circuit_update: bool = False):
         """ Realignment the qubits by the given mapping.
@@ -260,7 +257,7 @@ class Circuit(CircuitBased):
 
         if circuit_update:
             self._qubits = remapping_qureg
-            logger.debug(f"The qureg is permutation by the order {mapping}.")
+            self._logger.debug(f"The qureg is permutation by the order {mapping}.")
 
         qureg[:] = remapping_qureg
 
@@ -274,7 +271,7 @@ class Circuit(CircuitBased):
         else:
             self.gates.insert(insert_idx, gate)
 
-        logger.debug(
+        self._logger.debug(
             f"Add quantum gate {gate.type} with qubit indexes {gate.cargs + gate.targs} " +
             f"with index {insert_idx}."
         )
@@ -306,7 +303,7 @@ class Circuit(CircuitBased):
             "Circuit.replace_gate.gate", "[BasicGate, NoiseGate]", type(gate)
         )
 
-        logger.debug(f"The origin gate {self._gates[idx]} is replaced by {gate}")
+        self._logger.debug(f"The origin gate {self._gates[idx]} is replaced by {gate}")
         self._gates[idx] = gate
 
     def find_position(self, cp_child: CheckPointChild):
@@ -384,10 +381,10 @@ class Circuit(CircuitBased):
             self._add_trigger(op, qureg)
         elif isinstance(op, CheckPoint):
             self._checkpoints.append(op)
-            logger.debug(f"Add an CheckPoint which point to index {op.position}.")
+            self._logger.debug(f"Add an CheckPoint which point to index {op.position}.")
         elif isinstance(op, Operator):
             self._gates.append(op)
-            logger.debug(f"Add an operator {type(op)}.")
+            self._logger.debug(f"Add an operator {type(op)}.")
         else:
             raise TypeError(
                 "Circuit.append.gate", "Trigger/BasicGate/NoiseGate", {type(op)}
@@ -454,7 +451,7 @@ class Circuit(CircuitBased):
                     raise CircuitAppendError("The trigger's target exceed the width of the circuit.")
 
         self.gates.append(op)
-        logger.debug(f"Add an operator Trigger with qubit indexes {op.targs}.")
+        self._logger.debug(f"Add an operator Trigger with qubit indexes {op.targs}.")
 
     def random_append(
         self,
@@ -495,7 +492,7 @@ class Circuit(CircuitBased):
                     "The length of probabilities should equal to the length of Gate Typelist."
                 )
 
-        logger.debug(f"Random append {rand_size} quantum gates from {typelist} with probability {probabilities}.")
+        self._logger.debug(f"Random append {rand_size} quantum gates from {typelist} with probability {probabilities}.")
         gate_prob = probabilities
         gate_indexes = list(range(len(typelist)))
         n_qubit = self.width()
@@ -515,7 +512,9 @@ class Circuit(CircuitBased):
         qubits = len(self.qubits)
         supremacy_layout = SupremacyLayout(qubits)
         supremacy_typelist = [GateType.sx, GateType.sy, GateType.sw]
-        logger.debug(f"Append Supremacy Circuit with mapping pattern sequence {pattern} and repeat {repeat} times.")
+        self._logger.debug(
+            f"Append Supremacy Circuit with mapping pattern sequence {pattern} and repeat {repeat} times."
+        )
 
         self._add_gate_to_all_qubits(H)
 
@@ -561,7 +560,7 @@ class Circuit(CircuitBased):
             Circuit: the sub circuit
         """
         max_size_for_logger = max_size if max_size == -1 else len(self.gates) - start
-        logger.debug(
+        self._logger.debug(
             f"Get {max_size_for_logger} gates from gate index {start}" +
             f" with target qubits {qubit_limit} and gate limit {gate_limit}."
         )
@@ -607,7 +606,7 @@ class Circuit(CircuitBased):
 
         if remove:
             self._update_gate_index()
-            logger.warn(f"Remove sub-circuit's gates from quantum circuit {self._name}.")
+            self._logger.warn(f"Remove sub-circuit's gates from quantum circuit {self._name}.")
 
         return sub_circuit
 

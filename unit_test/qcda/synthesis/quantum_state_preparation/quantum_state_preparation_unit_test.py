@@ -2,7 +2,7 @@ import numpy as np
 from QuICT.core import Circuit
 
 from QuICT.qcda.synthesis.quantum_state_preparation import QuantumStatePreparation, SparseQuantumStatePreparation
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 def random_unit_vector(n):
@@ -20,7 +20,7 @@ def test_with_uniformly_gates():
             gates = QSP.execute(state_vector)
             circuit = Circuit(n)
             circuit.extend(gates)
-            simulator = CircuitSimulator()
+            simulator = StateVectorSimulator()
             state = simulator.run(circuit)
             assert np.allclose(state_vector, state)
 
@@ -33,7 +33,7 @@ def test_with_unitary_decomposition():
             gates = QSP.execute(state_vector)
             circuit = Circuit(n)
             circuit.extend(gates)
-            simulator = CircuitSimulator()
+            simulator = StateVectorSimulator()
             state = simulator.run(circuit)
             assert np.allclose(state_vector, state)
 
@@ -54,9 +54,9 @@ def test_multicontrol_G():
             assert np.allclose(gates.matrix()[-2:, -2:-1].reshape(2), np.exp(-1j * phase) * state_vector)
 
 
-# [TODO]: Waiting for CircuitSimulator Support input State Vector.
+# [TODO]: Waiting for StateVectorSimulator Support input State Vector.
 # def test_reduce_state():
-#     simulator = CircuitSimulator()
+#     simulator = StateVectorSimulator()
 #     sparseQSP = SparseQuantumStatePreparation()
 #     for n in range(2, 6):
 #         for k in range(2, 1 << (n - 1)):
@@ -77,8 +77,8 @@ def test_multicontrol_G():
 
 
 def test_sparse_qsp():
-    simulator = CircuitSimulator()
-    sparseQSP = SparseQuantumStatePreparation('state_vector', keep_phase=True)
+    simulator = StateVectorSimulator()
+    sparseQSP = SparseQuantumStatePreparation('state_vector')
     for n in range(2, 6):
         for k in range(2, 1 << (n - 1)):
             state_vector = np.zeros(1 << n, dtype=complex)
@@ -89,14 +89,14 @@ def test_sparse_qsp():
             gates = sparseQSP.execute(state_vector)
             circuit = Circuit(n)
             circuit.extend(gates)
-            simulator = CircuitSimulator()
+            simulator = StateVectorSimulator()
             state = simulator.run(circuit)
             assert np.allclose(state_vector, state)
 
 
 def test_state_array():
-    simulator = CircuitSimulator()
-    sparseQSP = SparseQuantumStatePreparation('state_array', keep_phase=True)
+    simulator = StateVectorSimulator()
+    sparseQSP = SparseQuantumStatePreparation('state_array')
     for n in range(2, 6):
         for k in range(2, 1 << (n - 1)):
             nonzeros = random_unit_vector(k)
@@ -108,7 +108,7 @@ def test_state_array():
             gates = sparseQSP.execute(state_array)
             circuit = Circuit(n)
             circuit.extend(gates)
-            simulator = CircuitSimulator()
+            simulator = StateVectorSimulator()
             state = simulator.run(circuit)
             state_vector = sparseQSP.dict_to_statevector(dict(state_array), n)
             assert np.allclose(state_vector, state)

@@ -10,7 +10,7 @@ from QuICT.qcda.synthesis.arithmetic.bea import (
     BEAMulMod,
     BEACUa
 )
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 def set_qureg(qreg_index, N):
@@ -46,6 +46,7 @@ def ex_gcd(a, b, coff):
 
 
 def test_DraperAdder():
+    sim = StateVectorSimulator()
     for a in range(0, 20):
         for b in range(0, 20):
             n = max(len(bin(a)) - 2, len(bin(b)) - 2)
@@ -56,7 +57,7 @@ def test_DraperAdder():
             set_qureg(qreg_b, b) | circuit
             BEAAdder.execute(n) | circuit
             Measure | circuit
-            ConstantStateVectorSimulator().run(circuit)
+            sim.run(circuit)
             # aa = int(qreg_a)
             bb = int(circuit[qreg_b])
             if bb != (a + b) % (2 ** n):
@@ -66,6 +67,7 @@ def test_DraperAdder():
 
 
 def test_FourierAdderWired():
+    sim = StateVectorSimulator()
     for a in range(0, 20):
         for b in range(0, 20):
             n = max(len(bin(a)) - 2, len(bin(b)) - 2)
@@ -74,7 +76,7 @@ def test_FourierAdderWired():
             set_qureg(qreg_b, b) | circuit
             BEAAdderWired.execute(n, a) | circuit
             Measure | circuit
-            ConstantStateVectorSimulator().run(circuit)
+            sim.run(circuit)
             # aa = int(qreg_a)
             bb = int(circuit[qreg_b])
             # print("{0}+{1}={2}".format(str(a), str(b), str(bb)))
@@ -85,6 +87,7 @@ def test_FourierAdderWired():
 
 
 def test_FourierReverseAdderWired():
+    sim = StateVectorSimulator()
     for a in range(0, 20):
         for b in range(0, 20):
             n = max(len(bin(a)) - 2, len(bin(b)) - 2)
@@ -93,7 +96,7 @@ def test_FourierReverseAdderWired():
             set_qureg(qreg_b, b) | circuit
             BEAReverseAdderWired.execute(n, a) | circuit
             Measure | circuit
-            ConstantStateVectorSimulator().run(circuit)
+            sim.run(circuit)
             # aa = int(qreg_a)
             bb = int(circuit[qreg_b])
             if bb != (b - a) % (2 ** (n + 1)):
@@ -103,6 +106,7 @@ def test_FourierReverseAdderWired():
 
 
 def test_FourierAdderMod():
+    sim = StateVectorSimulator()
     for N in range(0, 20):
         for a in range(0, N):
             for b in range(0, N):
@@ -112,7 +116,7 @@ def test_FourierAdderMod():
                 set_qureg(qreg_b, b) | circuit
                 BEAAdderMod.execute(n, a, N) | circuit
                 Measure | circuit
-                ConstantStateVectorSimulator().run(circuit)
+                sim.run(circuit)
                 # aa = int(qreg_a)
                 bb = int(circuit[qreg_b])
                 low = int(circuit[n + 1])
@@ -122,6 +126,7 @@ def test_FourierAdderMod():
 
 
 def test_BEAMulMod():
+    sim = StateVectorSimulator()
     for N in range(0, 20):
         for a in range(0, N):
             for x in range(0, N):
@@ -133,13 +138,14 @@ def test_BEAMulMod():
                 set_qureg(qreg_x, x) | circuit
                 BEAMulMod.execute(n, a, N) | circuit
                 Measure | circuit
-                ConstantStateVectorSimulator().run(circuit)
+                sim.run(circuit)
                 bb = int(circuit[qreg_b])
                 # print("0 + {0}*{1} mod {2}={3}".format(str(a), str(x), str(N), str(bb)))
                 assert bb == (0 + a * x) % N
 
 
 def test_BEACUa():
+    sim = StateVectorSimulator()
     n = 4
     for c in range(2):
         if c == 0:
@@ -164,7 +170,7 @@ def test_BEACUa():
                     set_qureg(qreg_x, x) | circuit
                     BEACUa.execute(n, a, N) | circuit
                     Measure | circuit
-                    ConstantStateVectorSimulator().run(circuit)
+                    sim.run(circuit)
                     bb = int(circuit[qreg_b])
                     xx = int(circuit[qreg_x])
                     cc = int(circuit[qreg_c])

@@ -5,7 +5,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import X, H, Measure
 from QuICT.core.gate.backend import MCTOneAux
 from QuICT.qcda.synthesis.quantum_state_preparation import QuantumStatePreparation
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 def weight_decison_para(n, k, l):
@@ -88,7 +88,7 @@ class WeightDecision(Algorithm):
         for i in range(num - 1):
             Measure | circuit(i)
 
-        simulator = ConstantStateVectorSimulator()
+        simulator = StateVectorSimulator()
         _ = simulator.run(circuit)
 
         if int(ancilla) == gamma % 2:

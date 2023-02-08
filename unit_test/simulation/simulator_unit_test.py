@@ -6,7 +6,7 @@ from copy import deepcopy
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.unitary import UnitarySimulator
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator, CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.simulation.density_matrix import DensityMatrixSimulation
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 from QuICT.simulation import Simulator
@@ -49,11 +49,11 @@ class TestGPUSimulator(unittest.TestCase):
         assert np.allclose(u["data"]["state_vector"], TestGPUSimulator.sv_data_single, atol=1e-6)
 
     def test_state_vector(self):
-        sim = ConstantStateVectorSimulator("double")
+        sim = StateVectorSimulator("GPU", "double")
         SV = sim.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(SV, TestGPUSimulator.sv_data)
 
-        sim = ConstantStateVectorSimulator("single")
+        sim = StateVectorSimulator("GPU", "single")
         SV = sim.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(SV, TestGPUSimulator.sv_data_single, atol=1e-6)
 
@@ -61,7 +61,7 @@ class TestGPUSimulator(unittest.TestCase):
         sv = sv_sim.run(deepcopy(TestGPUSimulator.circuit))
         assert np.allclose(sv["data"]["state_vector"], TestGPUSimulator.sv_data)
 
-        sv_sim = Simulator(device="GPU", precision="single")
+        sv_sim = Simulator(device="GPU", precision="single", matrix_aggregation=False, gpu_device_id=2)
         sv = sv_sim.run(deepcopy(TestGPUSimulator.circuit))
         assert np.allclose(sv["data"]["state_vector"], TestGPUSimulator.sv_data_single, atol=1e-6)
 
@@ -83,19 +83,19 @@ class TestGPUSimulator(unittest.TestCase):
         assert np.allclose(dm["data"]["density_matrix"], TestGPUSimulator.dm_data_single, atol=1e-6)
 
     def test_matrix_aggregation(self):
-        t = ConstantStateVectorSimulator(matrix_aggregation=True)
+        t = StateVectorSimulator(device="GPU", matrix_aggregation=True)
         T = t.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(T, TestGPUSimulator.sv_data)
 
-        t = ConstantStateVectorSimulator(matrix_aggregation=True, precision="single")
+        t = StateVectorSimulator(device="GPU", matrix_aggregation=True, precision="single")
         T = t.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(T, TestGPUSimulator.sv_data_single, atol=1e-6)
 
-        f = ConstantStateVectorSimulator(matrix_aggregation=False)
+        f = StateVectorSimulator(device="GPU", matrix_aggregation=False)
         F = f.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(F, TestGPUSimulator.sv_data)
 
-        f = ConstantStateVectorSimulator(matrix_aggregation=False, precision="single")
+        f = StateVectorSimulator(device="GPU", matrix_aggregation=False, precision="single")
         F = f.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(F, TestGPUSimulator.sv_data_single, atol=1e-6)
 
@@ -126,7 +126,7 @@ class TestCPUSimulator(unittest.TestCase):
         assert np.allclose(u["data"]["state_vector"], TestCPUSimulator.sv_data)
 
     def test_state_vector(self):
-        sim = CircuitSimulator()
+        sim = StateVectorSimulator()
         SV = sim.run(TestCPUSimulator.circuit)
         assert np.allclose(SV, TestCPUSimulator.sv_data)
 
@@ -171,7 +171,7 @@ class TestSample(unittest.TestCase):
         b = simulator.sample(100)
         assert b[0] + b[-1] == 100
 
-        simulator = ConstantStateVectorSimulator()
+        simulator = StateVectorSimulator()
         _ = simulator.run(TestSample.cir)
         c = simulator.sample(100)
         assert c[0] + c[-1] == 100
@@ -187,7 +187,7 @@ class TestSample(unittest.TestCase):
         b = simulator.sample(100)
         assert b[0] + b[-1] == 100
 
-        simulator = ConstantStateVectorSimulator(precision="single")
+        simulator = StateVectorSimulator(precision="single")
         _ = simulator.run(TestSample.cir)
         c = simulator.sample(100)
         assert c[0] + c[-1] == 100

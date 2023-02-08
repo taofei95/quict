@@ -3,7 +3,7 @@ import pytest
 from QuICT.algorithm.quantum_algorithm import QAE, StatePreparationInfo, OracleInfo
 
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 def example_oracle(n):
@@ -39,7 +39,7 @@ def test_canonical_QAE_run():
     n_sample = 100
     for i in range(n_sample):
         pr_quantum_good = QAE(
-            mode="canonical", eps=eps, simulator=ConstantStateVectorSimulator()
+            mode="canonical", eps=eps, simulator=StateVectorSimulator()
         ).run(oracle=oracle)
         print(f"{pr_quantum_good:.3f} from {pr_function_good:.3f}")
         if np.abs(pr_function_good - pr_quantum_good) < eps:

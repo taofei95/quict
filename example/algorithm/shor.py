@@ -1,6 +1,7 @@
 from QuICT.algorithm.quantum_algorithm import ShorFactor
 
-N = 35
+
+N = 15
 sf = ShorFactor(mode="BEA_zip")
-output = sf.run(N)
+output = sf.run(N, forced_quantum_approach=True)
 print(output)

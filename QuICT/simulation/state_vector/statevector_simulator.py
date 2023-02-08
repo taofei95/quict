@@ -6,14 +6,13 @@
 
 from typing import Union
 import numpy as np
-import cupy as cp
 
 from QuICT.core import Circuit
 from QuICT.core.operator import Trigger
 from QuICT.core.gate import BasicGate, CompositeGate
 from QuICT.core.utils import GateType, MatrixType
+from QuICT.ops.linalg.cpu_calculator import measure_gate_apply, matrix_dot_vector
 from QuICT.ops.utils import LinAlgLoader
-from QuICT.ops.gate_kernel import float_multiply, complex_multiply
 from QuICT.simulation.utils import GateMatrixs
 from QuICT.tools.exception.core import ValueError, TypeError, GateQubitAssignedError
 from QuICT.tools.exception.simulation import (
@@ -21,7 +20,7 @@ from QuICT.tools.exception.simulation import (
 )
 
 
-class ConstantStateVectorSimulator:
+class StateVectorSimulator:
     """
     The simulator for qubits' vector state.
 
@@ -32,6 +31,7 @@ class ConstantStateVectorSimulator:
         matrix_aggregation (bool): Using quantum gate matrix's aggregation to optimize running speed.
         sync (bool): Sync mode or Async mode.
     """
+    __DEVICE = ["CPU", "GPU"]
     __PRECISION = ["single", "double"]
 
     @property
@@ -48,11 +48,15 @@ class ConstantStateVectorSimulator:
 
     @vector.setter
     def vector(self, vec):
-        with cp.cuda.Device(self._device_id):
-            if type(vec) is np.ndarray:
-                self._vector = cp.array(vec)
-            else:
-                self._vector = vec
+        if self._device == "GPU":
+            with self._array_helper.cuda.Device(self._device_id):
+                if type(vec) is np.ndarray:
+                    self._vector = self._array_helper.array(vec)
+                else:
+                    self._vector = vec
+        else:
+            assert isinstance(vec, np.ndarray)
+            self._vector = vec
 
     @property
     def device(self):
@@ -60,25 +64,34 @@ class ConstantStateVectorSimulator:
 
     def __init__(
         self,
+        device: str = "CPU",
         precision: str = "double",
         gpu_device_id: int = 0,
         matrix_aggregation: bool = True,
         sync: bool = True
     ):
+        if device not in self.__DEVICE:
+            raise ValueError("StateVectorSimulation.device", "[CPU, GPU]", device)
+
         if precision not in self.__PRECISION:
             raise ValueError("StateVectorSimulation.precision", "[single, double]", precision)
 
+        self._device = device
         self._precision = np.complex128 if precision == "double" else np.complex64
         self._device_id = gpu_device_id
-        self._sync = sync
 
-        # Optimization
-        self._using_matrix_aggregation = matrix_aggregation
+        if self._device == "GPU":
+            import cupy as cp
 
-        # Initial simulator with limit_qubits
-        self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
-        # Set gpu id
-        cp.cuda.runtime.setDevice(self._device_id)
+            self._sync = sync
+            self._using_matrix_aggregation = matrix_aggregation
+            self._array_helper = cp
+            self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
+
+            # Set gpu id
+            cp.cuda.runtime.setDevice(self._device_id)
+        else:
+            self._array_helper = np
 
     def initial_circuit(self, circuit: Circuit):
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
@@ -92,7 +105,7 @@ class ConstantStateVectorSimulator:
         self._pipeline = circuit.gates
 
         # Initial GateMatrix if matrix_aggregation is True
-        if self._using_matrix_aggregation:
+        if self._device == "GPU" and self._using_matrix_aggregation:
             self.gateM_optimizer = GateMatrixs(self._precision, self._device_id)
             self.gateM_optimizer.build(self._pipeline)
 
@@ -101,21 +114,22 @@ class ConstantStateVectorSimulator:
         if self._using_matrix_aggregation:
             return self.gateM_optimizer.get_target_matrix(gate)
         else:
-            return cp.array(gate.matrix, dtype=self._precision)
+            return self._array_helper.array(gate.matrix, dtype=self._precision)
 
     def initial_state_vector(self, all_zeros: bool = False):
         """ Initial qubits' vector states. """
         vector_size = 1 << int(self._qubits)
-        self._vector = cp.zeros(vector_size, dtype=self._precision)
-        if not all_zeros:
+        self._vector = self._array_helper.zeros(vector_size, dtype=self._precision)
+        if self._device == "CPU" and not all_zeros:
+            self._vector[0] = self._precision(1)
+        elif self._device == "GPU" and not all_zeros:
             self._vector.put(0, self._precision(1))
 
     def run(
         self,
         circuit: Circuit,
-        state_vector: Union[np.ndarray, cp.ndarray] = None,
-        use_previous: bool = False,
-        gpu_out: bool = True
+        state_vector: np.ndarray = None,
+        use_previous: bool = False
     ) -> np.ndarray:
         """ start simulator with given circuit
 
@@ -123,16 +137,15 @@ class ConstantStateVectorSimulator:
             circuit (Circuit): The quantum circuits.
             state_vector (ndarray): The initial state vector.
             use_previous (bool, optional): Using the previous state vector. Defaults to False.
-            record_runtime_measured (bool, optional): Record qubits' measured state during the simulation.
 
         Returns:
-            [array]: The state vector.
+            Union[cp.array, np.array]: The state vector.
         """
         self.initial_circuit(circuit)
         if state_vector is not None:
             assert 2 ** self._qubits == state_vector.size, \
                 StateVectorUnmatchedError("The state vector should has the same qubits with the circuit.")
-            self.vector = cp.array(state_vector, dtype=self._precision)
+            self.vector = self._array_helper.array(state_vector, dtype=self._precision)
         elif not use_previous:
             self.initial_state_vector()
 
@@ -147,10 +160,24 @@ class ConstantStateVectorSimulator:
             else:
                 raise TypeError("StateVectorSimulation.run.circuit", "[BasicGate, Trigger]". type(gate))
 
-        if not gpu_out:
-            return self.vector.get()
-        else:
-            return self.vector
+        return self.vector
+
+    def _apply_gate_cpu(self, gate: BasicGate):
+        indexes = [self._qubits - 1 - index for index in gate.targs + gate.cargs]
+        matrix_dot_vector(
+            self._vector,
+            self._qubits,
+            gate.matrix,
+            gate.controls + gate.targets,
+            np.array(indexes)
+        )
+
+    def _measured_cpu(self, index: int):
+        result = measure_gate_apply(
+            index,
+            self._vector
+        )
+        self._circuit.qubits[self._qubits - 1 - index].measured = result
 
     def apply_gate(self, gate: BasicGate):
         """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
@@ -158,6 +185,17 @@ class ConstantStateVectorSimulator:
         Args:
             gate (Gate): the quantum gate in the circuit.
         """
+        # CPU simulator here
+        # TODO: only consider as unitary for all gates currently
+        if self._device == "CPU":
+            if gate.type == GateType.measure:
+                index = self._qubits - 1 - gate.targ
+                self._measured_cpu(index)
+            else:
+                self._apply_gate_cpu(gate)
+
+            return
+
         matrix_type = gate.matrix_type
         gate_type = gate.type
         default_parameters = (self._vector, self._qubits, self._sync)
@@ -443,13 +481,16 @@ class ConstantStateVectorSimulator:
         """
         for targ in op.targs:
             index = self._qubits - 1 - targ
-            prob = self.get_measured_prob(index).get()
-            _ = self.apply_specialgate(index, GateType.measure, prob)
+            if self._device == "GPU":
+                prob = self.get_measured_prob(index).get()
+                _ = self.apply_specialgate(index, GateType.measure, prob)
+            else:
+                self._measured_cpu(index)
 
         mapping_cgate = op.mapping(int(self._circuit[op.targs]))
         if isinstance(mapping_cgate, CompositeGate):
             # optimized composite gate's matrix
-            if self._using_matrix_aggregation:
+            if self._device == "GPU" and self._using_matrix_aggregation:
                 self.gateM_optimizer.build(mapping_cgate.gates)
 
             # Check for checkpoint
@@ -464,6 +505,8 @@ class ConstantStateVectorSimulator:
         Args:
             value (Union[float, complex]): The multiply value apply to state vector.
         """
+        from QuICT.ops.gate_kernel import float_multiply, complex_multiply
+
         default_parameters = (self._vector, self._qubits, self._sync)
         if isinstance(value, float):
             float_multiply(value, *default_parameters)
@@ -475,9 +518,9 @@ class ConstantStateVectorSimulator:
 
     def apply_zeros(self):
         """ Set state vector to be zero. """
-        self._vector = cp.zeros_like(self.vector)
+        self._vector = self._array_helper.zeros_like(self.vector)
 
-    def get_measured_prob(self, index: int, all_measured: bool = False) -> cp.ndarray:
+    def get_measured_prob(self, index: int, all_measured: bool = False):
         """ Return the probability of measured qubit with given index to be 0
 
         Args:
@@ -548,8 +591,11 @@ class ConstantStateVectorSimulator:
         for _ in range(shots):
             for m_id in measured_idx:
                 index = self._qubits - 1 - m_id
-                prob = self.get_measured_prob(index).get()
-                _ = self.apply_specialgate(index, GateType.measure, prob)
+                if self._device == "GPU":
+                    prob = self.get_measured_prob(index).get()
+                    _ = self.apply_specialgate(index, GateType.measure, prob)
+                else:
+                    self._measured_cpu(index)
 
             state_list[int(self._circuit.qubits)] += 1
             self._vector = original_sv.copy()

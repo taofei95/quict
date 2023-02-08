@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 
 from QuICT.core.layout.layout import Layout
 from QuICT.qcda.qcda import QCDA
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.tools.circuit_library.circuitlib import CircuitLib
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 
@@ -36,12 +36,7 @@ class QuICTBenchmark:
         self._output_path = os.path.abspath(output_path)
         self._output_file_type = output_file_type
         self._device = device
-        if device == "CPU":
-            self.simulator = CircuitSimulator()
-        else:
-            from QuICT.simulation.state_vector import ConstantStateVectorSimulator
-
-            self.simulator = ConstantStateVectorSimulator()
+        self.simulator = StateVectorSimulator(device=self._device)
 
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path)

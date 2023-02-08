@@ -161,27 +161,91 @@ def matrix_dot_vector(
     """
     # Deal with special case when matrix's qubit == vector's qubit
     if mat_bit == vec_bit:
-        return np.dot(mat, vec)
+        vec[:] = dot(mat, vec)
+        return
 
     repeat = 1 << (vec_bit - mat_bit)
     arg_len = 1 << mat_bit
     sorted_args = mat_args.copy()
     sorted_args = np.sort(sorted_args)
-    aux = np.zeros_like(vec)
-    for i in range(repeat):
+    for i in prange(repeat):
         for sarg_idx in range(mat_bit):
             less = i & ((1 << sorted_args[sarg_idx]) - 1)
-            i = i >> sorted_args[sarg_idx] << (sorted_args[sarg_idx] + 1) + less
+            i = (i >> sorted_args[sarg_idx] << (sorted_args[sarg_idx] + 1)) + less
 
         indexes = np.array([i] * arg_len, dtype=np.int32)
-        for i in range(1, arg_len, 1):
+        for ii in prange(1, arg_len):
             for j in range(mat_bit):
-                if i & (1 << j):
-                    indexes[i] += 1 << mat_args[j]
+                if ii & (1 << j):
+                    indexes[ii] += 1 << mat_args[j]
 
-        aux[indexes] = dot(mat, vec[indexes])
+        vec[indexes] = dot(mat, vec[indexes])
 
-    return aux
+
+@njit()
+def diagonal_matrix(
+    vec: np.ndarray,
+    vec_bit: int,
+    mat: np.ndarray,
+    mat_bit: int,
+    control_args: np.ndarray,
+    target_args: np.ndarray,
+    is_control: bool
+):
+    # Step 1: Get diagonal value from gate_matrix
+    diagonal_value = np.diag(mat)
+
+    # Step 2: Deal with mat_bit == vec_bit
+    if mat_bit == vec_bit:
+        vec = multiply(diagonal_value, vec)
+        return
+
+    # Step 3: diagonal matrix * vec
+    repeat = 1 << (vec_bit - mat_bit)
+    arg_len = 1 << mat_bit - len(control_args)
+    sorted_args = target_args.copy()
+    sorted_args = np.sort(sorted_args)
+    for i in prange(repeat):
+        for sarg_idx in range(mat_bit):
+            less = i & ((1 << sorted_args[sarg_idx]) - 1)
+            i = (i >> sorted_args[sarg_idx] << (sorted_args[sarg_idx] + 1)) + less
+
+        for carg_idx in control_args:
+            i += 1 << carg_idx
+
+        if is_control:
+            i += 1 << target_args[0]
+            vec[i] = vec[i] * diagonal_value[-1]
+        else:
+            for ii in range(1, arg_len):
+                index = i
+                for j in len(target_args):
+                    if ii & (1 << j):
+                        index += 1 << target_args[j]
+
+                    vec[index] = vec[index] * diagonal_value[1 << len(control_args) + ii]
+
+
+@njit()
+def swap_matrix(
+    vec: np.ndarray,
+    vec_bit: int,
+    mat: np.ndarray,
+    mat_bit: int,
+    mat_args: np.ndarray
+):
+    pass
+
+
+@njit()
+def reverse_matrix(
+    vec: np.ndarray,
+    vec_bit: int,
+    mat: np.ndarray,
+    mat_bit: int,
+    mat_args: np.ndarray
+):
+    pass
 
 
 @njit()
@@ -219,3 +283,24 @@ def measure_gate_apply(
         vec[vec_idx_1] = np.complex128(0)
 
     return _1
+
+
+@njit()
+def reset_gate_apply(
+    index: int,
+    vec: np.array
+):
+    target_index = 1 << index
+    vec_idx_0 = [idx for idx in range(len(vec)) if not idx & target_index]
+    vec_idx_0 = np.array(vec_idx_0, dtype=np.int32)
+    vec_idx_1 = [idx for idx in range(len(vec)) if idx & target_index]
+    vec_idx_1 = np.array(vec_idx_1, dtype=np.int32)
+    prob = np.sum(np.square(np.abs(vec[vec_idx_0])))
+
+    alpha = np.float64(np.sqrt(prob))
+    if alpha < 1e-6:
+        vec[vec_idx_0] = vec[vec_idx_1]
+        vec[vec_idx_1] = np.complex128(0)
+    else:
+        vec[vec_idx_0] = vec[vec_idx_0] / alpha
+        vec[vec_idx_1] = np.complex128(0)

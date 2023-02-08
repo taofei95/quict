@@ -8,7 +8,7 @@ from QuICT.qcda.synthesis.arithmetic.hrs import (
     HRSMulMod,
     CHRSMulMod,
 )
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 def set_qureg(qreg_index, N):
@@ -54,7 +54,7 @@ def ex_gcd(a, b, arr):
 
 
 def test_HRSAdder():
-    sim = ConstantStateVectorSimulator()
+    sim = StateVectorSimulator()
     for a in range(0, 20):
         for b in range(0, 20):
             n = max(len(bin(a)) - 2, len(bin(b)) - 2)
@@ -73,7 +73,7 @@ def test_HRSAdder():
 
 
 def test_HRSAdderMod():
-    sim = ConstantStateVectorSimulator()
+    sim = StateVectorSimulator()
     for N in range(4, 15):
         n = len(bin(N)) - 2
         for a in range(0, N):
@@ -95,7 +95,7 @@ def test_HRSAdderMod():
 
 
 def test_HRSMulMod():
-    sim = ConstantStateVectorSimulator()
+    sim = StateVectorSimulator()
     for N in range(4, 12):
         n = len(bin(N)) - 2
         for a in range(0, N):
@@ -120,7 +120,7 @@ def test_HRSMulMod():
 
 
 def test_CHRSMulMod():
-    sim = ConstantStateVectorSimulator()
+    sim = StateVectorSimulator()
     for c in (1, 0):
         for N in range(4, 12):
             n = len(bin(N)) - 2
