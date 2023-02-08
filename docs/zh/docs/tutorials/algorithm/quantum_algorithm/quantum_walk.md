@@ -4,7 +4,7 @@
 
 !!! note
 
-    本教程目前只针对**离散时间**的，**带硬币**的量子游走算法。
+    本教程目前只针对**无权图**上**离散时间**的，**带硬币**的量子游走算法。
 
 ## 带硬币的量子游走算法
 
@@ -45,7 +45,7 @@ $$U = S \cdot C$$
 
 ### 算法流程
 
-1. 设初态 $|\psi_0⟩=|0⟩$ ，运行 $t$ 轮量子游走，每轮迭代的步骤为：
+1. 设初态 $|\psi_0⟩=|0⟩$ ，即粒子只位于节点0，且尚未进行抛硬币操作。运行 $t$ 轮量子游走，每轮迭代的步骤为：
    
       1. 执行抛硬币操作 $C$ 以获得 $|\psi_C⟩$ ，即对所有硬币寄存器应用相同的硬币 $c$ 。
       2. 根据抛硬币结果 $|\psi_C⟩$ 执行移动操作 $S$ 。
@@ -54,17 +54,17 @@ $$U = S \cdot C$$
     
     $$|\psi_{t}⟩ = U^t|\psi_0⟩$$
    
-2. 对最终的状态进行量子测量
+2. 对最终的状态进行量子测量。
 
 ### 用QuICT实现量子游走
 
 #### 基本用法
 
-`QuantumWalk` 位于 `QuICT.algorithm.quantum_algorithm.quantum_walk`，运行函数的输入参数为：
+`QuantumWalk` 位于 `QuICT.algorithm.quantum_algorithm`，运行函数的输入参数为：
 
 - `step`: 自定义的量子游走轮数
 - `position`: 给定图的节点数
-- `edges`:` 给定图的边
+- `edges:` 给定图的边
 - `operators`: 定义对各节点的操作
 - `coin_operator`: 定义抛硬币操作（酉矩阵）
 - `switched_time`: 单次搜索的硬币操作次数
@@ -127,13 +127,45 @@ draw_samples_with_auxiliary(sample, 2, 1)
 
 ### 算法原理
 
+量子游走搜索算法旨在通过量子游走模型解决在图中寻找标记节点的问题。其本质是在标记节点与非标记节点上使用不同的硬币算子。
+
+假设一个节点数为 $N=2^n$ 的 $n$ 维超立方体，每个节点都与 $n$ 个邻居节点相连，并且每个节点都可以由一个 二进制的 n-bit 向量 $\vec{x}$ 表示，则这个 $n$ 维超立方体上的移动算子 $S$ 为：
+
+$$S=\sum_{d=0}^{n-1} \sum_{\vec{x}}^{} |d,\vec{x} \oplus \vec{e}_d⟩ ⟨d,\vec{x}|$$
+
+其中 $d$ 为粒子游走的方向， $\vec{e}_d$ 为超立方体第 $d$ 个方向基向量。
+
+给定一个硬币谕示 $C'$ （Coin Oracle）用于标记其中 $M$ 个节点为待搜索节点，在标记节点与非标记节点上使用不同的硬币。通常选用Grover硬币用作非标记硬币 $C_0$ ：
+
+$$C_0=G=I-2|S^C⟩⟨S^C|$$
+
+其中 $|S^C⟩$ 为各个位置上的等权重叠加：
+
+$$|S^C⟩=\frac{1}{\sqrt{N}}\sum_{j=0}^{N-1}|j⟩$$
+
+$|j⟩=|0,\dots,0,1,0,\dots,0⟩$ 为第 $j$ 个位置基向量。可见Grover硬币可以视作超立方体上的公平硬币。
+
+标记硬币 $C_1$ 为：
+
+$$C_1=I-2|\chi⟩⟨\chi|$$
+
+$$|\chi⟩=\sum_{j=0}^{N-1}\frac{a_j}{a}|j⟩$$
+
+$$a=\sqrt{\sum_{j=0}^{N-1}{a_j}^2}$$
+
+$a_j$ 为实数且 $a\neq 0$ ，$a_j$ 描述了标记硬币 $C_1$ 的不对称性。通常取 $a_r=x$ ， $a_{\neq r}=y$ ，且 $|y|<|x|$
+
+因此，单步的量子游走搜索算子 $U'$ 可以被表示为：
+
+$$U' = S \cdot C'$$
+
 ### 算法流程
 
 1. 初始化硬币寄存器和节点寄存器为所有状态的等权重叠加态，即在全部量子比特上施加 $H$ 门。
-2. 对于总节点数为 $n$ ，标记节点数为 $m$ 的超立方体，运行 $O(1/\sqrt{\frac{m}{n}})$ 轮量子游走搜索，每轮迭代的步骤为：
+2. 对于上一节定义的包含 $M$ 个标记节点的 $n$ 维超立方体，运行 $O(1/\sqrt{\frac{M}{N}})$ 轮量子游走搜索，每轮迭代的步骤为：
    
-      1. 对于给定的硬币谕示（Coin Oracle），对未标记节点的对应状态应用硬币 $C_0$ ，对标记节点的对应状态应用硬币 $C_1$ 。
-      2. 执行移动操作（Shift Operator）。
+      1. 对于给定的硬币谕示 $C'$，对未标记节点的对应状态应用硬币 $C_0$ ，对标记节点的对应状态应用硬币 $C_1$ 。
+      2. 根据抛硬币结果执行移动操作 $S$ 。
    
 3. 对最终的状态进行量子测量
 
@@ -141,14 +173,14 @@ draw_samples_with_auxiliary(sample, 2, 1)
 
 #### 基本用法
 
-`QuantumWalkSearch` 位于 `QuICT.algorithm.quantum_algorithm.quantum_walk`，运行函数的输入参数为：
+`QuantumWalkSearch` 位于 `QuICT.algorithm.quantum_algorithm`，运行函数的输入参数为：
 
-- `index_qubits`: 超立方体维度
+- `index_qubits`: 超立方体维度 $n$
 - `targets`: 标记的节点编号
 - `step`: 自定义的搜索轮数
 - `r`: 硬币参数 $r$
 - `a_r`: 硬币参数 $a_r$
-- `a_nr`: 硬币参数 $a_{nr}$
+- `a_nr`: 硬币参数 $a_{\neq r}$
 - `switched_time`: 单次搜索的硬币操作次数
 - `shots`: 采样次数
 
@@ -180,9 +212,9 @@ draw_samples_with_auxiliary(sample, N, int(np.ceil(np.log2(N))))
 ![QWS_result1](../../../assets/images/tutorials/algorithm/quantum_algorithm/QWS_result1.png){:width="500px"}
 </figure>
 
-!!! warning "硬币参数 $a_r$ 和 $a_{nr}$ 的选择"
+!!! warning "硬币参数 $a_r$ 和 $a_{\neq r}$ 的选择"
 
-    选择适合的硬币参数 $a_r$ 和 $a_{nr}$ 非常重要。特别地，当 $a_r$ 和 $a_{nr}$ 非常接近时，标记硬币将失去标记作用：
+    选择适合的硬币参数 $a_r$ 和 $a_{\neq r}$ 非常重要。特别地，当 $a_r$ 和 $a_{\neq r}$ 非常接近时，标记硬币将失去标记作用：
 
     ``` python
     sample = qws.run(index_qubits=N, targets=[4], a_r=1 / 8, a_nr=0.9 / 8)
