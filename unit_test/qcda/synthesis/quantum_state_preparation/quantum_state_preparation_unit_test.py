@@ -16,7 +16,7 @@ def test_with_uniformly_gates():
     for n in range(2, 6):
         for _ in range(10):
             state_vector = random_unit_vector(1 << n)
-            QSP = QuantumStatePreparation('uniformly_gates')
+            QSP = QuantumStatePreparation('uniformly_gates', keep_phase=True)
             gates = QSP.execute(state_vector)
             circuit = Circuit(n)
             circuit.extend(gates)
@@ -29,7 +29,7 @@ def test_with_unitary_decomposition():
     for n in range(2, 6):
         for _ in range(10):
             state_vector = random_unit_vector(1 << n)
-            QSP = QuantumStatePreparation('unitary_decomposition')
+            QSP = QuantumStatePreparation('unitary_decomposition', keep_phase=True)
             gates = QSP.execute(state_vector)
             circuit = Circuit(n)
             circuit.extend(gates)
@@ -78,7 +78,7 @@ def test_multicontrol_G():
 
 def test_sparse_qsp():
     simulator = CircuitSimulator()
-    sparseQSP = SparseQuantumStatePreparation('state_vector')
+    sparseQSP = SparseQuantumStatePreparation('state_vector', keep_phase=True)
     for n in range(2, 6):
         for k in range(2, 1 << (n - 1)):
             state_vector = np.zeros(1 << n, dtype=complex)
@@ -96,7 +96,7 @@ def test_sparse_qsp():
 
 def test_state_array():
     simulator = CircuitSimulator()
-    sparseQSP = SparseQuantumStatePreparation('state_array')
+    sparseQSP = SparseQuantumStatePreparation('state_array', keep_phase=True)
     for n in range(2, 6):
         for k in range(2, 1 << (n - 1)):
             nonzeros = random_unit_vector(k)
