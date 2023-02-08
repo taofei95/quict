@@ -32,7 +32,7 @@ else()
 
   enable_testing()
 
-  set(U_GATE_TEST_SRC ${SIMULATOR_SRC} tests/gates/unitary/apply_unitary_gates.cc)
+  set(U_GATE_TEST_SRC ${SIMULATOR_SRC} tests/gates/unitary/naive.cc)
   add_executable(apply_unitary_gates ${U_GATE_TEST_SRC})
   target_link_libraries(apply_unitary_gates GTest::gtest_main)
 

@@ -1,3 +1,6 @@
+#ifndef QUICT_SIM_BACKEND_TESTS_GATES_TEST_VEC_H
+#define QUICT_SIM_BACKEND_TESTS_GATES_TEST_VEC_H
+
 #include <gtest/gtest.h>
 
 #include <complex>
@@ -5,8 +8,8 @@
 #include <iostream>
 #include <regex>
 
-#include "../../../simulator/simulator.hpp"
-#include "../../common/data_reader.hpp"
+#include "../../simulator/simulator.hpp"
+#include "data_reader.hpp"
 
 namespace fs = std::filesystem;
 using namespace sim;
@@ -33,13 +36,13 @@ void TestPair(size_t q_num, Str desc_f_name, Str vec_f_name, double eps,
   }
 }
 
-fs::path GetDataPath() {
+inline fs::path GetDataPath() {
   fs::path cwd = fs::current_path();
   fs::path data_dir = cwd.parent_path() / "tests" / "data";
   return data_dir;
 }
 
-size_t GetQubitNum(const std::string &f_name) {
+inline size_t GetQubitNum(const std::string &f_name) {
   static std::regex rgx("(qubit)(\\w+)");
   std::smatch matches;
   assert(std::regex_search(f_name, matches, rgx));
@@ -63,9 +66,4 @@ void TestDType(double eps, BackendTag tag) {
   }
 }
 
-TEST(ApplyUnitaryGate, NaiveComplexF32) {
-  TestDType<std::complex<float>>(5e-7, BackendTag::NAIVE);
-}
-TEST(ApplyUnitaryGate, NaiveComplexF64) {
-  TestDType<std::complex<double>>(1e-7, BackendTag::NAIVE);
-}
+#endif

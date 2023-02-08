@@ -1,3 +1,6 @@
+#ifndef QUICT_SIM_BACKEND_SIMULATOR_APPLY_GATE_IMPL_NAIVE_H
+#define QUICT_SIM_BACKEND_SIMULATOR_APPLY_GATE_IMPL_NAIVE_H
+
 #include <stdexcept>
 
 #include "../delegate.hpp"
@@ -94,3 +97,5 @@ class NaiveApplyGateDelegate : public ApplyGateDelegate<DType> {
   }
 };
 }  // namespace sim
+
+#endif
