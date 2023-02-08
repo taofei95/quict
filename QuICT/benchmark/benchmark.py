@@ -3,9 +3,7 @@ import random
 import re
 import pandas as pd
 import prettytable as pt
-import math
 import numpy as np
-import scipy.stats
 from collections import defaultdict
 from matplotlib import pyplot as plt
 
