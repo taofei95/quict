@@ -164,7 +164,7 @@ def test_enumerate_cnot_rz_circuit():
 
 def check_circuit_optimization(circ: Circuit, label, level='light'):
     try:
-        AO = CliffordRzOptimization(level=level, verbose=False)
+        AO = CliffordRzOptimization(level=level, verbose=False, keep_phase=True)
         circ_optim = AO.execute(circ)
     except Exception as e:
         pickle.dump(circ.gates, open(f'circ_{label}.dat', 'wb'))
@@ -301,7 +301,7 @@ def test_disabling_optimize_toffoli():
         circ = Circuit(n_qubit)
         circ.random_append(n_gate, typelist=support_gates)
         cnt = sum([g.type == GateType.ccx or g.type == GateType.ccz for g in circ.gates])
-        circ_optim = CliffordRzOptimization(level=level, optimize_toffoli=False).execute(circ)
+        circ_optim = CliffordRzOptimization(level=level, optimize_toffoli=False, keep_phase=True).execute(circ)
         cnt_optim = sum([g.type == GateType.ccx or g.type == GateType.ccz for g in circ_optim.gates])
 
         assert cnt == cnt_optim, f'ccx/ccz changed in {level} mode'
