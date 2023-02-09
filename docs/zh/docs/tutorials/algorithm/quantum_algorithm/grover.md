@@ -20,9 +20,8 @@ Grover搜索算法的实际运行时间取决于谕示（oracle）电路的复�
 
 <figure markdown>
 ![grover_list](../../../assets/images/tutorials/algorithm/quantum_algorithm/grover_list.png)
+    <p markdown="1" style="font-size:15px;"> 图片引用自Grover’s Algorithm. (n.d.). Community.qiskit.org. https://qiskit.org/textbook/ch-algorithms/grover.html [<sup>[2]</sup>](#refer2)
 </figure>
-
-[<sup>[2]</sup>](#refer2)
 
 
 为了找到紫色的盒子——*标记的项目*——使用经典计算，我们必须平均检查 $N/2$ 的这些盒子，在最坏的情况下，必须检查所有 $N$ 的盒子。然而，在量子计算机上，我们可以用Grover的振幅放大技巧在大约 $\sqrt{N}$ 的步骤中找到标记的项目。二次加速对于在长列表中寻找有标记的项目来说确实是一个可观的时间节省。此外，该算法不使用列表的内部结构，这使它成为*通用的；*这就是为什么它对许多经典问题立即提供了二次量子化的加速。
@@ -95,9 +94,8 @@ $$\mathcal{G}=U_s U_f, \quad U_s = I-2|s⟩⟨s|s⟩, \quad U_f = I-2|\omega⟩�
 
 <figure markdown>
 ![grover_step3](../../../assets/images/tutorials/algorithm/quantum_algorithm/grover_step3.jpg)
+    <p markdown="1" style="font-size:15px;"> 图片引用自Grover’s Algorithm. (n.d.). Community.qiskit.org. https://qiskit.org/textbook/ch-algorithms/grover.html [<sup>[2]</sup>](#refer2)
 </figure>
-
-[<sup>[2]</sup>](#refer2)
 
 两个反射总是对应于一个旋转。Grover算子使初始状态 $|s\rangle$ 向标记状态 $|w\rangle$ 旋转。振幅条形图中的反射 $U_s$ 的作用可以理解为对平均振幅的反射，而 $U_f$ 则是对非标记状态的反射。这个过程将重复数次，以锁定标记状态。经过 $t$ 步，我们将处于 $|\psi_t\rangle$ 状态，其中 $| \psi_t \rangle = (U_s U_f)^t | s \rangle$ 。事实证明，大约 $\sqrt{N}$ 的旋转就足够了。这一点在观察状态 $| \psi \rangle$ 的振幅时就很清楚了。我们可以看到，$| w\rangle$ 的振幅随着应用次数 $\sim t N^{-1/2}$ 线性增长。然而，由于我们处理的是振幅而不是概率，矢量空间的维数以平方根的形式进入。因此，在这个过程中，被放大的是振幅，而不仅仅是概率。
 
@@ -107,16 +105,16 @@ $$\mathcal{G}=U_s U_f, \quad U_s = I-2|s⟩⟨s|s⟩, \quad U_f = I-2|\omega⟩�
 
 具体而言，算法使用$\lceil\frac{\pi}{4}\sqrt{N}\rceil$次谕示电路，其整体结构与Grover算子的构造如图所示：
 
-<center>
-<img src='../../../assets/images/tutorials/algorithm/quantum_algorithm/basic_Grover_circuit.png'>
-</center>
-
-[<sup>[1]</sup>](#refer1)
+<figure markdown>
+![图片名](../../../assets/images/tutorials/algorithm/quantum_algorithm/basic_Grover_circuit.png)
+<p markdown="1" style="font-size:15px;"> 图片引用自*Quantum computation and quantum information*. [<sup>[1]</sup>](#refer1)
+</figure>
 
 $U_s$门可以由$O(n)=O(\log N)$基础门实现，该实现已包含在QuICT的qcda部分中。
 
+## 代码示例
 
-## 基本用法
+### 基本用法
 
 `Grover`类位于`QuICT.algorithm.quantum_algorithm.grover`，`circuit`/`run`的参数包括：
 
@@ -127,8 +125,6 @@ $U_s$门可以由$O(n)=O(\log N)$基础门实现，该实现已包含在QuICT的
 1. `measure`：最终的电路是否包含测量。默认为`True`
 
 用户的oracle可以自行构建，也可以使用框架中已有的oracle（MCT oracle、CNF oracle）。随后用户实例化一个`Grover`对象，然后调用`circuit`方法得到电路或者调用`run`方法运行Grover搜索算法得到搜索结果。
-
-## 代码示例
 
 ### 单个解的搜索
 
