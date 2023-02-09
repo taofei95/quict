@@ -32,7 +32,7 @@ class CircuitLib:
             "ctrl_unitary", "diag", "single_bit", "ctrl_diag",
             "google", "ibmq", "ionq", "ustc", "nam", "origin"
         ],
-        "algorithm": ["adder", "clifford", "cnf", "grover", "maxcut", "qft", "qnn", "quantum_walk", "shor", "vqe"],
+        "algorithm": ["adder", "clifford", "cnf", "grover", "maxcut", "qft", "qnn", "quantum_walk", "vqe"],
         "benchmark": ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"],
     }
     __DEFAULT_GATESET_for_RANDOM = {
@@ -278,9 +278,7 @@ class CircuitLib:
         Restrictions will be ignored if not specified.
 
         Args:
-            classify (str): one of [
-                "adder", "clifford", "cnf", "grover", "maxcut", "qft", "qnn", "quantum_walk", "shor", "vqe"
-            ]
+            classify (str): one of ["adder", "clifford", "cnf", "grover", "maxcut", "qft", "qnn", "quantum_walk", "vqe"]
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
                 it equals to the interval of [1, qubits_interval].
             max_size(int): max number of gates.
@@ -343,7 +341,7 @@ class CircuitLib:
                     [aspen-4, ourense, rochester, sycamore, tokyo, ctrl_unitary, diag, single_bit, ctrl_diag,
                      google, ibmq, ionq, ustc, nam, origin]
                 For algorithm circuit's type, classify is one of
-                    [adder, clifford, qnn, grover, qft, vqe, cnf, maxcut, quantum_walk, shor]
+                    [adder, clifford, qnn, grover, qft, vqe, cnf, maxcut, quantum_walk]
                 For benchmark circuit's type, classify is one of
                     [highly_entangled, highly_parallelized, highly_serialized, mediate_measure]
 
