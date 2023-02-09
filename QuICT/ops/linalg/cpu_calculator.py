@@ -159,27 +159,31 @@ def matrix_dot_vector(
     Returns:
         np.ndarray: updated state vector
     """
-    # Deal with special case when matrix's qubit == vector's qubit
+    # Step 1: Deal with mat_bit == vec_bit
     if mat_bit == vec_bit:
         vec[:] = dot(mat, vec)
         return
 
-    repeat = 1 << (vec_bit - mat_bit)
+    # Step 2: Get related index of vector by matrix args
     arg_len = 1 << mat_bit
+    indexes = np.zeros(arg_len, dtype=np.int32)
+    for idx in range(1, arg_len):
+        for midx in range(mat_bit):
+            if idx & (1 << midx):
+                indexes[idx] += 1 << mat_args[midx]
+
+    # Step 3: normal matrix * vec
+    repeat = 1 << (vec_bit - mat_bit)
     sorted_args = mat_args.copy()
     sorted_args = np.sort(sorted_args)
     for i in prange(repeat):
+        i = np.int64(i)
         for sarg_idx in range(mat_bit):
             less = i & ((1 << sorted_args[sarg_idx]) - 1)
             i = (i >> sorted_args[sarg_idx] << (sorted_args[sarg_idx] + 1)) + less
 
-        indexes = np.array([i] * arg_len, dtype=np.int32)
-        for ii in prange(1, arg_len):
-            for j in range(mat_bit):
-                if ii & (1 << j):
-                    indexes[ii] += 1 << mat_args[j]
-
-        vec[indexes] = dot(mat, vec[indexes])
+        current_idx = indexes + i
+        vec[current_idx] = dot(mat, vec[current_idx])
 
 
 @njit()
@@ -190,7 +194,7 @@ def diagonal_matrix(
     mat_bit: int,
     control_args: np.ndarray,
     target_args: np.ndarray,
-    is_control: bool
+    is_control: bool = False
 ):
     # Step 1: Get diagonal value from gate_matrix
     diagonal_value = np.diag(mat)
@@ -200,30 +204,35 @@ def diagonal_matrix(
         vec = multiply(diagonal_value, vec)
         return
 
-    # Step 3: diagonal matrix * vec
+    # Step 3: Get related index of vector by matrix args
+    target_bits = 1 << len(target_args)
+    arg_len = target_bits if not is_control else 1
+    valued_mat = diagonal_value[-arg_len:]
+    based_idx = 0
+    for carg_idx in control_args:
+        based_idx += 1 << carg_idx
+
+    indexes = np.array([based_idx] * arg_len, dtype=np.int64)
+    if is_control:
+        indexes[0] += 1 << target_args[0]
+    else:
+        for idx in range(1, arg_len):
+            for midx in range(target_bits):
+                if idx & (1 << midx):
+                    indexes[idx] += 1 << target_args[midx]
+
+    # Step 4: diagonal matrix * vec
     repeat = 1 << (vec_bit - mat_bit)
-    arg_len = 1 << mat_bit - len(control_args)
-    sorted_args = target_args.copy()
+    mat_args = np.append(control_args, target_args)
+    sorted_args = mat_args.copy()
     sorted_args = np.sort(sorted_args)
     for i in prange(repeat):
         for sarg_idx in range(mat_bit):
             less = i & ((1 << sorted_args[sarg_idx]) - 1)
             i = (i >> sorted_args[sarg_idx] << (sorted_args[sarg_idx] + 1)) + less
 
-        for carg_idx in control_args:
-            i += 1 << carg_idx
-
-        if is_control:
-            i += 1 << target_args[0]
-            vec[i] = vec[i] * diagonal_value[-1]
-        else:
-            for ii in range(1, arg_len):
-                index = i
-                for j in len(target_args):
-                    if ii & (1 << j):
-                        index += 1 << target_args[j]
-
-                    vec[index] = vec[index] * diagonal_value[1 << len(control_args) + ii]
+        current_idx = indexes + i
+        vec[current_idx] = multiply(vec[current_idx], valued_mat)
 
 
 @njit()
@@ -232,9 +241,43 @@ def swap_matrix(
     vec_bit: int,
     mat: np.ndarray,
     mat_bit: int,
-    mat_args: np.ndarray
+    control_args: np.ndarray,
+    target_args: np.ndarray,
 ):
-    pass
+    # Step 1: Get swap indexes for vector
+    based_index = 0
+    for carg in control_args:
+        based_index += 1 << carg
+
+    swap_idxes = np.array([based_index] * 2, dtype=np.int64)
+    if len(target_args) == 1:
+        swap_idxes[1] += 1 << target_args[0]
+    else:
+        swap_idxes[0] += 1 << target_args[0]
+        swap_idxes[1] += 1 << target_args[1]
+
+    # Step 2: Deal with mat_bit == vec_bit
+    if mat_bit == vec_bit:
+        temp_value = vec[swap_idxes[0]]
+        vec[swap_idxes[0]] = vec[swap_idxes[1]]
+        vec[swap_idxes[1]] = temp_value
+
+        return
+
+    # Step 3: swap matrix * vec
+    repeat = 1 << (vec_bit - mat_bit)
+    mat_args = np.append(control_args, target_args)
+    sorted_args = mat_args.copy()
+    sorted_args = np.sort(sorted_args)
+    for i in prange(repeat):
+        for sarg_idx in range(mat_bit):
+            less = i & ((1 << sorted_args[sarg_idx]) - 1)
+            i = (i >> sorted_args[sarg_idx] << (sorted_args[sarg_idx] + 1)) + less
+
+        current_sidx = swap_idxes + i
+        temp_value = vec[current_sidx[0]]
+        vec[current_sidx[0]] = vec[current_sidx[1]]
+        vec[current_sidx[1]] = temp_value
 
 
 @njit()
@@ -243,9 +286,44 @@ def reverse_matrix(
     vec_bit: int,
     mat: np.ndarray,
     mat_bit: int,
-    mat_args: np.ndarray
+    control_args: np.ndarray,
+    target_args: np.ndarray,
 ):
-    pass
+    # Step 1: Get swap matrix used value
+    reverse_value = np.empty(2, dtype=vec.dtype)
+    reverse_value[0] = mat[-2, -1]
+    reverse_value[1] = mat[-1, -2]
+
+    # Step 1: Get swap indexes for vector
+    based_index = 0
+    for carg in control_args:
+        based_index += 1 << carg
+
+    swap_idxes = np.array([based_index] * 2, dtype=np.int64)
+    swap_idxes[1] += 1 << target_args[0]
+
+    # Step 2: Deal with mat_bit == vec_bit
+    if mat_bit == vec_bit:
+        temp_value = vec[swap_idxes[0]]
+        vec[swap_idxes[0]] = vec[swap_idxes[1]] * reverse_value[0]
+        vec[swap_idxes[1]] = temp_value * reverse_value[1]
+
+        return
+
+    # Step 3: swap matrix * vec
+    repeat = 1 << (vec_bit - mat_bit)
+    mat_args = np.append(control_args, target_args)
+    sorted_args = mat_args.copy()
+    sorted_args = np.sort(sorted_args)
+    for i in prange(repeat):
+        for sarg_idx in range(mat_bit):
+            less = i & ((1 << sorted_args[sarg_idx]) - 1)
+            i = (i >> sorted_args[sarg_idx] << (sorted_args[sarg_idx] + 1)) + less
+
+        current_sidx = swap_idxes + i
+        temp_value = vec[current_sidx[0]]
+        vec[current_sidx[0]] = vec[current_sidx[1]] * reverse_value[0]
+        vec[current_sidx[1]] = temp_value * reverse_value[1]
 
 
 @njit()
