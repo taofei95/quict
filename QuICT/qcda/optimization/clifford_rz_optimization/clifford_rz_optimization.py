@@ -1038,14 +1038,15 @@ class CliffordRzOptimization(object):
         cnt += self.gate_reducing_rewrite(gates)
         return cnt
 
-    def __init__(self, level='light', optimize_toffoli=True, verbose=False):
+    def __init__(self, level='light', optimize_toffoli=True, keep_phase=False, verbose=False):
         """
         Heuristic optimization of circuits in Clifford + Rz.
 
         Args:
               level(str): Support 'light' and 'heavy' level. See details in [1]
-              optimize_toffoli(bool): whether decompose and optimize ccx/ccz gates into Clifford+rz
-              verbose(bool): whether output details of each step
+              optimize_toffoli(bool): whether to decompose and optimize ccx/ccz gates into Clifford+rz
+              keep_phase(bool): whether to keep the global phase as a GPhase gate in the output
+              verbose(bool): whether to output details of each step
 
         [1] Nam, Yunseong, et al. "Automated optimization of large quantum
         circuits with continuous parameters." npj Quantum Information 4.1
@@ -1055,6 +1056,7 @@ class CliffordRzOptimization(object):
         self.level = level
         self.verbose = verbose
         self.optimize_toffoli = optimize_toffoli
+        self.keep_phase = keep_phase
 
     def __repr__(self):
         return f'CliffordRzOptimization(level={self.level}, ' \
@@ -1118,7 +1120,7 @@ class CliffordRzOptimization(object):
             gate_cnt += cnt
 
         self.deparameterize_all(_gates)
-        ret = _gates.get_circuit()
+        ret = _gates.get_circuit(self.keep_phase)
 
         if self.verbose:
             print(f'initially {_gates.init_size} gates, '

@@ -29,6 +29,7 @@ class BenchmarkCircuitBuilder:
 
         for i in range(len(random_para)):
             cir = Circuit(width)
+            H | cir
             while cir.size() < size:
                 rand_type = np.random.choice(gate_indexes, p=prob)
                 gate_type = typelist[rand_type]
@@ -60,6 +61,7 @@ class BenchmarkCircuitBuilder:
         void_gates = 0
         for i in range(len(random_para)):
             cir = Circuit(width)
+            H | cir
             qubit_indexes = list(range(width))
             qubit = random.choice(qubit_indexes)
             qubit_indexes.remove(qubit)
@@ -120,6 +122,7 @@ class BenchmarkCircuitBuilder:
         void_gates = 0
         for i in range(len(random_para)):
             cir = Circuit(width)
+            H | cir
             while cir.size() < size:
                 cgate = random.choice([_pattern1(), _pattern2()])
                 cgate | cir

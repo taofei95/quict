@@ -13,12 +13,14 @@ from QuICT.qcda.utility import OutputAligner
 
 
 class GateTransform(object):
-    def __init__(self, instruction_set=USTCSet):
+    def __init__(self, instruction_set=USTCSet, keep_phase=False):
         """
         Args:
             instruction_set(InstructionSet): the goal instruction set
+            keep_phase(bool): whether to keep the global phase as a GPhase gate in the output
         """
         self.instruction_set = instruction_set
+        self.keep_phase = keep_phase
 
     @OutputAligner()
     def execute(self, circuit):
@@ -59,12 +61,13 @@ class GateTransform(object):
                         local_matrix = np.eye(2)
                     else:
                         local_matrix = gates_transformed.matrix(local=True)
-                    phase = np.angle(np.dot(unitaries[targ], np.linalg.inv(local_matrix))[0][0])
-                    if (
-                        not np.isclose(np.mod(phase, 2 * np.pi), 0) and
-                        not np.isclose(np.mod(phase, 2 * np.pi), 2 * np.pi)
-                    ):
-                        gates_transformed.append(GPhase(phase) & targ)
+                    if self.keep_phase:
+                        phase = np.angle(np.dot(unitaries[targ], np.linalg.inv(local_matrix))[0][0])
+                        if (
+                            not np.isclose(np.mod(phase, 2 * np.pi), 0) and
+                            not np.isclose(np.mod(phase, 2 * np.pi), 2 * np.pi)
+                        ):
+                            gates_transformed.append(GPhase(phase) & targ)
                     gates_tran.extend(gates_transformed)
                     unitaries[targ] = np.identity(2, dtype=np.complex128)
                 gates_tran.append(gate)
@@ -76,12 +79,13 @@ class GateTransform(object):
                 local_matrix = np.eye(2)
             else:
                 local_matrix = gates_transformed.matrix(local=True)
-            phase = np.angle(np.dot(unitaries[i], np.linalg.inv(local_matrix))[0][0])
-            if (
-                not np.isclose(np.mod(phase, 2 * np.pi), 0) and
-                not np.isclose(np.mod(phase, 2 * np.pi), 2 * np.pi)
-            ):
-                gates_transformed.append(GPhase(phase) & i)
+            if self.keep_phase:
+                phase = np.angle(np.dot(unitaries[i], np.linalg.inv(local_matrix))[0][0])
+                if (
+                    not np.isclose(np.mod(phase, 2 * np.pi), 0) and
+                    not np.isclose(np.mod(phase, 2 * np.pi), 2 * np.pi)
+                ):
+                    gates_transformed.append(GPhase(phase) & i)
             gates_tran.extend(gates_transformed)
         return gates_tran
 
@@ -92,7 +96,12 @@ class GateTransform(object):
                 raise Exception("gate_transform only support 2-qubit and 1-qubit gate now.")
             if gate.type != self.instruction_set.two_qubit_gate and gate.targets + gate.controls == 2:
                 rule = self.instruction_set.select_transform_rule(gate.type)
-                gates_tran.extend(rule(gate))
+                if self.keep_phase:
+                    gates_tran.extend(rule(gate))
+                else:
+                    for g in rule(gate):
+                        if g.type != GateType.gphase:
+                            gates_tran.append(g)
             else:
                 gates_tran.append(gate)
         return gates_tran
