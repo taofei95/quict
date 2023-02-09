@@ -2,7 +2,7 @@ import os
 import time
 
 from QuICT.tools.cli import JobCreator
-from QuICT.tools.cli.client import QuICTLocalManager
+from QuICT.tools.cli.client import QuICTLocalManager, QuICTRemoteManager
 
 
 def create_job_through_JobCreator(save: bool = False):
@@ -58,4 +58,40 @@ def job_controller_in_local_mode():
     job_manager.list_job()
 
 
-job_controller_in_local_mode()
+def job_controller_in_remote_mode():
+    job_dict = create_job_through_JobCreator()
+    job_name = job_dict["job_name"]
+    # Using Yaml file
+    file_path = os.path.join(os.path.dirname(__file__), "cli_example/quict_job.yml")
+
+    # Start Job Through QuICTLocalManager
+    job_manager = QuICTRemoteManager()
+
+    # Register User
+    job_manager.register(
+        "{your_username}",
+        "{your_password}",
+        "{your_email}"
+    )
+    # User Login
+    job_manager.login("{your_username}", "{your_password}")
+
+    # Start Job
+    time.sleep(2)
+    job_manager.start_job(job_dict)
+    job_manager.start_job(file_path)
+
+    # Check Job States
+    time.sleep(2)
+    job_manager.status_job(job_name)
+
+    # List all Job within current User
+    job_manager.list_jobs()
+
+    # Delete job
+    job_manager.delete_job(job_name)
+    time.sleep(15)
+    job_manager.list_jobs()
+
+
+job_controller_in_remote_mode()
