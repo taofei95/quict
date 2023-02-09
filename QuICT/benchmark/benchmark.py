@@ -3,9 +3,7 @@ import random
 import re
 import pandas as pd
 import prettytable as pt
-import math
 import numpy as np
-import scipy.stats
 from collections import defaultdict
 from matplotlib import pyplot as plt
 
@@ -227,10 +225,9 @@ class QuICTBenchmark:
             machine_result = normalization(abs(amp_results_list[index]))
 
             # Step 2: calculate Cross entropy loss, Relative entropy loss, Regression loss
-            kl = self._kl_cal(quict_result, machine_result)
-            cross_en = self._cross_en_cal(quict_result, machine_result)
-            l2 = self._l2_cal(quict_result, machine_result)
-            entropy_value = round((abs(kl) + abs(cross_en) + abs(l2)) / 3, 3)
+            wasserstein = self._wasserstein_cal(quict_result, machine_result)
+            huber = self._huber_cal(quict_result, machine_result)
+            entropy_value = round((wasserstein + huber) / 2, 4)
             entropy_score = self._entropy_cal(entropy_value)
 
             circuit_info = re.findall(r"\d+", circuit_list[index].name)
@@ -262,25 +259,24 @@ class QuICTBenchmark:
 
         return eigenvalue_QV_score
 
-    def _kl_cal(self, p, q):
-        # calculate KL
-        KL_divergence = 0.5 * scipy.stats.entropy(p, q) + 0.5 * scipy.stats.entropy(q, p)
-        return KL_divergence
+    def _wasserstein_cal(self, p, q):
+        # calculate wasserstein distance
+        wasserstein_distance = 0
+        for i in range(len(p)):
+            wasserstein_distance += abs(p[i] - q[i])
+        return wasserstein_distance
 
-    def _cross_en_cal(self, p, q):
-        # calculate cross E
-        sum = 0.0
-        delta = 1e-7
-        for x in map(lambda y, p: (1 - y) * math.log(1 - p + delta) + y * math.log(p + delta), p, q):
-            sum += x
-        cross_entropy = -sum / len(p)
-        return cross_entropy
-
-    def _l2_cal(self, p, q):
-        # calculate L2
-        delta = 1e-7
-        L2_loss = np.sum(np.square(p + delta - q + delta))
-        return L2_loss
+    def _huber_cal(self, p, q):
+        # calculate huber loss
+        delta = 1
+        huber_loss = 0
+        for i_x, i_y in zip(p, q):
+            tmp = abs(i_y - i_x)
+            if tmp <= delta:
+                huber_loss += 0.5 * (tmp ** 2)
+            else:
+                huber_loss += tmp * delta - 0.5 * delta ** 2
+        return huber_loss
 
     def _entropy_cal(self, entropy_value):
         counts = round((1 - entropy_value) * 100, 2)
