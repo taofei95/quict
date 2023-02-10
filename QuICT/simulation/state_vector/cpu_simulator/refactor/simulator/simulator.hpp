@@ -80,9 +80,34 @@ class Simulator {
 
   inline std::string BuildSpec() const noexcept {
     std::stringstream ss;
+#ifdef __SSE__
+    constexpr bool QUICT_SUPPORT_SSE = true;
+#else
+    constexpr bool QUICT_SUPPORT_SSE = false;
+#endif
+
+#ifdef __SSE2__
+    constexpr bool QUICT_SUPPORT_SSE2 = true;
+#else
+    constexpr bool QUICT_SUPPORT_SSE2 = false;
+#endif
+
+#ifdef __AVX__
+    constexpr bool QUICT_SUPPORT_AVX = true;
+#else
+    constexpr bool QUICT_SUPPORT_AVX = false;
+#endif
+
+#ifdef __AVX2__
+    constexpr bool QUICT_SUPPORT_AVX2 = true;
+#else
+    constexpr bool QUICT_SUPPORT_AVX2 = false;
+#endif
     ss << "[Compile]" << std::endl;
     ss << "  SSE:      " << FlagCStr(QUICT_SUPPORT_SSE) << std::endl;
     ss << "  SSE2:     " << FlagCStr(QUICT_SUPPORT_SSE2) << std::endl;
+    ss << "  AVX:      " << FlagCStr(QUICT_SUPPORT_AVX) << std::endl;
+    ss << "  AVX2:     " << FlagCStr(QUICT_SUPPORT_AVX2) << std::endl;
     return ss.str();
   }
 
@@ -93,7 +118,8 @@ class Simulator {
     ss << "  SSE:      " << FlagCStr(feat_.HW_SSE) << std::endl;
     ss << "  SSE2:     " << FlagCStr(feat_.HW_SSE2) << std::endl;
     ss << "  AVX:      " << FlagCStr(feat_.OS_AVX && feat_.HW_AVX) << std::endl;
-    ss << "  AVX2:     " << FlagCStr(feat_.OS_AVX && feat_.HW_AVX2) << std::endl;
+    ss << "  AVX2:     " << FlagCStr(feat_.OS_AVX && feat_.HW_AVX2)
+       << std::endl;
     ss << "  AVX512F:  " << FlagCStr(feat_.OS_AVX512 && feat_.HW_AVX512_F)
        << std::endl;
     ss << std::endl;

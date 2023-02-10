@@ -26,27 +26,38 @@ set(SIMULATOR_SRC
 # Detect CPU features
 if(MSVC)
   # SSE
-  set(SSE_FLAG "/arch:SSE")
-  set(SSE2_FLAG "/arch:SSE2")
+  set(QUICT_SSE_FLAG "/arch:SSE")
+  set(QUICT_SSE2_FLAG "/arch:SSE2")
+
+  # AVX
+  set(QUICT_AVX_FLAG "/arch:AVX")
+  set(QUICT_AVX2_FLAG "/arch:AVX2")
+
+  # AVX512F
+  set(QUICT_AVX512F_FLAG "/arch:AVX512")
 else()
   # SSE
-  set(SSE_FLAG "-msse")
-  set(SSE2_FLAG "-msse2")
-endif()
+  set(QUICT_SSE_FLAG "-msse")
+  set(QUICT_SSE2_FLAG "-msse2")
 
-set(QUICT_SSE_FAMILY_FLAGS "${SSE_FLAG} ${SSE2_FLAG}")
+  # AVX
+  set(QUICT_AVX_FLAG "-mavx")
+  set(QUICT_AVX2_FLAG "-mavx2")
+
+  # AVX512F
+  set(QUICT_AVX512F_FLAG "-mavx512f")
+endif()
 
 macro(quict_check_flag flag flag_name)
   check_cxx_compiler_flag(${flag} "QUICT_SUPPORT_${flag_name}")
-  if("${QUICT_SUPPORT_${flag_name}}")
-    add_compile_definitions(QUICT_SUPPORT_${flag_name}=1)
-  else()
-    add_compile_definitions(QUICT_SUPPORT_${flag_name}=0)
-  endif()
+  message(STATUS "QuICT ${flag_name} flags: ${QUICT_${flag_name}_FLAG}")
 endmacro()
 
-quict_check_flag("${SSE_FLAG}" "SSE")
-quict_check_flag("${SSE2_FLAG}" "SSE2")
+quict_check_flag("${QUICT_SSE_FLAG}" "SSE")
+quict_check_flag("${QUICT_SSE2_FLAG}" "SSE2")
+quict_check_flag("${QUICT_AVX_FLAG}" "AVX")
+quict_check_flag("${QUICT_AVX2_FLAG}" "AVX2")
+quict_check_flag("${QUICT_AVX512F_FLAG}" "AVX512F")
 
 # Google Test
 include(FetchContent)
@@ -75,11 +86,13 @@ else()
   endmacro()
 
   quict_add_test(spec ${SIMULATOR_SRC} tests/spec.cc)
+  target_compile_options(spec PRIVATE ${QUICT_SSE_FLAG} ${QUICT_SSE2_FLAG} ${QUICT_AVX_FLAG} ${QUICT_AVX2_FLAG} ${QUICT_AVX512F_FLAG})
 
   quict_add_test(unitary_gate_naive ${SIMULATOR_SRC} tests/gates/unitary/naive.cc)
 
-  if(QUICT_SUPPORT_SSE_FAMILY)
+  if(QUICT_SUPPORT_SSE AND QUICT_SUPPORT_SSE2)
     quict_add_test(unitary_gate_sse ${SIMULATOR_SRC} tests/gates/unitary/x86_64/sse.cc)
+    target_compile_options(unitary_gate_sse PRIVATE ${QUICT_SSE_FLAG} ${QUICT_SSE2_FLAG})
   endif()
 endif()
 
