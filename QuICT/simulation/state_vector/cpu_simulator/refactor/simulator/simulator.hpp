@@ -5,9 +5,11 @@
 #include <memory>
 
 #include "../gate/gate.hpp"
+#include "../utility/debug_msg.hpp"
 #include "./backends.hpp"
 #include "apply_gate/delegate.hpp"
 #include "apply_gate/impl/naive.hpp"
+#include "apply_gate/impl/x86_64/sse.hpp"
 
 namespace sim {
 template <class DType>
@@ -15,6 +17,10 @@ class Simulator {
  private:
   inline void BuildBackend(BackendTag tag) {
     switch (tag) {
+      case BackendTag::SSE: {
+        DEBUG_MSG("Using SSE optimized simulator");
+        d_ = std::make_unique<SseApplyGateDelegate<DType>>();
+      }
       default: {
         d_ = std::make_unique<NaiveApplyGateDelegate<DType>>();
       }
