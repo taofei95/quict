@@ -235,6 +235,7 @@ class QuICTBenchmark:
 
             # Step 3: return entropy values and quantum volumn values
             entropy_QV_score.append([circuit_list[index].name, entropy_value, entropy_score, QV_value])
+            entropy_QV_score.sort(key=lambda x:re.findall(r"\d+", x[0])[0], reverse=False)
 
         return entropy_QV_score
 
@@ -399,7 +400,7 @@ class QuICTBenchmark:
             cir_attribute = re.findall(r"\d+", entropy_QV_score[i][0])
             tb.add_row([
                 field, cir_attribute[0], cir_attribute[1], cir_attribute[2], entropy_QV_score[i][1],
-                entropy_QV_score[i][2], entropy_QV_score[i][3]
+                entropy_QV_score[i][2], (2 ** entropy_QV_score[i][3])
             ])
         result_file.write(str(tb))
         result_file.close()
@@ -416,7 +417,7 @@ class QuICTBenchmark:
                 'circuit depth': cir_attribute[2],
                 'entropy value': entropy_QV_score[i][1],
                 'entropy score': entropy_QV_score[i][2],
-                'QV value': entropy_QV_score[i][3]
+                'QV value': 2 ** entropy_QV_score[i][3]
             }
             dfData_list.append(dfData)
 
