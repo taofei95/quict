@@ -3,9 +3,12 @@
 
 #include <algorithm>
 #include <memory>
+#include <sstream>
+#include <string>
 
 #include "../gate/gate.hpp"
 #include "../utility/debug_msg.hpp"
+#include "../utility/feat_detect.hpp"
 #include "./backends.hpp"
 #include "apply_gate/delegate.hpp"
 #include "apply_gate/impl/naive.hpp"
@@ -56,6 +59,14 @@ class Simulator {
     data_ = std::move(data);
   }
 
+  inline std::string Spec() const noexcept {
+    std::stringstream ss;
+    ss << "QuICT CPU Simulation Backend Specification: " << std::endl;
+    ss << BuildSpec();
+    ss << RuntimeSpec();
+    return ss.str();
+  }
+
  private:
   // Total qubit number
   size_t q_num_;
@@ -63,6 +74,35 @@ class Simulator {
   std::unique_ptr<ApplyGateDelegate<DType>> d_;
   // Simulator-maintained state vector
   std::shared_ptr<DType[]> data_;
+
+  // x86_64 cpu feature detector
+  inline static util::Cpu_x86_64_Detector feat_{};
+
+  inline std::string BuildSpec() const noexcept {
+    std::stringstream ss;
+    ss << "[Compile]" << std::endl;
+    ss << "  SSE:      " << FlagCStr(QUICT_SUPPORT_SSE) << std::endl;
+    ss << "  SSE2:     " << FlagCStr(QUICT_SUPPORT_SSE2) << std::endl;
+    return ss.str();
+  }
+
+  inline std::string RuntimeSpec() const noexcept {
+    std::stringstream ss;
+    ss << "[Runtime]" << std::endl;
+    ss << "  Vendor:   " << feat_.GetVendorString() << std::endl;
+    ss << "  SSE:      " << FlagCStr(feat_.HW_SSE) << std::endl;
+    ss << "  SSE2:     " << FlagCStr(feat_.HW_SSE2) << std::endl;
+    ss << "  AVX:      " << FlagCStr(feat_.OS_AVX && feat_.HW_AVX) << std::endl;
+    ss << "  AVX2:     " << FlagCStr(feat_.OS_AVX && feat_.HW_AVX2) << std::endl;
+    ss << "  AVX512F:  " << FlagCStr(feat_.OS_AVX512 && feat_.HW_AVX512_F)
+       << std::endl;
+    ss << std::endl;
+    return ss.str();
+  }
+
+  inline const char *FlagCStr(bool flag) const noexcept {
+    return flag ? "Yes" : "No";
+  }
 };
 }  // namespace sim
 

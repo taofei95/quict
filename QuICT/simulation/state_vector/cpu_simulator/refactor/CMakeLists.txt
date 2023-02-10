@@ -5,6 +5,12 @@ include(CheckCXXCompilerFlag)
 
 cmake_minimum_required(VERSION 3.0)
 
+# Only support 64bit mode.
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+  message("Please switch to x64 build.")
+  return()
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -32,16 +38,15 @@ set(QUICT_SSE_FAMILY_FLAGS "${SSE_FLAG} ${SSE2_FLAG}")
 
 macro(quict_check_flag flag flag_name)
   check_cxx_compiler_flag(${flag} "QUICT_SUPPORT_${flag_name}")
+  if("${QUICT_SUPPORT_${flag_name}}")
+    add_compile_definitions(QUICT_SUPPORT_${flag_name}=1)
+  else()
+    add_compile_definitions(QUICT_SUPPORT_${flag_name}=0)
+  endif()
 endmacro()
 
 quict_check_flag("${SSE_FLAG}" "SSE")
 quict_check_flag("${SSE2_FLAG}" "SSE2")
-
-if("${QUICT_SUPPORT_SSE}" AND "${QUICT_SUPPORT_SSE2}")
-  set(QUICT_SUPPORT_SSE_FAMILY TRUE)
-  add_compile_definitions(QUICT_SUPPORT_SSE_FAMILY)
-  message(STATUS "Support SSE family")
-endif()
 
 # Google Test
 include(FetchContent)
@@ -68,6 +73,8 @@ else()
     
     gtest_discover_tests("${name}")
   endmacro()
+
+  quict_add_test(spec ${SIMULATOR_SRC} tests/spec.cc)
 
   quict_add_test(unitary_gate_naive ${SIMULATOR_SRC} tests/gates/unitary/naive.cc)
 
