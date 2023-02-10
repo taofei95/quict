@@ -69,21 +69,21 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
     // mask0:
     // [0...0][1...1]
 
+    float mptr[8] __attribute__((aligned(16)));
+    std::copy((float *)(&gate[0]), (float *)(&gate[0]) + 8, mptr);
     // SSE for normal unitary
 #pragma omp parallel for nowait
     for (size_t iter = 0; iter < iter_cnt; ++iter) {
       size_t base_ind = ((iter & mask1) << 1) | (iter & mask0);
       size_t inds[2] = {base_ind, base_ind | (1LL << pos)};
       // Mat-vec complex mul (2x2, 2)
-      float tmp[4];
+      float tmp[4] __attribute__((aligned(16)));
       float *v_raw = (float *)(data);
-      float vptr[4];
+      float vptr[4] __attribute__((aligned(16)));
       vptr[0] = v_raw[inds[0]];
       vptr[1] = v_raw[inds[0] + 1];
       vptr[2] = v_raw[inds[1]];
       vptr[3] = v_raw[inds[1] + 1];
-
-      float *mptr = (float *)(&gate[0]);
 
       //
       // first row
@@ -152,20 +152,22 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
     // mask0:
     // [0...0][1...1]
 
+    double mptr[8] __attribute__((aligned(16)));
+    std::copy((double *)(&gate[0]), (double *)(&gate[0]) + 8, mptr);
     // SSE for normal unitary
 #pragma omp parallel for nowait
     for (size_t iter = 0; iter < iter_cnt; ++iter) {
       size_t base_ind = ((iter & mask1) << 1) | (iter & mask0);
       size_t inds[2] = {base_ind, base_ind | (1LL << pos)};
       // Mat-vec complex mul (2x2, 2):
-      double tmp[2];
+      double tmp[2] __attribute__((aligned(16)));
       double *v_raw = (double *)(data);
-      double vptr[4];
+      double vptr[4] __attribute__((aligned(16)));
       vptr[0] = v_raw[inds[0]];
       vptr[1] = v_raw[inds[0] + 1];
       vptr[2] = v_raw[inds[1]];
       vptr[3] = v_raw[inds[1] + 1];
-      double *mptr = (double *)(&gate[0]);
+
       // [vr0, vi0]
       __m128d v0 = _mm_load_pd(vptr);
       // [vr1, vi1]
@@ -249,6 +251,8 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
     // mask2:
     // [1...1][0...0][0...0]
 
+    float mptr[32];
+    std::copy((float *)(&gate[0]), (float *)(&gate[0]) + 32, mptr);
 #pragma omp parallel for nowait
     for (size_t iter = 0; iter < iter_cnt; ++iter) {
       size_t base_ind =
@@ -259,10 +263,9 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
       inds[2] = inds[0] | (1LL << pos0);
       inds[3] = inds[1] | (1LL << pos0);
 
-      float tmp[4];
-      float *mptr = (float *)(&gate[0]);
+      float tmp[4] __attribute__((aligned(16)));
       float *v_raw = (float *)(data);
-      float vptr[8];
+      float vptr[8] __attribute__((aligned(16)));
       vptr[0] = v_raw[inds[0]];
       vptr[1] = v_raw[inds[0] + 1];
       vptr[2] = v_raw[inds[1]];
@@ -273,14 +276,14 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
       vptr[7] = v_raw[inds[3] + 1];
 
       // [vr0, vi0, vr1, vi1]
-      __m128d tmpv0 = _mm_load_ps(vptr);
+      __m128 tmpv0 = _mm_load_ps(vptr);
       // [vr2, vi2, vr3, vi3]
-      __m128d tmpv1 = _mm_load_ps(vptr + 4);
+      __m128 tmpv1 = _mm_load_ps(vptr + 4);
       // [vr0, vr1, vr2, vr3]
-      __m128d vr = _mm_shuffle_ps(tmpv0, tmpv1, 0b10001000);
+      __m128 vr = _mm_shuffle_ps(tmpv0, tmpv1, 0b10001000);
       // [vi0, vi1, vi2, vi3]
-      __m128d vi = _mm_shuffle_ps(tmpv0, tmpv1, 0b11101110);
-      __m128d mr, mi;
+      __m128 vi = _mm_shuffle_ps(tmpv0, tmpv1, 0b11101110);
+      __m128 mr, mi;
 
 #define ONE_ROW_OP(offset, data_pos)                     \
   /* [mr?0, mi?0, mr?1, mi?1] */                         \
@@ -345,6 +348,8 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
     // mask2:
     // [1...1][0...0][0...0]
 
+    double mptr[32] __attribute__((aligned(16)));
+    std::copy((double *)(&gate[0]), (double *)(&gate[0]) + 32, mptr);
     // SSE for unitary
 #pragma omp parallel for nowait
     for (size_t iter = 0; iter < iter_cnt; ++iter) {
@@ -356,10 +361,9 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
       inds[2] = inds[0] | (1LL << pos0);
       inds[3] = inds[1] | (1LL << pos0);
 
-      double tmp[4];
-      double *mptr = (double *)(&gate[0]);
+      double tmp[4] __attribute__((aligned(16)));
       double *v_raw = (double *)(data);
-      double vptr[8];
+      double vptr[8] __attribute__((aligned(16)));
       vptr[0] = v_raw[inds[0]];
       vptr[1] = v_raw[inds[0] + 1];
       vptr[2] = v_raw[inds[1]];

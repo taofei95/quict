@@ -86,7 +86,7 @@ else()
   endmacro()
 
   quict_add_test(spec ${SIMULATOR_SRC} tests/spec.cc)
-  target_compile_options(spec PRIVATE ${QUICT_SSE_FLAG} ${QUICT_SSE2_FLAG} ${QUICT_AVX_FLAG} ${QUICT_AVX2_FLAG} ${QUICT_AVX512F_FLAG})
+  target_compile_options(spec PRIVATE ${QUICT_SSE_FLAG} ${QUICT_SSE2_FLAG} ${QUICT_AVX_FLAG} ${QUICT_AVX2_FLAG})
 
   quict_add_test(unitary_gate_naive ${SIMULATOR_SRC} tests/gates/unitary/naive.cc)
 

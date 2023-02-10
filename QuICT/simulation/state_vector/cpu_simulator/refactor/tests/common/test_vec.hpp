@@ -45,7 +45,10 @@ inline fs::path GetDataPath() {
 inline size_t GetQubitNum(const std::string &f_name) {
   static std::regex rgx("(qubit)(\\w+)");
   std::smatch matches;
-  assert(std::regex_search(f_name, matches, rgx));
+  bool search_success = std::regex_search(f_name, matches, rgx);
+  assert(search_res);
+  // Do not write it like this. Because assert is not presented in release mode.
+  // assert(std::regex_search(f_name, matches, rgx));
   assert(matches.size() == 3);
   return std::stoi(matches[2].str());
 }
