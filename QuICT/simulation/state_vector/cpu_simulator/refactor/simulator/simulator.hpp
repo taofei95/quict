@@ -103,11 +103,18 @@ class Simulator {
 #else
     constexpr bool QUICT_SUPPORT_AVX2 = false;
 #endif
+
+#ifdef __AVX512F__
+    constexpr bool QUICT_SUPPORT_AVX512F = true;
+#else
+    constexpr bool QUICT_SUPPORT_AVX512F = false;
+#endif
     ss << "[Compile]" << std::endl;
     ss << "  SSE:      " << FlagCStr(QUICT_SUPPORT_SSE) << std::endl;
     ss << "  SSE2:     " << FlagCStr(QUICT_SUPPORT_SSE2) << std::endl;
     ss << "  AVX:      " << FlagCStr(QUICT_SUPPORT_AVX) << std::endl;
     ss << "  AVX2:     " << FlagCStr(QUICT_SUPPORT_AVX2) << std::endl;
+    ss << "  AVX512F:  " << FlagCStr(QUICT_SUPPORT_AVX512F) << std::endl;
     return ss.str();
   }
 
