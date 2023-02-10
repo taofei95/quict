@@ -162,7 +162,7 @@ class CircuitLib:
                     circuits_list = self._get_circuit_from_benchmark(classify, width, size * width)
                     for idx in range(len(circuits_list)):
                         benchmark_circuit = circuits_list[idx]
-                        benchmark_circuit_depth = re.findall(r"\d+", benchmark_circuit.name)[2]
+                        benchmark_circuit_depth = int(re.findall(r"\d+", benchmark_circuit.name)[2])
                         if max_depth is None or benchmark_circuit_depth <= max_depth:
                             circuit_list.append(benchmark_circuit)
 
