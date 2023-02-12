@@ -118,13 +118,6 @@ def authenticated_only(f):
 
 #     return 'Bad login'
 
-
-@app.route('/logout')
-def logout():
-    flask_login.logout_user()
-    return 'Logged out'
-
-
 @login_manager.unauthorized_handler
 def unauthorized_handler():
     return redirect(url_for('index'))
@@ -180,8 +173,11 @@ def login(content):
     if SQLManger().validation_password(usr, psw) : #psw == users[usr]['password']:
         user = User()
         user.id = usr
+        userinfo = SQLManger().get_user_info(usr)
         flask_login.login_user(user)
-        emit('login_success', {'uuid': uid,}, namespace="/api/pty")
+        emit('login_success', {'uuid': uid, 'info':userinfo}, namespace="/api/pty")
+    else:
+        emit('login_error', {'uuid': uid,}, namespace="/api/pty")
     
 @socketio.on("testLogin", namespace="/api/pty")
 def testLogin(content):
@@ -192,8 +188,13 @@ def testLogin(content):
     else:
         emit('need_login', {'uuid': uid,}, namespace="/api/pty")
 
+@socketio.on("logout", namespace="/api/pty")
+def logout(content):
+    flask_login.logout_user()
+    return 'Logged out'
 
 @socketio.on("register", namespace="/api/pty")
+@authenticated_only
 def register(content):
     uid = content['uuid']
     content = content['content']
@@ -215,8 +216,13 @@ def register(content):
     # RedisController().update_user_dynamic_info(usr, get_default_user_config(usr))
     emit('register_ok', {'uuid': uid,}, namespace="/api/pty")
 
-def unsubscribe(username, **kwargs):
+@socketio.on("unsubscribe", namespace="/api/pty")
+@authenticated_only
+def unsubscribe(content):
     """ Delete an user. """
+    uid = content['uuid']
+    content = content['content']
+    usr = content['user']
     # redis_controller = RedisController()
     # job_list = redis_controller.list_jobs(username, name_only=True)
     # for job_name in job_list:
@@ -226,11 +232,11 @@ def unsubscribe(username, **kwargs):
     # redis_controller.add_operator(username, JobOperatorType.user_delete)
 
     # Delete user information in database
-    SQLManger().delete_user(username)
-
-    return True
+    SQLManger().delete_user(usr)
+    emit('unsubscribe_ok', {'uuid': uid,}, namespace="/api/pty")
 
 @socketio.on("forget", namespace="/api/pty")
+@authenticated_only
 def forget_password(content):
     uid = content['uuid']
     content = content['content']
@@ -247,6 +253,18 @@ def forget_password(content):
     SQLManger().update_password(usr, reset_password)
 
     emit('forget_ok', {'uuid': uid,}, namespace="/api/pty")
+
+@socketio.on("changepsw", namespace="/api/pty")
+@authenticated_only    
+def update_password(content):
+    uid = content['uuid']
+    content = content['content']
+    usr = content['user']
+    new_password = content['new_password']
+    """ Update user's password. """
+    SQLManger().update_password(usr, new_password)
+
+    emit('update_psw_ok', {'uuid': uid,}, namespace="/api/pty")
 
 # QCDA PART
 

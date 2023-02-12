@@ -3,15 +3,11 @@
     <el-header style="height: 50px">
       <!-- <el-row>
       <el-col :span="12"> -->
-      <el-space style="height: 50px; font-size: var(--el-font-size-large); width: 100%" size="large"
+      <el-space style="height: 50px; font-size: var(--el-font-size-large); width: 80%" size="large"
         direction="horizontal">
-        <div style="
-            background-image: url('/assets/logo.png');
-            background-repeat: no-repeat;
-            background-position: left;
-            width: 160px;
-            height: 45px;
-          "></div>
+        <div
+          style="background-image: url('/assets/logo.png'); background-repeat: no-repeat; background-position: left; width: 160px;  height: 45px;">
+        </div>
 
         <span class="span_selected" id="span_QuCompuser" @click="SelectPageQuCompuser">
           QuCompuser
@@ -19,6 +15,15 @@
 
         <span class="span_not_selected" id="span_QCDA" @click="SelectPageQCDA">
           QCDA
+        </span>
+      </el-space>
+      <el-space style="height: 50px; font-size: var(--el-font-size-large); width: 20%" size="large"
+        direction="horizontal">
+        <span class="span_not_selected" id="span_QCDA" @click="dialogUser = true">
+          User
+        </span>
+        <span class="span_not_selected" id="span_QCDA" @click="Logout">
+          Logout
         </span>
       </el-space>
       <!-- </el-col>
@@ -63,6 +68,35 @@
           </span>
         </template>
       </el-dialog>
+
+      <el-dialog title="User" v-model="dialogUser" width="30%" :close-on-click-modal="false"
+        :close-on-press-escape="false" :show-close="false">
+        <el-space direction>
+          <div>USER: {{ user }}</div>
+          <div>E-Mail: {{ email }}</div>
+        </el-space>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button type="primary" @click="dialogUser = false">OK</el-button>
+            <el-button type="primary" @click="dialogUser = false; dialogPsw = true">Change Password</el-button>
+            <el-button type="primary" @click="Unsubscribe()">Unsubscribe</el-button>
+          </span>
+        </template>
+      </el-dialog>
+
+      <el-dialog title="Change Password" v-model="dialogPsw" width="30%" :close-on-click-modal="false"
+        :close-on-press-escape="false" :show-close="false">
+        <label>Old<el-input v-model="reg_psw" type="password" show-password></el-input></label>
+        <label>New<el-input v-model="reg_psw" type="password" show-password></el-input></label>
+        <label>Confirm<el-input v-model="reg_psw" type="password" show-password></el-input></label>
+
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button type="primary" @click="ChangePsw()">OK</el-button>
+            <el-button type="primary" @click="dialogPsw = false">Cancel</el-button>
+          </span>
+        </template>
+      </el-dialog>
     </el-main>
   </el-container>
 </template>
@@ -104,13 +138,18 @@ export default {
       dialogLogin: false,
       dialogRegister: false,
       dialogForget: false,
+      dialogUser: false,
+      dialogPsw: false,
       user: "",
       psw: "",
+      email: "",
       reg_user: "",
       reg_psw: "",
       reg_email: "",
       for_user: "",
       for_email: "",
+      ch_psw: "",
+      ch_psw_2: "",
       CurrentPage: "QuCompuser",
 
       AllPages: ["QuCompuser", "QCDA"],
@@ -148,6 +187,18 @@ export default {
           psw: this.psw,
         },
       });
+    },
+    Logout() {
+      this.socket.emit("logout", {
+        uuid: this.uuid,
+        content: {
+          user: this.user,
+        },
+      });
+      this.dialogLogin = true;
+    },
+    User() {
+      this.dialogUser = true;
     },
     testLogin() {
       this.socket.emit("testLogin", {
@@ -187,6 +238,50 @@ export default {
         },
       });
     },
+    ChangePsw() {
+      if (this.ch_psw != this.ch_psw_2) {
+        this.ShowError('Password not the same.')
+      }
+      else {
+        this.socket.emit("changepsw", {
+          uuid: this.uuid,
+          content: {
+            user: this.user,
+            new_password: this.ch_psw
+          },
+        });
+      }
+    },
+    Unsubscribe() {
+      this.$confirm('Do you want to Unsubscribe?', 'Confirm', {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }).then(() => {
+        this.socket.emit("unsubscribe", {
+          uuid: this.uuid,
+          content: {
+            user: this.user,
+          },
+        });
+      }).catch(() => {
+
+      });
+    },
+    ShowError(msg) {
+      this.$message({
+        showClose: true,
+        message: msg,
+        type: 'error'
+      });
+    },
+    ShowOK(msg) {
+      this.$message({
+        showClose: true,
+        message: msg,
+        type: 'success'
+      });
+    }
   },
   mounted: function () {
     d3.select("#page_QCDA").attr("class", "page_not_selected");
@@ -198,11 +293,11 @@ export default {
         return;
       }
       this.dialogLogin = false;
+      this.email = content['info'][1]
       this.socket.emit("get_gate_set", { uuid: this.uuid, source: "Home" });
     });
 
     this.socket.on("need_login", (content) => {
-      // 收到后端处理好的qasm，显示到前端qasm编辑区域
       console.log(content);
       if (!content.uuid == this.uuid) {
         return;
@@ -211,22 +306,51 @@ export default {
     });
 
     this.socket.on("register_ok", (content) => {
-      // 收到后端处理好的qasm，显示到前端qasm编辑区域
       console.log(content);
       if (!content.uuid == this.uuid) {
         return;
       }
       this.dialogRegister = false;
+      this.ShowOK("Register success. Please login.")
       this.socket.emit("testLogin", { uuid: this.uuid });
     });
 
     this.socket.on("forget_ok", (content) => {
-      // 收到后端处理好的qasm，显示到前端qasm编辑区域
       console.log(content);
       if (!content.uuid == this.uuid) {
         return;
       }
       this.dialogForget = false;
+      this.ShowOK("Password reseted, Please check your e-mail box.")
+      this.socket.emit("testLogin", { uuid: this.uuid });
+    });
+
+    this.socket.on("update_psw_ok", (content) => {
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      this.dialogPsw = false;
+      this.ShowOK("Password changed.")
+      this.socket.emit("testLogin", { uuid: this.uuid });
+    });
+
+    this.socket.on("unsubscribe_ok", (content) => {
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      this.dialogUser = false;
+      this.ShowOK("Unsubscribed success.")
+      this.socket.emit("testLogin", { uuid: this.uuid });
+    });
+
+    this.socket.on("login_error", (content) => {
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      this.ShowError("Login failed.")
       this.socket.emit("testLogin", { uuid: this.uuid });
     });
   },
