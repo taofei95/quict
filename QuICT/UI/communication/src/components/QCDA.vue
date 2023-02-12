@@ -12,7 +12,7 @@
         <el-step title="Result" />
       </el-steps>
     </el-header>
-    <el-main style="padding: 0px !important; height: calc(100vh - 100px)">
+    <el-main style="padding: 0px !important; height: calc(100vh - 160px)">
       <el-space direction="horizen" :size="1" style="line-height: 19px !important" id="step_0">
         <el-button size="large" type="primary" plain style="
             font-family: 'Segoe UI Symbol';
@@ -55,14 +55,7 @@
             </ToolBar>
             <nVisualizeZone ref="n_visVue" :VisContentIn="n_VisContent" v-on:VisUpdate="n_VisUpdate">
             </nVisualizeZone>
-            <el-button size="large" type="primary" plain @click="back_qcda"
-              style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
-              Back
-            </el-button>
-            <el-button size="large" type="primary" plain @click="confirm_newQCDA" :enabled="NewConfirmBtnEnable"
-              style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
-              Next
-            </el-button>
+
           </el-main>
           <el-aside width="20%" style="background-color: #292c3d; padding: 0px">
             <ProgramZone :ProgramTextIn="n_ProgramText" v-on:ProgramUpdate="n_ProgramUpdate">
@@ -79,32 +72,31 @@
         <lVisualizeZone ref="l_visVue" :VisContentIn="l_VisContent">
           <!-- TODO: replace with a one way vue component -->
         </lVisualizeZone>
-        <el-button size="large" type="primary" plain @click="back_qcda"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
-          Back
-        </el-button>
-        <el-button size="large" type="primary" plain @click="confirm_loadQCDA"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
-          Next
-        </el-button>
+
       </div>
       <div id="step_2" class="div_not_selected">
-        <span style="font-size: large;">Original:</span>
-        <oVisualizeZone2 ref="o_visVue2" :VisContentIn="o_VisContent2">
-          <!-- TODO: replace with a one way vue component -->
-        </oVisualizeZone2>
-        <span style="font-size: large;">Optimized:</span>
-        <oVisualizeZone ref="o_visVue" :VisContentIn="o_VisContent">
-          <!-- TODO: replace with a one way vue component -->
-        </oVisualizeZone>
-        <el-button size="large" type="primary" plain @click="back_o_qasm"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
-          Back
-        </el-button>
-        <el-button size="large" type="primary" plain @click="run_o_QCDA"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
-          Next
-        </el-button>
+        <el-container>
+          <el-main style="width: 50%;">
+            <span style="font-size: large;
+    font-weight: bolder;
+    color: white;
+    display: flex;
+    margin-left: 20px">Original:</span>
+            <oVisualizeZone2 ref="o_visVue2" :VisContentIn="o_VisContent2">
+              <!-- TODO: replace with a one way vue component -->
+            </oVisualizeZone2>
+          </el-main>
+          <el-main style="width: 50%;">
+            <span style="font-size: large;
+    font-weight: bolder;
+    color: white;
+    display: flex;
+    margin-left: 20px">Optimized:</span>
+            <oVisualizeZone ref="o_visVue" :VisContentIn="o_VisContent">
+              <!-- TODO: replace with a one way vue component -->
+            </oVisualizeZone>
+          </el-main>
+        </el-container>
       </div>
       <div id="step_3" class="div_not_selected">
         <el-radio-group v-model="Output_type" @change="DrawOutput">
@@ -168,29 +160,58 @@
           </el-tab-pane>
         </el-tabs>
         <el-tabs type="border-card" style="background: transparent !important; border: 0px solid"
-            v-if="(Output_type == 2)">
-            <el-tab-pane label="Table">
-              <table style="width: 100%;">
-                <tr style="height: 40px" v-for="result in OutputContent_density_matrix" :key="result">
-                  <td style="height: 40px" v-for="elem in result" :key="elem">{{elem}}</td>
-                </tr>
-              </table>
-            </el-tab-pane>
-          </el-tabs>
-        <el-button size="large" type="primary" plain @click="back_r_QCDA"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
-          Back
-        </el-button>
-        <el-button size="large" type="primary" @click="back_qcda"
-          style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
-          Restart
-        </el-button>
+          v-if="(Output_type == 2)">
+          <el-tab-pane label="Table">
+            <table style="width: 100%;">
+              <tr style="height: 40px" v-for="result in OutputContent_density_matrix" :key="result">
+                <td style="height: 40px" v-for="elem in result" :key="elem">{{ elem }}</td>
+              </tr>
+            </table>
+          </el-tab-pane>
+        </el-tabs>
+
       </div>
     </el-main>
+    <el-footer height="60px">
+      <el-button v-if="(current_step == 1 && Route == 'N')" size="large" type="primary" plain @click="back_qcda"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
+        Back
+      </el-button>
+      <el-button v-if="(current_step == 1 && Route == 'N')" size="large" type="primary" plain @click="confirm_newQCDA"
+        :enabled="NewConfirmBtnEnable" style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
+        Next
+      </el-button>
+
+      <el-button v-if="(current_step == 1 && Route == 'L')" size="large" type="primary" plain @click="back_qcda"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
+        Back
+      </el-button>
+      <el-button v-if="(current_step == 1 && Route == 'L')" size="large" type="primary" plain @click="confirm_loadQCDA"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
+        Next
+      </el-button>
+
+      <el-button v-if="(current_step == 2)" size="large" type="primary" plain @click="back_o_qasm"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
+        Back
+      </el-button>
+      <el-button v-if="(current_step == 2)" size="large" type="primary" plain @click="run_o_QCDA"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
+        Next
+      </el-button>
+
+      <el-button v-if="(current_step == 4)" size="large" type="primary" plain @click="back_r_QCDA"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
+        Back
+      </el-button>
+      <el-button v-if="(current_step == 4)" size="large" type="primary" @click="back_qcda"
+        style="margin: 0px 10px; font-family: 'Segoe UI Symbol'">
+        Restart
+      </el-button>
+    </el-footer>
   </el-container>
 </template>
 <style>
-
 .div_not_selected {
   display: none !important;
 }
