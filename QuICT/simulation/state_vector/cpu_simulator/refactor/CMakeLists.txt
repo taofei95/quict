@@ -59,6 +59,18 @@ quict_check_flag("${QUICT_AVX_FLAG}" "AVX")
 quict_check_flag("${QUICT_AVX2_FLAG}" "AVX2")
 quict_check_flag("${QUICT_AVX512F_FLAG}" "AVX512F")
 
+macro(quict_target_enable name)
+  set(_TMP_FEAT_FLAG_LIST "")
+  foreach(feat IN ITEMS ${ARGN})
+    list(APPEND _TMP_FEAT_FLAG_LIST "${QUICT_${feat}_FLAG}")
+  endforeach()
+  message(STATUS "Target ${name} compiler feature flags: ${_TMP_FEAT_FLAG_LIST}")
+  foreach(flag IN ITEMS ${_TMP_FEAT_FLAG_LIST})
+    target_compile_options(${name} PUBLIC "${flag}")
+  endforeach()
+  unset(_TMP_FEAT_FLAG_LIST)
+endmacro()
+
 # Google Test
 include(FetchContent)
 FetchContent_Declare(
@@ -86,13 +98,13 @@ else()
   endmacro()
 
   quict_add_test(spec ${SIMULATOR_SRC} tests/spec.cc)
-  target_compile_options(spec PRIVATE ${QUICT_SSE_FLAG} ${QUICT_SSE2_FLAG} ${QUICT_AVX_FLAG} ${QUICT_AVX2_FLAG})
+  quict_target_enable(spec "SSE" "SSE2" "AVX" "AVX2" "AVX512F")
 
   quict_add_test(unitary_gate_naive ${SIMULATOR_SRC} tests/gates/unitary/naive.cc)
 
   if(QUICT_SUPPORT_SSE AND QUICT_SUPPORT_SSE2)
     quict_add_test(unitary_gate_sse ${SIMULATOR_SRC} tests/gates/unitary/x86_64/sse.cc)
-    target_compile_options(unitary_gate_sse PRIVATE ${QUICT_SSE_FLAG} ${QUICT_SSE2_FLAG})
+    quict_target_enable(unitary_gate_sse "SSE" "SSE2")
   endif()
 endif()
 
