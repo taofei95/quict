@@ -108,3 +108,6 @@ else()
   endif()
 endif()
 
+add_executable(bench_quict_sim ${SIMULATOR_SRC} bench/bench_quict_sim.hpp bench/bench_quict_sim.cc)
+quict_target_enable(bench_quict_sim "SSE" "SSE2" "AVX" "AVX2")
+

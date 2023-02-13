@@ -45,6 +45,15 @@ class Gate {
 
   Gate(Gate &&gate) = default;
 
+  friend void swap(Gate &a, Gate &b) {
+    using std::swap;
+    swap(a.len_, b.len_);
+    swap(a.q_num_, b.q_num_);
+    swap(a.attr_, b.attr_);
+    swap(a.targ_, b.targ_);
+    swap(a.data_, b.data_);
+  }
+
   /*
    * @brief Create a single qubit gate. Copy gate data from provided ptr.
    *

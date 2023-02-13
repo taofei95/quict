@@ -2,9 +2,12 @@
 #define QUICT_CPU_SIM_BACKEND_SIMULATOR_H
 
 #include <algorithm>
+#include <complex>
 #include <memory>
+#include <random>
 #include <sstream>
 #include <string>
+#include <type_traits>
 
 #include "../gate/gate.hpp"
 #include "../utility/debug_msg.hpp"
@@ -20,15 +23,53 @@ class Simulator {
  private:
   inline void BuildBackend(BackendTag tag) {
     switch (tag) {
+      case BackendTag::NAIVE: {
+        d_ = std::make_unique<NaiveApplyGateDelegate<DType>>();
+        return;
+      }
       case BackendTag::SSE: {
         // DEBUG_MSG("Using SSE optimized simulator");
         d_ = std::make_unique<SseApplyGateDelegate<DType>>();
         return;
       }
       default: {
-        d_ = std::make_unique<NaiveApplyGateDelegate<DType>>();
+        throw std::runtime_error("Not support such backend tag");
       }
     }
+  }
+
+  inline void BuildName() {
+    std::stringstream ss;
+    // Check backend
+    switch (d_->GetBackendTag()) {
+      case BackendTag::NAIVE: {
+        ss << "NaiveSimulator";
+        break;
+      }
+      case BackendTag::SSE: {
+        ss << "SseSimulator";
+        break;
+      }
+      case BackendTag::AVX: {
+        ss << "AvxSimulator";
+        break;
+      }
+      case BackendTag::AVX512: {
+        ss << "Avx512Simulator";
+        break;
+      }
+      default: {
+        throw std::runtime_error("Not support such backend tag");
+      }
+    }
+
+    // Check fp precision
+    if constexpr (std::is_same_v<DType, std::complex<float>>) {
+      ss << "[f32]";
+    } else if constexpr (std::is_same_v<DType, std::complex<double>>) {
+      ss << "[f64]";
+    }
+    name_ = ss.str();
   }
 
  public:
@@ -39,16 +80,20 @@ class Simulator {
     data_[0] = DType(1);
 
     BuildBackend(tag);
+    BuildName();
   }
 
   Simulator(size_t q_num, std::shared_ptr<DType[]> data, BackendTag tag)
       : q_num_(q_num), data_(std::move(data)) {
     BuildBackend(tag);
+    BuildName();
   }
+
+  Simulator(Simulator &&) = default;
 
   ~Simulator() = default;
 
-  inline void ApplyGate(gate::Gate<DType> &gate) {
+  inline void ApplyGate(const gate::Gate<DType> &gate) {
     // Use `data_.get()` directly to save 1 call of shared_ptr ctor because we
     // guarantee that lifecycle of `data_` outlives this `ApplyGate` call.
     d_->ApplyGate(q_num_, data_.get(), gate);
@@ -60,12 +105,18 @@ class Simulator {
     data_ = std::move(data);
   }
 
-  inline std::string Spec() const noexcept {
+  inline std::string PlatformSpec() const noexcept {
     std::stringstream ss;
     ss << "QuICT CPU Simulation Backend Specification: " << std::endl;
     ss << BuildSpec();
     ss << RuntimeSpec();
     return ss.str();
+  }
+
+  inline const std::string &GetName() const noexcept { return name_; }
+
+  static inline const util::Cpu_x86_64_Detector &GetHardwareFeature() {
+    return hw_feat_;
   }
 
  private:
@@ -75,9 +126,11 @@ class Simulator {
   std::unique_ptr<ApplyGateDelegate<DType>> d_;
   // Simulator-maintained state vector
   std::shared_ptr<DType[]> data_;
+  // Simulator name, including fp precision and backend tag
+  std::string name_;
 
   // x86_64 cpu feature detector
-  inline static util::Cpu_x86_64_Detector feat_{};
+  inline static util::Cpu_x86_64_Detector hw_feat_{};
 
   inline std::string BuildSpec() const noexcept {
     std::stringstream ss;
@@ -122,13 +175,14 @@ class Simulator {
   inline std::string RuntimeSpec() const noexcept {
     std::stringstream ss;
     ss << "[Runtime]" << std::endl;
-    ss << "  Vendor:   " << feat_.GetVendorString() << std::endl;
-    ss << "  SSE:      " << FlagCStr(feat_.HW_SSE) << std::endl;
-    ss << "  SSE2:     " << FlagCStr(feat_.HW_SSE2) << std::endl;
-    ss << "  AVX:      " << FlagCStr(feat_.OS_AVX && feat_.HW_AVX) << std::endl;
-    ss << "  AVX2:     " << FlagCStr(feat_.OS_AVX && feat_.HW_AVX2)
+    ss << "  Vendor:   " << hw_feat_.GetVendorString() << std::endl;
+    ss << "  SSE:      " << FlagCStr(hw_feat_.HW_SSE) << std::endl;
+    ss << "  SSE2:     " << FlagCStr(hw_feat_.HW_SSE2) << std::endl;
+    ss << "  AVX:      " << FlagCStr(hw_feat_.OS_AVX && hw_feat_.HW_AVX)
        << std::endl;
-    ss << "  AVX512F:  " << FlagCStr(feat_.OS_AVX512 && feat_.HW_AVX512_F)
+    ss << "  AVX2:     " << FlagCStr(hw_feat_.OS_AVX && hw_feat_.HW_AVX2)
+       << std::endl;
+    ss << "  AVX512F:  " << FlagCStr(hw_feat_.OS_AVX512 && hw_feat_.HW_AVX512_F)
        << std::endl;
     ss << std::endl;
     return ss.str();

@@ -17,6 +17,8 @@ namespace sim {
 template <class DType>
 class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
  public:
+  BackendTag GetBackendTag() const override { return BackendTag::SSE; }
+
   void ApplyGate(size_t q_num, DType *data,
                  const gate::Gate<DType> &gate) override {
     size_t gq_num = gate.Qnum();
