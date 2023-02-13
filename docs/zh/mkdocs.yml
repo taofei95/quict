@@ -1,4 +1,4 @@
-site_name: QuICT
+site_name: QuICT(开发版)
 
 nav:
 - 概览: home.md
@@ -11,6 +11,7 @@ nav:
   - QCDA:
     - 映射:
       - SABRE映射算法: functions/QCDA/mapping/SABRE.md
+      - 基于图学习及强化学习的量子电路映射算法: functions/QCDA/mapping/RL_mapping.md
     - 优化:
       - Clifford+Rz优化: functions/QCDA/optimization/clifford_rz_optimization.md
       - Clifford电路合成与symbolic优化: functions/QCDA/optimization/clifford.md
@@ -28,8 +29,8 @@ nav:
   - QCDA: tutorials/QCDA.md
   - 算法:
     - 经典量子算法:
-      - 格罗弗算法: tutorials/algorithm/quantum_algorithm/grover.md
-      - 秀尔算法: tutorials/algorithm/quantum_algorithm/shor.md
+      - Grover搜索算法: tutorials/algorithm/quantum_algorithm/grover.md
+      - Shor算法: tutorials/algorithm/quantum_algorithm/shor.md
       - 量子振幅估计: tutorials/algorithm/quantum_algorithm/amplitude_estimate.md
       - 量子游走: tutorials/algorithm/quantum_algorithm/quantum_walk.md
     - 变分量子算法:
@@ -40,7 +41,11 @@ nav:
   - Algorithm:
     - Quantum Machine Learning:
       - QAOA: API_qaoa.md
-- 基准测试: QuICTbenchmark.md
+- 基准测试:
+  - 简介: QuICTbenchmark/QuICTbenchmark.md
+  - 模拟基准测试: QuICTbenchmark/simulation_benchmark.md
+  - 算法基准测试: QuICTbenchmark/algorithm_benchmark.md
+  - QCDA基准测试: QuICTbenchmark/qcda_benchmark.md
 - 贡献: contribution.md
     
 theme:

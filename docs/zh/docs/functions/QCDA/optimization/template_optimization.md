@@ -24,6 +24,7 @@ $$S'=T_{i-1}^\dagger T_{i-2}^\dagger \cdots T_1^\dagger T_m^\dagger T_{m-1}^\dag
 
 <figure markdown>
 ![模板$T$和电路$C$的匹配](../../../assets/images/functions/QCDA/to_match.png)
+<p markdown="1" style="font-size:15px;"> 图片引用自*Exact and practical pattern matching for quantum circuit optimization.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 上图为一个匹配的例子，注意到找到的子电路 $S$ 在 $C$ 中可能并不相邻，但
@@ -59,6 +60,7 @@ $$S'=T_{i-1}^\dagger T_{i-2}^\dagger \cdots T_1^\dagger T_m^\dagger T_{m-1}^\dag
 
 <figure markdown>
 ![模板示例](../../../assets/images/functions/QCDA/to_template.png)
+<p markdown="1" style="font-size:15px;"> 图片引用自*Exact and practical pattern matching for quantum circuit optimization.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 ## 基本用法

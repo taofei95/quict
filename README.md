@@ -1,71 +1,58 @@
-[![](https://img.shields.io/badge/license-Apache%202.0-lightgrey)](./LICENSE) ![](https://img.shields.io/badge/platform-windows_|_linux-lightgrey) ![](https://img.shields.io/badge/Python-3.7_|_3.8_|_3.9-blue) ![](https://img.shields.io/badge/version-v1.0.0-blue) ![](https://img.shields.io/badge/Docs-failed-red) [![](https://img.shields.io/badge/UI-Ready-gree)](http://49.235.108.172:8080/) ![](https://img.shields.io/badge/UnitTest-pass-gree) ![](https://img.shields.io/badge/Pypi-v1.0.0-blue) ![](https://img.shields.io/badge/Build-Clang++-orange) ![](https://img.shields.io/badge/Docker-CPU_|_GPU-orange)
+[![](https://img.shields.io/badge/license-Apache%202.0-lightgrey)](./LICENSE) ![](https://img.shields.io/badge/platform-windows_|_linux_|_mac-lightgrey) ![](https://img.shields.io/badge/Python-3.7_|_3.8_|_3.9-blue) ![](https://img.shields.io/badge/version-v1.0.0-blue) ![](https://img.shields.io/badge/Docs-Ready-green) [![](https://img.shields.io/badge/UI-Ready-gree)](http://49.235.108.172:8080/) ![](https://img.shields.io/badge/UnitTest-pass-gree) ![](https://img.shields.io/badge/Pypi-v1.0.0-blue) ![](https://img.shields.io/badge/Extra-QML_|_QSIM-orange) ![](https://img.shields.io/badge/Docker-CPU_|_GPU-orange)
 <div align=center><img src="./docs/zh/docs/assets/images/IMG_1986.PNG"></div>
 
 ## QuICT 平台简介
 QuICT (Quantum Computer of Institute of Computing Technology)是一个开源量子计算操作平台。目前QuICT已能支持6种常见指令集以及20余种量子门操作，已实现3种不同类型的量子电路模拟器，并且都有对CPU/GPU的支持和加速，可进行含噪声量子电路仿真模拟。设计并实现了QCDA(Quantum Circuit Design Automation)量子电路辅助设计模块，包括量子初态制备、指令集转换、酉矩阵合成、量子电路优化和映射等功能。算法方面，实现了shor、grover、qae等常见量子算法，可进行因数分解、SAT问题求解等；也实现了QML领域内的QAOA 和 QNN算法，支持图求解最大割问题和MNIST手写数字图片二分类。 QuICT同时也构建了量子算法电路库和针对量子计算机的性能基准测试，通过设计不同的量子电路赛道，来实现针对不同量子机特性的基准测试。
 
-主要模块
-- QuICT.algorithm: 包含多种常见量子算法，例如shor, grover, qaoa, vqe等。
-- QuICT.core: 包含构建电路所需的组件，Circuit, Gates, Qubits等。
-- QuICT.qcda: 量子电路生成、优化和映射
-- QuICT.simulation: 量子电路模拟器，支持 Unitary、StateVector、DensityMatrix。
-
 <div align=center><img src="./docs/zh/docs/assets/images/quictv1.drawio.png" width="400" height="400"></div>
 
+主要模块
+- QuICT.algorithm: 包含多种常见量子算法，例如shor, grover, QAOA, VQE等。
+- QuICT.core: 包含构建电路所需的组件，量子电路、量子门、量子比特等。
+- QuICT.qcda: 量子电路生成、优化和映射。
+- QuICT.simulation: 量子电路模拟器，支持酉矩阵、状态向量和密度矩阵。
+- QuICT.tools: 辅助模块，包括画图、QASM转换、量子电路库以及Benchmark等。
+
+更多功能
+- QuICT_ML: 包含多种机器学习相关的量子算法库，比如QAOA、VQE，以及基于强化学习的量子电路映射算法
+- QuICT_SIM: 量子电路模拟库，包含一个基于CPU的更高效快速的状态向量模拟器，以及多节点全振幅模拟器（暂未开源）
+
 相关链接
-- 代码库：https://gitee.com/quictucas/quict
+- QuICT代码库：https://gitee.com/quictucas/quict
+- QuICT_ML代码库： https://edu.gitee.com/quictucas/repos/quictucas/quict-ml/sources
+- QuICT_SIM代码库： https://edu.gitee.com/quictucas/repos/quictucas/quict-sim/sources
 - 文档：https://pypi.org/project/quict/
 - Pypi：https://pypi.org/project/quict/
 - UI：http://49.235.108.172:8080/
 
 ## 安装说明
+### 预先准备
+- PYTHON VERSION >= 3.8
+- GPU环境要求
+    - Cupy: [Installing Cupy](https://docs.cupy.dev/en/stable/install.html)
+        ```sh
+        nvcc -V     # 获得cuda版本号
+
+        pip install cupy-cuda{version}      # 根据cuda版本号进行安装
+        ```
+
+
 ### 从 pypi 安装
 ```
 pip install quict
 ```
 
 ### 从Gitee处安装
-- 预先准备
-  - C++ Compiler
-    - Windows: [Installing Clang/LLVM for use with Visual Studio](https://devblogs.microsoft.com/cppblog/clang-llvm-support-in-visual-studio/)
-
-    - Linux: `clang/LLVM`
-    ```sh
-    sudo apt install build-essential libtbb2 libtbb-dev clang llvm python3 python3-setuptools python3-numpy python3-scipy
-    # if you handle python parts in another way, just install
-    sudo apt install build-essential libtbb2 libtbb-dev clang llvm.
-    ```
-
 - 克隆 QuICT 仓库
     ```sh
     # git clone
     git clone https://gitee.com/quictucas/quict.git
     ```
 
-- Linux 系统 \
-以下命令将构建 QuICT 并在系统范围内安装它。您可能需要“sudo”权限才能将 QuICT 安装到系统 python 包路径中。
-    > 由于低版本 GCC (<=11) 中缺少一些功能，建议使用 clang 构建当前的 QuICT。在未来的版本中，将支持 GCC。
+- QuICT 安装
     ```sh
-    export CC=clang && export CXX=clang++ && ./build.sh && ./install.sh
-
-    # If you are encountered with permission issues during installing, try
-    export CC=clang && export CXX=clang++ && ./build.sh && ./install.sh --user
-    ```
-
-- Windows 系统 \
-推荐使用 clang-cl.exe，它是带有 MSVC CLI 的 clang 编译器。其他编译器可能工作但未经测试。打开“Developer PowerShell for VS”，将工作目录更改为 QuICT 存储库根目录。然后使用以下命令构建：
-
-    ```powershell
-    $ENV:CC="clang-cl.exe"
-    $ENV:CXX="clang-cl.exe"
-    $ENV:ComSpec="powershell.exe"
-    python3 .\setup.py bdist_wheel
-    ```
-
-- QuICT 命令行界面
-    > please pip install quict firstly.
-    ```sh
-    quict --help
+    # 在quict仓库根目录下
+    python setup.py install
     ```
 
 - Docker 构建指令
@@ -73,6 +60,12 @@ pip install quict
     # Build QuICT docker for target device [cpu/gpu]
     sudo docker build -t quict/{device} -f dockerfile/{device}.quict.df .
     ```
+
+### QuICT 命令行界面
+
+```sh
+quict --help
+```
 
 ## 使用示例
 在 quict/example 下，有关于QuICT各个主要模块的用例，另外在[Tutorial](https://gitee.com/quictucas/quict)中会有更详细的教程说明。
@@ -93,6 +86,6 @@ print(circuit.qasm())
 作者为量子计算和理论计算机科学实验室, 中国科学院计算技术研究所。如果您使用QuICT，请按照[此文件](./citation)进行引用
 
 ## 开源协议
-Copyright (c) Institute of Computing Technology, Chinese Academy of Sciences. All rights reserved.
+版权所有 (c) 中国科学院计算技术研究所
 
-Licensed under the Apache 2.0 License.
+许可基于 Apache 2.0 许可证

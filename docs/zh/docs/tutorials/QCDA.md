@@ -27,12 +27,10 @@ circuit_phy = qcda.compile(circuit)
 
 以上的代码给出了QCDA的一个典型使用例，以下给出了一组原电路及其对应的物理电路。
 
-原逻辑电路：
 <figure markdown>
-![逻辑电路](../assets/images/tutorials/qcda_0.png)
+![逻辑电路](../assets/images/tutorials/QCDA/qcda_0.png)
 </figure>
 
-物理电路：
 <figure markdown>
-![物理电路](../assets/images/tutorials/qcda_1.png)
+![物理电路](../assets/images/tutorials/QCDA/qcda_1.png)
 </figure>

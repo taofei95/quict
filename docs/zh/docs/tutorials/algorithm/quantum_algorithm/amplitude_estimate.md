@@ -1,8 +1,8 @@
-# QAE算法
+# 量子振幅估计算法（Quantum Amplitude Estimation Algorithm, QAE）
 
 ## 概要
 
-QAE算法计算一个量子态在目标空间上的振幅。更详细地，输入是期望精度$\epsilon$、oracle电路$S_\chi$（与Grover算法中的输入相同）、状态制备电路$\mathcal{A}$；以高概率输出振幅估计$\tilde a,|a-\tilde a|<\epsilon$，其中$\mathcal{A}\ket{0}=\sqrt{a}\ket{\Psi_1}+\sqrt{1-a}\ket{\Psi_0}$，$\ket{\Psi_1}$是归一化的解空间向量。
+QAE算法计算一个量子态在目标空间上的振幅。更详细地：输入是期望精度 $\epsilon$ 、oracle电路 $S_\chi$（与Grover算法中的输入相同）、状态制备电路 $\mathcal{A}$ ；以高概率输出振幅估计 $\tilde a,|a-\tilde a|<\epsilon$ ，其中 $\mathcal{A}|0⟩ =\sqrt{a}|\Psi_1⟩+\sqrt{1-a}|\Psi_0⟩$ ，$|\Psi_1⟩$ 是归一化的解空间向量。
 
 振幅估计可以作为其他算法的组件，例如在量子蒙特卡洛方法[^4]中。
 
@@ -12,32 +12,29 @@ QAE算法计算一个量子态在目标空间上的振幅。更详细地，输�
 
 给出一个算子$\mathcal{A}$，其作用为
 
-$$
-    \mathcal{A}|0\rangle = \sqrt{1 - a}|\Psi_0\rangle + \sqrt{a}|\Psi_1\rangle
-$$
+$$\mathcal{A}|0\rangle = \sqrt{1 - a}|\Psi_0\rangle + \sqrt{a}|\Psi_1\rangle$$
 
-量子振幅估计（QAE）的任务是为$\mathcal{A} | 0\rangle$在状态$|\Psi_1\rangle$张成的空间上的振幅$a$寻找一个估计。
+量子振幅估计（QAE）的任务是为$\mathcal{A} | 0\rangle$在状态$|\Psi_1\rangle$张成的空间上的振幅$a$寻找一个估计：
 
-$$
-a = |\langle\Psi_1 | \mathcal{A} | 0\rangle|^2。
-$$
+$$a = |\langle\Psi_1 | \mathcal{A} | 0\rangle|^2。$$
 
-Brassard等人[<sup>[1]</sup>](#refer1)在2000年首次研究了这项任务，他们的算法使用了两个技术：一是振幅放大，使用了Grover算子的组合 
-$$
-\mathcal{Q} = \mathcal{A}\mathcal{S}_0\mathcal{A}^\dagger\mathcal{S}_{\chi}
-$$
+Brassard等人[<sup>[1]</sup>](#refer1)在2000年首次研究了这项任务，他们的算法使用了两个技术：一是振幅放大，使用了Grover算子的组合：
 
-其中$\mathcal{S}_0=I-2\ket{0}\bra{0}$和$\mathcal{S}_{\chi}=I-2\ket{\Psi_1}\bra{\Psi_1}$分别是关于$|0\rangle$和$|\Psi_1\rangle$状态的反映。二是相位估计，观察到$\mathcal{Q}$的两个本征值是$e^{-i2\arcsin {\sqrt{a}}}$，从其相位的估计就直接得到了振幅的估计。然而该算法需要带有受控位的Grover算子电路，计算成本很高。因此，人们提出了QAE的其他变体。参考Qiskit中的设置，接下来的教程中以一个简单的例子来展示这些变体。
+$$\mathcal{Q} = \mathcal{A}\mathcal{S}_0\mathcal{A}^\dagger\mathcal{S}_{\chi}$$
+
+其中：
+
+$$\mathcal{S}_0=I-2|0⟩⟨0|0⟩, \quad \mathcal{S}_{\chi}=I-2|\Psi_1⟩⟨\Psi_1|\Psi_1⟩$$
+
+分别是关于 $|0\rangle$ 和 $|\Psi_1\rangle$ 状态的反映。二是相位估计，观察到 $\mathcal{Q}$ 的两个本征值是 $e^{-i2\arcsin {\sqrt{a}}}$ ，从其相位的估计就直接得到了振幅的估计。然而该算法需要带有受控位的Grover算子电路，计算成本很高。因此，人们提出了QAE的其他变体。参考Qiskit中的设置，接下来的教程中以一个简单的例子来展示这些变体。
 
 在我们的例子中，
 
-$$
-\mathcal{A}=H^{\otimes n}, S_\chi=CZ \otimes I_{n-2}
-$$
+$$\mathcal{A}=H^{\otimes n}, \quad S_\chi=CZ \otimes I_{n-2}$$
 
-对应的概率是随机选取长度为$n$的比特串而开始两位均为$1$的概率。$S_0$的核心是多控Toffoli门，QuICT内置了若干实现。由此我们可以构造出Grover算子。此时想要估计的概率固定为$p = 0.25$。现在我们可以为$\mathcal{A}$和$\mathcal{Q}$定义电路。
+对应的概率是随机选取长度为 $n$ 的比特串而开始两位均为$1$的概率。$S_0$ 的核心是多控Toffoli门，QuICT内置了若干实现。由此我们可以构造出Grover算子。此时想要估计的概率固定为 $p = 0.25$ 。现在我们可以为 $\mathcal{A}$ 和 $\mathcal{Q}$ 定义电路。
 
-```python
+``` python
 def example_oracle(n):
     def S_chi(n, controlled=False):
         # phase-flip on target
@@ -61,30 +58,34 @@ QuICT实现了三种QAE算法，通过指定初始化参数`mode`来选择。`ru
 
 接下来，我们将运行所有不同的QAE算法。详细的代码见下方的代码示例，这里我们给出canonical QAE的线路图：
 
-![canonical_QAE_ref](./canonical_QAE_ref.png)
+<figure markdown>
+![canonical_QAE_ref](../../../assets/images/tutorials/algorithm/quantum_algorithm/canonical_QAE_ref.png){:width="500px"}
+</figure>
 
 MLAE与FQAE的原理稍有不同：两者不使用相位估计。前者使用最大似然估计，后者通过迭代缩小致信域，来给出振幅估计。其算法的量子部分均为一层状态制备电路加上若干Grover算子。MLAE的实验结果如图：
 
-![QAE_run_result](./QAE_run_result.png)
+<figure markdown>
+![QAE_run_result](../../../assets/images/tutorials/algorithm/quantum_algorithm/QAE_run_result.png){:width="500px"}
+</figure>
 
-## 接口说明
+## 基本用法
 
 `QAE`类位于`QuICT.algorithm.quantum_algorithm.amplitude_estimate`。初始化参数包括：
 
 1. `mode`：字符串，可以是`canonical`，`fast`，`max_likely`中的一个
 2. `eps`：输出的期望精度。默认为0.1
-3. `simulator`：模拟器。默认值`CircuitSimulator()`
+3. `simulator`：模拟器。默认值`StateVectorSimulator()`
 
 `circuit`方法用于输出电路（只在`canonical`模式可用）；`run`方法用于直接执行算法。为了准备算法所需的输入，需要构造`OracleInfo`对象和`StatePreparationInfo`对象（可选，默认为一层H门）。
 
-## 代码示例
+## 代码实例
 
-以下代码中，目标空间为最后两位为11的状态，状态制备电路为$H^{\otimes n}$，振幅$a=1/4$。
+以下代码中，目标空间为最后两位为11的状态，状态制备电路为 $H^{\otimes n}$ ，振幅 $a=1/4$ 。
 
 ```python
 from QuICT.algorithm.quantum_algorithm import QAE, StatePreparationInfo, OracleInfo
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 def example_oracle(n):

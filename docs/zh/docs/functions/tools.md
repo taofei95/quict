@@ -40,11 +40,11 @@ circuit.draw(method='command')
 ```
 
 <figure markdown>
-![circuit_draw_matp](../../../assets/images/functions/circuit_draw_matp.jpg)
+![circuit_draw_matp](../assets/images/functions/tools/circuit_draw_matp.jpg)
 </figure>
 
 <figure markdown>
-![circuit_draw_command](../../../assets/images/functions/circuit_draw_command.png)
+![circuit_draw_command](../assets/images/functions/tools/circuit_draw_command.png)
 </figure>
 
 
