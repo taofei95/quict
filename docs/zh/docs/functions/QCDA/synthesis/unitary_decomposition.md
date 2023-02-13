@@ -4,12 +4,6 @@
 
 ## 代码实例
 
-此部分具体原理请参见对应的原论文。
-
-Shende, V.V., Bullock, S.S., & Markov, I.L. (2006). Synthesis of quantum-logic circuits. IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems, 25, 1000-1010.
-
-Drury, B., & Love, P.J. (2008). Constructive quantum Shannon decomposition from Cartan involutions. Journal of Physics A: Mathematical and Theoretical, 41, 395305.
-
 ``` python
 from QuICT.qcda.synthesis import UnitaryDecomposition
 
@@ -22,3 +16,15 @@ gates, _ = UD.execute(mat)
 <figure markdown>
 ![合成电路](../../../assets/images/functions/QCDA/ud_0.png)
 </figure>
+
+## 参考文献
+
+<div id="refer1"></div>
+<font size=3>
+[1] Shende, V.V., Bullock, S.S., & Markov, I.L. (2006). Synthesis of quantum-logic circuits. IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems, 25, 1000-1010. [https://arxiv.org/abs/quant-ph/0406176](https://arxiv.org/abs/quant-ph/0406176)
+</font>
+
+<div id="refer2"></div>
+<font size=3>
+[2] Drury, B., & Love, P.J. (2008). Constructive quantum Shannon decomposition from Cartan involutions. Journal of Physics A: Mathematical and Theoretical, 41, 395305. [https://arxiv.org/abs/0806.4015](https://arxiv.org/abs/0806.4015)
+</font>
