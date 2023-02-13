@@ -57,8 +57,8 @@ else()
 endif()
 
 macro(quict_check_flag flag_name)
-  set(flag "QUICT_${flag_name}_FLAG")
-  check_cxx_compiler_flag(${flag} "QUICT_SUPPORT_${flag_name}")
+  set(flag "${QUICT_${flag_name}_FLAG}")
+  check_cxx_compiler_flag("${flag}" "QUICT_SUPPORT_${flag_name}")
 
   if(${QUICT_SUPPORT_${flag_name}})
     message(STATUS "QuICT ${flag_name} flags: ${QUICT_${flag_name}_FLAG}")
