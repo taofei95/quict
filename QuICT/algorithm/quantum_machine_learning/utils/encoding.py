@@ -76,3 +76,24 @@ class Amplitude:
     def encoding(self, img, circuit=False):
         """Encode the image as quantum ansatz using amplitude encoding."""
         raise NotImplementedError
+
+
+class FRQI:
+    def __init__(self, device=torch.device("cuda:0")):
+        self._device = device
+        self._circuit = None
+        self._ansatz = None
+
+    def encoding(self, img, grayscale=256, circuit=False):
+        img = img.flatten()
+        img_theta = img / grayscale * np.pi
+        pos_qubits = list(range(img.shape[0]))
+        color_qubit = img.shape[0]
+        self._ansatz = Ansatz(color_qubit, device=self._device)
+        for qid in pos_qubits:
+            self._ansatz.add_gate(H_tensor, qid)
+
+
+frqi = FRQI()
+img = torch.rand(4, 4)
+frqi.encoding(img)

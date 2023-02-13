@@ -45,6 +45,9 @@ class GateType(Enum):
     ccz = "Multi-Control Z Gate"
     ccrz = "CCRz gate"
 
+    crx = "Controlled Rx gate"
+    cry = "Controlled Ry gate"
+
     # Special gate below
     measure = "Measure gate"
     reset = "Reset gate"
@@ -61,7 +64,7 @@ class GateType(Enum):
 
 
 class MatrixType(Enum):
-    """ Different Type of quantum gates' matrix
+    """Different Type of quantum gates' matrix
 
     normal: based type of matrix
         1-bits: [[a,b], [c,d]]

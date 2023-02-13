@@ -888,3 +888,137 @@ class MeasureGate(BasicGateTensor):
 
 
 Measure_tensor = MeasureGate()
+
+
+class CRxGate(BasicGateTensor):
+    """Controlled Rx Gate"""
+
+    def __init__(self, params=torch.tensor([np.pi / 2])):
+        super().__init__(
+            controls=1,
+            targets=1,
+            params=1,
+            type=GateType.crx,
+            matrix_type=MatrixType.diag_normal,
+        )
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        self.permit_element(alpha)
+
+        return (
+            CRxGate(alpha)
+            if isinstance(alpha, torch.Tensor)
+            else CRxGate(torch.tensor([alpha]))
+        )
+
+    @property
+    def matrix(self):
+        matrix = torch.zeros([4, 4], dtype=self._precision).to(self.device)
+        matrix[0, 0] = matrix[1, 1] = 1
+        matrix[2, 2] = matrix[3, 3] = torch.cos(self.parg / 2)
+        matrix[2, 3] = matrix[3, 2] = -torch.sin(self.parg / 2) * 1j
+
+        return matrix
+
+    @property
+    def gradient(self):
+        gradient = torch.zeros([4, 4], dtype=self._precision).to(self.device)
+        gradient[2, 2] = gradient[3, 3] = -torch.sin(self.parg / 2) / 2
+        gradient[2, 3] = gradient[3, 2] = -torch.cos(self.parg / 2) * 1j / 2
+
+        return gradient
+
+
+CRx_tensor = CRxGate()
+
+
+class CRyGate(BasicGateTensor):
+    """Controlled Ry Gate"""
+
+    def __init__(self, params=torch.tensor([np.pi / 2])):
+        super().__init__(
+            controls=1,
+            targets=1,
+            params=1,
+            type=GateType.cry,
+            matrix_type=MatrixType.diag_normal,
+        )
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        self.permit_element(alpha)
+
+        return (
+            CRyGate(alpha)
+            if isinstance(alpha, torch.Tensor)
+            else CRyGate(torch.tensor([alpha]))
+        )
+
+    @property
+    def matrix(self):
+        matrix = torch.zeros([4, 4], dtype=self._precision).to(self.device)
+        matrix[0, 0] = matrix[1, 1] = 1
+        matrix[2, 2] = matrix[3, 3] = torch.cos(self.parg / 2)
+        matrix[2, 3] = -torch.sin(self.parg / 2)
+        matrix[3, 2] = torch.sin(self.parg / 2)
+
+        return matrix
+
+    @property
+    def gradient(self):
+        gradient = torch.zeros([4, 4], dtype=self._precision).to(self.device)
+        gradient[2, 2] = gradient[3, 3] = -torch.sin(self.parg / 2) / 2
+        gradient[2, 3] = -torch.cos(self.parg / 2) / 2
+        gradient[3, 2] = torch.cos(self.parg / 2) / 2
+
+        return gradient
+
+
+CRy_tensor = CRyGate()
+
+
+class CRzGate(BasicGateTensor):
+    """Controlled Rz Gate"""
+
+    def __init__(self, params=torch.tensor([np.pi / 2])):
+        super().__init__(
+            controls=1,
+            targets=1,
+            params=1,
+            type=GateType.crz,
+            matrix_type=MatrixType.diagonal,
+        )
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        self.permit_element(alpha)
+
+        return (
+            CRzGate(alpha)
+            if isinstance(alpha, torch.Tensor)
+            else CRzGate(torch.tensor([alpha]))
+        )
+
+    @property
+    def matrix(self):
+        matrix = torch.zeros([4, 4], dtype=self._precision).to(self.device)
+        matrix[0, 0] = matrix[1, 1] = 1
+        matrix[2, 2] = torch.exp(-self.parg / 2 * 1j)
+        matrix[3, 3] = torch.exp(self.parg / 2 * 1j)
+
+        return matrix
+
+    @property
+    def gradient(self):
+        gradient = torch.zeros([4, 4], dtype=self._precision).to(self.device)
+        gradient[2, 2] = -1j * torch.exp(-self.parg / 2 * 1j) / 2
+        gradient[3, 3] = 1j * torch.exp(self.parg / 2 * 1j) / 2
+
+        return gradient
+
+
+CRz_tensor = CRzGate()
