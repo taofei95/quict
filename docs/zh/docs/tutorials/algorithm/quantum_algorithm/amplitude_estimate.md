@@ -1,4 +1,6 @@
-# 量子振幅估计算法（Quantum Amplitude Estimation Algorithm, QAE）
+# 量子振幅估计算法
+
+QAE模块实现了量子振幅估计算法（Quantum Amplitude Estimation, QAE）。本教程将讲解QuICT中QAE模块的算法设置、基本用法以及代码示例。
 
 ## 概要
 
@@ -68,7 +70,7 @@ MLAE与FQAE的原理稍有不同：两者不使用相位估计。前者使用最
 ![QAE_run_result](../../../assets/images/tutorials/algorithm/quantum_algorithm/QAE_run_result.png){:width="500px"}
 </figure>
 
-## 基本用法
+## 代码实例
 
 `QAE`类位于`QuICT.algorithm.quantum_algorithm.amplitude_estimate`。初始化参数包括：
 
@@ -77,8 +79,6 @@ MLAE与FQAE的原理稍有不同：两者不使用相位估计。前者使用最
 3. `simulator`：模拟器。默认值`StateVectorSimulator()`
 
 `circuit`方法用于输出电路（只在`canonical`模式可用）；`run`方法用于直接执行算法。为了准备算法所需的输入，需要构造`OracleInfo`对象和`StatePreparationInfo`对象（可选，默认为一层H门）。
-
-## 代码实例
 
 以下代码中，目标空间为最后两位为11的状态，状态制备电路为 $H^{\otimes n}$ ，振幅 $a=1/4$ 。
 
@@ -129,6 +129,16 @@ for i in range(n_sample):
 pr_success /= n_sample
 print(f"success rate {pr_success:.2f} with {n_sample:4} samples")
 ```
+```
+0.248 from 0.250
+...
+0.241 from 0.250
+0.251 from 0.250
+0.253 from 0.250
+0.248 from 0.250
+success rate 1.00 with  100 samples
+```
+
 
 ## 参考文献
 

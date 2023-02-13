@@ -1,8 +1,10 @@
 # Shor因子分解算法
 
+本教程将讲解QuICT中Shor模块的算法设置、基本用法以及代码示例。
+
 ## 概要
 
-Shor因子分解算法相对最好的经典算法实现了指数加速，在 $O(n^3)$ 的时间内以高概率给出输入的非平凡因子（如果有）。本框架实现了四个Shor因数分解算法的变体（根据量子部分中使用的乘幂电路/是否使用iterative QPE），在电路宽度与深度上有常数上的差别。
+Shor算法是一个解决因数分解问题的量子算法，在时间复杂度上该算法相对最好的经典算法实现了指数加速，在 $O(n^3)$ 的时间内以高概率给出输入的非平凡因子（如果有）。本框架实现了四个Shor因数分解算法的变体（根据量子部分中使用的乘幂电路/是否使用iterative QPE），在电路宽度与深度上有常数上的差别。
 
 下列表格中，$n$是输入数的位数，$t$是求阶算法中QPE的精度位数。默认$t=2n+1$。
 
@@ -54,8 +56,10 @@ $$\phi=\frac{s}{r},s\in [0,r-1]$$
 而迭代相位估计（iterative QPE）则减少了所需要的量子比特：
 
 <figure markdown>
-![semi_classical_IQFT_circuit](../../../assets/images/tutorials/algorithm/quantum_algorithm/semi_classical_IQFT_circuit.png){:width="600px"}
+![semi_classical_IQFT_circuit](../../../assets/images/tutorials/algorithm/quantum_algorithm/semi_classical_IQFT_circuit.png)
+    <p markdown="1" style="font-size:15px;"> 图片引用自*Semiclassical Fourier transform for quantum computation.* [<sup>[3]</sup>](#refer3)
 </figure>
+
 
 ### ...到因数分解
 
@@ -64,7 +68,27 @@ $$\phi=\frac{s}{r},s\in [0,r-1]$$
 1. 对于合数 $N$ ，如果 $x\in[0,N]$ 满足 $x^2=1\bmod N$ ，则 $\gcd(x-1,N)$ 与 $\gcd(x+1,N)$ 中至少有一个是 $N$ 的非平凡因子。
 2. 考虑 $N=\Pi_{i=1}^{m} p_i^{\alpha_i}$ ，$x$ 从 $\{x|x\in[1,N-1]\land \gcd(x,N)=1\}$ 中随机选取，则 $2|r=\text{ord}_N(x),x^{r/2}\neq -1\bmod N$ 的概率至少是 $1-\frac{1}{2^m}$ 。
 
-## 基本用法
+### 实现的正确性测试
+
+周期寻找算法实现的行为与理论预测一致。 
+
+| mode    | original | reinforced(MAX_ROUND=3) | $Pr(r\neq 0\text{ and }r\nmid\text{order}(a,N))$ | repetitions |
+| ------- | -------- | ----------------------- | ------------------------------------------------ | ----------- |
+| BEA     | 0.47     | 0.12                    | 0                                                | 108         |
+| BEA_zip | 0.48     | 0.11                    | 0                                                | 108         |
+| HRS     | 0.44     | 0.06                    | 0                                                | 108         |
+| HRS_zip | 0.44     | 0.03                    | 0                                                | 108         |
+
+该数据集是$[4,54)$中的合数，共36个，其中9个是奇合数。
+
+`original`指的是上面给出的**原始**程序，`forced`只在第3步不同，我们挑选一个随机数$x$，即$gcd(x,N)=1$来**强制**执行周期寻找子程序。数字指第4步中重复子程序的次数。
+
+| mode    | original-2 | forced-2 | original-3 | forced-3 |
+| ------- | ---------- | -------- | ---------- | :------- |
+| BEA_zip | 0.028      | 0.028    | 0.0        | 0.0      |
+| HRS_zip | 0.028      | 0.028    | 0.0        | 0.0      |
+
+## 代码示例
 
 `ShorFactor`类位于`QuICT.algorithm.quantum_algorithm.shor`，初始化参数包括
 
@@ -75,9 +99,38 @@ $$\phi=\frac{s}{r},s\in [0,r-1]$$
 
 调用`circuit`方法可以得到order-finding部分的电路；调用`run`方法可以直接执行整个算法。
 
-## 代码示例
+### 基本用法
 
-参考`example/demo/tutorial_shor.ipynb`。
+使用`ShorFactor(mode, N).run()`来通过QuICT内置的Shor算法实现来寻找一个数字$N$的因子：
+
+
+```python
+from QuICT.simulation.state_vector.cpu_simulator import CircuitSimulator
+from QuICT.algorithm.quantum_algorithm import ShorFactor
+
+input  = 35
+sf = ShorFactor(mode="BEA_zip", max_rd=2)
+circ, indices = sf.circuit(N=input)
+
+output = sf.run(N=input, circuit=circ, indices=indices, forced_quantum_approach=True)
+print(f"input  = {input}")
+print(f"output = {output}")
+```
+
+```
+2023-02-06 11:22:57 | Shor | INFO | round = 0
+2023-02-06 11:22:57 | Shor | INFO | forced quantum approach, looking for coprime number...
+2023-02-06 11:22:57 | Shor | INFO | Quantumly determine the order of the randomly chosen a = 22
+2023-02-06 11:24:02 | Shor | INFO | phi: 0.000
+2023-02-06 11:24:02 | Shor | INFO | Shor failed: found odd order r = 1 of a = 22
+2023-02-06 11:24:02 | Shor | INFO | round = 1
+2023-02-06 11:24:02 | Shor | INFO | forced quantum approach, looking for coprime number...
+2023-02-06 11:24:02 | Shor | INFO | Quantumly determine the order of the randomly chosen a = 2
+2023-02-06 11:25:25 | Shor | INFO | phi: 0.250
+2023-02-06 11:25:25 | Shor | INFO | Shor succeed: found factor 5, with the help of a = 2, r = 4
+input  = 35
+output = 5
+```
 
 ## 参考文献
 
