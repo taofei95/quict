@@ -19,7 +19,7 @@ namespace util {
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || \
     defined(_M_IX86)
 // Check MSVC
-#if _WIN32
+#if _MSC_VER
 
 inline __int64 xgetbv(unsigned int x) { return _xgetbv(x); }
 
