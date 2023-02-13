@@ -69,7 +69,8 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
     // mask0:
     // [0...0][1...1]
 
-    float mptr[8] __attribute__((aligned(16)));
+    alignas(16) float mptr[8];
+    assert((((size_t)mptr) & 0b1111) == 0);  // Check 16 bytes alignment;
     std::copy((float *)(&gate[0]), (float *)(&gate[0]) + 8, mptr);
     // SSE for normal unitary
 #pragma omp parallel for nowait
@@ -77,9 +78,11 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
       size_t base_ind = ((iter & mask1) << 1) | (iter & mask0);
       size_t inds[2] = {base_ind, base_ind | (1LL << pos)};
       // Mat-vec complex mul (2x2, 2)
-      float tmp[4] __attribute__((aligned(16)));
+      alignas(16) float tmp[4];
+      assert((((size_t)tmp) & 0b1111) == 0);  // Check 16 bytes alignment;
       float *v_raw = (float *)(data);
-      float vptr[4] __attribute__((aligned(16)));
+      alignas(16) float vptr[4];
+      assert((((size_t)vptr) & 0b1111) == 0);  // Check 16 bytes alignment;
       vptr[0] = v_raw[inds[0]];
       vptr[1] = v_raw[inds[0] + 1];
       vptr[2] = v_raw[inds[1]];
@@ -152,7 +155,8 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
     // mask0:
     // [0...0][1...1]
 
-    double mptr[8] __attribute__((aligned(16)));
+    alignas(16) double mptr[8];
+    assert((((size_t)mptr) & 0b1111) == 0);  // Check 16 bytes alignment;
     std::copy((double *)(&gate[0]), (double *)(&gate[0]) + 8, mptr);
     // SSE for normal unitary
 #pragma omp parallel for nowait
@@ -160,9 +164,11 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
       size_t base_ind = ((iter & mask1) << 1) | (iter & mask0);
       size_t inds[2] = {base_ind, base_ind | (1LL << pos)};
       // Mat-vec complex mul (2x2, 2):
-      double tmp[2] __attribute__((aligned(16)));
+      alignas(16) double tmp[2];
+      assert((((size_t)tmp) & 0b1111) == 0);  // Check 16 bytes alignment;
       double *v_raw = (double *)(data);
-      double vptr[4] __attribute__((aligned(16)));
+      alignas(16) double vptr[4];
+      assert((((size_t)vptr) & 0b1111) == 0);  // Check 16 bytes alignment;
       vptr[0] = v_raw[inds[0]];
       vptr[1] = v_raw[inds[0] + 1];
       vptr[2] = v_raw[inds[1]];
@@ -251,7 +257,8 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
     // mask2:
     // [1...1][0...0][0...0]
 
-    float mptr[32];
+    alignas(16) float mptr[32];
+    assert((((size_t)mptr) & 0b1111) == 0);  // Check 16 bytes alignment;
     std::copy((float *)(&gate[0]), (float *)(&gate[0]) + 32, mptr);
 #pragma omp parallel for nowait
     for (size_t iter = 0; iter < iter_cnt; ++iter) {
@@ -263,9 +270,11 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
       inds[2] = inds[0] | (1LL << pos0);
       inds[3] = inds[1] | (1LL << pos0);
 
-      float tmp[4] __attribute__((aligned(16)));
+      alignas(16) float tmp[4];
+      assert((((size_t)tmp) & 0b1111) == 0);  // Check 16 bytes alignment;
       float *v_raw = (float *)(data);
-      float vptr[8] __attribute__((aligned(16)));
+      alignas(16) float vptr[8];
+      assert((((size_t)vptr) & 0b1111) == 0);  // Check 16 bytes alignment;
       vptr[0] = v_raw[inds[0]];
       vptr[1] = v_raw[inds[0] + 1];
       vptr[2] = v_raw[inds[1]];
@@ -348,7 +357,8 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
     // mask2:
     // [1...1][0...0][0...0]
 
-    double mptr[32] __attribute__((aligned(16)));
+    alignas(16) double mptr[32];
+    assert((((size_t)mptr) & 0b1111) == 0);  // Check 16 bytes alignment;
     std::copy((double *)(&gate[0]), (double *)(&gate[0]) + 32, mptr);
     // SSE for unitary
 #pragma omp parallel for nowait
@@ -361,9 +371,11 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
       inds[2] = inds[0] | (1LL << pos0);
       inds[3] = inds[1] | (1LL << pos0);
 
-      double tmp[4] __attribute__((aligned(16)));
+      alignas(16) double tmp[4];
+      assert((((size_t)tmp) & 0b1111) == 0);  // Check 16 bytes alignment;
       double *v_raw = (double *)(data);
-      double vptr[8] __attribute__((aligned(16)));
+      alignas(16) double vptr[8];
+      assert((((size_t)vptr) & 0b1111) == 0);  // Check 16 bytes alignment;
       vptr[0] = v_raw[inds[0]];
       vptr[1] = v_raw[inds[0] + 1];
       vptr[2] = v_raw[inds[1]];
