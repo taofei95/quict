@@ -11,30 +11,10 @@
 #include "../../simulator/simulator.hpp"
 #include "data_reader.hpp"
 
+namespace details {
+
 namespace fs = std::filesystem;
 using namespace sim;
-
-template <class T, class Str>
-void TestPair(size_t q_num, Str desc_f_name, Str vec_f_name, double eps,
-              BackendTag tag) {
-  auto desc = test::ReadDesc<T>(desc_f_name);
-  auto cmp_vec = test::ReadVec<T>(vec_f_name);
-  ASSERT_TRUE(desc.size() > 0) << "desc f name: " << desc_f_name << "\n";
-  ASSERT_TRUE(cmp_vec.size() == (1ULL << q_num))
-      << "vec f name: " << vec_f_name << "\n";
-
-  Simulator<T> simulator(q_num, tag);
-
-  for (auto &gate : desc) {
-    simulator.ApplyGate(gate);
-  }
-
-  auto res_data = simulator.GetStateVector();
-  for (int i = 0; i < cmp_vec.size(); ++i) {
-    ASSERT_NEAR(std::abs(cmp_vec[i] - res_data[i]), 0.0, eps)
-        << "Desc file name: " << desc_f_name << "\n";
-  }
-}
 
 inline fs::path GetDataPath() {
   fs::path cwd = fs::current_path();
@@ -55,9 +35,23 @@ inline size_t GetQubitNum(const std::string &f_name) {
   return std::stoi(matches[2].str());
 }
 
+inline size_t GetGateQubitNum(const std::string &f_name) {
+  static std::regex rgx("desc_(\\w+)bit");
+  std::smatch matches;
+  bool search_success = std::regex_search(f_name, matches, rgx);
+  assert(search_success);
+
+  assert(matches.size() == 2);
+  return std::stoi(matches[1].str());
+}
+
+}  // namespace details
+
 template <class DType>
-void TestDType(double eps, BackendTag tag) {
+inline void TestDType(size_t gate_q_num, double eps, sim::BackendTag tag) {
+  using namespace details;
   auto data_dir = GetDataPath();
+  bool early_stop = false;
   for (auto &it : fs::directory_iterator(data_dir)) {
     auto desc_f_name = it.path().filename().string();
     if (desc_f_name.substr(0, 3) == "vec") {
@@ -67,7 +61,34 @@ void TestDType(double eps, BackendTag tag) {
     desc_f_name = (data_dir / desc_f_name).string();
     vec_f_name = (data_dir / vec_f_name).string();
     size_t q_num = GetQubitNum(desc_f_name);
-    TestPair<DType>(q_num, desc_f_name, vec_f_name, eps, tag);
+    size_t f_gate_q_num = GetGateQubitNum(desc_f_name);
+    if (gate_q_num != f_gate_q_num) {
+      continue;
+    }
+    auto desc = test::ReadDesc<DType>(desc_f_name);
+    auto cmp_vec = test::ReadVec<DType>(vec_f_name);
+    ASSERT_TRUE(desc.size() > 0) << "desc f name: " << desc_f_name << "\n";
+    ASSERT_TRUE(cmp_vec.size() == (1ULL << q_num))
+        << "vec f name: " << vec_f_name << "\n";
+
+    Simulator<DType> simulator(q_num, tag);
+
+    for (auto &gate : desc) {
+      simulator.ApplyGate(gate);
+    }
+
+    auto res_data = simulator.GetStateVector();
+    for (int i = 0; i < cmp_vec.size(); ++i) {
+      bool test_flag = std::abs(cmp_vec[i] - res_data[i]) < eps;
+      if (!test_flag) {
+        early_stop = true;
+      }
+      ASSERT_NEAR(cmp_vec[i].real(), res_data[i].real(), eps)
+          << "Desc file name: " << desc_f_name << "\n";
+      ASSERT_NEAR(cmp_vec[i].imag(), res_data[i].imag(), eps)
+          << "Desc file name: " << desc_f_name << "\n";
+    }
+    if (early_stop) break;
   }
 }
 
