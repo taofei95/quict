@@ -14,6 +14,14 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Globally enable OpenMP
+find_package(OpenMP)
+if (OPENMP_FOUND)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
+
 set(SIMULATOR_SRC 
   gate/gate.hpp 
   gate/gate_attr.hpp
@@ -98,7 +106,7 @@ else()
   endmacro()
 
   quict_add_test(spec ${SIMULATOR_SRC} tests/spec.cc)
-  quict_target_enable(spec "SSE" "SSE2" "AVX" "AVX2" "AVX512F")
+  quict_target_enable(spec "SSE" "SSE2" "AVX" "AVX2")
 
   quict_add_test(unitary_gate_naive ${SIMULATOR_SRC} tests/gates/unitary/naive.cc)
 

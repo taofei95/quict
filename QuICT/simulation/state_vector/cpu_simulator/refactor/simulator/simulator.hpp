@@ -119,6 +119,10 @@ class Simulator {
     return hw_feat_;
   }
 
+  inline BackendTag GetBackendTag() const noexcept {
+    return d_->GetBackendTag();
+  }
+
  private:
   // Total qubit number
   size_t q_num_;

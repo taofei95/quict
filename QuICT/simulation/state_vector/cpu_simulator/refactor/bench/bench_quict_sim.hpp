@@ -6,6 +6,7 @@
 #include <complex>
 #include <cstdint>
 #include <exception>
+#include <iomanip>
 #include <iostream>
 #include <random>
 #include <stdexcept>
@@ -88,13 +89,13 @@ inline double BenchSingleSimulator(
 //        Number of 1-bit and 2-bit gates are generated in fraction 2:1.
 //        Print time information.
 template <typename DType>
-inline void BenchAllSimulators(size_t gate_num = 1000, size_t repeat = 5) {
+inline void BenchAllSimulators(size_t gate_num = 200, size_t repeat = 5) {
   using namespace sim;
   using namespace gate;
   using namespace detail;
-  size_t test_q_nums[] = {5, 10, 15, 20, 25, 30, 35};
+  size_t test_q_nums[] = {5, 10, 15, 20, 25};
   for (size_t q_num : test_q_nums) {
-    std::cout << "  " << q_num << " bits circuit:" << std::endl;
+    std::cout << q_num << " bits circuit:" << std::endl;
 
     std::vector<Gate<DType>> gates;
     for (size_t i = 0; i < gate_num / 3; ++i) {
@@ -113,13 +114,19 @@ inline void BenchAllSimulators(size_t gate_num = 1000, size_t repeat = 5) {
     }
 
     for (auto &simulator : simulators) {
+      // Skip naive simulator for large scale circuits.
+      if (q_num >= 20 && simulator.GetBackendTag() == BackendTag::NAIVE) {
+        std::cout << "\t" << simulator.GetName() << ":\tskipped" << std::endl;
+        continue;
+      }
+
       double duration = 0.0;
       for (size_t i = 0; i < repeat; ++i) {
         duration += BenchSingleSimulator(simulator, gates);
       }
       duration /= repeat;
-      std::cout << "    " << simulator.GetName() << ": " << duration << "s"
-                << std::endl;
+      std::cout << "\t" << simulator.GetName() << ":\t" << std::fixed
+                << std::setprecision(6) << duration << " s" << std::endl;
     }
     std::cout << std::endl;
   }
