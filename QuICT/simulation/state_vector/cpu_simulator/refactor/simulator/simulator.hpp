@@ -21,8 +21,9 @@ class Simulator {
   inline void BuildBackend(BackendTag tag) {
     switch (tag) {
       case BackendTag::SSE: {
-        DEBUG_MSG("Using SSE optimized simulator");
+        // DEBUG_MSG("Using SSE optimized simulator");
         d_ = std::make_unique<SseApplyGateDelegate<DType>>();
+        return;
       }
       default: {
         d_ = std::make_unique<NaiveApplyGateDelegate<DType>>();

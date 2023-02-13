@@ -1,6 +1,10 @@
 #ifndef QUICT_SIM_BACKEND_APPLY_GATE_IMPL_X86_64_SSE_H
 #define QUICT_SIM_BACKEND_APPLY_GATE_IMPL_X86_64_SSE_H
 
+// On x86_64 architecture, there are 16 XMM registers available.
+// So don't worry about register usage. :)
+// https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions
+
 #include <immintrin.h>
 
 #include <complex>
@@ -71,70 +75,60 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
 
     alignas(16) float mptr[8];
     assert((((size_t)mptr) & 0b1111) == 0);  // Check 16 bytes alignment;
-    std::copy((float *)(&gate[0]), (float *)(&gate[0]) + 8, mptr);
-    // SSE for normal unitary
+    mptr[0] = gate[0].real();
+    mptr[1] = gate[1].real();
+    mptr[2] = gate[2].real();
+    mptr[3] = gate[3].real();
+    mptr[4] = gate[0].imag();
+    mptr[5] = gate[1].imag();
+    mptr[6] = gate[2].imag();
+    mptr[7] = gate[3].imag();
+
+    // [mr00, mr01, mr10, mr11]
+    __m128 mr = _mm_load_ps(mptr);
+    // [mi00, mi01, mi10, mi11]
+    __m128 mi = _mm_load_ps(mptr + 4);
 #pragma omp parallel for nowait
     for (size_t iter = 0; iter < iter_cnt; ++iter) {
       size_t base_ind = ((iter & mask1) << 1) | (iter & mask0);
       size_t inds[2] = {base_ind, base_ind | (1LL << pos)};
       // Mat-vec complex mul (2x2, 2)
-      alignas(16) float tmp[4];
+      alignas(16) float tmp[8];
       assert((((size_t)tmp) & 0b1111) == 0);  // Check 16 bytes alignment;
-      float *v_raw = (float *)(data);
-      alignas(16) float vptr[4];
+      alignas(16) float vptr[8];
       assert((((size_t)vptr) & 0b1111) == 0);  // Check 16 bytes alignment;
-      vptr[0] = v_raw[inds[0]];
-      vptr[1] = v_raw[inds[0] + 1];
-      vptr[2] = v_raw[inds[1]];
-      vptr[3] = v_raw[inds[1] + 1];
+      vptr[0] = data[inds[0]].real();
+      vptr[1] = data[inds[1]].real();
+      vptr[2] = data[inds[0]].real();
+      vptr[3] = data[inds[1]].real();
+      vptr[4] = data[inds[0]].imag();
+      vptr[5] = data[inds[1]].imag();
+      vptr[6] = data[inds[0]].imag();
+      vptr[7] = data[inds[1]].imag();
 
-      //
-      // first row
-      //
-      // [mr00, mi00, mr01, mi01]
-      __m128 m = _mm_load_ps(mptr);
-      // [vr0, vi0, vr1, vi1]
-      __m128 vp = _mm_load_ps(vptr);
-      // [-vr0, -vi0, -vr1, -vi1]
-      __m128 vn = _mm_sub_ps(_mm_setzero_ps(), vp);
-      // [vr0, vi0, -vr0, -vi0]
-      __m128 v0 = _mm_shuffle_ps(vp, vn, 0b01000100);
-      // [vr1, vi1, -vr1, -vi1]
-      __m128 v1 = _mm_shuffle_ps(vp, vn, 0b11101110);
-      // real part
-      // [vr0, -vi0, vr1, -vi1]
-      __m128 v = _mm_shuffle_ps(v0, v1, 0b11001100);
-      _mm_store_ps(tmp, _mm_mul_ps(m, v));
-      v_raw[inds[0]] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
-      // imag part
-      // [vi0, vr0, vi1, vr1]
-      v = _mm_shuffle_ps(v0, v1, 0b00010001);
-      _mm_store_ps(tmp, _mm_mul_ps(m, v));
-      v_raw[inds[0] + 1] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+      __m128 vr, vi;
+      __m128 tmpv0, tmpv1, tmpv2, tmpv3, tmpv5, tmpv6;
 
-      //
-      // second row
-      //
-      // [mr10, mi10, mr11, mi11]
-      m = _mm_load_ps(mptr + 4);
-      // [vr0, vi0, vr1, vi1]
-      vp = _mm_load_ps(vptr);
-      // [-vr0, -vi0, -vr1, -vi1]
-      vn = _mm_sub_ps(_mm_setzero_ps(), vp);
-      // [vr0, vi0, -vr0, -vi0]
-      v0 = _mm_shuffle_ps(vp, vn, 0b01000100);
-      // [vr1, vi1, -vr1, -vi1]
-      v1 = _mm_shuffle_ps(vp, vn, 0b11101110);
-      // real part
-      // [vr0, -vi0, vr1, -vi1]
-      v = _mm_shuffle_ps(v0, v1, 0b11001100);
-      _mm_store_ps(tmp, _mm_mul_ps(m, v));
-      v_raw[inds[0]] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
-      // imag part
-      // [vi0, vr0, vi1, vr1]
-      v = _mm_shuffle_ps(v0, v1, 0b00010001);
-      _mm_store_ps(tmp, _mm_mul_ps(m, v));
-      v_raw[inds[0] + 1] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+      // [vr0, vr1, vr0, vr1]
+      vr = _mm_load_ps(vptr);
+      // [vi0, vi1, vi0, vi1]
+      vi = _mm_load_ps(vptr + 4);
+
+      tmpv0 = _mm_mul_ps(mr, vr);
+      tmpv1 = _mm_mul_ps(mi, vi);
+      tmpv2 = _mm_mul_ps(mr, vi);
+      tmpv3 = _mm_mul_ps(mi, vr);
+
+      tmpv5 = _mm_sub_ps(tmpv0, tmpv1);  // real part
+      tmpv6 = _mm_add_ps(tmpv2, tmpv3);  // imag part
+
+      _mm_store_ps(tmp, tmpv5);
+      _mm_store_ps(tmp + 4, tmpv6);
+
+      data[inds[0]].real(tmp[0] + tmp[1]);
+      data[inds[1]].real(tmp[2] + tmp[3]);
+      data[inds[0]].imag(tmp[4] + tmp[5]);
+      data[inds[1]].imag(tmp[6] + tmp[7]);
     }
   }
 
@@ -157,75 +151,70 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
 
     alignas(16) double mptr[8];
     assert((((size_t)mptr) & 0b1111) == 0);  // Check 16 bytes alignment;
-    std::copy((double *)(&gate[0]), (double *)(&gate[0]) + 8, mptr);
-    // SSE for normal unitary
+    mptr[0] = gate[0].real();
+    mptr[1] = gate[1].real();
+    mptr[2] = gate[2].real();
+    mptr[3] = gate[3].real();
+    mptr[4] = gate[0].imag();
+    mptr[5] = gate[1].imag();
+    mptr[6] = gate[2].imag();
+    mptr[7] = gate[3].imag();
+
+    // [mr00, mr01]
+    __m128d mr0 = _mm_load_pd(mptr);
+    // [mr10, mr11]
+    __m128d mr1 = _mm_load_pd(mptr + 2);
+    // [mi00, mi01]
+    __m128d mi0 = _mm_load_pd(mptr + 4);
+    // [mi10, mi11]
+    __m128d mi1 = _mm_load_pd(mptr + 6);
 #pragma omp parallel for nowait
     for (size_t iter = 0; iter < iter_cnt; ++iter) {
       size_t base_ind = ((iter & mask1) << 1) | (iter & mask0);
       size_t inds[2] = {base_ind, base_ind | (1LL << pos)};
       // Mat-vec complex mul (2x2, 2):
-      alignas(16) double tmp[2];
+      alignas(16) double tmp[4];
       assert((((size_t)tmp) & 0b1111) == 0);  // Check 16 bytes alignment;
-      double *v_raw = (double *)(data);
       alignas(16) double vptr[4];
       assert((((size_t)vptr) & 0b1111) == 0);  // Check 16 bytes alignment;
-      vptr[0] = v_raw[inds[0]];
-      vptr[1] = v_raw[inds[0] + 1];
-      vptr[2] = v_raw[inds[1]];
-      vptr[3] = v_raw[inds[1] + 1];
+      vptr[0] = data[inds[0]].real();
+      vptr[1] = data[inds[1]].real();
+      vptr[2] = data[inds[0]].imag();
+      vptr[3] = data[inds[1]].imag();
 
-      // [vr0, vi0]
-      __m128d v0 = _mm_load_pd(vptr);
-      // [vr1, vi1]
-      __m128d v1 = _mm_load_pd(vptr + 2);
       // [vr0, vr1]
-      __m128d vr = _mm_shuffle_pd(v0, v1, 0b00);
+      __m128d vr = _mm_load_pd(vptr);
       // [vi0, vi1]
-      __m128d vi = _mm_shuffle_pd(v0, v1, 0b11);
+      __m128d vi = _mm_load_pd(vptr + 2);
+      __m128d tmpv0, tmpv1, tmpv2, tmpv3;
 
       //
       // first row
       //
-      // [mr00, mi00]
-      v0 = _mm_load_pd(mptr);
-      // [mr01, mi01]
-      v1 = _mm_load_pd(mptr + 2);
-      // [mr00, mr01]
-      __m128d mr = _mm_shuffle_pd(v0, v1, 0b00);
-      // [mi00, mi01]
-      __m128d mi = _mm_shuffle_pd(v0, v1, 0b11);
       // real part
-      v0 = _mm_mul_pd(mr, vr);
-      v1 = _mm_mul_pd(mi, vi);
-      _mm_store_pd(tmp, _mm_sub_pd(v0, v1));
-      v_raw[inds[0]] = tmp[0] + tmp[1];
+      tmpv0 = _mm_mul_pd(mr0, vr);
+      tmpv1 = _mm_mul_pd(mi0, vi);
       // imag part
-      v0 = _mm_mul_pd(mr, vi);
-      v1 = _mm_mul_pd(mi, vr);
-      _mm_store_pd(tmp, _mm_add_pd(v0, v1));
-      v_raw[inds[0] + 1] = tmp[0] + tmp[1];
+      tmpv2 = _mm_mul_pd(mr0, vi);
+      tmpv3 = _mm_mul_pd(mi0, vr);
+      _mm_store_pd(tmp, _mm_sub_pd(tmpv0, tmpv1));
+      _mm_store_pd(tmp + 2, _mm_add_pd(tmpv2, tmpv3));
+      data[inds[0]].real(tmp[0] + tmp[1]);
+      data[inds[0]].imag(tmp[2] + tmp[3]);
 
       //
       // second row
       //
-      // [mr10, mi10]
-      v0 = _mm_load_pd(mptr + 4);
-      // [mr11, mi11]
-      v1 = _mm_load_pd(mptr + 6);
-      // [mr10, mr11]
-      mr = _mm_shuffle_pd(v0, v1, 0b00);
-      // [mi10, mi11]
-      mi = _mm_shuffle_pd(v0, v1, 0b11);
       // real part
-      v0 = _mm_mul_pd(mr, vr);
-      v1 = _mm_mul_pd(mi, vi);
-      _mm_store_pd(tmp, _mm_sub_pd(v0, v1));
-      v_raw[inds[1]] = tmp[0] + tmp[1];
+      tmpv0 = _mm_mul_pd(mr1, vr);
+      tmpv1 = _mm_mul_pd(mi1, vi);
       // imag part
-      v0 = _mm_mul_pd(mr, vi);
-      v1 = _mm_mul_pd(mi, vr);
-      _mm_store_pd(tmp, _mm_add_pd(v0, v1));
-      v_raw[inds[1] + 1] = tmp[0] + tmp[1];
+      tmpv2 = _mm_mul_pd(mr1, vi);
+      tmpv3 = _mm_mul_pd(mi1, vr);
+      _mm_store_pd(tmp, _mm_sub_pd(tmpv0, tmpv1));
+      _mm_store_pd(tmp + 2, _mm_add_pd(tmpv2, tmpv3));
+      data[inds[1]].real(tmp[0] + tmp[1]);
+      data[inds[1]].imag(tmp[2] + tmp[3]);
     }
   }
 
@@ -259,7 +248,39 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
 
     alignas(16) float mptr[32];
     assert((((size_t)mptr) & 0b1111) == 0);  // Check 16 bytes alignment;
-    std::copy((float *)(&gate[0]), (float *)(&gate[0]) + 32, mptr);
+    mptr[0] = gate[0].real();
+    mptr[1] = gate[1].real();
+    mptr[2] = gate[2].real();
+    mptr[3] = gate[3].real();
+    mptr[4] = gate[4].real();
+    mptr[5] = gate[5].real();
+    mptr[6] = gate[6].real();
+    mptr[7] = gate[7].real();
+    mptr[8] = gate[8].real();
+    mptr[9] = gate[9].real();
+    mptr[10] = gate[10].real();
+    mptr[11] = gate[11].real();
+    mptr[12] = gate[12].real();
+    mptr[13] = gate[13].real();
+    mptr[14] = gate[14].real();
+    mptr[15] = gate[15].real();
+    mptr[16] = gate[0].imag();
+    mptr[17] = gate[1].imag();
+    mptr[18] = gate[2].imag();
+    mptr[19] = gate[3].imag();
+    mptr[20] = gate[4].imag();
+    mptr[21] = gate[5].imag();
+    mptr[22] = gate[6].imag();
+    mptr[23] = gate[7].imag();
+    mptr[24] = gate[8].imag();
+    mptr[25] = gate[9].imag();
+    mptr[26] = gate[10].imag();
+    mptr[27] = gate[11].imag();
+    mptr[28] = gate[12].imag();
+    mptr[29] = gate[13].imag();
+    mptr[30] = gate[14].imag();
+    mptr[31] = gate[15].imag();
+
 #pragma omp parallel for nowait
     for (size_t iter = 0; iter < iter_cnt; ++iter) {
       size_t base_ind =
@@ -270,60 +291,51 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
       inds[2] = inds[0] | (1LL << pos0);
       inds[3] = inds[1] | (1LL << pos0);
 
-      alignas(16) float tmp[4];
+      alignas(16) float tmp[8];
       assert((((size_t)tmp) & 0b1111) == 0);  // Check 16 bytes alignment;
-      float *v_raw = (float *)(data);
       alignas(16) float vptr[8];
       assert((((size_t)vptr) & 0b1111) == 0);  // Check 16 bytes alignment;
-      vptr[0] = v_raw[inds[0]];
-      vptr[1] = v_raw[inds[0] + 1];
-      vptr[2] = v_raw[inds[1]];
-      vptr[3] = v_raw[inds[1] + 1];
-      vptr[4] = v_raw[inds[2]];
-      vptr[5] = v_raw[inds[2] + 1];
-      vptr[6] = v_raw[inds[3]];
-      vptr[7] = v_raw[inds[3] + 1];
+      vptr[0] = data[inds[0]].real();
+      vptr[1] = data[inds[1]].real();
+      vptr[2] = data[inds[2]].real();
+      vptr[3] = data[inds[3]].real();
+      vptr[4] = data[inds[0]].imag();
+      vptr[5] = data[inds[1]].imag();
+      vptr[6] = data[inds[2]].imag();
+      vptr[7] = data[inds[3]].imag();
 
-      // [vr0, vi0, vr1, vi1]
-      __m128 tmpv0 = _mm_load_ps(vptr);
-      // [vr2, vi2, vr3, vi3]
-      __m128 tmpv1 = _mm_load_ps(vptr + 4);
       // [vr0, vr1, vr2, vr3]
-      __m128 vr = _mm_shuffle_ps(tmpv0, tmpv1, 0b10001000);
+      __m128 vr = _mm_load_ps(vptr);
       // [vi0, vi1, vi2, vi3]
-      __m128 vi = _mm_shuffle_ps(tmpv0, tmpv1, 0b11101110);
+      __m128 vi = _mm_load_ps(vptr + 4);
       __m128 mr, mi;
+      __m128 tmpv0, tmpv1, tmpv2, tmpv3;
 
-#define ONE_ROW_OP(offset, data_pos)                     \
-  /* [mr?0, mi?0, mr?1, mi?1] */                         \
-  tmpv0 = _mm_load_ps(mptr + (offset));                  \
-  /* [mr?2, mi?2, mr?3, mi?3] */                         \
-  tmpv1 = _mm_load_ps(mptr + (offset) + 4);              \
-  /* [mr?0, mr?1, mr?2, mr?3] */                         \
-  mr = _mm_shuffle_ps(tmpv0, tmpv1, 0b10001000);         \
-  /* [mi?0, mi?1, mi?2, mi?3] */                         \
-  mi = _mm_shuffle_ps(tmpv0, tmpv1, 0b11101110);         \
-                                                         \
-  /* real part */                                        \
-  tmpv0 = _mm_mul_ps(mr, vr);                            \
-  tmpv1 = _mm_mul_ps(mi, vi);                            \
-  _mm_store_ps(tmp, _mm_sub_ps(tmpv0, tmpv1));           \
-  v_raw[(data_pos)] = tmp[0] + tmp[1] + tmp[2] + tmp[3]; \
-                                                         \
-  /* imag part */                                        \
-  tmpv0 = _mm_mul_ps(mr, vi);                            \
-  tmpv1 = _mm_mul_ps(mi, vr);                            \
-  _mm_store_ps(tmp, _mm_add_ps(tmpv0, tmpv1));           \
-  v_raw[(data_pos) + 1] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+#define ONE_ROW_OP(offset, data_pos)                        \
+  /* [mr?0, mr?1, mr?2, mr?3] */                            \
+  mr = _mm_load_ps(mptr + (offset));                        \
+  /* [mi?0, mi?1, mi?2, mi?3] */                            \
+  mi = _mm_load_ps(mptr + (offset) + 16);                   \
+                                                            \
+  tmpv0 = _mm_mul_ps(mr, vr);                               \
+  tmpv1 = _mm_mul_ps(mi, vi);                               \
+  tmpv2 = _mm_mul_ps(mr, vi);                               \
+  tmpv3 = _mm_mul_ps(mi, vr);                               \
+  /* real part */                                           \
+  _mm_store_ps(tmp, _mm_sub_ps(tmpv0, tmpv1));              \
+  /* imag part */                                           \
+  _mm_store_ps(tmp + 4, _mm_add_ps(tmpv2, tmpv3));          \
+  data[(data_pos)].real(tmp[0] + tmp[1] + tmp[2] + tmp[3]); \
+  data[(data_pos)].imag(tmp[4] + tmp[5] + tmp[6] + tmp[7]);
 
       // 1st row
       ONE_ROW_OP(0, inds[0]);
       // 2nd row
-      ONE_ROW_OP(8, inds[1]);
+      ONE_ROW_OP(4, inds[1]);
       // 3rd row
-      ONE_ROW_OP(16, inds[2]);
+      ONE_ROW_OP(8, inds[2]);
       // 4th row
-      ONE_ROW_OP(24, inds[3]);
+      ONE_ROW_OP(12, inds[3]);
 
 #undef ONE_ROW_OP
     }
@@ -359,8 +371,39 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
 
     alignas(16) double mptr[32];
     assert((((size_t)mptr) & 0b1111) == 0);  // Check 16 bytes alignment;
-    std::copy((double *)(&gate[0]), (double *)(&gate[0]) + 32, mptr);
-    // SSE for unitary
+    mptr[0] = gate[0].real();
+    mptr[1] = gate[1].real();
+    mptr[2] = gate[2].real();
+    mptr[3] = gate[3].real();
+    mptr[4] = gate[4].real();
+    mptr[5] = gate[5].real();
+    mptr[6] = gate[6].real();
+    mptr[7] = gate[7].real();
+    mptr[8] = gate[8].real();
+    mptr[9] = gate[9].real();
+    mptr[10] = gate[10].real();
+    mptr[11] = gate[11].real();
+    mptr[12] = gate[12].real();
+    mptr[13] = gate[13].real();
+    mptr[14] = gate[14].real();
+    mptr[15] = gate[15].real();
+    mptr[16] = gate[0].imag();
+    mptr[17] = gate[1].imag();
+    mptr[18] = gate[2].imag();
+    mptr[19] = gate[3].imag();
+    mptr[20] = gate[4].imag();
+    mptr[21] = gate[5].imag();
+    mptr[22] = gate[6].imag();
+    mptr[23] = gate[7].imag();
+    mptr[24] = gate[8].imag();
+    mptr[25] = gate[9].imag();
+    mptr[26] = gate[10].imag();
+    mptr[27] = gate[11].imag();
+    mptr[28] = gate[12].imag();
+    mptr[29] = gate[13].imag();
+    mptr[30] = gate[14].imag();
+    mptr[31] = gate[15].imag();
+
 #pragma omp parallel for nowait
     for (size_t iter = 0; iter < iter_cnt; ++iter) {
       size_t base_ind =
@@ -373,70 +416,54 @@ class SseApplyGateDelegate : public ApplyGateDelegate<DType> {
 
       alignas(16) double tmp[4];
       assert((((size_t)tmp) & 0b1111) == 0);  // Check 16 bytes alignment;
-      double *v_raw = (double *)(data);
       alignas(16) double vptr[8];
       assert((((size_t)vptr) & 0b1111) == 0);  // Check 16 bytes alignment;
-      vptr[0] = v_raw[inds[0]];
-      vptr[1] = v_raw[inds[0] + 1];
-      vptr[2] = v_raw[inds[1]];
-      vptr[3] = v_raw[inds[1] + 1];
-      vptr[4] = v_raw[inds[2]];
-      vptr[5] = v_raw[inds[2] + 1];
-      vptr[6] = v_raw[inds[3]];
-      vptr[7] = v_raw[inds[3] + 1];
+      vptr[0] = data[inds[0]].real();
+      vptr[1] = data[inds[1]].real();
+      vptr[2] = data[inds[2]].real();
+      vptr[3] = data[inds[3]].real();
+      vptr[4] = data[inds[0]].imag();
+      vptr[5] = data[inds[1]].imag();
+      vptr[6] = data[inds[2]].imag();
+      vptr[7] = data[inds[3]].imag();
 
-      // On x86_64 architecture, there are 16 XMM registers available.
-      // So don't worry about register usage. :)
-      // https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions
-
-      // [vr0, vi0]
-      __m128d tmpv0 = _mm_load_pd(vptr);
-      // [vr1, vi1]
-      __m128d tmpv1 = _mm_load_pd(vptr + 2);
       // [vr0, vr1]
-      __m128d vra = _mm_shuffle_pd(tmpv0, tmpv1, 0b00);
-      // [vi0, vi1]
-      __m128d via = _mm_shuffle_pd(tmpv0, tmpv1, 0b11);
-      // [vr2, vi2]
-      tmpv0 = _mm_load_pd(vptr + 4);
-      // [vr3, vi3]
-      tmpv1 = _mm_load_pd(vptr + 6);
+      __m128d vra = _mm_load_pd(vptr);
       // [vr2, vr3]
-      __m128d vrb = _mm_shuffle_pd(tmpv0, tmpv1, 0b00);
+      __m128d vrb = _mm_load_pd(vptr + 2);
+      // [vi0, vi1]
+      __m128d via = _mm_load_pd(vptr + 4);
       // [vi2, vi3]
-      __m128d vib = _mm_shuffle_pd(tmpv0, tmpv1, 0b11);
+      __m128d vib = _mm_load_pd(vptr + 6);
+
+      __m128d tmpv0, tmpv1, tmpv2, tmpv3;
       __m128d mra, mrb, mia, mib;
+
 #define ONE_ROW_OP(offset, data_pos)                              \
-  /* [mr?0, mi?0] */                                              \
-  tmpv0 = _mm_load_pd(mptr + (offset));                           \
-  /* [mr?1, mi?1] */                                              \
-  tmpv1 = _mm_load_pd(mptr + (offset) + 2);                       \
   /* [mr?0, mr?1] */                                              \
-  mra = _mm_shuffle_pd(tmpv0, tmpv1, 0b00);                       \
-  mia = _mm_shuffle_pd(tmpv0, tmpv1, 0b11);                       \
-  tmpv0 = _mm_load_pd(mptr + (offset) + 4);                       \
-  tmpv1 = _mm_load_pd(mptr + (offset) + 6);                       \
+  mra = _mm_load_pd(mptr + (offset));                             \
   /* [mr?2, mr?3] */                                              \
-  mrb = _mm_shuffle_pd(tmpv0, tmpv1, 0b00);                       \
+  mrb = _mm_load_pd(mptr + (offset) + 2);                         \
+  /* [mi?0, mi?1] */                                              \
+  mia = _mm_load_pd(mptr + (offset) + 16);                        \
   /* [mi?2, mi?3] */                                              \
-  mib = _mm_shuffle_pd(tmpv0, tmpv1, 0b11);                       \
+  mib = _mm_load_pd(mptr + (offset) + 18);                        \
                                                                   \
   /* real part */                                                 \
   tmpv0 = _mm_add_pd(_mm_mul_pd(mra, vra), _mm_mul_pd(mrb, vrb)); \
   tmpv1 = _mm_add_pd(_mm_mul_pd(mia, via), _mm_mul_pd(mib, vib)); \
-  _mm_store_pd(tmp, _mm_sub_pd(tmpv0, tmpv1));                    \
-  v_raw[(data_pos)] = tmp[0] + tmp[1];                            \
-                                                                  \
   /* imag part */                                                 \
-  tmpv0 = _mm_add_pd(_mm_mul_pd(mra, via), _mm_mul_pd(mrb, vib)); \
-  tmpv1 = _mm_add_pd(_mm_mul_pd(mia, vra), _mm_mul_pd(mib, vrb)); \
-  _mm_store_pd(tmp, _mm_add_pd(tmpv0, tmpv1));                    \
-  v_raw[(data_pos) + 1] = tmp[0] + tmp[1];
+  tmpv2 = _mm_add_pd(_mm_mul_pd(mra, via), _mm_mul_pd(mrb, vib)); \
+  tmpv3 = _mm_add_pd(_mm_mul_pd(mia, vra), _mm_mul_pd(mib, vrb)); \
+  _mm_store_pd(tmp, _mm_sub_pd(tmpv0, tmpv1));                    \
+  _mm_store_pd(tmp + 2, _mm_add_pd(tmpv2, tmpv3));                \
+  data[(data_pos)].real(tmp[0] + tmp[1]);                         \
+  data[(data_pos)].imag(tmp[2] + tmp[3]);
 
       ONE_ROW_OP(0, inds[0]);
-      ONE_ROW_OP(8, inds[1]);
-      ONE_ROW_OP(16, inds[2]);
-      ONE_ROW_OP(24, inds[3]);
+      ONE_ROW_OP(4, inds[1]);
+      ONE_ROW_OP(8, inds[2]);
+      ONE_ROW_OP(12, inds[3]);
 
 #undef ONE_ROW_OP
     }
