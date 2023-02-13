@@ -23,6 +23,15 @@ class Simulator {
  private:
   inline void BuildBackend(BackendTag tag) {
     switch (tag) {
+      case BackendTag::AUTO: {
+        if (hw_feat_.HW_SSE) {
+          d_ = std::make_unique<SseApplyGateDelegate<DType>>();
+        } else {
+          // Fallback to naive implementation.
+          d_ = std::make_unique<NaiveApplyGateDelegate<DType>>();
+        }
+        return;
+      }
       case BackendTag::NAIVE: {
         d_ = std::make_unique<NaiveApplyGateDelegate<DType>>();
         return;
