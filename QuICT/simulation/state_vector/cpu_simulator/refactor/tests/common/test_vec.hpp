@@ -46,9 +46,11 @@ inline size_t GetQubitNum(const std::string &f_name) {
   static std::regex rgx("(qubit)(\\w+)");
   std::smatch matches;
   bool search_success = std::regex_search(f_name, matches, rgx);
-  assert(search_res);
+  assert(search_success);
+  //
   // Do not write it like this. Because assert is not presented in release mode.
   // assert(std::regex_search(f_name, matches, rgx));
+  //
   assert(matches.size() == 3);
   return std::stoi(matches[2].str());
 }
