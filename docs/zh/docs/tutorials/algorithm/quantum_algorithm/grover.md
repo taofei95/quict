@@ -89,10 +89,12 @@ $$
 </figure>
 
 
-在这个平面上，$U_s$是对状态$\ket{s}$的反转，$U_f$是对状态$\ket{w}$的反转，两者总是对应于一个旋转。Grover算子使初始状态 $|s\rangle$ 向标记状态 $|w\rangle$ 旋转。这个过程将重复数次，以锁定标记状态。经过 $t$ 步，我们将处于 $|\psi_t\rangle$ 状态，其中 $| \psi_t \rangle = (U_s U_f)^t | s \rangle$ 。可以证明约 $\sqrt{N}$ 的旋转是足够的。观察 $\|\langle w|\psi_t\rangle\|$ ，它随着Grover算子的使用次数而增长，并且在旋转到$|w\rangle$时达到最大。我们可以写出旋转角度的表达式：
+在这个平面上，$U_s$是对状态$|s\rangle$的反转，$U_f$是对状态$|w\rangle$的反转，两者总是对应于一个旋转。Grover算子使初始状态 $|s\rangle$ 向标记状态 $|w\rangle$ 旋转。这个过程将重复数次，以锁定标记状态。经过 $t$ 步，我们将处于 $|\psi_t\rangle$ 状态，其中 $| \psi_t \rangle = (U_s U_f)^t | s \rangle$ 。可以证明约 $\sqrt{N}$ 的旋转是足够的。观察 $\|\langle w|\psi_t\rangle\|$ ，它随着Grover算子的使用次数而增长，并且在旋转到$|w\rangle$时达到最大。我们可以写出旋转角度的表达式：
+
 $$
 \sin\theta = \frac{\|w\cdot s\|}{\| w \|\cdot\| s \|}=\sqrt{1/N}
 $$
+
 于是在$\frac{\pi/2}{\theta}\sim N^{1/2}$次旋转后，我们可以找到目标状态，以小于$\sin^2\theta\sim N^{-1}$的失败率。这实现了查询复杂度上的二次加速。在有多个解决方案的情况下，可以证明大约 $\sqrt{(N/M)}$ 的旋转就足够了，其中 $M$ 是解的数目。
 
 ### 算法流程
@@ -175,9 +177,9 @@ from QuICT.simulation.state_vector import ConstantStateVectorSimulator, CircuitS
 - 每一列不能出现相同值
 - 每一行不能出现相同值
 
-<center>
-<img src='../../../assets/images/tutorials/algorithm/quantum_algorithm/binary_sudoku.png'>
-</center>
+<figure markdown>
+![图片名](../../../assets/images/tutorials/algorithm/quantum_algorithm/binary_sudoku.png)
+</figure>
 
 也就是
 

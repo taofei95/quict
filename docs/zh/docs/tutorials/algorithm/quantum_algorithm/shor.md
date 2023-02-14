@@ -23,11 +23,11 @@ $$(a,N)=1, \quad \text{ord}_N(a)=r, \quad 2|r, \quad a^{r/2}\neq -1\bmod N$$
 
 ## 算法设置
 
-本节将重点讨论Shor算法的量子部分，它实际上是解决了寻找周期（period finding）的问题。由于一个因式分解问题可以在多项式时间内转化为一个周期查找问题，一个有效的周期查找算法也可以用来有效地分解整数。现在，我们只需证明，如果我们能高效计算出 $a^x\bmod N$ 的周期，那么我们也可以高效地进行因子计算。由于寻找周期本身就是一个有价值的问题，我们将首先解决这个问题，然后再讨论如何利用这个问题进行因式分解。
+Shor算法的核心思想是通过解决周期寻找（period finding）问题，从而解决因式分解问题。具体来说，Shor算法将大整数分解的过程分为两个部分：量子部分和经典部分。量子部分使用相位估计（Quantum Phase Estimation，QPE）和量子算术电路，来找到与输入整数互质的一个随机数的阶。经典部分则根据这个周期来求得输入整数的因子。接下来我们将先讨论问题的前半部分，也就是周期寻找问题，如何通过量子算法解决，再简要介绍如何解决问题的后半部分，也就是算法的经典部分。
 
-### 周期寻找
+### 量子部分
 
-考虑酉矩阵 $U_a|y⟩=|ay\bmod N⟩$ ，注意到他有以下本征向量：
+考虑输入$N$以及满足$\gcd(a,N)=1$的数$a$，周期寻找问题要求找到$f(x)=a^x\bmod N$ 的周期$r$。考虑酉矩阵 $U_a|y⟩=|ay\bmod N⟩$ ，注意到他有以下本征向量：
 
 $$|u_s\rangle = \tfrac{1}{\sqrt{r}}\sum_{k=0}^{r-1}{e^{-\tfrac{2\pi i s k}{r}}|a^k \bmod N\rangle}\\[10pt] $$
 
@@ -40,8 +40,6 @@ $$\tfrac{1}{\sqrt{r}}\sum_{s=0}^{r-1} |u_s\rangle = |1\rangle$$
 这意味着我们在 $U_a$ 和初态 $|1⟩$ 上的相位估计（phase estimation）可以得到相位：
 
 $$\phi=\frac{s}{r},s\in [0,r-1]$$
-
-如果 $\gcd(s,r)=1$ ，[连分数算法](https://en.wikipedia.org/wiki/Continued_fraction)允许我们找到 $r$ 。最终的线路如图：
 
 <figure markdown>
 ![BEA_circuit](../../../assets/images/tutorials/algorithm/quantum_algorithm/BEA_circuit.png){:width="500px"}
@@ -61,16 +59,20 @@ $$\phi=\frac{s}{r},s\in [0,r-1]$$
 </figure>
 
 
-### ...到因数分解
+### 经典部分
 
-量子部分成功运行返回的结果 $r$ 满足 $a^r=1\bmod N \land a^{r'}\neq 1\bmod N \forall 0\leq r'<r$ 。以下两个事实保证了算法以高概率得到待分解数的非平凡因子（如果有）：
+首先，我们需要确保算法的输入是一个合数。有若干多项式时间内运行的[素性判别算法](https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test)可以满足我们的要求。
+
+其次，为了运行求阶算法，我们需要找到满足$\gcd(a,N)=1$的数$a$。注意到当$\gcd(a,N)\neq 1$时，我们只需要返回$\gcd(a,N)$即可。
+
+再考虑在量子部分中我们得到的相位$s/r$。如果 $\gcd(s,r)=1$ ，[连分数算法](https://en.wikipedia.org/wiki/Continued_fraction)允许我们找到 $r$ 。该结果 $r$ 满足 $a^r=1\bmod N \land a^{r'}\neq 1\bmod N \forall 0\leq r'<r$ 。以下两个事实保证了算法以高概率得到待分解数的非平凡因子（如果有）：
 
 1. 对于合数 $N$ ，如果 $x\in[0,N]$ 满足 $x^2=1\bmod N$ ，则 $\gcd(x-1,N)$ 与 $\gcd(x+1,N)$ 中至少有一个是 $N$ 的非平凡因子。
 2. 考虑 $N=\Pi_{i=1}^{m} p_i^{\alpha_i}$ ，$x$ 从 $\{x|x\in[1,N-1]\land \gcd(x,N)=1\}$ 中随机选取，则 $2|r=\text{ord}_N(x),x^{r/2}\neq -1\bmod N$ 的概率至少是 $1-\frac{1}{2^m}$ 。
 
 ### 实现的正确性测试
 
-周期寻找算法实现的行为与理论预测一致。 
+周期寻找算法实现的行为与理论预测一致。
 
 | mode    | original | reinforced(MAX_ROUND=3) | $Pr(r\neq 0\text{ and }r\nmid\text{order}(a,N))$ | repetitions |
 | ------- | -------- | ----------------------- | ------------------------------------------------ | ----------- |
