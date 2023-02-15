@@ -53,14 +53,15 @@ QuICT中实现了三种振幅估计问题的算法：Canonical QAE[<sup>[1]</sup
 
 `QAE`类位于`QuICT.algorithm.quantum_algorithm`。初始化参数包括：
 
-- `mode`：字符串，可以是`canonical`，`max_likely`，`fast`中的一个，分别代表Canonical QAE，MLAE，和FQAE
 - `eps`：输出的期望精度。默认为0.1
 - `simulator`：模拟器。默认为`StateVectorSimulator()`
+- `mode`：字符串，可以是`canonical`，`max_likely`，`fast`中的一个，分别代表Canonical QAE，MLAE，和FQAE
 
-!!! note
+函数包括：
 
-    `circuit`方法用于输出电路（只在`canonical`模式可用）；
-    `run`方法用于直接执行算法。为了准备算法所需的输入，需要构造`OracleInfo`对象和`StatePreparationInfo`对象（可选，默认为一层H门）。
+- `circuit()`：用于输出电路（只在`canonical`模式可用）
+
+- `run()`：用于直接执行算法。为了准备算法所需的输入，需要构造`OracleInfo`对象和`StatePreparationInfo`对象（可选，默认为一层H门）
 
 ### Canonical QAE
 
