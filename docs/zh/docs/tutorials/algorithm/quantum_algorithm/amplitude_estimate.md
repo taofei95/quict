@@ -42,12 +42,11 @@ Brassard等人[<sup>[1]</sup>](#refer1)在2000年提出的算法主要使用了�
 
 QuICT中实现了三种振幅估计问题的算法：Canonical QAE[<sup>[1]</sup>](#refer1)、MLAE[<sup>[2]</sup>](#refer2)、FQAE[<sup>[3]</sup>](#refer3)。查询复杂度上第一个算法最优；而电路宽度上第二个算法最优；第三个算法在电路宽度与第二个算法基本一致（常数差距）的同时有更小的查询复杂度，而且在实际应用中表现较好。
 
-!!! Failure "改"
-    图片做成表格
-
-<figure markdown>
-![canonical_QAE_ref](../../../assets/images/tutorials/algorithm/quantum_algorithm/QAE_complexity_table.png){:width="500px"}
-</figure>
+| 文献/方法                                  | 量子查询复杂度                            | 后处理                                        | 电路深度、宽度                                    |
+| ------------------------------------------ | ---------------------------------------- | --------------------------------------------- | ------------------------------------------------- |
+| canonical                                  | 严格最优                                 | 常数（测量得到θ）                             | $\epsilon^{-1}$, QPE宽度+Grover宽度               |
+| MLAE (Suzuki et al., 2020)                 | 只给出了下界，使用指数队列则包含对数因子 | $\epsilon^{-1}$（在[0,1]区间以ε精度暴力搜索） | 数列最大值，指数队列则$\epsilon^{-1}$, Grover宽度 |
+| FQAE (Nakaji, 2020)                        | 包含了double-log因子                     | $\log \epsilon$                               | $\epsilon^{-1}$, Grover宽度+1 ancilla             |
 
 ### 基本用法
 
@@ -68,9 +67,6 @@ QuICT中实现了三种振幅估计问题的算法：Canonical QAE[<sup>[1]</sup
 Canonical QAE采用了量子相位估计（QPE）的形式。该算法使用 $m$ 个量子比特来记录想要估计的相位。最终，被测量的整数 $y\in\{0\cdots 2^m - 1\}$ 被映射为一个角度 $\tilde θ_a = y\pi/M$ ，从而得到振幅的估计值$\tilde a =\sin^2(\tilde\theta_a)$。
 
 canonical QAE的电路图如下：
-
-!!! Failure "改"
-    图片是自己做的还是引用的？如果是引用请注明。图片右侧文字不清晰
 
 <figure markdown>
 ![canonical_QAE_ref](../../../assets/images/tutorials/algorithm/quantum_algorithm/canonical_QAE_ref.png){:width="500px"}

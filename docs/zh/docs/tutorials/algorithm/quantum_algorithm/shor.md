@@ -45,11 +45,13 @@ $$\phi=\frac{s}{r},s\in [0,r-1]$$
 ![BEA_circuit](../../../assets/images/tutorials/algorithm/quantum_algorithm/BEA_circuit.png){:width="500px"}
 </figure>
 
+
 其中的IQFT电路为：
 
 <figure markdown>
 ![IQFT_circuit](../../../assets/images/tutorials/algorithm/quantum_algorithm/IQFT_circuit.png){:width="500px"}
 </figure>
+
 
 而迭代相位估计（iterative QPE）则减少了所需要的量子比特：
 
@@ -59,13 +61,14 @@ $$\phi=\frac{s}{r},s\in [0,r-1]$$
 </figure>
 
 
+
 ### 经典部分
 
-首先，我们需要确保算法的输入是一个合数。有若干多项式时间内运行的[素性判别算法](https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test)可以满足我们的要求。
+首先需要确保算法的输入是一个合数。有若干多项式时间内运行的[素性判别算法](https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test)可以满足这一要求。
 
-其次，为了运行求阶算法，我们需要找到满足$\gcd(a,N)=1$的数$a$。注意到当$\gcd(a,N)\neq 1$时，我们只需要返回$\gcd(a,N)$即可。
+其次，为了运行求阶算法，需要找到满足$\gcd(a,N)=1$的数$a$，只需要随机选取即可，因为$\gcd(a,N)\neq 1$时，$\gcd(a,N)$就是$N$的非平凡因子。
 
-再考虑在量子部分中我们得到的相位$s/r$。如果 $\gcd(s,r)=1$ ，[连分数算法](https://en.wikipedia.org/wiki/Continued_fraction)允许我们找到 $r$ 。该结果 $r$ 满足 $a^r=1\bmod N \land a^{r'}\neq 1\bmod N \forall 0\leq r'<r$ 。以下两个事实保证了算法以高概率得到待分解数的非平凡因子（如果有）：
+再考虑在量子部分中我们、、得到的相位$s/r$。如果 $\gcd(s,r)=1$ ，[连分数算法](https://en.wikipedia.org/wiki/Continued_fraction)将给出 $r$ 。该结果 $r$ 满足 $a^r=1\bmod N \land a^{r'}\neq 1\bmod N \forall 0\leq r'<r$ 。以下两个事实保证了算法以高概率得到输入的非平凡因子：
 
 1. 对于合数 $N$ ，如果 $x\in[0,N]$ 满足 $x^2=1\bmod N$ ，则 $\gcd(x-1,N)$ 与 $\gcd(x+1,N)$ 中至少有一个是 $N$ 的非平凡因子。
 2. 考虑 $N=\Pi_{i=1}^{m} p_i^{\alpha_i}$ ，$x$ 从 $\{x|x\in[1,N-1]\land \gcd(x,N)=1\}$ 中随机选取，则 $2|r=\text{ord}_N(x),x^{r/2}\neq -1\bmod N$ 的概率至少是 $1-\frac{1}{2^m}$ 。
