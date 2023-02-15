@@ -2,39 +2,13 @@
 
 Shor算法是一个解决因数分解问题的量子算法，在时间复杂度上该算法相对最好的经典算法实现了指数加速，在 $O(n^3)$ 的时间内以高概率给出输入的非平凡因子（如果存在）。本教程旨在介绍如何使用QuICT的Shor模块，并结合代码实例进一步阐述此算法。
 
-
-
-本框架实现了四个Shor因数分解算法的变体（根据量子部分中使用的乘幂电路/是否使用iterative QPE），在电路宽度与深度上有常数上的差别。
-
-下列表格中，$n$是输入数的位数，$t$是求阶算法中QPE的精度位数。默认$t=2n+1$。
-
-| 算法    | 电路宽度 | 电路深度   | 电路规模   | 模拟器上的运行速度 |
-| ------- | -------- | ---------- | ---------- | ------------------ |
-| BEA     | 2n+2+t   | $O(n^2 t)$ | $O(n^3 t)$ | 快                 |
-| HRS     | 2n+1+t   | $O(n^2 t)$ | $O(n^3 t)$ | 快                 |
-| BEA-zip | 2n+3     | $O(n^2 t)$ | $O(n^3 t)$ | 慢                 |
-| HRS-zip | 2n+2     | $O(n^2 t)$ | $O(n^3 t)$ | 慢                 |
-
-
 ## 算法原理
-
-Shor因子分解算法包含了经典部分（素数判定、求最大公约数等等）与量子部分（求阶算法）。
-
-在Shor算法的量子部分，对于待分解数 $N$ ，我们使用数 $a$ 满足：
-
-$$(a,N)=1, \quad \text{ord}_N(a)=r, \quad 2|r, \quad a^{r/2}\neq -1\bmod N$$
-
-那么 $\gcd(a^{r/2}-1,N)$ 和 $\gcd(a^{r/2}+1,N)$ 中必然包含 $N$ 的非平凡因子。更详细的成功概率分析可以参考教科书。我们只考虑对于量子部分的时间开销，对于 $n=11$ 的输入，求阶算法在单块GPU上可以在一小时内完成。
 
 Shor算法的核心思想是通过解决周期寻找（period finding）问题，从而解决因式分解问题。具体来说，Shor算法将大整数分解的过程分为两个部分：量子部分和经典部分。量子部分使用相位估计（Quantum Phase Estimation，QPE）和量子算术电路，来找到与输入整数互质的一个随机数的阶。经典部分则根据这个周期来求得输入整数的因子。接下来本教程将分别叙述这两个部分。
 
 ### 量子部分
 
-对于待分解数 $N$ 以及满足以下条件的数 $a$ ：
-
-$$(a,N)=1, \quad \text{ord}_N(a)=r, \quad 2|r, \quad a^{r/2}\neq -1\bmod N$$
-
-那么 $\gcd(a^{r/2}-1,N)$ 和 $\gcd(a^{r/2}+1,N)$ 中必然包含 $N$ 的非平凡因子。周期寻找问题要求找到 $f(x)=a^x\bmod N$ 的周期 $r$。对于酉矩阵：
+对于待分解数 $N$ 以及满足 $\gcd(a,N)=1$ 的数 $a$ ，周期寻找问题要求找到 $f(x)=a^x\bmod N$ 的周期 $r$。对于酉矩阵：
 
 $$U_a|y⟩=|ay\bmod N⟩$$
 
@@ -48,15 +22,21 @@ $$U|u_s\rangle = e^{\tfrac{2\pi i s}{r}}|u_s\rangle$$
 
 $$\tfrac{1}{\sqrt{r}}\sum_{s=0}^{r-1} |u_s\rangle = |1\rangle$$
 
-这意味着我们在 $U_a$ 和初态 $|1⟩$ 上的相位估计（phase estimation）可以得到相位：
+这意味着在 $U_a$ 和初态 $|1⟩$ 上的相位估计（phase estimation）可以得到相位：
 
 $$\phi=\frac{s}{r},s\in [0,r-1]$$
+
+!!! Failure "改"
+    从上面的公式到下面的图片，加叙述过渡（引出电路图）
 
 <figure markdown>
 ![BEA_circuit](../../../assets/images/tutorials/algorithm/quantum_algorithm/BEA_circuit.png){:width="500px"}
 </figure>
 
-其中的IQFT电路为：
+!!! Failure "改"
+    建议增加文字叙述IQFT和iterative QPE，上次汇报孙老师问这个问了很久（记得也为明天的汇报准备一下）。这三张图的引入有点不明所以，请解释作用和效果，并顺便解释4种变体算法。
+
+其中的IQFT电路如图：
 
 <figure markdown>
 ![IQFT_circuit](../../../assets/images/tutorials/algorithm/quantum_algorithm/IQFT_circuit.png){:width="500px"}
@@ -73,14 +53,19 @@ $$\phi=\frac{s}{r},s\in [0,r-1]$$
 
 首先需要确保算法的输入是一个合数。可以使用能够在多项式时间内完成的[素性判别算法](https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test)对此进行判断。
 
-其次，为了运行求阶算法，需要找到满足 $\gcd(a,N)=1$ 的数 $a$ 。注意当 $\gcd(a,N)\neq 1$ 时，只需要返回 $\gcd(a,N)$ 即可。
+其次，为了运行求阶算法，需要找到满足 $\gcd(a,N)=1$ 的数 $a$ ，只需随机选取即可，因为当 $\gcd(a,N)\neq 1$ 时， $\gcd(a,N)$ 即为 $N$ 的非平凡因子。如果 $\gcd(s,r)=1$ ，可使用[连分数算法](https://en.wikipedia.org/wiki/Continued_fraction)计算 $r$ ，使之满足：
 
-再考虑在量子部分中我们得到的相位$s/r$。如果 $\gcd(s,r)=1$ ，[连分数算法](https://en.wikipedia.org/wiki/Continued_fraction)允许我们找到 $r$ 。该结果 $r$ 满足 $a^r=1\bmod N \land a^{r'}\neq 1\bmod N \forall 0\leq r'<r$ 。以下两个事实保证了算法以高概率得到待分解数的非平凡因子（如果有）：
+$$a^r=1\bmod N \land a^{r'}\neq 1\bmod N \forall 0\leq r'<r$$
+
+以下两个事实保证了算法能够以高概率得到 $N$ 的非平凡因子：
 
 1. 对于合数 $N$ ，如果 $x\in[0,N]$ 满足 $x^2=1\bmod N$ ，则 $\gcd(x-1,N)$ 与 $\gcd(x+1,N)$ 中至少有一个是 $N$ 的非平凡因子。
 2. 考虑 $N=\Pi_{i=1}^{m} p_i^{\alpha_i}$ ，$x$ 从 $\{x|x\in[1,N-1]\land \gcd(x,N)=1\}$ 中随机选取，则 $2|r=\text{ord}_N(x),x^{r/2}\neq -1\bmod N$ 的概率至少是 $1-\frac{1}{2^m}$ 。
 
 ### 实现的正确性测试
+
+!!! Failure "改"
+    这部分是实验得出的吗？如果是的话简单叙述一下如何进行的以下正确性测试（比较推荐放在**用QuICT实现Shor算法**那个部分的表格下面）
 
 周期寻找算法实现的行为与理论预测一致。
 
@@ -100,21 +85,40 @@ $$\phi=\frac{s}{r},s\in [0,r-1]$$
 | BEA_zip | 0.028      | 0.028    | 0.0        | 0.0      |
 | HRS_zip | 0.028      | 0.028    | 0.0        | 0.0      |
 
-## 代码示例
+## 用QuICT实现Shor算法
 
-`ShorFactor`类位于`QuICT.algorithm.quantum_algorithm.shor`，初始化参数包括
+QuICT根据量子部分中使用的乘幂电路，以及是否使用iterative QPE实现了四种Shor因数分解算法的变体，4种方法在电路宽度与深度上有常数上的差别，详见下表：
 
-1. `mode`：字符串，可以指定为`BEA`[<sup>[1]</sup>](#refer1)、`HRS`[<sup>[2]</sup>](#refer2)、`BEA_zip`、`HRS_zip`中的一个。`*_zip`指使用了iterative QPE[<sup>[3]</sup>](#refer3)（也就是原论文中所说的one-bit trick）
-2. `eps`：相位估计的精度
-3. `max_rd`：order-finding子程序的最大可执行次数。默认为2
-4. `simulator`：模拟器。默认为`StateVectorSimulator()`
+$n$ 为输入数的位数， $t$ 为求阶算法中QPE的精度位数。默认 $t=2n+1$ 。
 
-调用`circuit`方法可以得到order-finding部分的电路；调用`run`方法可以直接执行整个算法。
+| 算法    | 电路宽度 | 电路深度   | 电路规模   | 模拟器上的运行速度 |
+| ------- | -------- | ---------- | ---------- | ------------------ |
+| BEA     | 2n+2+t   | $O(n^2 t)$ | $O(n^3 t)$ | 快                 |
+| HRS     | 2n+1+t   | $O(n^2 t)$ | $O(n^3 t)$ | 快                 |
+| BEA-zip | 2n+3     | $O(n^2 t)$ | $O(n^3 t)$ | 慢                 |
+| HRS-zip | 2n+2     | $O(n^2 t)$ | $O(n^3 t)$ | 慢                 |
+
 
 ### 基本用法
 
-使用`ShorFactor(mode, N).run()`来通过QuICT内置的Shor算法实现来寻找一个数字$N$的因子：
+`ShorFactor`类位于`QuICT.algorithm.quantum_algorithm`，初始化参数包括：
 
+- `mode`：字符串，可以指定为`BEA`[<sup>[1]</sup>](#refer1)、`HRS`[<sup>[2]</sup>](#refer2)、`BEA_zip`、`HRS_zip`中的一个。`*_zip`指使用了iterative QPE[<sup>[3]</sup>](#refer3)（即原论文中提到的one-bit trick）
+- `eps`：相位估计的精度
+- `max_rd`：order-finding子程序的最大可执行次数。默认为2
+- `simulator`：模拟器。默认为`StateVectorSimulator()`
+
+函数包括：
+
+- `circuit()`：获取order-finding部分的电路
+- `run()`：直接执行算法
+
+### 代码实例
+
+!!! Failure
+    可以加个无平凡因子的情况
+
+接下来，将以35为例用QuICT内置的Shor模块对其进行因数分解，使用的是加入iterative QPE的Beauregard[<sup>[1]</sup>](#refer1)的电路：
 
 ```python
 from QuICT.simulation.state_vector.cpu_simulator import CircuitSimulator
