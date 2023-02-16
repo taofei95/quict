@@ -77,7 +77,7 @@ def test_reduce_state():
 
 def test_sparse_qsp():
     simulator = StateVectorSimulator()
-    sparseQSP = SparseQuantumStatePreparation('state_vector')
+    sparseQSP = SparseQuantumStatePreparation('state_vector', keep_phase=True)
     for n in range(2, 6):
         for k in range(2, 1 << (n - 1)):
             state_vector = np.zeros(1 << n, dtype=complex)
@@ -95,7 +95,7 @@ def test_sparse_qsp():
 
 def test_state_array():
     simulator = StateVectorSimulator()
-    sparseQSP = SparseQuantumStatePreparation('state_array')
+    sparseQSP = SparseQuantumStatePreparation('state_array', keep_phase=True)
     for n in range(2, 6):
         for k in range(2, 1 << (n - 1)):
             nonzeros = random_unit_vector(k)
