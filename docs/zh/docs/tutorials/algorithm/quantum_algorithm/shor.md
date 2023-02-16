@@ -157,16 +157,13 @@ for mode in run_test_modes:
 
 ### 代码实例
 
-<!-- !!! Failure
-    可以加个无平凡因子的情况 -->
-
-接下来，将以35为例用QuICT内置的Shor模块对其进行因数分解，使用的是加入iterative QPE的Beauregard[<sup>[1]</sup>](#refer1)的电路：
+接下来，将以21为例用QuICT内置的Shor模块对其进行因数分解，使用的是加入iterative QPE的Beauregard[<sup>[1]</sup>](#refer1)的电路：
 
 ```python
 from QuICT.simulation.state_vector.cpu_simulator import CircuitSimulator
 from QuICT.algorithm.quantum_algorithm import ShorFactor
 
-input  = 35
+input  = 21
 sf = ShorFactor(mode="BEA_zip", max_rd=2)
 circ, indices = sf.circuit(N=input)
 
@@ -176,18 +173,23 @@ print(f"output = {output}")
 ```
 
 ```
-2023-02-06 11:22:57 | Shor | INFO | round = 0
-2023-02-06 11:22:57 | Shor | INFO | forced quantum approach, looking for coprime number...
-2023-02-06 11:22:57 | Shor | INFO | Quantumly determine the order of the randomly chosen a = 22
-2023-02-06 11:24:02 | Shor | INFO | phi: 0.000
-2023-02-06 11:24:02 | Shor | INFO | Shor failed: found odd order r = 1 of a = 22
-2023-02-06 11:24:02 | Shor | INFO | round = 1
-2023-02-06 11:24:02 | Shor | INFO | forced quantum approach, looking for coprime number...
-2023-02-06 11:24:02 | Shor | INFO | Quantumly determine the order of the randomly chosen a = 2
-2023-02-06 11:25:25 | Shor | INFO | phi: 0.250
-2023-02-06 11:25:25 | Shor | INFO | Shor succeed: found factor 5, with the help of a = 2, r = 4
-input  = 35
-output = 5
+2023-02-16 13:17:11 | BEA-zip | INFO | 	circuit construction begin: circuit: n = 5 t = 13
+2023-02-16 13:17:14 | Shor | INFO | round = 0
+2023-02-16 13:17:14 | Shor | INFO | forced quantum approach, looking for coprime number...
+2023-02-16 13:17:14 | Shor | INFO | Quantumly determine the order of the randomly chosen a = 11
+2023-02-16 13:18:26 | Shor | INFO | phi: 0.167
+2023-02-16 13:18:26 | Shor | INFO | Shor succeed: found factor 7, with the help of a = 11, r = 6
+input  = 21
+output = 7
+```
+
+如果输入为素数，程序将会返回0，表示无法分解。将上述程序中`input`修改为`13`，运行结果如下：
+
+```
+2023-02-16 12:55:02 | BEA-zip | INFO | circuit construction begin: circuit: n = 4 t = 11
+2023-02-16 12:55:04 | Shor    | INFO | N does not pass miller rabin test, may be a prime number
+input  = 13
+output = 0
 ```
 
 ## 参考文献
