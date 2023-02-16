@@ -8,7 +8,6 @@ from QuICT.qcda.optimization.cnot_without_ancilla import CnotWithoutAncilla
 from QuICT.qcda.optimization.cnot_without_ancilla.block_ldu_decompose import BlockLDUDecompose
 
 from .utility import *
-from QuICT.utility import *
 from QuICT.qcda.optimization.cnot_without_ancilla.utility import *
 
 
@@ -190,20 +189,3 @@ def test_cnot_without_ancillae():
             t = gate.targ
             test_mat2[t, :] ^= test_mat2[c, :]
         assert np.allclose(test_mat1, test_mat2)
-
-
-# def test_optimize_factor():
-#     print("=" * 40)
-#     for qubit_num in range(2, 100):
-#         average_factor = 0.0
-#         _up = 10
-#         for _ in range(_up):
-#             circuit1 = Circuit(qubit_num)
-#             circuit1.random_append(30 * qubit_num, typelist=[GateType.cx])
-#             CWA = CnotWithoutAncilla()
-#             gates = CWA.run(circuit1)
-#             depth = gates.depth()
-#             factor = depth / qubit_num
-#             average_factor += factor
-#         average_factor /= _up
-#         print(f"Average constant factor of n={qubit_num}: {average_factor:3f}")

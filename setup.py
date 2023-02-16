@@ -34,7 +34,7 @@ file_data = [
 
 setup(
     name="quict",
-    version="0.9.7",
+    version="1.0.0",
     description="Quantum Compute Platform of Institute of Computing Technology",
     author="Library for Quantum Computation and Theoretical Computer Science, ICT, CAS",
     author_email="quact@ict.ac.cn",
@@ -58,6 +58,8 @@ setup(
         "scipy>=1.9.2",
         "pyyaml>=6.0",
         "IPython",
+        "prettytable>=3.6.0",
+        "pandas>=1.5.3",
     ],
     packages=find_packages(where=PRJ_ROOT_RELATIVE),
     data_files=file_data,

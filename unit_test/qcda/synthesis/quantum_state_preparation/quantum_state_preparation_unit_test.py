@@ -54,26 +54,25 @@ def test_multicontrol_G():
             assert np.allclose(gates.matrix()[-2:, -2:-1].reshape(2), np.exp(-1j * phase) * state_vector)
 
 
-# [TODO]: Waiting for StateVectorSimulator Support input State Vector.
-# def test_reduce_state():
-#     simulator = StateVectorSimulator()
-#     sparseQSP = SparseQuantumStatePreparation()
-#     for n in range(2, 6):
-#         for k in range(2, 1 << (n - 1)):
-#             state_vector = np.zeros(1 << n, dtype=complex)
-#             nonzeros = random_unit_vector(k)
-#             qubits = np.random.choice(range(1 << n), k, replace=False)
-#             state_vector[qubits] = nonzeros
-#             state, width = sparseQSP.statevector_to_dict(state_vector)
+def test_reduce_state():
+    simulator = StateVectorSimulator()
+    sparseQSP = SparseQuantumStatePreparation()
+    for n in range(2, 6):
+        for k in range(2, 1 << (n - 1)):
+            state_vector = np.zeros(1 << n, dtype=complex)
+            nonzeros = random_unit_vector(k)
+            qubits = np.random.choice(range(1 << n), k, replace=False)
+            state_vector[qubits] = nonzeros
+            state, width = sparseQSP.statevector_to_dict(state_vector)
 
-#             gates = sparseQSP.reduce_state(state, width)
-#             cir = Circuit(n)
-#             cir.extend(gates)
+            gates = sparseQSP.reduce_state(state, width)
+            cir = Circuit(n)
+            cir.extend(gates)
 
-#             reduced = simulator.run(cir, state_vector)
-#             reduced_state, _ = sparseQSP.statevector_to_dict(reduced)
-#             # np.set_printoptions(precision=3, suppress=True)
-#             assert len(reduced_state) < len(state)
+            reduced = simulator.run(cir, state_vector)
+            reduced_state, _ = sparseQSP.statevector_to_dict(reduced)
+            # np.set_printoptions(precision=3, suppress=True)
+            assert len(reduced_state) < len(state)
 
 
 def test_sparse_qsp():
