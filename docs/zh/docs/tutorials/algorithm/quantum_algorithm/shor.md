@@ -26,41 +26,45 @@ $$\tfrac{1}{\sqrt{r}}\sum_{s=0}^{r-1} |u_s\rangle = |1\rangle$$
 
 $$\phi=\frac{s}{r},s\in [0,r-1]$$
 
-一个$m=3,n=2,N=2^2$电路与状态变换如下图所示（其中$\tilde{s/r}=(0.a_1\cdots a_m)_2$，其中$a_i$是第i个比特的测量结果）：
-
-<figure markdown>
-![BEA_circuit](../../../assets/images/tutorials/algorithm/quantum_algorithm/BEA_circuit.png){:width="700px"}
-</figure>
+#### iterative QPE
 
 iterative QPE技术可以减少使用的量子比特数量。根据使用的量子算数电路与是否使用iterative QPE，QuICT上给出了四种Shor算法的变体。
 
-??? Info "iterative QPE"
-    <!-- 建议增加文字叙述IQFT和iterative QPE，上次汇报孙老师问这个问了很久（记得也为明天的汇报准备一下）。这三张图的引入有点不明所以，请解释作用和效果，并顺便解释4种变体算法。 -->
-    观察上图中的前三步（对应前三条虚线）完成了如下变换：
+考虑一个 $m=3, n=2, N=2^2$ 的情况，其电路与状态变换如下图所示（$\tilde{s/r}=(0.a_1\cdots a_m)_2$ ，其中 $a_i$ 是第i个比特的测量结果）：
 
-    $$
-    \begin{aligned}
-    &\sqrt\frac{1}{2^m}\sum_{k=0...2^m-1}|k\rangle|u\rangle
-    \\ &\to
-    \sqrt\frac{1}{2^m}\sum_{k=0...2^m-1}e^{\tfrac{2\pi i s k}{r}}|k\rangle|u\rangle
-    \\ &\to
-    \tilde{|s/r\rangle}|u\rangle
-    \end{aligned}
-    $$
+<figure markdown>
+![BEA_circuit](../../../assets/images/tutorials/algorithm/quantum_algorithm/BEA_circuit.png)
+</figure>
 
-    这是一个标准的相位估计子程序，这一转换需要在原始酉变换所需的n个量子比特（也就是第二个寄存器）之外使用m个量子比特（也就是第一个寄存器）用于存储相位。但是，如果只关心测量结果$\tilde{s/r}$，而且允许由测量结果构建量子电路，那么第一个寄存器只需要一个比特即可。其核心想法是利用$CU_a$电路的可交换性，用一个量子比特逐个完成m个量子比特的制备和测量，这个方法也就是迭代相位估计（iterative QPE）。这一方法减少了所需要的量子比特。
+上图中的前三步（对应前三条虚线）完成了如下变换：
 
-    <figure markdown>
-    ![semi_classical_IQFT_circuit](../../../assets/images/tutorials/algorithm/quantum_algorithm/semi_classical_IQFT_circuit.png){:width="500px"}
-        <p markdown="1" style="font-size:8px;"> iterative QPE如何逐个制备和测量第一个寄存器中的量子比特。在每个量子比特被用作控制位之前对其进行测量，根据测量结果来进行受控旋转，测量结果的概率分布与标准相位估计是相同的。图片引用自*Semiclassical Fourier transform for quantum computation.* [<sup>[3]</sup>](#refer3)
-    </figure>
+$$
+\sqrt\frac{1}{2^m}\sum_{k=0...2^m-1}|k\rangle|u\rangle
+$$
 
-    iterative QPE的电路如图所示：
+$$
+\sqrt\frac{1}{2^m}\sum_{k=0...2^m-1}e^{\tfrac{2\pi i s k}{r}}|k\rangle|u\rangle
+$$
 
-    <figure markdown>
-    ![semi_classical_IQFT_circuit_2](../../../assets/images/tutorials/algorithm/quantum_algorithm/semi_classical_IQFT_circuit_2.png)
-        <p markdown="1" style="font-size:8px;"> iterative QPE的电路示意。其中$X^m$将量子比特还原到0，$R$门受控于之前的测量结果。图片引用自*Circuit for Shor's algorithm using 2n+3 qubits.* [<sup>[1]</sup>](#refer1)
-    </figure>
+$$
+\tilde{|s/r\rangle}|u\rangle
+$$
+
+这是一个标准的相位估计子程序，这一转换需要在原始酉变换所需的n个量子比特（也就是第二个寄存器）之外使用m个量子比特（也就是第一个寄存器）用于存储相位。但是，如果只关心测量结果 $\tilde{s/r}$ ，而且允许由测量结果构建量子电路，那么第一个寄存器只需要一个比特即可。其核心想法是利用 $CU_a$ 电路的可交换性，用一个量子比特逐个完成m个量子比特的制备和测量，这个方法也就是迭代相位估计（iterative QPE）。这一方法减少了所需要的量子比特。
+
+下图描述了iterative QPE如何逐个制备和测量第一个寄存器中的量子比特。在每个量子比特被用作控制位之前对其进行测量，根据测量结果来进行受控旋转，测量结果的概率分布与标准相位估计是相同的。
+
+<figure markdown>
+![semi_classical_IQFT_circuit](../../../assets/images/tutorials/algorithm/quantum_algorithm/semi_classical_IQFT_circuit.png){:width="500px"}
+    <p markdown="1" style="font-size:8px;"> 图片引用自*Semiclassical Fourier transform for quantum computation.* [<sup>[3]</sup>](#refer3)
+</figure>
+
+iterative QPE的电路如下图所示，其中 $X^m$ 将量子比特还原到0， $R$ 门受控于之前的测量结果：
+
+<figure markdown>
+![semi_classical_IQFT_circuit_2](../../../assets/images/tutorials/algorithm/quantum_algorithm/semi_classical_IQFT_circuit_2.png)
+    <p markdown="1" style="font-size:8px;"> 图片引用自*Circuit for Shor's algorithm using 2n+3 qubits.* [<sup>[1]</sup>](#refer1)
+</figure>
 
 ### 经典部分
 
@@ -88,7 +92,6 @@ $n$ 为输入数的位数， $t$ 为求阶算法中QPE的精度位数。默认 $
 | BEA-zip | 2n+3     | $O(n^2 t)$ | $O(n^3 t)$ | 慢                 |
 | HRS-zip | 2n+2     | $O(n^2 t)$ | $O(n^3 t)$ | 慢                 |
 
-
 ### 基本用法
 
 `ShorFactor`类位于`QuICT.algorithm.quantum_algorithm`，初始化参数包括：
@@ -114,7 +117,7 @@ $n$ 为输入数的位数， $t$ 为求阶算法中QPE的精度位数。默认 $
 | HRS     | 0.44     | 0.06                    | 0                                                | 108         |
 | HRS_zip | 0.44     | 0.03                    | 0                                                | 108         |
 
-该数据集是$[4,54)$中的合数，共36个，其中9个是奇合数。测试程序如下：
+该数据集是 $[4,54)$ 中的合数，共36个，其中9个是奇合数。测试程序如下：
 
 ```python
 for mode in order_finding_test_modes.keys():
