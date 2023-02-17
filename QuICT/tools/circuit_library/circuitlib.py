@@ -91,7 +91,10 @@ class CircuitLib:
 
     def _get_string_from_qasm(self, file_path: str) -> str:
         """ Return qasm string from qasm file. """
-        return open(file_path, 'r').read()
+        with open(file_path, 'r') as qasm_file:
+            qstring = qasm_file.read()
+
+        return qstring
 
     def _copy_qasm_file(self, file_path: str):
         """ Copy target qasm file to the given output path. """

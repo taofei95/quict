@@ -50,7 +50,7 @@ class BenchmarkCircuitBuilder:
                     shuffle_qindexes = shuffle_qindexes[gsize:]
 
             depth = cir.depth()
-            cir.name = "+".join(["benchmark", "highly_parallelized", f"w{width}_s{size}_d{depth}_v{depth}"])
+            cir.name = "+".join(["benchmark", "highly_parallelized", f"w{width}_s{size}_d{depth}_v1"])
             cirs_list.append(cir)
         return cirs_list
 
@@ -58,8 +58,9 @@ class BenchmarkCircuitBuilder:
     def serialized_circuit_build(width: int, size: int):
         cirs_list = []
         random_para = [0.4, 0.6, 0.8, 1]
-        void_gates = 0
+        
         for i in range(len(random_para)):
+            void_gates = 0
             cir = Circuit(width)
             H | cir(0)
             qubit_indexes = list(range(width))
@@ -72,7 +73,8 @@ class BenchmarkCircuitBuilder:
                 CX & (qubits_list) | cir
                 if random.random() > random_para[i]:
                     CX & (random.sample(list(range(width)), 2)) | cir
-            void_gates += 1
+                    void_gates += 1
+
             depth = cir.depth()
             cir.name = "+".join(["benchmark", "highly_serialized", f"w{width}_s{size}_d{depth}_v{void_gates}"])
             cirs_list.append(cir)
@@ -118,9 +120,9 @@ class BenchmarkCircuitBuilder:
             return cgate
 
         random_para = [0.4, 0.6, 0.8, 1]
-        cirs_list, void_gates_list = [], []
-        void_gates = 0
+        cirs_list = []
         for i in range(len(random_para)):
+            void_gates = 0
             cir = Circuit(width)
             H | cir(0)
             while cir.size() < size:
@@ -130,10 +132,10 @@ class BenchmarkCircuitBuilder:
                 else:
                     cgate = random.choice([_pattern1(), _pattern2()])
                     cgate | cir
+
             size = cir.size()
             depth = cir.depth()
             cir.name = "+".join(["benchmark", "highly_entangled", f"w{width}_s{size}_d{depth}_v{void_gates}"])
-            void_gates_list.append(void_gates)
             cirs_list.append(cir)
 
         return cirs_list
@@ -160,9 +162,9 @@ class BenchmarkCircuitBuilder:
             return cgate
 
         cir_list = []
-        void_gates = 0
         random_para = [0.4, 0.6, 0.8, 1]
         for i in range(len(random_para)):
+            void_gates = 0
             cir = Circuit(width)
             for _ in range(size - width, size, width):
                 flat_build() | cir
