@@ -232,14 +232,9 @@ class QuICTBenchmark:
 
             circuit_info = re.findall(r"\d+", circuit_list[index].name)
             QV_value = min(int(circuit_info[0]), int(circuit_info[2]))
-            # print(entropy_QV_score)
             # Step 3: return entropy values and quantum volumn values
             entropy_QV_score.append([circuit_list[index].name, entropy_value, entropy_score, QV_value])
-<<<<<<< HEAD
-            entropy_QV_score.sort(key=lambda x: circuit_info, reverse=False)
-=======
             entropy_QV_score.sort(key=lambda x:int(re.findall(r"\d+", x[0])[0]), reverse=False)
->>>>>>> quict_light
 
         return entropy_QV_score
 
