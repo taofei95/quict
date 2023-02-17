@@ -45,17 +45,6 @@ class TestBenchmark(unittest.TestCase):
             gate_transform=True
         )
         assert len(circuits_list) == 84
-=======
-        # circuits_list = benchmark.get_circuits(
-        #     quantum_machine_info={"qubits_number": 5, "layout_file": layout, "Instruction_Set": Inset},
-        #     mapping=True,
-        #     gate_transform=True
-        # )
-        # assert len(circuits_list) == 296
-
-        circuits_list = benchmark.get_circuits(quantum_machine_info={"qubits_number": 10})
-        assert len(circuits_list) == 696
->>>>>>> c642e524534593196903230a85b32e1fe606a59a:unit_test/tools/benchmark_unit_test.py
 
 
 if __name__ == "__main__":
