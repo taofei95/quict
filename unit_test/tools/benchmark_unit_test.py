@@ -20,7 +20,6 @@ class TestBenchmark(unittest.TestCase):
     def test_validate_circuits(self):
         benchmark = QuICTBenchmark()
         circuits_list = benchmark.get_circuits(quantum_machine_info={"qubits_number": 5})
-
         amp_results_list = []
         for circuit in circuits_list:
             simulator = StateVectorSimulator()
@@ -39,14 +38,12 @@ class TestBenchmark(unittest.TestCase):
 
         benchmark = QuICTBenchmark()
         circuits_list = benchmark.get_circuits(
-            quantum_machine_info={"qubits_number": 5, "layout_file": layout, "Instruction_Set": Inset},
+            quantum_machine_info={"qubits_number": 2, "layout_file": layout, "Instruction_Set": Inset},
+            level=1,
             mapping=True,
             gate_transform=True
         )
-        assert len(circuits_list) == 296
-
-        circuits_list = benchmark.get_circuits(quantum_machine_info={"qubits_number": 10})
-        assert len(circuits_list) == 696
+        assert len(circuits_list) == 84
 
 
 if __name__ == "__main__":

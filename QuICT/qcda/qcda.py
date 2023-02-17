@@ -27,8 +27,6 @@ class QCDA(object):
         Experienced users could customize the process for certain purposes.
 
         Args:
-            instruction(InstructionSet, optional): InstructionSet for default process
-            layout(Layout, optional): Layout for default process
             process(list, optional): A customized list of Synthesis, Optimization and Mapping
         """
         self.process = []
@@ -49,22 +47,23 @@ class QCDA(object):
         GateTransform would transform the gates in the original Circuit/CompositeGate to a certain InstructionSet.
 
         Args:
-            instruction(InstructionSet): The target InstructionSet
+            target_instruction(InstructionSet): The target InstructionSet
         """
         assert target_instruction is not None, ValueError('No InstructionSet provided for Synthesis')
         self.add_method(GateTransform(target_instruction))
 
-    def add_default_optimization(self, level='light'):
+    def add_default_optimization(self, level='light', keep_phase=False):
         """ Generate the default optimization process
 
         The default optimization process contains the CommutativeOptimization.
 
         Args:
             level(str): Optimizing level. Support `light`, `heavy` level.
+            keep_phase(bool): whether to keep the global phase as a GPhase gate in the output
         """
 
-        self.add_method(CommutativeOptimization())
-        self.add_method(CliffordRzOptimization(level=level))
+        self.add_method(CommutativeOptimization(keep_phase=keep_phase))
+        self.add_method(CliffordRzOptimization(level=level, keep_phase=keep_phase))
 
     def add_mapping(self, layout=None, method='sabre'):
         """ Generate the default mapping process

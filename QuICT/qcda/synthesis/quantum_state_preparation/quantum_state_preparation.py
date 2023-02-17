@@ -180,7 +180,7 @@ class SparseQuantumStatePreparation(object):
             state_vector = self.dict_to_statevector(state, width)
             cir = Circuit(width)
             cir.extend(gates_last)
-            state_vector = simulator.run(cir, state_vector).get()
+            state_vector = simulator.run(cir, state_vector)
             state, width = self.statevector_to_dict(state_vector)
             gates.extend(gates_last)
 

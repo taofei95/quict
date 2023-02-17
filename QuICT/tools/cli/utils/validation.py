@@ -43,7 +43,7 @@ class JobValidation:
     @staticmethod
     def load_yaml_file(file_path: str) -> dict:
         with open(os.path.abspath(file_path), encoding='utf-8') as yml:
-            job_info = yaml.load(yml)
+            job_info = yaml.safe_load(yml)
 
         return job_info
 

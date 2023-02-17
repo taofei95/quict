@@ -20,10 +20,10 @@ def test_default_optimization():
     ]
 
     qcda_light = QCDA()
-    qcda_light.add_default_optimization(level='light')
+    qcda_light.add_default_optimization(level='light', keep_phase=True)
 
     qcda_heavy = QCDA()
-    qcda_heavy.add_default_optimization(level='heavy')
+    qcda_heavy.add_default_optimization(level='heavy', keep_phase=True)
 
     for _ in range(n_iter):
         circ = Circuit(n_qubit)

@@ -11,7 +11,10 @@ from QuICT.core import Circuit
 from QuICT.core.operator import Trigger
 from QuICT.core.gate import BasicGate, CompositeGate
 from QuICT.core.utils import GateType, MatrixType
-from QuICT.ops.linalg.cpu_calculator import measure_gate_apply, matrix_dot_vector
+from QuICT.ops.linalg.cpu_calculator import (
+    measure_gate_apply, reset_gate_apply, matrix_dot_vector,
+    diagonal_matrix, swap_matrix, reverse_matrix
+)
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.simulation.utils import GateMatrixs
 from QuICT.tools.exception.core import ValueError, TypeError, GateQubitAssignedError
@@ -163,14 +166,31 @@ class StateVectorSimulator:
         return self.vector
 
     def _apply_gate_cpu(self, gate: BasicGate):
-        indexes = [self._qubits - 1 - index for index in gate.targs + gate.cargs]
-        matrix_dot_vector(
-            self._vector,
-            self._qubits,
-            gate.matrix,
-            gate.controls + gate.targets,
-            np.array(indexes)
+        matrix_type = gate.matrix_type
+        qubits_num = gate.controls + gate.targets
+        control_idx = np.array([self._qubits - 1 - index for index in gate.cargs], dtype=np.int64)
+        target_idx = np.array([self._qubits - 1 - index for index in gate.targs], dtype=np.int64)
+        default_params = (
+            self._vector, self._qubits, gate.matrix, qubits_num, control_idx, target_idx
         )
+
+        if matrix_type in [MatrixType.diag_diag, MatrixType.diagonal, MatrixType.control]:
+            diagonal_matrix(
+                *default_params,
+                is_control=True if matrix_type == MatrixType.control else False
+            )
+        elif matrix_type == MatrixType.swap:
+            swap_matrix(*default_params)
+        elif matrix_type == MatrixType.reverse:
+            reverse_matrix(*default_params)
+        else:
+            matrix_dot_vector(
+                self._vector,
+                self._qubits,
+                gate.matrix,
+                gate.controls + gate.targets,
+                np.append(target_idx, control_idx)
+            )
 
     def _measured_cpu(self, index: int):
         result = measure_gate_apply(
@@ -191,6 +211,9 @@ class StateVectorSimulator:
             if gate.type == GateType.measure:
                 index = self._qubits - 1 - gate.targ
                 self._measured_cpu(index)
+            elif gate.type == GateType.reset:
+                index = self._qubits - 1 - gate.targ
+                reset_gate_apply(index, self._vector)
             else:
                 self._apply_gate_cpu(gate)
 
