@@ -197,7 +197,7 @@ class StateVectorSimulator:
             index,
             self._vector
         )
-        self._circuit.qubits[self._qubits - 1 - index].measured = result
+        self._circuit.qubits[self._qubits - 1 - index].measured = int(result)
 
     def apply_gate(self, gate: BasicGate):
         """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
