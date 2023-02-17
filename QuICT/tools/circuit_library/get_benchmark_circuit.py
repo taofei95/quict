@@ -9,7 +9,7 @@ class BenchmarkCircuitBuilder:
     """
     A class fetch QuICT benchmark circuits.
 
-     Args:
+    Args:
         width(int): number of qubits
         size(int): number of gates
         random_params (bool, optional): whether random parameter or use default parameter. Defaults to True.
@@ -73,7 +73,8 @@ class BenchmarkCircuitBuilder:
                 if random.random() > random_para[i]:
                     CX & (random.sample(list(range(width)), 2)) | cir
             void_gates += 1
-            cir.name = "+".join(["benchmark", "highly_serialized", f"w{width}_s{size}_d{cir.depth()}_v{void_gates}"])
+            depth = cir.depth()
+            cir.name = "+".join(["benchmark", "highly_serialized", f"w{width}_s{size}_d{depth}_v{void_gates}"])
             cirs_list.append(cir)
 
         return cirs_list
@@ -97,7 +98,6 @@ class BenchmarkCircuitBuilder:
                     break
                 else:
                     break
-
             return cgate
 
         def _pattern2():
@@ -124,12 +124,15 @@ class BenchmarkCircuitBuilder:
             cir = Circuit(width)
             H | cir(0)
             while cir.size() < size:
-                cgate = random.choice([_pattern1(), _pattern2()])
-                cgate | cir
-                if random.random() > random_para[i]:
-                    cir.random_append(5, [GateType.cx])
+                if size - cir.size() < width or random.random() > random_para[i]:
+                    cir.random_append(1, [GateType.cx])
                     void_gates += 1
-            cir.name = "+".join(["benchmark", "highly_entangled", f"w{width}_s{size}_d{cir.depth()}_v{void_gates}"])
+                else:
+                    cgate = random.choice([_pattern1(), _pattern2()])
+                    cgate | cir
+            size = cir.size()
+            depth = cir.depth()
+            cir.name = "+".join(["benchmark", "highly_entangled", f"w{width}_s{size}_d{depth}_v{void_gates}"])
             void_gates_list.append(void_gates)
             cirs_list.append(cir)
 
@@ -157,15 +160,22 @@ class BenchmarkCircuitBuilder:
             return cgate
 
         cir_list = []
-        for i in range(size - width, size, 3):
+        void_gates = 0
+        random_para = [0.4, 0.6, 0.8, 1]
+        for i in range(len(random_para)):
             cir = Circuit(width)
-            void_gates = 0
-            for _ in range(int(i / width)):
+            for _ in range(size - width, size, width):
                 flat_build() | cir
-                void_gates += 1
             Measure | cir
             while cir.size() < size:
-                flat_build() | cir
-            cir.name = "+".join(["benchmark", "mediate_measure", f"w{width}_s{size}_d{cir.depth()}_v{void_gates}"])
+                if size - cir.size() < width or random.random() > random_para[i]:
+                    cir.random_append(1, [random.choice(typelist)])
+                    void_gates += 1
+                else:
+                    flat_build() | cir
+            size = cir.size()
+            depth = cir.depth()
+            cir.name = "+".join(["benchmark", "mediate_measure", f"w{width}_s{size}_d{depth}_v{void_gates}"])
             cir_list.append(cir)
+
         return cir_list
