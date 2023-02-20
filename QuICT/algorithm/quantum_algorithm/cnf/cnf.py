@@ -6,6 +6,7 @@
 import math
 import numpy as np
 
+from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.gate.backend.mct.mct_linear_dirty_aux import MCTLinearHalfDirtyAux
 from QuICT.core.gate.backend.mct.mct_one_aux import MCTOneAux
@@ -722,7 +723,9 @@ class CNFSATOracle:
                                     ]
                                 )
 
-        return self._cgate
+        cnf_circuit = Circuit(self._cgate.width())
+        self._cgate | cnf_circuit
+        return cnf_circuit
 
     def run(
         self, cnf_para: str, ancilla_qubits_num: int = 3, dirty_ancilla: int = 0, shots: int = 0
@@ -805,6 +808,7 @@ class CNFSATOracle:
             variable_data = [int(x) for x in variable_data]
             if cls.check_solution(variable_data, variable_number, clause_number, CNF_data):
                 solutions.append(variable_data)
+                print(variable_data)
 
         return len(solutions)
 
