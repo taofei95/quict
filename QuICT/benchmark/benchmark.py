@@ -235,7 +235,7 @@ class QuICTBenchmark:
             # print(entropy_QV_score)
             # Step 3: return entropy values and quantum volumn values
             entropy_QV_score.append([circuit_list[index].name, entropy_value, entropy_score, QV_value])
-            entropy_QV_score.sort(key=lambda x:int(re.findall(r"\d+", x[0])[0]), reverse=False)
+            entropy_QV_score.sort(key=lambda x: int(re.findall(r"\d+", x[0])[0]), reverse=False)
 
         return entropy_QV_score
 

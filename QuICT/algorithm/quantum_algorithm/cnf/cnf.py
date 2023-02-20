@@ -779,15 +779,15 @@ class CNFSATOracle:
         cnf_result = 1
         for i in range(clause_number):
             clause_result = 0
-            if CNF_data[i+1] == []:
+            if CNF_data[i + 1] == []:
                 clause_result = 1
             else:
-                for j in range(len(CNF_data[i+1])):
-                    if CNF_data[i+1][j] > 0:
-                        clause_result = clause_result + variable_data[CNF_data[i+1][j]-1]
+                for j in range(len(CNF_data[i + 1])):
+                    if CNF_data[i + 1][j] > 0:
+                        clause_result = clause_result + variable_data[CNF_data[i + 1][j] - 1]
                     else:
-                        if CNF_data[i+1][j] < 0:
-                            clause_result = clause_result  + ( 1 - variable_data[-CNF_data[i+1][j]-1] )
+                        if CNF_data[i + 1][j] < 0:
+                            clause_result = clause_result  + (1 - variable_data[-CNF_data[i + 1][j] - 1])
                 if clause_result == 0:
                     cnf_result = 0
                     break
@@ -800,8 +800,8 @@ class CNFSATOracle:
     @classmethod
     def find_solution_count(cls, variable_number, clause_number, CNF_data):
         solutions = []
-        for i in range(1<<variable_number):
-            variable_data = bin(i)[2:].rjust(variable_number,'0')[::-1]
+        for i in range(1 << variable_number):
+            variable_data = bin(i)[2:].rjust(variable_number, '0')[::-1]
             variable_data = [int(x) for x in variable_data]
             if cls.check_solution(variable_data, variable_number, clause_number, CNF_data):
                 solutions.append(variable_data)
