@@ -1366,6 +1366,92 @@ class CHGate(BasicGate):
 CH = CHGate()
 
 
+class CRxGate(BasicGate):
+    """ controlled-Rx gate """
+
+    def __init__(self, params: list = [np.pi / 2]):
+        super().__init__(
+            controls=1,
+            targets=1,
+            params=1,
+            type_=GateType.crx,
+            matrix_type=MatrixType.diag_normal
+        )
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
+        self.permit_element(alpha)
+
+        return CRzGate([alpha])
+
+    @property
+    def matrix(self):
+        return np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, np.cos(self.parg / 2), -np.sin(self.parg / 2) * 1j],
+            [0, 0, -np.sin(self.parg / 2) * 1j, np.cos(self.parg / 2)]
+        ], dtype=self._precision)
+
+
+CRx = CRxGate()
+
+
+class CRyGate(BasicGate):
+    """ controlled-Ry gate """
+
+    def __init__(self, params: list = [np.pi / 2]):
+        super().__init__(
+            controls=1,
+            targets=1,
+            params=1,
+            type_=GateType.cry,
+            matrix_type=MatrixType.diag_normal
+        )
+
+        self.pargs = params
+
+    def __call__(self, alpha):
+        """ Set parameters for the gate.
+
+        Args:
+            alpha (int/float/complex): The parameter for gate
+
+        Raises:
+            TypeError: param not one of int/float/complex
+
+        Returns:
+            BasicGate: The gate with parameters
+        """
+        self.permit_element(alpha)
+
+        return CRzGate([alpha])
+
+    @property
+    def matrix(self):
+        return np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, np.cos(self.parg / 2), -np.sin(self.parg / 2)],
+            [0, 0, np.sin(self.parg / 2), np.cos(self.parg / 2)]
+        ], dtype=self._precision)
+
+
+CRy = CRyGate()
+
+
 class CRzGate(BasicGate):
     """ controlled-Rz gate """
 
