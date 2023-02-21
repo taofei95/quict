@@ -18,14 +18,15 @@ class CNFSATOracle:
         self.simulator = simu
 
     def circuit(
-        self, cnf_para: str, ancilla_qubits_num: int = 3, dirty_ancilla: int = 0
-    ) -> int:
+        self, cnf_para: str, ancilla_qubits_num: int = 3, dirty_ancilla: int = 0, output_cgate: bool = True
+    ) -> Circuit:
         """Run CNF algorithm
 
         Args:
             cnf_para (str | list): The cnf file path or cnf variables (variable_number, clause_number, CNF_data).
             ancilla_qubits_num (int): >= 3
             dirty_ancilla (int): 0 for clean and >0 for dirty
+            output_cgate (bool): Whether return a compositegate or a circuit.
         """
         # check if Aux > 2
         assert ancilla_qubits_num > 2, "Need at least 3 auxiliary qubit."
@@ -723,9 +724,12 @@ class CNFSATOracle:
                                     ]
                                 )
 
-        cnf_circuit = Circuit(self._cgate.width())
-        self._cgate | cnf_circuit
-        return cnf_circuit
+        if output_cgate:
+            return self._cgate
+        else:
+            cnf_circuit = Circuit(self._cgate.width())
+            self._cgate | cnf_circuit
+            return cnf_circuit
 
     def run(
         self, cnf_para: str, ancilla_qubits_num: int = 3, dirty_ancilla: int = 0, shots: int = 0
