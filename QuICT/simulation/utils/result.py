@@ -1,8 +1,5 @@
-from collections import defaultdict
 import os
 import numpy as np
-
-from QuICT.core.utils import unique_id_generator
 
 
 class Result:
@@ -17,63 +14,91 @@ class Result:
         self,
         device: str,
         backend: str,
-        shots: int,
-        options: dict
+        precision: str,
+        circuit_record: bool,
+        amplitude_record: bool,
+        options: dict,
+        output_path: str = None
     ):
-        self.id = unique_id_generator()
         self.device = device
         self.backend = backend
-        self.shots = shots
+        self.precision = precision
+        self._circuit_record = circuit_record
+        self._amplitude_record = amplitude_record
         self.options = options
-        self.spending_time = 0
-        self.counts = defaultdict(int)
+
+        self.counts = {}
+        self.state_vector = None
+        self.density_matrix = None
 
         # prepare output path
-        self.output_path = self._prepare_output_file()
+        self._dump_folder = True if self._amplitude_record or self._circuit_record else False
+        if self._dump_folder:
+            self._output_path = self._prepare_output_file(output_path)
 
-    def _prepare_output_file(self):
+    def __str__(self):
+        return f"Device: {self.device}\nBackend: {self.backend}\n" + \
+            f"Options: {self.options}\nResults: {self.counts}"
+
+    def __dict__(self):
+        return {
+            "id": self.id,
+            "shots": self.shots,
+            "backend_info": {
+                "device": self.device,
+                "backend": self.backend,
+                "options": self.options
+            },
+            "data": {
+                "counts": self.counts,
+                "state_vector": self.state_vector,
+                "density_matrix": self.density_matrix
+            }
+        }
+
+    def _prepare_output_file(self, output_path):
         """ Prepare output path. """
-        curr_path = os.getcwd()
-        output_path = os.path.join(curr_path, "output", self.id)
+        if output_path is None:
+            curr_path = os.getcwd()
+            output_path = os.path.join(curr_path, "output")
 
         if not os.path.exists(output_path):
             os.makedirs(output_path)
 
         return output_path
 
-    def record(self, result, spending_time: float = None, qubits: int = None):
+    def record_sample(self, result: list):
         """ Record circuit's result
 
         Args:
-            result (int or np.array): The measured result from StateVectorSimulator or matrix from Unitary Simulator.
-
-        Raises:
-            TypeError: Wrong type input.
+            result (list): The sample of measured result from given circuit.
         """
-        if isinstance(result, int):
-            bit_idx = "{0:0b}".format(result)
-            if qubits:
-                bit_idx = bit_idx.zfill(qubits)
-            self.counts[bit_idx] += 1
+        self.shots = sum(result)
+        for i in range(len(result)):
+            bit_idx = "{0:0b}".format(i)
+            bit_idx = bit_idx.zfill(int(np.log2(len(result))))
+            self.counts[bit_idx] = result[i]
 
-        if spending_time is not None:
-            self.spending_time += spending_time / self.shots
+        if self._dump_folder:
+            with open(f"{self._output_path}/result_{self.id}.log", "w") as of:
+                of.write(str(self.__dict__()))
 
     def record_circuit(self, circuit):
         """ dump the circuit. """
-        with open(f"{self.output_path}/circuit.qasm", "w") as of:
-            of.write(circuit.qasm())
+        self.id = circuit.name
+        if self._circuit_record:
+            with open(f"{self._output_path}/circuit_{self.id}.qasm", "w") as of:
+                of.write(circuit.qasm())
 
-    def record_sv(self, state, shot):
+    def record_amplitude(self, amplitude):
         """ dump the circuit. """
-        if self.device == "GPU" and self.backend != "multiGPU":
-            state = state.get()
+        if self.device == "GPU":
+            amplitude = amplitude.get()
 
-        np.savetxt(f"{self.output_path}/state_{shot}.txt", state)
+        if self._amplitude_record:
+            np.savetxt(f"{self._output_path}/amp_{self.id}.txt", amplitude)
 
-    def dumps(self):
-        """ dump the result. """
-        with open(f"{self.output_path}/result.log", "w") as of:
-            of.write(str(self.__dict__))
-
-        return self.__dict__
+        if self.backend == "density_matrix":
+            self.density_matrix = amplitude.copy()
+        else:
+            self.state_vector = amplitude.copy()

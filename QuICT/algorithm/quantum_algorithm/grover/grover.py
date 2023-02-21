@@ -1,24 +1,14 @@
-#!/usr/bin/env python
-# -*- coding:utf8 -*-
-# @TIME    : 2021/6/1 16:20 上午
-# @Author  : Zhu Qinlin
-# @File    : standard_grover.py
-
 import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.mct import MCTLinearOneDirtyAux
+from QuICT.core.gate.backend import MCTOneAux
+from QuICT.tools import Logger
+from QuICT.tools.exception.core import *
 
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
-import logging
+logger = Logger("Grover")
 
-
-def my_print(msg, demo_mode):
-    if demo_mode:
-        print(msg)
-    else:
-        logging.info(msg)
+ALPHA = 1.5
 
 
 def degree_counterclockwise(v1: np.ndarray, v2: np.ndarray):
@@ -35,71 +25,122 @@ class Grover:
 
     Quantum Computation and Quantum Information - Michael A. Nielsen & Isaac L. Chuang
     """
-    @staticmethod
-    def run(n, oracle, simulator=None, demo_mode=False, **kwargs):
+
+    def __init__(self, simulator=None) -> None:
+        self.simulator = simulator
+
+    def _grover_operator(self, n, n_ancilla, oracle, is_bit_flip=False):
+        cgate = CompositeGate()
+        index_q = list(range(n))
+        ancilla_q = list(range(n, n + n_ancilla))
+        # Grover iteration
+        if is_bit_flip:
+            X | cgate(ancilla_q[0])
+            H | cgate(ancilla_q[0])
+        oracle | cgate(index_q + ancilla_q)
+        if is_bit_flip:
+            H | cgate(ancilla_q[0])
+            X | cgate(ancilla_q[0])
+        for idx in index_q:
+            H | cgate(idx)
+        # control phase shift
+        for idx in index_q:
+            X | cgate(idx)
+        H | cgate(index_q[n - 1])
+        MCTOneAux().execute(n + 1) | cgate(index_q + ancilla_q[:1])
+        H | cgate(index_q[n - 1])
+        for idx in index_q:
+            X | cgate(idx)
+        # control phase shift end
+        for idx in index_q:
+            H | cgate(idx)
+        return cgate
+
+    def circuit(
+        self,
+        n,
+        n_ancilla,
+        oracle,
+        n_solution=1,
+        measure=True,
+        is_bit_flip=False,
+        iteration_number_forced=False,
+    ):
         """ grover search for f with custom oracle
 
         Args:
             n(int): the length of input of f
-            oracle(CompositeGate): the oracle assuming one ancilla@[n] in |->
+            n_ancilla(int): length of oracle working space. assume clean
+            oracle(CompositeGate): the oracle that flip phase of target state.
+                [0:n] is index qreg,
+                [n:n+k] is ancilla
+            n_solution(int): number of solution
+            measure(bool): measure included or not
+            iteration_number_forced(bool): if True, n_solution is used as iteration count
+
         Returns:
             int: the a satisfies that f(a) = 1
         """
-        if simulator is None:
-            simulator = ConstantStateVectorSimulator()
-        circuit = Circuit(n + 1)
-        index_q: list = list(range(n))
-        result_q: int = n
-        N = 2 ** n
-        theta = 2 * np.arccos(np.sqrt(1 - 1 / N))
-        T = round(np.arccos(np.sqrt(1 / N)) / theta)
-        my_print(
-            f"[init] theta = {theta:.4f}, Grover iteration count = {T}", demo_mode
-        )
-        phase_size = 0
-        oracle_size = 0
+        assert n_ancilla > 0, "at least 1 ancilla, which is shared by MCT part"
+        circuit = Circuit(n + n_ancilla)
+        index_q = list(range(n))
+        if iteration_number_forced:
+            T = n_solution
+        else:
+            N = 2 ** n
+            theta = np.arcsin(np.sqrt(n_solution / N))
+            T = int(np.round((np.pi / 2 - theta) / (2 * theta)))
+
+        grover_operator = self._grover_operator(n, n_ancilla, oracle, is_bit_flip)
 
         # create equal superposition state in index_q
-        for idx in index_q: H | circuit(idx)
-        # create |-> in result_q
-        X | circuit(result_q)
-        H | circuit(result_q)
+        for idx in index_q:
+            H | circuit(idx)
+        # rotation
         for i in range(T):
-            # Grover iteration
-            if demo_mode and i == 0:
-                tmp = circuit.size()
-            oracle | circuit
-            if demo_mode and i == 0:
-                oracle_size = circuit.size() - tmp
-                tmp = circuit.size()
-            for idx in index_q: H | circuit(idx)
-            # control phase shift
-            for idx in index_q: X | circuit(idx)
-            H | circuit(index_q[n - 1])
-            MCTLinearOneDirtyAux.execute(n + 1) | circuit
+            grover_operator | circuit
+        for idx in index_q:
+            if measure:
+                Measure | circuit(idx)
+        logger.info(
+            f"circuit width          = {circuit.width():4}\n"
+            + f"oracle  calls          = {T:4}\n"
+            + f"other circuit size     = {circuit.size() - oracle.size()*T:4}\n"
+        )
+        return circuit
 
-            H | circuit(index_q[n - 1])
-            for idx in index_q: X | circuit(idx)
-            # control phase shift end
-            for idx in index_q: H | circuit(idx)
-            if demo_mode and i == 0:
-                phase_size = circuit.circuit_size() - tmp
-            if demo_mode:
-                amp = simulator.run(circuit)
-                amp = np.array(amp[::2]) * np.sqrt(2)
-                d = degree_counterclockwise(amp, kwargs["beta"])
-                my_print(
-                    f"[{i+1:3}-th Grover iteration] "
-                    + f"degree from target state: {d:.3f} "
-                    + f"success rate:{(np.real(amp[kwargs['target']])**2) * 100:.1f}%", demo_mode
+    def run(
+        self,
+        n,
+        n_ancilla,
+        oracle,
+        n_solution=1,
+        measure=True,
+        is_bit_flip=False,
+        check_solution=None,
+    ):
+        index_q = list(range(n))
+        # unkonwn solution number
+        if n_solution is None:
+            assert check_solution is not None
+            n_solution_guess = 1 << n
+            while n_solution_guess > 0:
+                logger.info(f"trial with {n_solution_guess} solutions...")
+                circ = self.circuit(
+                    n, n_ancilla, oracle, n_solution_guess, True, is_bit_flip
                 )
-        amp = simulator.run(circuit)
-        if demo_mode:
-            amp = np.array(amp[::2]) * np.sqrt(2)
-        for idx in index_q: Measure | circuit(idx)
-        simulator.run(circuit)
-        my_print(f"circuit width          = {circuit.width():4}", demo_mode)
-        my_print(f"circuit depth          = {circuit.depth():4}", demo_mode)
-        my_print(f"circuit size           = {circuit.size():4}", demo_mode)
-        my_print(f"Grover iteration size  = {oracle_size:4}+{phase_size:4}", demo_mode)
-        return int(circuit[index_q])
+                self.simulator.run(circ)
+                solution = int(circ[index_q])
+                if check_solution(solution):
+                    return solution
+                n_solution_guess = int(n_solution_guess / ALPHA)
+            logger.info("FAILED!")
+            return None
+        # no solution
+        elif n_solution == 0:
+            return 0
+        # standard Grover's algorithm
+        else:
+            circ = self.circuit(n, n_ancilla, oracle, n_solution, measure, is_bit_flip)
+            self.simulator.run(circ)
+            return int(circ[index_q])

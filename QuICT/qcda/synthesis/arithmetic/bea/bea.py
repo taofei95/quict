@@ -1,7 +1,6 @@
 import numpy as np
 
-from QuICT.core.gate import CompositeGate, CX, CCX, CSwap, X, QFT, IQFT, CRz, Rz
-from ..._synthesis import Synthesis
+from QuICT.core.gate import CompositeGate, CX, CCX, CSwap, X, QFT, IQFT, CU1, U1, CCRz, Phase
 
 
 def ex_gcd(a, b, arr):
@@ -18,7 +17,9 @@ def ex_gcd(a, b, arr):
 
 def mod_reverse(a, n):
     arr = [0, 1]
-    ex_gcd(a, n, arr)
+    g = ex_gcd(a, n, arr)
+    if g != 1:
+        raise ValueError("not coprime")
     return (arr[0] % n + n) % n
 
 
@@ -41,7 +42,7 @@ def draper_adder(gate_set, a, b):
             p = 0
             for j in range(i, n):
                 p += 1
-                CRz(2 * np.pi / (1 << p)) & [a[j], b[i]]
+                CU1(2 * np.pi / (1 << p)) & [a[j], b[i]]
         IQFT.build_gate(n) & b
 
 
@@ -65,7 +66,7 @@ def fourier_adder_wired(gate_set, a, phib):
             for j in range(i, n + 1):
                 p += 1
                 if a & (1 << (n - j)) != 0:
-                    Rz(2 * np.pi / (1 << p)) & phib[i]
+                    U1(2 * np.pi / (1 << p)) & phib[i]
 
 
 def fourier_adder_wired_reversed(gate_set, a, phib):
@@ -87,7 +88,7 @@ def fourier_adder_wired_reversed(gate_set, a, phib):
             p = n + 1 - i
             for j in reversed(range(i, n + 1)):
                 if a & (1 << (n - j)) != 0:
-                    Rz(- 2 * np.pi / (1 << p)) & phib[i]
+                    U1(- 2 * np.pi / (1 << p)) & phib[i]
                 p -= 1
 
 
@@ -115,17 +116,16 @@ def cc_fourier_adder_wired(gate_set, a, phib, c, dualControlled):
             for j in range(i, n + 1):
                 p += 1
                 if a & (1 << (n - j)) != 0:
-                    # CCRz(2 * np.pi / (1 << p)) | (c[0],c[1],phib[i])
-                    # QCQI p128, Figure 4.8
                     phase = 2 * np.pi / (1 << p)
+                    # CCU1(2 * np.pi / (1 << p)) | (c[0],c[1],phib[i])
                     if dualControlled:
-                        CRz(phase / 2) & [c[1], phib[i]]
+                        CU1(phase / 2) & [c[1], phib[i]]
                         CX & [c[0], c[1]]
-                        CRz(- phase / 2) & [c[1], phib[i]]
+                        CU1(- phase / 2) & [c[1], phib[i]]
                         CX & [c[0], c[1]]
-                        CRz(phase / 2) & [c[0], phib[i]]
+                        CU1(phase / 2) & [c[0], phib[i]]
                     else:
-                        CRz(phase) & [c[0], phib[i]]
+                        CU1(phase) & [c[0], phib[i]]
 
 
 def cc_fourier_adder_wired_reversed(gate_set, a, phib, c, dualControlled):
@@ -152,16 +152,15 @@ def cc_fourier_adder_wired_reversed(gate_set, a, phib, c, dualControlled):
             for j in reversed(range(i, n + 1)):
                 if a & (1 << (n - j)) != 0:
                     phase = 2 * np.pi / (1 << p)
-                    # CCRz(- 2 * np.pi / (1 << p)) | (c[0],c[1],phib[i])
-                    # QCQI p128, Figure 4.8
+                    # CCU1(2 * np.pi / (1 << p)) | (c[0],c[1],phib[i])
                     if dualControlled:
-                        CRz(- phase / 2) & [c[0], phib[i]]
+                        CU1(- phase / 2) & [c[0], phib[i]]
                         CX & [c[0], c[1]]
-                        CRz(phase / 2) & [c[1], phib[i]]
+                        CU1(phase / 2) & [c[1], phib[i]]
                         CX & [c[0], c[1]]
-                        CRz(- phase / 2) & [c[1], phib[i]]
+                        CU1(- phase / 2) & [c[1], phib[i]]
                     else:
-                        CRz(- phase) & [c[0], phib[i]]
+                        CU1(- phase) & [c[0], phib[i]]
                 p -= 1
 
 
@@ -288,7 +287,7 @@ def c_mult_mod(gate_set, a, N, x, b, c, low):
         IQFT.build_gate(len(b)) & b
 
 
-class BEAAdder(Synthesis):
+class BEAAdder(object):
     @staticmethod
     def execute(n):
         """ a circuit calculate a+b, a and b are gotten from some qubits.
@@ -306,7 +305,7 @@ class BEAAdder(Synthesis):
         return gate_set
 
 
-class BEAAdderWired(Synthesis):
+class BEAAdderWired(object):
     @staticmethod
     def execute(n, a):
         """ a circuit calculate a+b, a is wired, and b are gotten from some qubits.
@@ -327,7 +326,7 @@ class BEAAdderWired(Synthesis):
         return gate_set
 
 
-class BEAReverseAdderWired(Synthesis):
+class BEAReverseAdderWired(object):
     @staticmethod
     def execute(n, a):
         """
@@ -347,7 +346,7 @@ class BEAReverseAdderWired(Synthesis):
         return gate_set
 
 
-class CCBEAAdderWired(Synthesis):
+class CCBEAAdderWired(object):
     @staticmethod
     def execute(n, a):
         """
@@ -369,7 +368,7 @@ class CCBEAAdderWired(Synthesis):
         return gate_set
 
 
-class CCBEAReverseAdderWired(Synthesis):
+class CCBEAReverseAdderWired(object):
     @staticmethod
     def execute(n, a):
         """
@@ -391,7 +390,7 @@ class CCBEAReverseAdderWired(Synthesis):
         return gate_set
 
 
-class CCBEAAdderMod(Synthesis):
+class CCBEAAdderMod(object):
     @staticmethod
     def execute(n, a, N):
         """ use fourier_adder_wired/cc_fourier_adder_wired to calculate (a+b)%N in Fourier space
@@ -423,7 +422,7 @@ class CCBEAAdderMod(Synthesis):
         return gate_set
 
 
-class BEAAdderMod(Synthesis):
+class BEAAdderMod(object):
     @staticmethod
     def execute(n, a, N):
         """ use fourier_adder_wired/cc_fourier_adder_wired
@@ -454,7 +453,7 @@ class BEAAdderMod(Synthesis):
         return gate_set
 
 
-class CBEAMulMod(Synthesis):
+class CBEAMulMod(object):
     @staticmethod
     def execute(n, a, N):
         """ use cc_fourier_adder_mod to calculate (b+ax)%N in Fourier space
@@ -489,7 +488,7 @@ class CBEAMulMod(Synthesis):
         return gate_set
 
 
-class BEAMulMod(Synthesis):
+class BEAMulMod(object):
     @staticmethod
     def execute(n, a, N):
         """ use fourier_adder_mod to calculate (b+ax)%N in Fourier space. No control bits
@@ -522,7 +521,7 @@ class BEAMulMod(Synthesis):
         return gate_set
 
 
-class BEACUa(Synthesis):
+class BEACUa(object):
     @staticmethod
     def execute(n, a, N):
         """ Controlled-U_a, ((a*x)MOD(N)) if c=1, else (x)
@@ -554,10 +553,7 @@ class BEACUa(Synthesis):
             gate_set: CompositeGate
             c_mult_mod(gate_set, a, N, qreg_x, qreg_b, qreg_c, qreg_low)
             for i in range(n):  # n bits swapped, b[0] always 0
-                CSwap & (qreg_c[0], qreg_x[i], qreg_b[i + 1])
-                # CX & (qreg_b[i + 1], qreg_x[i])
-                # CCX & (qreg_c[0], qreg_x[i], qreg_b[i + 1])
-                # CX & (qreg_b[i + 1], qreg_x[i])
+                CSwap & [qreg_c[0], qreg_x[i], qreg_b[i + 1]]
             # Reverse c_mult_mod(a_inv,N,x,b,c,low)
             c_mult_mod(gate_set, N - mod_reverse(a, N), N, qreg_x, qreg_b, qreg_c, qreg_low)
 

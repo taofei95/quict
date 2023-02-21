@@ -10,7 +10,8 @@ try:
 except ImportError:
     cupy = None
 
-from QuICT.core.utils import SPECIAL_GATE_SET, GateType
+from QuICT.core.operator import Operator
+from QuICT.core.utils import GateType
 
 
 class GateMatrixs:
@@ -47,7 +48,10 @@ class GateMatrixs:
 
     def build(self, gates):
         for gate in gates:
-            if gate.type in SPECIAL_GATE_SET and gate.type != GateType.unitary:
+            if isinstance(gate, Operator):
+                continue
+
+            if gate.type in [GateType.measure, GateType.reset, GateType.barrier]:
                 continue
 
             if gate.type == GateType.unitary:
@@ -88,7 +92,7 @@ class GateMatrixs:
         Args:
             gate(Gate): the gate in circuit.
         """
-        if gate.type in SPECIAL_GATE_SET and gate.type != GateType.unitary:
+        if gate.type in [GateType.measure, GateType.reset, GateType.barrier]:
             raise KeyError(f"Wrong gate here. {gate.name}")
 
         gate_name = self._get_gate_name(gate)

@@ -10,10 +10,12 @@ import random
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.gate import *
 from QuICT.core.utils import GateType
+from QuICT.tools.exception.core import GateQubitAssignedError
 
 
 GATE_TYPE_TO_CLASS = {
     GateType.h: HGate,
+    GateType.hy: HYGate,
     GateType.s: SGate,
     GateType.sdg: SDaggerGate,
     GateType.x: XGate,
@@ -32,6 +34,7 @@ GATE_TYPE_TO_CLASS = {
     GateType.t: TGate,
     GateType.tdg: TDaggerGate,
     GateType.phase: PhaseGate,
+    GateType.gphase: GlobalPhaseGate,
     GateType.cz: CZGate,
     GateType.cx: CXGate,
     GateType.cy: CYGate,
@@ -40,25 +43,24 @@ GATE_TYPE_TO_CLASS = {
     GateType.cu1: CU1Gate,
     GateType.cu3: CU3Gate,
     GateType.fsim: FSimGate,
-    GateType.Rxx: RxxGate,
-    GateType.Ryy: RyyGate,
-    GateType.Rzz: RzzGate,
+    GateType.rxx: RxxGate,
+    GateType.ryy: RyyGate,
+    GateType.rzz: RzzGate,
+    GateType.rzx: RzxGate,
     GateType.swap: SwapGate,
+    GateType.iswap: iSwapGate,
+    GateType.iswapdg: iSwapDaggerGate,
+    GateType.sqiswap: SquareRootiSwapGate,
     GateType.cswap: CSwapGate,
     GateType.ccx: CCXGate,
-    GateType.CCRz: CCRzGate,
+    GateType.ccz: CCZGate,
+    GateType.ccrz: CCRzGate,
     GateType.measure: MeasureGate,
     GateType.reset: ResetGate,
     GateType.barrier: BarrierGate,
     GateType.unitary: UnitaryGate,
     GateType.perm: PermGate,
-    GateType.control_perm_detail: ControlPermMulDetailGate,
-    GateType.perm_shift: PermShiftGate,
-    GateType.control_perm_shift: ControlPermShiftGate,
-    GateType.perm_mul: PermMulGate,
-    GateType.control_perm_mul: ControlPermMulGate,
     GateType.perm_fx: PermFxGate,
-    GateType.shor_init: ShorInitialGate,
     GateType.qft: QFTGate,
     GateType.iqft: IQFTGate
 }
@@ -89,7 +91,9 @@ def build_gate(
         qubits = Qureg(qubits)
     elif isinstance(qubits, int):
         qubits = [qubits]
-    assert len(qubits) == args_number
+    assert len(qubits) == args_number, GateQubitAssignedError(
+        "The qubits number should equal to the target quantum gate."
+    )
 
     if isinstance(qubits, Qureg):
         gate.assigned_qubits = qubits
@@ -122,6 +126,6 @@ def build_random_gate(
     gate.targs = choiced_qubits[gate.controls:]
 
     if random_params and gate.params:
-        gate.pargs = [np.random.uniform(0, 2 * np.pi, gate.params) for _ in range(gate.params)]
+        gate.pargs = list(np.random.uniform(0, 2 * np.pi, gate.params))
 
     return gate

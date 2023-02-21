@@ -1,3 +1,17 @@
+// This code is part of Qiskit.
+//
+// (C) Copyright IBM 2017.
+//
+// This code is licensed under the Apache License, Version 2.0. You may
+// obtain a copy of this license in the LICENSE.txt file in the root directory
+// of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+//
+// Any modifications or derivative works of this code must retain this
+// copyright notice, and modified files need to carry a notice indicating
+// that they have been altered from the originals.
+
+// Modification Notice: Code revised for QuICT
+
 // Quantum Experience (QE) Standard Header
 // file: qelib1.inc
 
@@ -17,7 +31,10 @@ gate id a { U(0,0,0) a; }
 gate u0(gamma) q { U(0,0,0) q; }
 
 // --- QE Standard Gates ---
-
+// phase gate
+gate p(lambda) a { U(0,0,lambda) a; }
+// global phase gate
+gate phase(lambda) a { U(0,0,lambda) a; }
 // Pauli gate: bit-flip
 gate x a { u3(pi,0,pi) a; }
 // Pauli gate: bit and phase flip
@@ -26,6 +43,8 @@ gate y a { u3(pi,pi/2,pi/2) a; }
 gate z a { u1(pi) a; }
 // Clifford gate: Hadamard
 gate h a { u2(0,pi) a; }
+// Self-inverse gate: Hadamard
+gate hy a { u3(pi/2,-pi/2,pi/2) a; }
 // Clifford gate: sqrt(Z) phase gate
 gate s a { u1(pi/2) a; }
 // Clifford gate: conjugate of sqrt(Z)
@@ -35,6 +54,20 @@ gate t a { u1(pi/4) a; }
 // C3 gate: conjugate of sqrt(S)
 gate tdg a { u1(-pi/4) a; }
 
+// --- Sqat Gates ---
+// sqrt-X gate
+gate sx a { sdg a; h a; sdg a; }
+// sqrt-W gate
+gate sw a {
+  u1(pi/4) a; sx a; u1(pi/2) a;
+  sx a; x a; u1(-pi/4) a;
+}
+// sqrt-Y gate
+gate sy a {
+  sx a; u1(pi/2) a; sx a;
+  x a;
+}
+
 // --- Standard rotations ---
 // Rotation around X-axis
 gate rx(theta) a { u3(theta, -pi/2,pi/2) a; }
@@ -42,6 +75,11 @@ gate rx(theta) a { u3(theta, -pi/2,pi/2) a; }
 gate ry(theta) a { u3(theta,0,0) a; }
 // rotation around Z axis
 gate rz(phi) a { u1(phi) a; }
+
+// --- Swap Gates ---
+gate iswap a,b { cx a,b; cx b,a; cx a,b; }
+gate iswapdg a,b { cx a,b; cx b,a; cx a,b; }
+gate sqiswap a,b { cx a,b; cx b,a; cx a,b; }
 
 // --- QE Standard User-Defined Gates  ---
 
@@ -70,12 +108,39 @@ gate ccx a,b,c
   cx a,b; t a; tdg b;
   cx a,b;
 }
+// C3 gate: MultiControl-Z
+gate ccz a,b,c
+{
+  cx b,c; tdg c;
+  cx a,c; t c;
+  cx b,c; tdg c;
+  cx a,c; t b; t c;
+  cx a,b; t a; tdg b;
+  cx a,b;
+}
 // cswap (Fredkin)
 gate cswap a,b,c
 {
   cx c,b;
   ccx a,b,c;
   cx c,b;
+}
+// controlled rx rotation
+gate crx(lambda) a,b
+{
+  u1(pi/2) b;
+  cx a,b;
+  u3(-lambda/2,0,0) b;
+  cx a,b;
+  u3(lambda/2,-pi/2,0) b;
+}
+// controlled ry rotation
+gate cry(lambda) a,b
+{
+  ry(lambda/2) b;
+  cx a,b;
+  ry(-lambda/2) b;
+  cx a,b;
 }
 // controlled rz rotation
 gate crz(lambda) a,b
@@ -84,6 +149,15 @@ gate crz(lambda) a,b
   cx a,b;
   u1(-lambda/2) b;
   cx a,b;
+}
+// double controlled rz rotation
+gate ccrz(lambda) a,b,c
+{
+  crz(lambda/2) b,c;
+  cx a,b;
+  crz(-lambda/2) b,c;
+  cx a,b;
+  crz(-lambda/2) a,c;
 }
 // controlled phase rotation
 gate cu1(lambda) a,b
@@ -109,5 +183,37 @@ gate rzz(theta) a,b
 {
   cx a,b;
   u1(theta) b;
+  cx a,b;
+}
+// two-qubit XX rotation
+gate rxx(theta) a,b
+{
+  h a; h b;
+  cx a,b;
+  u1(theta) b;
+  cx a,b;
+  h a; h b;
+}
+// two-qubit YY rotation
+gate ryy(theta) a,b
+{
+  rx(pi/2) a; rx(pi/2) b;
+  cx a,b;
+  u1(theta) b;
+  cx a,b;
+  rx(pi/2) a; rx(pi/2) b;
+}
+// two-qubit ZX rotation
+gate rzx(theta) a,b
+{
+  h a;
+  cx a,b;
+  u1(theta) b;
+  cx a,b;
+  h a;
+}
+// FSim Gate
+gate fsim(alpha, beta) a,b
+{
   cx a,b;
 }

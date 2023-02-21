@@ -4,9 +4,10 @@
 # @Author  : Han Yu, Li Kaiqi
 # @File    : qubit.py
 import random
+from typing import Union
 
-from QuICT.core.exception import *
 from QuICT.core.utils import unique_id_generator
+from QuICT.tools.exception.core import TypeError, ValueError, IndexExceedError, QubitMeasureError
 
 
 class Qubit(object):
@@ -24,6 +25,8 @@ class Qubit(object):
             the probability of measure result to be 1, which range in [0, 1].
             After apply measure gate on the qubit, this attribute can be read,
             otherwise raise an exception
+        historical_measured(list):
+            Record all measured result of current qubits.
     """
 
     @property
@@ -37,6 +40,12 @@ class Qubit(object):
     @measured.setter
     def measured(self, measured):
         self._measured = measured
+        if self._measured is not None:
+            self._historical_measured.append(self._measured)
+
+    @property
+    def historical_measured(self):
+        return self._historical_measured
 
     @property
     def prob(self) -> float:
@@ -55,6 +64,7 @@ class Qubit(object):
         self._id = unique_id_generator()
         self._measured = None
         self._prob = prob
+        self._historical_measured = []
 
     def __str__(self):
         """ string describe of the qubit
@@ -74,7 +84,7 @@ class Qubit(object):
             The qubit has not be measured.
         """
         if self.measured is None:
-            raise Exception(f"The qubit {self.id} has not be measured")
+            raise QubitMeasureError(f"The qubit {self.id} has not be measured")
 
         return self.measured
 
@@ -88,6 +98,11 @@ class Qubit(object):
             The qubit has not be measured.
         """
         return bool(int(self))
+
+    def reset(self):
+        """ Reset self qubit status. """
+        self._historical_measured = []
+        self._measured = None
 
 
 class Qureg(list):
@@ -124,9 +139,9 @@ class Qureg(list):
                     for qbit in qubit:
                         self.append(qbit)
                 else:
-                    raise TypeException("list<Qubits/Qureg>", qubits)
+                    raise TypeError("Qureg.qubits", "int/Qubit/list<Qubit/Qureg>", type(qubit))
         else:
-            raise TypeException("list<Qubits/Qureg> or int or qubit", qubits)
+            raise TypeError("Qureg.qubits", "int/Qubit/list<Qubit/Qureg>", type(qubit))
 
     def __call__(self, indexes: object):
         """ get a smaller qureg from this qureg
@@ -137,9 +152,6 @@ class Qureg(list):
                 2) list<int>
         Returns:
             Qubit[s]: the qureg correspond to the indexes
-        Exceptions:
-            IndexDuplicateException: the range of indexes is error.
-            TypeException: the type of indexes is error.
         """
         if isinstance(indexes, int):
             return Qureg(self[indexes])
@@ -153,6 +165,7 @@ class Qureg(list):
 
         Args:
             item(int/slice): slice passed in.
+
         Return:
             Qubit/Qureg: the result or slice
         """
@@ -166,13 +179,13 @@ class Qureg(list):
                 qureg.append(qubit)
         elif isinstance(item, list) or isinstance(item, tuple):
             for idx in item:
-                assert isinstance(idx, int)
+                assert isinstance(idx, int), TypeError("Qureg.getitem.item.value", "int", type(idx))
                 if idx < 0 or idx > len(self):
-                    raise IndexLimitException(len(self), idx)
+                    raise IndexExceedError("Qureg.getitem", [0, len(self)], idx)
 
                 qureg.append(self[idx])
         else:
-            raise TypeException("int/list[int]/slice", item)
+            raise TypeError("Qureg.getitem", "int/list[int]/slice", type(item))
 
         return qureg
 
@@ -191,7 +204,7 @@ class Qureg(list):
         value = 0
         for qubit in self:
             if qubit.measured is None:
-                raise Exception(f"The qubit {qubit.id} has not be measured")
+                raise QubitMeasureError(f"The qubit {qubit.id} has not be measured")
 
             value <<= 1
             if qubit.measured == 1:
@@ -236,7 +249,7 @@ class Qureg(list):
             for q in other:
                 self.append(q)
         else:
-            raise TypeError("Qureg only can be added with qureg/qubit.")
+            raise TypeError("Qureg.iadd", "Qureg/Qubit", type(other))
 
         return self
 
@@ -248,7 +261,7 @@ class Qureg(list):
         Args:
             other(Qureg): qureg to be checked.
         """
-        assert isinstance(other, Qureg)
+        assert isinstance(other, Qureg), TypeError("Qureg.eq", "Qureg", type(other))
         if not len(other) == len(self):
             return False
 
@@ -276,3 +289,18 @@ class Qureg(list):
                 diff_qubit.append(qubit)
 
         return Qureg(diff_qubit)
+
+    def index(self, qubit: Union[str, Qubit]):
+        if isinstance(qubit, Qubit):
+            return super().index(qubit)
+
+        for idx, item in enumerate(self):
+            if item.id == qubit:
+                return idx
+
+        raise ValueError("Qureg.index.qubit", "within current Qureg", "qubit is not")
+
+    def reset_qubits(self):
+        """ Reset all qubits' status. """
+        for qubit in self:
+            qubit.reset()

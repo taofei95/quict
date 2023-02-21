@@ -4,10 +4,8 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .mct import *
 from .arithmetic import *
-from .uniformly_gate import *
-from .unitary_transform import *
-from .initial_state_preparation import *
+from .clifford import *
 from .gate_transform import *
-from .gate_decomposition import *
+from .quantum_state_preparation import *
+from .unitary_decomposition import *

@@ -1024,7 +1024,7 @@ class TextDrawing:
         top_box = list()
         bot_box = list()
 
-        qubit_index = sorted([i for i in instruction.affectArgs])
+        qubit_index = sorted([i for i in ctrl_qubits + args_qubits])
 
         for ctrl_qubit in zip(ctrl_qubits, ctrl_state):
             if min(qubit_index) > layer.qregs.index(ctrl_qubit[0]):
@@ -1079,9 +1079,10 @@ class TextDrawing:
         # add in a gate that operates over multiple qubits
         def add_connected_gate(gate, gates, layer, current_cons):
             for i, g in enumerate(gates):
-                actual_index = self.qregs.index(gate.affectArgs[i])
+                gate_args = gate.cargs + gate.targs
+                actual_index = self.qregs.index(gate_args[i])
                 if actual_index not in [i for i, j in current_cons]:
-                    layer.set_qubit(gate.affectArgs[i], g)
+                    layer.set_qubit(gate_args[i], g)
                     current_cons.append((actual_index, g))
 
         ctrl_label = ""
@@ -1091,12 +1092,10 @@ class TextDrawing:
             mgate = MeasureFrom()
             layer.set_qubit(gate.targs[0], mgate)
         elif isinstance(gate, BarrierGate):
-            for qubit in gate.targs:
-                if qubit in self.targs:
-                    layer.set_qubit(qubit, Barrier())
+            layer.set_qubit(gate.targ, Barrier())
         elif isinstance(gate, SwapGate):
             # swap
-            gates = [Ex(conditional=conditional) for _ in range(len(gate.affectArgs))]
+            gates = [Ex(conditional=conditional) for _ in range(len(gate.cargs + gate.targs))]
             add_connected_gate(gate, gates, layer, current_cons)
 
         elif isinstance(gate, ResetGate):
@@ -1137,7 +1136,8 @@ class TextDrawing:
                                 conditional=conditional)
         else:
             raise Exception(
-                "Text visualizer does not know how to handle this instruction: ", instruction.qasm_name)
+                f"Text visualizer does not know how to handle this instruction: {gate.type}."
+            )
 
         # sort into the order they were declared in
         # this ensures that connected boxes have lines in the right direction

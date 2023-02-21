@@ -3,9 +3,9 @@ import numpy as np
 from QuICT.algorithm import Algorithm
 from QuICT.core import Circuit
 from QuICT.core.gate import X, H, Measure
-from QuICT.qcda.synthesis.initial_state_preparation import InitialStatePreparation
-from QuICT.qcda.synthesis.mct import MCTOneAux
-from QuICT.simulation.gpu_simulator import ConstantStateVectorSimulator
+from QuICT.core.gate.backend import MCTOneAux
+from QuICT.qcda.synthesis.quantum_state_preparation import QuantumStatePreparation
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 def weight_decison_para(n, k, l):
@@ -56,34 +56,39 @@ class WeightDecision(Algorithm):
         value[N - 1] = b / np.sqrt(n + a ** 2 + b ** 2)
 
         # Apply oracle U_f which flips the phase of every state |x> with f(x) = 1
-        InitialStatePreparation.execute(value) | circuit(qreg)
+        QSP = QuantumStatePreparation('uniformly_gates')
+        gates_preparation = QSP.execute(value)
+        gates_preparation | circuit(qreg)
         X | circuit(ancilla)
         H | circuit(ancilla)
 
+        MCTOA = MCTOneAux()
+        gates_mct = MCTOA.execute(num)
+
         for i in range(d - 1):
             oracle | circuit([i for i in range(num - 1)])
-            MCTOneAux.execute(num) | circuit
-            InitialStatePreparation.execute(value) ^ circuit(qreg)
+            gates_mct | circuit
+            gates_preparation ^ circuit(qreg)
             for q in qreg:
                 X | circuit(q)
 
-            MCTOneAux.execute(num) | circuit
+            gates_mct | circuit
             for q in qreg:
                 X | circuit(q)
 
-            InitialStatePreparation.execute(value) | circuit(qreg)
+            gates_preparation | circuit(qreg)
 
         # Apply H,X to recover ancilla
         H | circuit(ancilla)
         X | circuit(ancilla)
         oracle | circuit(list(range(num - 1)))
-        MCTOneAux.execute(num) | circuit
+        gates_mct | circuit
 
         # Measure
         for i in range(num - 1):
             Measure | circuit(i)
 
-        simulator = ConstantStateVectorSimulator()
+        simulator = StateVectorSimulator()
         _ = simulator.run(circuit)
 
         if int(ancilla) == gamma % 2:

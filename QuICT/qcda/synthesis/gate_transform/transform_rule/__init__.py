@@ -4,6 +4,5 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .transform_rule import TransformRule
-from .SU2_rules import *
+from .one_qubit_gate_rules import *
 from .two_qubit_gate_rules import *
