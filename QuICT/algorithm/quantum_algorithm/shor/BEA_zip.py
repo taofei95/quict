@@ -82,6 +82,10 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
             ptr += 1
         triggers_reset[k] | circuit(trickbit)
         ptr += 1
+    logger.info("circuit info:")
+    logger.info(f"width = {circuit.width()}")
+    logger.info(f"depth = {circuit.depth()}")
+    logger.info(f"size  = {circuit.size()}")
     return circuit, trickbit + history_indices[::-1]
 
 

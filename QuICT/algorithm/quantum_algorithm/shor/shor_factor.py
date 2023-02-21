@@ -29,10 +29,10 @@ class ShorFactor:
 
     _ALLOWED_MODES = {"BEA", "HRS", "BEA_zip", "HRS_zip"}
     _RUN_METHOD_OF_MODE = {
-        "BEA": reinforced_order_finding_constructor(BEA_run),
-        "HRS": reinforced_order_finding_constructor(HRS_run),
-        "BEA_zip": reinforced_order_finding_constructor(BEA_zip_run),
-        "HRS_zip": reinforced_order_finding_constructor(HRS_zip_run),
+        "BEA": BEA_run,
+        "HRS": HRS_run,
+        "BEA_zip": BEA_zip_run,
+        "HRS_zip": HRS_zip_run,
     }
     _CIRCUIT_METHOD_OF_MODE = {
         "BEA": BEA_circuit,
@@ -143,9 +143,8 @@ class ShorFactor:
             )
             # check if any input circuit. if no, run according to `mode`; else run the input circuit
             if circuit is None:
-                r = ShorFactor._RUN_METHOD_OF_MODE[self.mode](
-                    a=a, N=N, simulator=simulator
-                )
+                func = reinforced_order_finding_constructor(ShorFactor._RUN_METHOD_OF_MODE[self.mode])
+                r = func(a=a, N=N, simulator=simulator)
             else:
                 circuit.reset_qubits()
                 simulator.run(circuit)

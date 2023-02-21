@@ -36,3 +36,4 @@ unit_test/**/*.jpg
 /demo/
 /QNN_MNIST*
 /docs_
+/tmp

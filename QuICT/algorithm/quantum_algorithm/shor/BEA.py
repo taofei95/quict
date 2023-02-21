@@ -51,6 +51,10 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
         Swap | circuit([trickbits[k], trickbits[len(trickbits) - 1 - k]])
     for idx in b_reg + trickbits + qreg_low:
         Measure | circuit(idx)
+    logger.info("circuit info:")
+    logger.info(f"width = {circuit.width()}")
+    logger.info(f"depth = {circuit.depth()}")
+    logger.info(f"size  = {circuit.size()}")
     return circuit, trickbits[::-1]  # for int(circuit[trickbits]) convenience
 
 
