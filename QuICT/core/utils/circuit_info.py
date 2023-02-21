@@ -3,13 +3,12 @@
 # @TIME    : 2022/1/15 10:31
 # @Author  : Han Yu, Li Kaiqi
 # @File    : _circuit_computing.py
-from collections import Iterable
+from enum import Enum
 from typing import List
 import numpy as np
-from enum import Enum
 
-from .gate_type import GateType
 from .circuit_matrix import CircuitMatrix, get_gates_order_by_depth
+from .gate_type import GateType
 
 
 class CircuitBased(object):
@@ -74,7 +73,7 @@ class CircuitBased(object):
         """
         count = 0
         for gate in self._gates:
-            if gate.controls + gate.targets == 2:
+            if hasattr(gate, "is_single") and gate.controls + gate.targets == 2:
                 count += 1
 
         return count
@@ -87,7 +86,7 @@ class CircuitBased(object):
         """
         count = 0
         for gate in self._gates:
-            if gate.is_single():
+            if hasattr(gate, "is_single") and gate.is_single():
                 count += 1
 
         return count

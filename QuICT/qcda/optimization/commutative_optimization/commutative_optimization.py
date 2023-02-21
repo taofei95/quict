@@ -97,14 +97,16 @@ class CommutativeOptimization(object):
         (GateType.rz, 15): ([T_dagger], np.pi / 8)
     }
 
-    def __init__(self, parameterization=True, deparameterization=False):
+    def __init__(self, parameterization=True, deparameterization=False, keep_phase=False):
         """
         Args:
             parameterization(bool, optional): whether to use the parameterize() process
             deparameterization(bool, optional): whether to use the deparameterize() process
+            keep_phase(bool): whether to keep the global phase as a GPhase gate in the output
         """
         self.parameterization = parameterization
         self.deparameterization = deparameterization
+        self.keep_phase = keep_phase
 
     def __repr__(self):
         return f'CommutativeOptimization(parameterization={self.parameterization}, ' \
@@ -318,7 +320,7 @@ class CommutativeOptimization(object):
                 gates_opt.append(node.gate)
 
         phase_angle = np.mod(phase_angle.real, 2 * np.pi)
-        if not np.isclose(phase_angle, 0) and not np.isclose(phase_angle, 2 * np.pi):
+        if self.keep_phase and not np.isclose(phase_angle, 0) and not np.isclose(phase_angle, 2 * np.pi):
             with gates_opt:
                 GPhase(phase_angle) & 0
 

@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 from typing import Union, List
 
@@ -90,7 +91,10 @@ class CircuitLib:
 
     def _get_string_from_qasm(self, file_path: str) -> str:
         """ Return qasm string from qasm file. """
-        return open(file_path, 'r').read()
+        with open(file_path, 'r') as qasm_file:
+            qstring = qasm_file.read()
+
+        return qstring
 
     def _copy_qasm_file(self, file_path: str):
         """ Copy target qasm file to the given output path. """
@@ -119,16 +123,16 @@ class CircuitLib:
         return circuit_all
 
     def _get_circuit_from_benchmark(self, classify, width, size):
-        if classify == "highly_entangled":
-            circuit = BenchmarkCircuitBuilder.entangled_circuit_build(width, size)
-        elif classify == "highly_parallelized":
-            circuit = BenchmarkCircuitBuilder.parallelized_circuit_build(width, size)
+        if classify == "highly_parallelized":
+            circuits_list = BenchmarkCircuitBuilder.parallelized_circuit_build(width, size)
+        elif classify == "highly_entangled":
+            circuits_list = BenchmarkCircuitBuilder.entangled_circuit_build(width, size)
         elif classify == "highly_serialized":
-            circuit = BenchmarkCircuitBuilder.serialized_circuit_build(width, size)
+            circuits_list = BenchmarkCircuitBuilder.serialized_circuit_build(width, size)
         else:
-            circuit = BenchmarkCircuitBuilder.mediate_measure_circuit_build(width, size)
+            circuits_list = BenchmarkCircuitBuilder.mediate_measure_circuit_build(width, size)
 
-        return circuit
+        return circuits_list
 
     def _get_all_from_generator(
         self,
@@ -154,13 +158,16 @@ class CircuitLib:
                     circuit = Circuit(width)
                     circuit.random_append(size * width, gateset, True, prob)
                     depth = circuit.depth()
+                    if max_depth is None or depth <= max_depth:
+                        circuit.name = "+".join([type, classify, f"w{width}_s{size}_d{depth}"])
+                        circuit_list.append(circuit)
                 else:
-                    circuit = self._get_circuit_from_benchmark(classify, width, size * width)
-                    depth = circuit.depth()
-
-                if max_depth is None or depth <= max_depth:
-                    circuit.name = "+".join([type, classify, f"w{width}_s{size * width}_d{depth}"])
-                    circuit_list.append(circuit)
+                    circuits_list = self._get_circuit_from_benchmark(classify, width, size * width)
+                    for idx in range(len(circuits_list)):
+                        benchmark_circuit = circuits_list[idx]
+                        benchmark_circuit_depth = int(re.findall(r"\d+", benchmark_circuit.name)[2])
+                        if max_depth is None or benchmark_circuit_depth <= max_depth:
+                            circuit_list.append(benchmark_circuit)
 
         if self._output_type == "circuit":
             return circuit_list
@@ -191,7 +198,7 @@ class CircuitLib:
 
         Args:
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [2, qubits_interval]. The qubits' number range is [1, 5].
+                it equals to the interval of [1, qubits_interval]. The qubits' number range is [1, 5].
             max_size(int): max number of gates, range is [2, 6].
             max_depth(int): max depth of circuit, range is [2, 9].
             typelist(Iterable[GateType]): list of allowed gate types
@@ -233,7 +240,7 @@ class CircuitLib:
             classify (str): one of ["aspen-4", "ourense", "rochester", "sycamore", "tokyo", \
                 "ctrl_unitary", "diag", "single_bits", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"]
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [2, qubits_interval].
+                it equals to the interval of [1, qubits_interval].
             max_size(int): max number of gates.
             max_depth(int): max depth of circuit.
 
@@ -274,9 +281,9 @@ class CircuitLib:
         Restrictions will be ignored if not specified.
 
         Args:
-            classify (str): one of ["adder", "clifford", "grover", "qft", "vqe"]
+            classify (str): one of ["adder", "clifford", "cnf", "grover", "maxcut", "qft", "qnn", "quantum_walk", "vqe"]
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [2, qubits_interval].
+                it equals to the interval of [1, qubits_interval].
             max_size(int): max number of gates.
             max_depth(int): max depth of circuit.
 
@@ -308,7 +315,7 @@ class CircuitLib:
         Args:
             classify (str): one of ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"]
             qubits_interval (Union[List, int], optional): The interval of qubit number, if it givens an interger,
-                it equals to the interval of [2, qubits_interval].
+                it equals to the interval of [1, qubits_interval].
             max_size(int): max number of gates.
             max_depth(int): max depth of circuit.
 
@@ -330,14 +337,14 @@ class CircuitLib:
         """Get the target circuits from QuICT Circuit Library.
 
         Args:
-            type (str): The type of circuits, one of [template, random, algorithm, benchmark].
+            type (str): The type of circuits, one of [template, random, algorithm, benchmark, instructionset].
             classify (str, optional): The classify of selected circuit's type.
                 For template circuit's type, classify must be template;
                 For random circuit's type, classify is one of
                     [aspen-4, ourense, rochester, sycamore, tokyo, ctrl_unitary, diag, single_bit, ctrl_diag,
                      google, ibmq, ionq, ustc, nam, origin]
                 For algorithm circuit's type, classify is one of
-                    [adder, clifford, grover, qft, vqe, cnf, maxcut]
+                    [adder, clifford, qnn, grover, qft, vqe, cnf, maxcut, quantum_walk]
                 For benchmark circuit's type, classify is one of
                     [highly_entangled, highly_parallelized, highly_serialized, mediate_measure]
 

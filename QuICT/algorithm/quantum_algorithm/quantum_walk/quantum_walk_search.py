@@ -1,8 +1,7 @@
-import matplotlib.pyplot as plt
 import numpy as np
 
 from QuICT.algorithm.quantum_algorithm.quantum_walk import Graph, QuantumWalk
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 class QuantumWalkSearch(QuantumWalk):
@@ -12,12 +11,12 @@ class QuantumWalkSearch(QuantumWalk):
     http://dx.doi.org/10.4236/jqis.2015.51002
     """
 
-    def __init__(self, simulator=ConstantStateVectorSimulator()):
+    def __init__(self, simulator=StateVectorSimulator()):
         """ Initialize the simulator circuit of quantum random walk.
 
         Args:
-            simulator (Union[ConstantStateVectorSimulator, CircuitSimulator], optional):
-                The simulator for simulating quantum circuit. Defaults to ConstantStateVectorSimulator().
+            simulator (Union[StateVectorSimulator, StateVectorSimulator], optional):
+                The simulator for simulating quantum circuit. Defaults to StateVectorSimulator().
         """
         QuantumWalk.__init__(self, simulator)
         self._search = True

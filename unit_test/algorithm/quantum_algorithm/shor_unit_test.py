@@ -15,10 +15,10 @@ from QuICT.algorithm.quantum_algorithm.shor.HRS_zip import (
 )
 import sys
 
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
-simulator = ConstantStateVectorSimulator()
+simulator = StateVectorSimulator()
 threthold_rate = 0.3
 number_list = [
     6,

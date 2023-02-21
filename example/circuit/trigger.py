@@ -2,7 +2,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.operator import Trigger
 
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 cgate0 = CompositeGate()
@@ -22,7 +22,7 @@ c = Circuit(3)
 H | c([0])
 trigger | c([0])  # trigger measure its target and then switch on the result to construct gates
 
-sim = CircuitSimulator()
+sim = StateVectorSimulator()
 amp = sim.run(c)
 
 print(amp)

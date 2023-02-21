@@ -13,7 +13,7 @@ from .utility import *
 
 
 class UnitaryDecomposition(object):
-    def __init__(self, include_phase_gate: bool = True, recursive_basis: int = 2):
+    def __init__(self, include_phase_gate: bool = False, recursive_basis: int = 2):
         """
         Args:
             include_phase_gate(bool): Whether to include a phase gate to keep synthesized gate matrix the same

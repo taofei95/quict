@@ -51,7 +51,7 @@ def test():
         circuit = Circuit(n)
         circuit.random_append(rand_size=100, typelist=typelist, random_params=True)
 
-        CO = CommutativeOptimization(deparameterization=True)
+        CO = CommutativeOptimization(deparameterization=True, keep_phase=True)
         circuit_opt = CO.execute(circuit)
 
         assert np.allclose(circuit.matrix(), circuit_opt.matrix())

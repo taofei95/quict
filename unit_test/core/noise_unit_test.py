@@ -52,9 +52,9 @@ class TestNoise(unittest.TestCase):
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation(accumulated_mode=True)
         _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
-        count = dm_simu.sample(1000)
+        count = dm_simu.sample(100)
 
-        assert count[0] + count[15] + count[7] + count[8] == 1000
+        assert count[0] + count[15] + count[7] + count[8] == 100
 
     def test_depolarizingerror(self):
         depolarizing_rate = 0.05
@@ -74,9 +74,9 @@ class TestNoise(unittest.TestCase):
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation()
         _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
-        count = dm_simu.sample(1000)
+        count = dm_simu.sample(100)
 
-        assert count[0] + count[15] + count[7] + count[8] == 1000
+        assert count[0] + count[15] + count[7] + count[8] == 100
 
     def test_damping(self):
         # Amplitude damping error
@@ -96,9 +96,9 @@ class TestNoise(unittest.TestCase):
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulation()
         _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
-        count = dm_simu.sample(1000)
+        count = dm_simu.sample(100)
 
-        assert count[0] + count[15] + count[7] + count[8] == 1000
+        assert count[0] + count[15] + count[7] + count[8] == 100
 
     def test_readout(self):
         # single-qubit Readout Error

@@ -172,7 +172,7 @@ class TestCPULinalg(unittest.TestCase):
 
         vec = np.zeros((1 << qubit_num, ), dtype=np.complex128)
         vec[0] = np.complex128(1)
-        vec = CPUCalculator.matrix_dot_vector(
+        CPUCalculator.matrix_dot_vector(
             vec,
             qubit_num,
             circuit.matrix(),

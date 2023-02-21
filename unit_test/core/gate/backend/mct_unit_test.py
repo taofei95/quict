@@ -7,7 +7,7 @@
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.core.gate.backend import MCTOneAux, MCTLinearHalfDirtyAux, MCTLinearOneDirtyAux, MCTWithoutAux
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 def set_ones(qreg, N):
@@ -38,7 +38,7 @@ def test_MCT_Linear_Simulation_Half():
 
 
 def test_MCT_Linear_Simulation_One_functional():
-    simulator = CircuitSimulator()
+    simulator = StateVectorSimulator()
     for n in range(3, 9):
         for control_bits in range(0, 1 << n - 2):
             circuit = Circuit(n)

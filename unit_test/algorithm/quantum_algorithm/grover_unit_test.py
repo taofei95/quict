@@ -11,11 +11,11 @@ import random
 from QuICT.algorithm.quantum_algorithm.grover import (
     Grover,
     PartialGrover,
-    GroverWithPriorKnowledge,
 )
+
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.core.gate.backend import MCTOneAux
 
 
@@ -60,7 +60,7 @@ class TestGrover(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("The Grover unit test start!")
-        cls.simulator = ConstantStateVectorSimulator(matrix_aggregation=False)
+        cls.simulator = StateVectorSimulator(matrix_aggregation=False)
 
     @classmethod
     def tearDownClass(cls) -> None:

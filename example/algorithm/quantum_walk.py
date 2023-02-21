@@ -1,9 +1,9 @@
 from QuICT.algorithm.quantum_algorithm import QuantumWalk
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.algorithm.tools.drawer.graph_drawer import *
 
-simulator = ConstantStateVectorSimulator()
+simulator = StateVectorSimulator()
 qw = QuantumWalk(simulator)
 step = 10
 edges = [[1, 3], [2, 0], [3, 1], [0, 2]]

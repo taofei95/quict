@@ -1,7 +1,11 @@
 from collections import deque
-from collections.abc import Iterable
 from itertools import chain
 from typing import Dict, List, Set, Tuple
+
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 from QuICT.core import *
 from QuICT.core.gate import *
@@ -238,9 +242,12 @@ class DAG(Iterable):
 
         return node_cnt
 
-    def get_circuit(self):
+    def get_circuit(self, keep_phase=True):
         """
         Generate circuit net list from this DAG.
+
+        Args:
+            keep_phase(bool): whether to keep the global phase as a GPhase gate in the output
 
         Returns:
             Circuit: Circuit equivalent to this DAG
@@ -255,7 +262,7 @@ class DAG(Iterable):
 
             node.get_gate() | circ([mapping[(id(node), qubit_)] for qubit_ in range(node.size)])
 
-        if not np.isclose(float(self.global_phase), 0):
+        if keep_phase and not np.isclose(float(self.global_phase), 0):
             GPhase(self.global_phase) | circ(0)
         return circ
 

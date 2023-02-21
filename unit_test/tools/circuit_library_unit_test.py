@@ -36,19 +36,19 @@ class TestCircuitLibrary(unittest.TestCase):
         cirs = cir_lib.get_random_circuit("diag", [3, 5, 7], max_size=40, max_depth=20)
         for cir in cirs:
             assert cir.width() in [3, 5, 7], "Error width get from get_algorithm_circuit."
-            assert cir.size() <= 40 and cir.depth() <= 20, "Error size and depth get from get_algorithm_circuit."
+            assert cir.size() <= 40 and cir.depth() <= 20, "Error size and depth get from get_random_circuit."
 
         # Test get_benchmark_circuit
         cirs = cir_lib.get_benchmark_circuit("highly_entangled", [3, 5], max_size=20, max_depth=15)
         for cir in cirs:
             assert cir.width() in [3, 5], "Error width get from get_algorithm_circuit."
-            assert cir.size() <= 20 and cir.depth() <= 15, "Error size and depth get from get_algorithm_circuit."
+            assert cir.size() <= 20 and cir.depth() <= 15, "Error size and depth get from get_benchmark_circuit."
 
         # Test get_template_circuit
         cirs = cir_lib.get_template_circuit(qubits_interval=5, max_size=20, max_depth=15)
         for cir in cirs:
             assert cir.width() <= 5, "Error width get from get_algorithm_circuit."
-            assert cir.size() <= 20 and cir.depth() <= 15, "Error size and depth get from get_algorithm_circuit."
+            assert cir.size() <= 20 and cir.depth() <= 15, "Error size and depth get from get_template_circuit."
 
     def test_qasm(self):
         # Test Circuit Library with output circuit
