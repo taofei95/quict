@@ -7,41 +7,45 @@ from QuICT.tools.exception.core import TypeError, ValueError
 
 
 class MultiControlRotation(object):
-    def __init__(self, target_gate: BasicGate):
-        assert target_gate.type in [GateType.rx, GateType.ry, GateType.rz], TypeError(
+    def __init__(self, target_gate: GateType, param: float):
+        assert target_gate in [GateType.ry, GateType.rz], TypeError(
             "MultiControlRotation.target_gate",
-            [GateType.rx, GateType.ry, GateType.rz],
-            target_gate.type,
+            [GateType.ry, GateType.rz],
+            target_gate,
         )
-        self.target_gate = target_gate
-        self.param = target_gate.pargs[0]
+        self.gate_type = target_gate
+        self.param = param
+        self.gate_dict = {
+            GateType.ry: Ry,
+            GateType.rz: Rz,
+        }
+        self.cgate_dict = {
+            GateType.ry: CRy,
+            GateType.rz: CRz,
+        }
 
     def __call__(self, control: list, target: int):
-        assert target not in control
         n_ctrl = len(control)
         if n_ctrl == 0:
             gates = CompositeGate()
-            self.target_gate & target | gates
+            self.gate_dict[self.gate_type](self.param) & target | gates
             return gates
         if n_ctrl == 1:
-            cgate_dict = {
-                GateType.rx: CRx,
-                GateType.ry: CRy,
-                GateType.rz: CRz,
-            }
-            cgate = cgate_dict[self.target_gate.type](self.param)
+            cgate = self.cgate_dict[self.gate_type](self.param)
             gates = CompositeGate()
             cgate & [control[0], target] | gates
             return gates
+        if n_ctrl >= 2:
+            theta = self.param / 2
+            cgate1 = self.cgate_dict[self.gate_type](theta)
+            cgate2 = self.cgate_dict[self.gate_type](-theta)
+            mct = MultiControlToffoli()
+            mcr = MultiControlRotation(self.gate_type, theta)
 
-
-if __name__ == "__main__":
-    
-    #mcr = MultiControlRotation(Ry(0.5))
-    #gates = mcr([0], 1)
-    #print(gates)
-    cir = Circuit(2)
-    # gates | cir
-    H | cir(0)
-    
-    cir.draw(filename="1.jpg")
+            gates = CompositeGate()
+            cgate1 & [control[-1], target] | gates
+            mct(n_ctrl - 1) | gates
+            cgate2 & [control[-1], target] | gates
+            mct(n_ctrl - 1) | gates
+            mcr(control[:-1], target) | gates
+            return gates
