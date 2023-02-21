@@ -15,7 +15,7 @@ print(solutions)
 
 # Get CNF Circuit
 cnf = CNFSATOracle(StateVectorSimulator())
-circ = cnf.circuit([variable_number, clause_number, CNF_data], 3, 1)
+circ = cnf.circuit([variable_number, clause_number, CNF_data], 3, 1, output_cgate=False)
 print(circ)
 circ.draw(method="matp_file")
 
