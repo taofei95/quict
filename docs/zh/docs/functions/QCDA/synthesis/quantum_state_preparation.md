@@ -4,7 +4,99 @@
 
 QuICT中目前共实现了3种不同的初态制备算法，其中2种针对一般的量子态，余下1种针对稀疏量子态。
 
-## 一般量子态制备
+## 算法流程
+
+### 基于uniformly控制门的一般量子态制备
+
+考虑量子态制备的逆过程，即将一个给定量子态经过某一电路转化为$\ket{0}$态。注意到uniformly控制门实际上就是分块对角门，容易想到可以在局部进行旋转操作$U$使得
+
+$$
+U\ket{\psi_n} = \ket{\psi_{n - 1}} \otimes \ket{0}
+$$
+
+其中$\ket{\psi_n}$为$n$-qubit初始量子态，$\ket{\psi_{n - 1}}$为某个$(n - 1)$-qubit量子态，这样就完成了所需的递归制备步骤。
+
+具体说来，算法首先使用一系列uniformly-Rz门将态向量逐步变为实向量（相差一个全局相位意义下），再用一系列uniformly-Ry门将实态向量逐步消为$\ket{0}$，最后将所有步骤取逆即可。如此进行制备的电路图如下图右半部分所示（由于原文意在给出从一个任意态到另一任意态的制备电路，因此左半部分是从某一任意态变为$\ket{0}$的电路）
+
+<figure markdown>
+![uniformly门制备](../../../assets/images/functions/QCDA/qsp_ug_theory.png)
+<p markdown="1" style="font-size:15px;"> 图片引用自*Transformation of quantum states using uniformly controlled rotations.* [<sup>[1]</sup>](#refer1)
+</figure>
+
+### 基于酉矩阵分解的一般量子态制备
+
+为叙述方便，这里主要讨论目标态qubit数为偶数的情形，奇数情形是完全类似的。首先对目标态进行qubit对半分开的Schmidt分解如下：设qubit数$n = 2k$，则有
+
+$$
+\ket{\Psi} = \sum_{i = 0}^{2^k - 1} \alpha_i \ket{\psi_i} \ket{\phi_i}
+$$
+
+据此经由如下三步即可得到目标态：
+1. 通过基于uniformly控制门的量子态制备过程在前半qubit上制备$\ket{\alpha}$态，即
+
+$$
+\ket{0}^{\otimes 2k} \to \sum_{i = 0}^{2^k - 1} \alpha_i \ket{i} \ket{0}
+$$
+
+2. 通过一系列CNOT门复制$\ket{\alpha}$态到后半qubit，即
+
+$$
+\sum_{i = 0}^{2^k - 1} \alpha_i \ket{i} \ket{0} \to \sum_{i = 0}^{2^k - 1} \alpha_i \ket{i} \ket{i}
+$$
+
+3. 通过酉矩阵分解将前后两半qubit分别转化到对应的态上，即分别
+
+$$
+\ket{i} \to \ket{\psi_i}, \ket{i} \to \ket{\phi_i}
+$$
+
+下图给出了$n = 4$时电路的结构（仅包含CNOT门）
+
+<figure markdown>
+![酉矩阵分解制备](../../../assets/images/functions/QCDA/qsp_ud_theory.png)
+<p markdown="1" style="font-size:15px;"> 图片引用自*Quantum-state preparation with universal gate decompositions.* [<sup>[2]</sup>](#refer2)
+</figure>
+
+### 稀疏量子态制备
+
+对于稀疏量子态，依然采用考虑制备逆过程的方法，此时的主要问题如何在不影响其他态向量元素的情况下“合并”态向量中的两个元素。举例来说，设初始态为
+
+$$
+\ket{\psi} = \alpha \ket{x} + \beta \ket{y} + \gamma \ket{z}
+$$
+
+其中$x, y, z$分别是一些$0, 1$串表示对应的计算基态。现在想要“合并”$\ket{x}, \ket{y}$，直接的想法是通过一系列CNOT门使得量子态转化为
+
+$$
+\ket{\psi'} = \alpha \ket{x'} + \beta \ket{y'} + \gamma \ket{z'}
+$$
+
+其中$\ket{x'}, \ket{y'}$只在一个qubit上$0, 1$情况不同，从而可以通过$1$-qubit门将其进行“合并”。但是通常这会造成$\ket{z'}$“分裂”为某两个计算基态的叠加，因此我们需要通过一定的控制来解决这一问题。
+
+为方便进行控制，这里采用的“合并”矩阵为
+
+$$
+M = \begin{pmatrix}
+\sin\omega & e^{i\alpha} \cos\omega \\
+e^{-i\alpha} \cos\omega & -\sin\omega \\
+\end{pmatrix}
+$$
+
+这样的多控制$M$门只需一个多控Toffoli门和两个$1$-qubit门即可实现。显然选择“合并”的顺序会极大影响算法的执行效果，这里不再详述具体选择的细节，可以参见[<sup>[3]</sup>](#refer3)。
+
+## 使用方法
+
+### 一般量子态制备
+
+在`QuantumStatePreparation`中选择需要使用的制备方法即可，可选`'uniformly_gates', 'unitary_decomposition'`，默认为`'unitary_decomposition'`。
+
+### 稀疏量子态制备
+
+在`SparseQuantumStatePreparation`中可以选择初态的输入格式：`state_vector`即标准的态向量输入；`state_array`要求输入一个`dict`，其`key`为态向量非零位置的二进制`str`，`value`为对应位置的振幅。
+
+## 代码实例
+
+### 一般量子态制备
 
 ``` python
 from QuICT.qcda.synthesis import QuantumStatePreparation
@@ -32,7 +124,7 @@ gates = QSP.execute(state_vector)
 ![制备电路](../../../assets/images/functions/QCDA/qsp_ud.png)
 </figure>
 
-## 稀疏量子态制备
+### 稀疏量子态制备
 
 ``` python
 from QuICT.qcda.synthesis import SparseQuantumStatePreparation
