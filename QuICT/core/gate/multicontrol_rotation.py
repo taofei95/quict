@@ -2,7 +2,6 @@ from typing import *
 import numpy as np
 
 from QuICT.core.gate import *
-from QuICT.core import Circuit
 from QuICT.tools.exception.core import TypeError, ValueError
 
 

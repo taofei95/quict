@@ -39,6 +39,8 @@ class GpuSimulator:
         else:
             if isinstance(state, np.ndarray):
                 state = torch.from_numpy(state).to(ansatz.device)
+            elif isinstance(state, cp.ndarray):
+                state = torch.from_dlpack(state).to(ansatz.device)
             else:
                 state = state.clone()
         if state.shape[0] != 1 << n_qubits:
