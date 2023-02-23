@@ -314,7 +314,7 @@ class TrainConfig:
         batch_size: int = 64,
         total_epoch: int = 2000,
         explore_period: int = 10000,
-        target_update_period: int = 20,
+        target_update_period: int = 10,
         model_sync_period: int = 10,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         model_path: str = None,

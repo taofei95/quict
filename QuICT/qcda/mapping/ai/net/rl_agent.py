@@ -149,8 +149,8 @@ class Agent:
         cnt = self.state.eager_exec(
             physical_circ=self.mapped_circ,
         )
-        if action == self._last_action:
-            reward += -1 * scale
+        # if action == self._last_action:
+            # reward += -1 * scale
         # If no gate is executed, avoid the same selection next time.
         self._last_action = action if cnt == 0 else None
         self._last_exec_cnt = cnt

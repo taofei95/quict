@@ -12,7 +12,8 @@ class GnnBlock(nn.Module):
         qubit_num: int,
         max_gate_num: int,
         feat_dim: int,
-        pool: bool,
+        normalize: bool = False,
+        pool: bool = False,
     ) -> None:
         super().__init__()
 
@@ -31,7 +32,7 @@ class GnnBlock(nn.Module):
                 gnn.SAGEConv(
                     in_channels=feat_dim,
                     out_channels=feat_dim,
-                    normalize=False,
+                    normalize=normalize,
                 ),
             ]
         )
@@ -47,7 +48,7 @@ class GnnBlock(nn.Module):
         batch: Optional[torch.Tensor],
     ):
         for conv in self._gc_grp:
-            x = F.leaky_relu(conv(x, edge_index)) + x
+            x = (F.leaky_relu(conv(x, edge_index)) + x) / 2
         if self._pool:
             x, edge_index, _, batch, _, _ = self._pool(x, edge_index, None, batch, None)
         return x, edge_index, batch
@@ -66,38 +67,27 @@ class CircuitGnn(nn.Module):
         self._max_gate_num = max_gate_num
         self._feat_dim = feat_dim
 
-        self._gc_grp = nn.ModuleList(
+        self._gc_grp_1 = nn.ModuleList(
             [
                 GnnBlock(
                     qubit_num=qubit_num,
                     max_gate_num=max_gate_num,
                     feat_dim=feat_dim,
-                    pool=False,
-                ),
+                )
+                for _ in range(5)
+            ]
+        )
+
+        self._layer_norm = nn.LayerNorm(feat_dim)
+
+        self._gc_grp_2 = nn.ModuleList(
+            [
                 GnnBlock(
                     qubit_num=qubit_num,
                     max_gate_num=max_gate_num,
                     feat_dim=feat_dim,
-                    pool=False,
-                ),
-                GnnBlock(
-                    qubit_num=qubit_num,
-                    max_gate_num=max_gate_num,
-                    feat_dim=feat_dim,
-                    pool=False,
-                ),
-                GnnBlock(
-                    qubit_num=qubit_num,
-                    max_gate_num=max_gate_num,
-                    feat_dim=feat_dim,
-                    pool=False,
-                ),
-                GnnBlock(
-                    qubit_num=qubit_num,
-                    max_gate_num=max_gate_num,
-                    feat_dim=feat_dim,
-                    pool=False,
-                ),
+                )
+                for _ in range(5)
             ]
         )
 
@@ -111,7 +101,12 @@ class CircuitGnn(nn.Module):
     ):
         f = self._feat_dim
 
-        for conv_block in self._gc_grp:
+        for conv_block in self._gc_grp_1:
+            x, edge_index, batch = conv_block(x, edge_index, batch)
+
+        x = self._layer_norm(x)
+
+        for conv_block in self._gc_grp_2:
             x, edge_index, batch = conv_block(x, edge_index, batch)
 
         x = self._aggr(x, batch)  # [b, f]

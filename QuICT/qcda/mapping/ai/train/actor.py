@@ -8,7 +8,7 @@ class Actor:
         self.config = config
         self.agent = Agent(config=config)
         self.policy_net = None
-        self.replay = ReplayMemory(capacity=config.memory_sync_period)
+        self.replay = ReplayMemory(capacity=config.replay_pool_size)
 
     def explore(self):
         action = self.agent.select_action(
