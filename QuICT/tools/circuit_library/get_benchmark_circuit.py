@@ -58,7 +58,7 @@ class BenchmarkCircuitBuilder:
     def serialized_circuit_build(width: int, size: int):
         cirs_list = []
         random_para = [0.4, 0.6, 0.8, 1]
-        
+
         for i in range(len(random_para)):
             void_gates = 0
             cir = Circuit(width)

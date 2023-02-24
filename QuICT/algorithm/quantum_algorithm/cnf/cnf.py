@@ -5,6 +5,8 @@
 
 import math
 import numpy as np
+
+from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.gate.backend.mct.mct_linear_dirty_aux import MCTLinearHalfDirtyAux
 from QuICT.core.gate.backend.mct.mct_one_aux import MCTOneAux
@@ -15,24 +17,26 @@ class CNFSATOracle:
     def __init__(self, simu=None):
         self.simulator = simu
 
-    def circuit(self) -> CompositeGate:
-        return self._cgate
-
-    def run(
-        self, cnf_file: str, ancilla_qubits_num: int = 3, dirty_ancilla: int = 0
-    ) -> int:
+    def circuit(
+        self, cnf_para: str, ancilla_qubits_num: int = 3, dirty_ancilla: int = 0, output_cgate: bool = True
+    ) -> Circuit:
         """Run CNF algorithm
 
         Args:
-            cnf_file (str): The file path
+            cnf_para (str | list): The cnf file path or cnf variables (variable_number, clause_number, CNF_data).
             ancilla_qubits_num (int): >= 3
             dirty_ancilla (int): 0 for clean and >0 for dirty
+            output_cgate (bool): Whether return a compositegate or a circuit.
         """
         # check if Aux > 2
         assert ancilla_qubits_num > 2, "Need at least 3 auxiliary qubit."
 
         # Step 1: Read CNF File
-        variable_number, clause_number, CNF_data = self.read_CNF(cnf_file)
+        if isinstance(cnf_para, str):
+            variable_number, clause_number, CNF_data = self.read_CNF(cnf_para)
+        else:
+            assert len(cnf_para) == 3
+            variable_number, clause_number, CNF_data = cnf_para
 
         # Step 2: Construct Circuit
         self._cgate = CompositeGate()
@@ -720,9 +724,40 @@ class CNFSATOracle:
                                     ]
                                 )
 
-    def read_CNF(self, cnf_file):
-        # file analysis
+        if output_cgate:
+            return self._cgate
+        else:
+            cnf_circuit = Circuit(self._cgate.width())
+            self._cgate | cnf_circuit
+            return cnf_circuit
 
+    def run(
+        self, cnf_para: str, ancilla_qubits_num: int = 3, dirty_ancilla: int = 0, shots: int = 0
+    ) -> int:
+        """Run CNF algorithm
+
+        Args:
+            cnf_para (str | list): The cnf file path or cnf variables (variable_number, clause_number, CNF_data).
+            ancilla_qubits_num (int): >= 3
+            dirty_ancilla (int): 0 for clean and >0 for dirty
+        """
+        # Step 1: Get Circuit
+        cnf_circuit = self.circuit(cnf_para, ancilla_qubits_num, dirty_ancilla)
+
+        # Step 2: Simulator
+        cnf_sv = self.simulator.run(cnf_circuit)
+
+        # Step 3: Sample
+        if shots > 0:
+            cnf_sample = self.simulator.sample(shots)
+
+            return cnf_sample
+        else:
+            return cnf_sv
+
+    @staticmethod
+    def read_CNF(cnf_file):
+        # file analysis
         variable_number = 0
         clause_number = 0
         CNF_data = []
@@ -745,6 +780,41 @@ class CNFSATOracle:
 
         f.close()
         return variable_number, clause_number, CNF_data
+
+    @staticmethod
+    def check_solution(variable_data, variable_number, clause_number, CNF_data):
+        cnf_result = 1
+        for i in range(clause_number):
+            clause_result = 0
+            if CNF_data[i + 1] == []:
+                clause_result = 1
+            else:
+                for j in range(len(CNF_data[i + 1])):
+                    if CNF_data[i + 1][j] > 0:
+                        clause_result = clause_result + variable_data[CNF_data[i + 1][j] - 1]
+                    else:
+                        if CNF_data[i + 1][j] < 0:
+                            clause_result = clause_result  + (1 - variable_data[-CNF_data[i + 1][j] - 1])
+                if clause_result == 0:
+                    cnf_result = 0
+                    break
+
+        if cnf_result == 1:
+            return True
+        else:
+            return False
+
+    @classmethod
+    def find_solution_count(cls, variable_number, clause_number, CNF_data):
+        solutions = []
+        for i in range(1 << variable_number):
+            variable_data = bin(i)[2:].rjust(variable_number, '0')[::-1]
+            variable_data = [int(x) for x in variable_data]
+            if cls.check_solution(variable_data, variable_number, clause_number, CNF_data):
+                solutions.append(variable_data)
+                print(variable_data)
+
+        return len(solutions)
 
     def clause(
         self,
