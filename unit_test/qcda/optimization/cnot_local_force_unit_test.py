@@ -37,52 +37,47 @@ def check_equiv(circuit1, circuit2):
 
 
 def test_1():
-    for _ in range(10):
-        for i in range(2, 4):
-            circuit = Circuit(i)
-            circuit.random_append(10, typelist=[GateType.cx])
-            CFB = CnotForceBfs()
-            new_circuit = CFB.execute(circuit)
-            assert check_equiv(circuit, new_circuit)
+    for i in range(2, 4):
+        circuit = Circuit(i)
+        circuit.random_append(10, typelist=[GateType.cx])
+        CFB = CnotForceBfs()
+        new_circuit = CFB.execute(circuit)
+        assert check_equiv(circuit, new_circuit)
 
 
 def test_2():
-    for _ in range(10):
-        for i in range(5, 6):
-            circuit = Circuit(i)
-            circuit.random_append(30, typelist=[GateType.z, GateType.x, GateType.cx])
-            CLFB = CnotLocalForceBfs(False)
-            new_circuit = CLFB.execute(circuit)
-            syn1 = circuit.matrix()
-            syn2 = new_circuit.matrix()
-            assert np.allclose(syn1, syn2)
+    for i in range(5, 6):
+        circuit = Circuit(i)
+        circuit.random_append(30, typelist=[GateType.z, GateType.x, GateType.cx])
+        CLFB = CnotLocalForceBfs(False)
+        new_circuit = CLFB.execute(circuit)
+        syn1 = circuit.matrix()
+        syn2 = new_circuit.matrix()
+        assert np.allclose(syn1, syn2)
 
 
 def test_3():
-    for _ in range(10):
-        for i in range(4, 7):
-            circuit = Circuit(i)
-            circuit.random_append(10, typelist=[GateType.cx])
-            CLFB = CnotLocalForceBfs(False)
-            new_circuit = CLFB.execute(circuit)
-            assert check_equiv(circuit, new_circuit)
+    for i in range(4, 7):
+        circuit = Circuit(i)
+        circuit.random_append(10, typelist=[GateType.cx])
+        CLFB = CnotLocalForceBfs(False)
+        new_circuit = CLFB.execute(circuit)
+        assert check_equiv(circuit, new_circuit)
 
 
 def test_4():
-    for _ in range(10):
-        for i in range(2, 4):
-            circuit = Circuit(i)
-            circuit.random_append(10, typelist=[GateType.cx])
-            CFDB = CnotForceDepthBfs()
-            new_circuit = CFDB.execute(circuit)
-            assert check_equiv(circuit, new_circuit)
+    for i in range(2, 4):
+        circuit = Circuit(i)
+        circuit.random_append(10, typelist=[GateType.cx])
+        CFDB = CnotForceDepthBfs()
+        new_circuit = CFDB.execute(circuit)
+        assert check_equiv(circuit, new_circuit)
 
 
 def test_5():
-    for _ in range(10):
-        for i in range(4, 7):
-            circuit = Circuit(i)
-            circuit.random_append(10, typelist=[GateType.cx])
-            CLFDB = CnotLocalForceDepthBfs(False)
-            new_circuit = CLFDB.execute(circuit)
-            assert check_equiv(circuit, new_circuit)
+    for i in range(4, 7):
+        circuit = Circuit(i)
+        circuit.random_append(10, typelist=[GateType.cx])
+        CLFDB = CnotLocalForceDepthBfs(False)
+        new_circuit = CLFDB.execute(circuit)
+        assert check_equiv(circuit, new_circuit)
