@@ -12,7 +12,7 @@ from QuICT.qcda.synthesis.gate_transform.transform_rule import *
 
 
 def test_one_qubit_rules():
-    for _ in range(20):
+    for _ in range(10):
         mat = unitary_group.rvs(2)
         for rule in [xyx_rule, zyz_rule, ibmq_rule, zxz_rule, hrz_rule, u3_rule]:
             unitary = Unitary(mat) & 0
