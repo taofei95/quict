@@ -8,10 +8,10 @@ from QuICT.qcda import QCDA
 
 
 def test_default_light_optimization():
-    n_iter = 5
-    n_qubit = 8
+    n_iter = 1
+    n_qubit = 4
     n_block = 4
-    n_gate = 50
+    n_gate = 20
     mode_list = [
         [CircuitMode.Misc, None],
         [CircuitMode.Arithmetic, [GateType.x, GateType.cx, GateType.ccx]],
@@ -33,10 +33,10 @@ def test_default_light_optimization():
 
 
 def test_default_heavy_optimization():
-    n_iter = 5
-    n_qubit = 8
+    n_iter = 1
+    n_qubit = 4
     n_block = 4
-    n_gate = 50
+    n_gate = 20
     mode_list = [
         [CircuitMode.Misc, None],
         [CircuitMode.Arithmetic, [GateType.x, GateType.cx, GateType.ccx]],

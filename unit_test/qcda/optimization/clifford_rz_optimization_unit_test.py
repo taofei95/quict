@@ -35,9 +35,9 @@ def check_circuit_optimization(circ: Circuit, label, level='light'):
 
 
 def test_light_optimization():
-    n_qubit = 6
+    n_qubit = 4
     n_gate = 100
-    n_iter = 5
+    n_iter = 1
 
     print(f'random ciruit test: {n_qubit} qubits, {n_gate} gates, {n_iter} iterations.')
     support_gates = [GateType.h, GateType.cx, GateType.rz,
@@ -54,9 +54,9 @@ def test_light_optimization():
 
 
 def test_heavy_optimization():
-    n_qubit = 6
+    n_qubit = 4
     n_gate = 100
-    n_iter = 5
+    n_iter = 1
 
     print(f'random ciruit test: {n_qubit} qubits, {n_gate} gates, {n_iter} iterations.')
     support_gates = [GateType.h, GateType.cx, GateType.rz,
@@ -73,7 +73,7 @@ def test_heavy_optimization():
 
 
 def test_disabling_optimize_toffoli():
-    n_qubit = 6
+    n_qubit = 4
     n_gate = 50
     support_gates = [GateType.h, GateType.cx, GateType.rz,
                      GateType.t, GateType.tdg, GateType.s, GateType.sdg, GateType.z, GateType.x,

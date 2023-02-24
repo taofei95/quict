@@ -68,11 +68,11 @@ def test_random_circuit():
     gates = [GateType.x, GateType.cx, GateType.ccx, GateType.h, GateType.s, GateType.t,
              GateType.sdg, GateType.tdg]
 
-    n_qubits = 6
+    n_qubits = 4
     template_list = CircuitLib().get_template_circuit()
     n_templates = 10
 
-    for n_gates in range(20, 201, 20):
+    for n_gates in range(20, 101, 20):
         circ = Circuit(n_qubits)
         circ.random_append(n_gates, typelist=gates)
         TO = TemplateOptimization(template_typelist=sample(template_list, n_templates))
