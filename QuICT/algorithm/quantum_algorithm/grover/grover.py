@@ -99,9 +99,9 @@ class Grover:
         # rotation
         for i in range(T):
             grover_operator | circuit
-        # for idx in index_q:
-        #     if measure:
-        #         Measure | circuit(idx)
+        for idx in index_q:
+            if measure:
+                Measure | circuit(idx)
         logger.info(
             f"circuit width          = {circuit.width():4}\n"
             + f"oracle  calls          = {T:4}\n"
