@@ -4,40 +4,75 @@
 
 !!! note
 
-    本教程目前只针对离散时间的，带硬币的量子游走算法。
+    本教程目前只针对**无权图**上**离散时间**的，**带硬币**的量子游走算法。
 
 ## 带硬币的量子游走算法
 
-
-
 ### 算法原理
+
+带硬币的量子游走是在图的顶点上进行的游走，因此每个节点都可以被视为一个状态，粒子可以在有边相连的两个状态之间移动。在硬币模型中，包含两个量子态和两个算子：
+
+- 两个量子态
+
+    - 位置状态 $|\psi_t⟩$ ：用于描述粒子在 $t$ 时刻时的位置，即粒子在游走的过程中处于各个位置的叠加态。
+    - 硬币状态 $|\psi_C⟩$ ：用于描述粒子下一步如何移动。
+
+- 两个算子
+
+    - 硬币算子 $C$ （Coin Operator）：一个酉矩阵，模拟抛硬币的过程以获得硬币状态 $|\psi_C⟩$。
+    - 移动算子 $S$ （Shift Operator）：一个置换矩阵，根据硬币状态 $|\psi_C⟩$ 决定粒子的移动情况。
+
+!!! note
+
+    一种常用的硬币是Hadamard硬币：
+
+    $$
+    H=\frac{1}{\sqrt{2}} \begin{bmatrix}
+    1 & 1\\
+    1 & -1
+    \end{bmatrix}
+    $$
+
+    Hadamard硬币可以视为公平硬币，能够使粒子处于相等的叠加状态。
+
+带硬币的量子游走本质上就是，先抛硬币，然后根据抛硬币结果让粒子进行移动：
+
+$$|\psi_{t}⟩ \overset{C}{\rightarrow} \overset{S}{\rightarrow} |\psi_{t+1}⟩$$
+
+因此，单步的量子游走算子 $U$ 可以被表示为：
+
+$$U = S \cdot C$$
 
 ### 算法流程
 
-1. 运行 $t$ 轮量子游走，每轮迭代的步骤为：
+1. 设初态 $|\psi_0⟩=|0⟩$ ，即粒子只位于节点0，且尚未进行抛硬币操作。运行 $t$ 轮量子游走，每轮迭代的步骤为：
    
-      1. 执行抛硬币操作（Coin Operator）。
-      2. 根据抛硬币结果执行移动操作（Shift Operator）。
+      1. 执行抛硬币操作 $C$ 以获得 $|\psi_C⟩$ ，即对所有硬币寄存器应用相同的硬币 $c$ 。
+      2. 根据抛硬币结果 $|\psi_C⟩$ 执行移动操作 $S$ 。
    
-2. 对最终的状态进行量子测量
+    即：
+    
+    $$|\psi_{t}⟩ = U^t|\psi_0⟩$$
+   
+2. 对最终的状态进行量子测量。
 
-### 算法总结
+### 用QuICT实现量子游走
 
-#### 输入
+#### 基本用法
+
+`QuantumWalk` 位于 `QuICT.algorithm.quantum_algorithm`，运行函数的输入参数为：
 
 - `step`: 自定义的量子游走轮数
 - `position`: 给定图的节点数
-- `edges`:` 给定图的边
+- `edges:` 给定图的边
 - `operators`: 定义对各节点的操作
 - `coin_operator`: 定义抛硬币操作（酉矩阵）
 - `switched_time`: 单次搜索的硬币操作次数
 - `shots`: 采样次数
 
-#### 输出
+最终输出对最终状态测量后的采样结果。
 
-- 对最终状态测量后的采样结果
-
-### 代码实例：QuICT实现量子游走
+#### 代码实例
 
 接下来，我们将以下图为例使用QuICT进行量子游走模拟，初始位置为节点0。
 
@@ -92,34 +127,66 @@ draw_samples_with_auxiliary(sample, 2, 1)
 
 ### 算法原理
 
+量子游走搜索算法旨在通过量子游走模型解决在图中寻找标记节点的问题。其本质是在标记节点与非标记节点上使用不同的硬币算子。
+
+假设一个节点数为 $N=2^n$ 的 $n$ 维超立方体，每个节点都与 $n$ 个邻居节点相连，并且每个节点都可以由一个 二进制的 n-bit 向量 $\vec{x}$ 表示，则这个 $n$ 维超立方体上的移动算子 $S$ 为：
+
+$$S=\sum_{d=0}^{n-1} \sum_{\vec{x}}^{} |d,\vec{x} \oplus \vec{e}_d⟩ ⟨d,\vec{x}|$$
+
+其中 $d$ 为粒子游走的方向， $\vec{e}_d$ 为超立方体第 $d$ 个方向基向量。
+
+给定一个黑盒硬币 $C'$ （Coin Oracle）用于标记其中 $M$ 个节点为待搜索节点，在标记节点与非标记节点上使用不同的硬币。通常选用Grover硬币用作非标记硬币 $C_0$ ：
+
+$$C_0=G=I-2|S^C⟩⟨S^C|$$
+
+其中 $|S^C⟩$ 为各个位置上的等权重叠加：
+
+$$|S^C⟩=\frac{1}{\sqrt{N}}\sum_{j=0}^{N-1}|j⟩$$
+
+$|j⟩=|0,\dots,0,1,0,\dots,0⟩$ 为第 $j$ 个位置基向量。可见Grover硬币可以视作超立方体上的公平硬币。
+
+标记硬币 $C_1$ 为：
+
+$$C_1=I-2|\chi⟩⟨\chi|$$
+
+$$|\chi⟩=\sum_{j=0}^{N-1}\frac{a_j}{a}|j⟩$$
+
+$$a=\sqrt{\sum_{j=0}^{N-1}{a_j}^2}$$
+
+$a_j$ 为实数且 $a\neq 0$ ，$a_j$ 描述了标记硬币 $C_1$ 的不对称性。通常取 $a_r=x$ ， $a_{\neq r}=y$ ，且 $|y|<|x|$
+
+因此，单步的量子游走搜索算子 $U'$ 可以被表示为：
+
+$$U' = S \cdot C'$$
+
 ### 算法流程
 
 1. 初始化硬币寄存器和节点寄存器为所有状态的等权重叠加态，即在全部量子比特上施加 $H$ 门。
-2. 对于总节点数为 $n$ ，标记节点数为 $m$ 的超立方体，运行 $O(1/\sqrt{\frac{m}{n}})$ 轮量子游走搜索，每轮迭代的步骤为：
+2. 对于上一节定义的包含 $M$ 个标记节点的 $n$ 维超立方体，运行 $O(1/\sqrt{\frac{M}{N}})$ 轮量子游走搜索，每轮迭代的步骤为：
    
-      1. 对于给定的硬币谕示（Coin Oracle），对未标记节点的对应状态应用硬币 $C_0$ ，对标记节点的对应状态应用硬币 $C_1$ 。
-      2. 执行移动操作（Shift Operator）。
+      1. 对于给定的黑盒硬币 $C'$，对未标记节点的对应状态应用硬币 $C_0$ ，对标记节点的对应状态应用硬币 $C_1$ 。
+      2. 根据抛硬币结果执行移动操作 $S$ 。
    
 3. 对最终的状态进行量子测量
 
-### 算法总结
+### 用QuICT实现N维超立方体上的量子游走搜索
 
-#### 输入
+#### 基本用法
 
-- `index_qubits`: 超立方体维度
+`QuantumWalkSearch` 位于 `QuICT.algorithm.quantum_algorithm`，运行函数的输入参数为：
+
+- `index_qubits`: 超立方体维度 $n$
 - `targets`: 标记的节点编号
 - `step`: 自定义的搜索轮数
 - `r`: 硬币参数 $r$
 - `a_r`: 硬币参数 $a_r$
-- `a_nr`: 硬币参数 $a_{nr}$
+- `a_nr`: 硬币参数 $a_{\neq r}$
 - `switched_time`: 单次搜索的硬币操作次数
 - `shots`: 采样次数
 
-#### 输出
+最终输出对最终状态测量后的采样结果。
 
-- 对最终状态测量后的采样结果
-
-### 代码实例：QuICT实现N维超立方体上的量子游走搜索
+#### 代码实例
 
 接下来，我们将以5-cube为例使用QuICT进行量子游走搜索，即节点数为32个，标记节点4。
 
@@ -145,9 +212,9 @@ draw_samples_with_auxiliary(sample, N, int(np.ceil(np.log2(N))))
 ![QWS_result1](../../../assets/images/tutorials/algorithm/quantum_algorithm/QWS_result1.png){:width="500px"}
 </figure>
 
-!!! warning "硬币参数 $a_r$ 和 $a_{nr}$ 的选择"
+!!! warning "硬币参数 $a_r$ 和 $a_{\neq r}$ 的选择"
 
-    选择适合的硬币参数 $a_r$ 和 $a_{nr}$ 非常重要。特别地，当 $a_r$ 和 $a_{nr}$ 非常接近时，标记硬币将失去标记作用：
+    选择适合的硬币参数 $a_r$ 和 $a_{\neq r}$ 非常重要。特别地，当 $a_r$ 和 $a_{\neq r}$ 非常接近时，标记硬币将失去标记作用：
 
     ``` python
     sample = qws.run(index_qubits=N, targets=[4], a_r=1 / 8, a_nr=0.9 / 8)
@@ -177,11 +244,17 @@ draw_samples_with_auxiliary(sample, N, int(np.ceil(np.log2(N))))
 <div id="refer1"></div>
 
 <font size=3>
-[1] Neil Shenvi, Julia Kempe, and K. Birgitta Whaley. A Quantum Random Walk Search Algorithm. Phys. Rev. A. [arXiv:quant-ph/0210064 (2003)](https://arxiv.org/abs/quant-ph/0210064)
+[1] Portugal, Renato. Quantum walks and search algorithms. Vol. 19. New York: Springer, 2013. [DOI: https://doi.org/10.1007/978-3-319-97813-0](https://doi.org/10.1007/978-3-319-97813-0)
 </font>
 
 <div id="refer2"></div>
 
 <font size=3>
-[2] Hristo Tonchev. Alternative Coins for Quantum Random Walk Search Optimized for a Hypercube. Journal of Quantum Information Science, Vol.5 No.1, 2015. [DOI: 10.4236/jqis.2015.51002](https://www.scirp.org/journal/paperinformation.aspx?paperid=55017)
+[2] Neil Shenvi, Julia Kempe, and K. Birgitta Whaley. A Quantum Random Walk Search Algorithm. Phys. Rev. A. [arXiv:quant-ph/0210064 (2003)](https://arxiv.org/abs/quant-ph/0210064)
+</font>
+
+<div id="refer3"></div>
+
+<font size=3>
+[3] Hristo Tonchev. Alternative Coins for Quantum Random Walk Search Optimized for a Hypercube. Journal of Quantum Information Science, Vol.5 No.1, 2015. [DOI: 10.4236/jqis.2015.51002](https://www.scirp.org/journal/paperinformation.aspx?paperid=55017)
 </font>
