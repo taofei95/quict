@@ -6,7 +6,6 @@ by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE in \
 "Factoring using 2n+2 qubits with Toffoli based modular multiplication"
 """
 
-import logging
 from fractions import Fraction
 from math import pi
 import numpy as np
@@ -14,16 +13,21 @@ import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.arithmetic.hrs import *
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.core.operator import Trigger, CheckPoint
 from .utility import *
+
+from QuICT.tools import Logger
+from QuICT.tools.exception.core import *
+
+logger = Logger("HRS-zip")
 
 
 def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     # phase estimation procedure
     n = int(np.ceil(np.log2(N + 1)))
     t = int(2 * n + 1 + np.ceil(np.log(2 + 1 / (2 * eps))))
-    logging.info(f"\tcircuit construction begin: circuit: n = {n} t = {t}")
+    logger.info(f"\tcircuit construction begin: circuit: n = {n} t = {t}")
 
     circuit = Circuit(2 * n + 2)
     x_reg = list(range(n))
@@ -82,7 +86,7 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     return circuit, trickbit + history_indices[::-1]
 
 
-def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulator()):
+def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=StateVectorSimulator()):
     """
     Shor algorithm by THOMAS HANER, MARTIN ROETTELER, and KRYSTA M. SVORE \
     in "Factoring using 2n+2 qubits with Toffoli based modular multiplication"
@@ -91,7 +95,7 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulato
     # phase estimation procedure
     n = int(np.ceil(np.log2(N + 1)))
     t = int(2 * n + 1 + np.ceil(np.log(2 + 1 / (2 * eps))))
-    logging.info(f"\torder_finding begin: circuit: n = {n} t = {t}")
+    logger.info(f"\torder_finding begin: circuit: n = {n} t = {t}")
     trickbit_store = [0] * t
 
     circuit = Circuit(2 * n + 2)
@@ -124,7 +128,7 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulato
         simulator.run(circuit, use_previous=True)
         # subcircuit: measure & reset trickbit
         assert int(circuit[indicator]) == 0 and int(circuit[ancilla]) == 0
-        logging.info(f"\tthe {k}th trickbit measured to be {int(circuit[trickbit])}")
+        logger.info(f"\tthe {k}th trickbit measured to be {int(circuit[trickbit])}")
         trickbit_store[k] = int(circuit[trickbit])
         if trickbit_store[k] == 1:
             circuit = Circuit(2 * n + 2)
@@ -133,13 +137,13 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulato
 
     # for idx in x_reg: Measure | circuit(idx)
     trickbit_store.reverse()
-    logging.info(f"\tphi~ (approximately s/r) in binary form is {trickbit_store}")
+    logger.info(f"\tphi~ (approximately s/r) in binary form is {trickbit_store}")
     # continued fraction procedure
     phi_ = sum([(trickbit_store[i] * 1.0 / (1 << (i + 1))) for i in range(t)])
-    logging.info(f"\tphi~ (approximately s/r) in decimal form is {phi_}")
+    logger.info(f"\tphi~ (approximately s/r) in decimal form is {phi_}")
     if phi_ == 0.0:
-        logging.info("\torder_finding failed: phi~ = 0")
+        logger.info("\torder_finding failed: phi~ = 0")
         return 0
     frac = Fraction(phi_).limit_denominator(N)
-    logging.info(f"\tContinued fraction expansion of phi~ is {frac}")
+    logger.info(f"\tContinued fraction expansion of phi~ is {frac}")
     return frac.denominator

@@ -1,3 +1,17 @@
+// This code is part of Qiskit.
+//
+// (C) Copyright IBM 2017.
+//
+// This code is licensed under the Apache License, Version 2.0. You may
+// obtain a copy of this license in the LICENSE.txt file in the root directory
+// of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+//
+// Any modifications or derivative works of this code must retain this
+// copyright notice, and modified files need to carry a notice indicating
+// that they have been altered from the originals.
+
+// Modification Notice: Code revised for QuICT
+
 // Quantum Experience (QE) Standard Header
 // file: qelib1.inc
 
@@ -19,6 +33,8 @@ gate u0(gamma) q { U(0,0,0) q; }
 // --- QE Standard Gates ---
 // phase gate
 gate p(lambda) a { U(0,0,lambda) a; }
+// global phase gate
+gate phase(lambda) a { U(0,0,lambda) a; }
 // Pauli gate: bit-flip
 gate x a { u3(pi,0,pi) a; }
 // Pauli gate: bit and phase flip
@@ -27,6 +43,8 @@ gate y a { u3(pi,pi/2,pi/2) a; }
 gate z a { u1(pi) a; }
 // Clifford gate: Hadamard
 gate h a { u2(0,pi) a; }
+// Self-inverse gate: Hadamard
+gate hy a { u3(pi/2,-pi/2,pi/2) a; }
 // Clifford gate: sqrt(Z) phase gate
 gate s a { u1(pi/2) a; }
 // Clifford gate: conjugate of sqrt(Z)
@@ -57,6 +75,11 @@ gate rx(theta) a { u3(theta, -pi/2,pi/2) a; }
 gate ry(theta) a { u3(theta,0,0) a; }
 // rotation around Z axis
 gate rz(phi) a { u1(phi) a; }
+
+// --- Swap Gates ---
+gate iswap a,b { cx a,b; cx b,a; cx a,b; }
+gate iswapdg a,b { cx a,b; cx b,a; cx a,b; }
+gate sqiswap a,b { cx a,b; cx b,a; cx a,b; }
 
 // --- QE Standard User-Defined Gates  ---
 
@@ -179,6 +202,15 @@ gate ryy(theta) a,b
   u1(theta) b;
   cx a,b;
   rx(pi/2) a; rx(pi/2) b;
+}
+// two-qubit ZX rotation
+gate rzx(theta) a,b
+{
+  h a;
+  cx a,b;
+  u1(theta) b;
+  cx a,b;
+  h a;
 }
 // FSim Gate
 gate fsim(alpha, beta) a,b

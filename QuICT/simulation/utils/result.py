@@ -12,26 +12,32 @@ class Result:
     """
     def __init__(
         self,
-        circuit_id: str,
         device: str,
         backend: str,
-        shots: int,
-        options: dict
+        precision: str,
+        circuit_record: bool,
+        amplitude_record: bool,
+        options: dict,
+        output_path: str = None
     ):
-        self.id = circuit_id
         self.device = device
         self.backend = backend
-        self.shots = shots
+        self.precision = precision
+        self._circuit_record = circuit_record
+        self._amplitude_record = amplitude_record
         self.options = options
+
         self.counts = {}
         self.state_vector = None
         self.density_matrix = None
 
         # prepare output path
-        self.output_path = self._prepare_output_file()
+        self._dump_folder = True if self._amplitude_record or self._circuit_record else False
+        if self._dump_folder:
+            self._output_path = self._prepare_output_file(output_path)
 
     def __str__(self):
-        return f"ID: {self.id}\nDevice: {self.device}\nBackend: {self.backend}\nShots: {self.shots}\n" + \
+        return f"Device: {self.device}\nBackend: {self.backend}\n" + \
             f"Options: {self.options}\nResults: {self.counts}"
 
     def __dict__(self):
@@ -50,10 +56,11 @@ class Result:
             }
         }
 
-    def _prepare_output_file(self):
+    def _prepare_output_file(self, output_path):
         """ Prepare output path. """
-        curr_path = os.getcwd()
-        output_path = os.path.join(curr_path, "output", self.id)
+        if output_path is None:
+            curr_path = os.getcwd()
+            output_path = os.path.join(curr_path, "output")
 
         if not os.path.exists(output_path):
             os.makedirs(output_path)
@@ -66,26 +73,30 @@ class Result:
         Args:
             result (list): The sample of measured result from given circuit.
         """
+        self.shots = sum(result)
         for i in range(len(result)):
             bit_idx = "{0:0b}".format(i)
             bit_idx = bit_idx.zfill(int(np.log2(len(result))))
             self.counts[bit_idx] = result[i]
 
-        with open(f"{self.output_path}/result.log", "w") as of:
-            of.write(str(self.__dict__))
+        if self._dump_folder:
+            with open(f"{self._output_path}/result_{self.id}.log", "w") as of:
+                of.write(str(self.__dict__()))
 
     def record_circuit(self, circuit):
         """ dump the circuit. """
-        with open(f"{self.output_path}/circuit.qasm", "w") as of:
-            of.write(circuit.qasm())
+        self.id = circuit.name
+        if self._circuit_record:
+            with open(f"{self._output_path}/circuit_{self.id}.qasm", "w") as of:
+                of.write(circuit.qasm())
 
-    def record_amplitude(self, amplitude, is_record: bool = False):
+    def record_amplitude(self, amplitude):
         """ dump the circuit. """
         if self.device == "GPU":
             amplitude = amplitude.get()
 
-        if is_record:
-            np.savetxt(f"{self.output_path}/amplitude.txt", amplitude)
+        if self._amplitude_record:
+            np.savetxt(f"{self._output_path}/amp_{self.id}.txt", amplitude)
 
         if self.backend == "density_matrix":
             self.density_matrix = amplitude.copy()

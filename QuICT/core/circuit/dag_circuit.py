@@ -1,11 +1,17 @@
-from collections import Iterable, deque
+from collections import deque
 from typing import Set
+
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 
 from QuICT.core.gate import BasicGate
+from QuICT.tools.exception.core import TypeError
 
 
 class DAGNode:
@@ -45,6 +51,10 @@ class DAGNode:
     def successors(self):
         return self._successors
 
+    @property
+    def type(self):
+        return self._type
+
     @successors.setter
     def successors(self, sces: list):
         self._successors = sces
@@ -64,6 +74,7 @@ class DAGNode:
         self._cargs = gate.cargs
         self._targs = gate.targs
         self._qargs = gate.cargs + gate.targs
+        self._type = gate.type
         self._successors = [] if successors is None else successors
         self._predecessors = [] if predecessors is None else predecessors
 
@@ -118,6 +129,12 @@ class DAGCircuit:
     def width(self) -> int:
         return self._width
 
+    @property
+    def gates(self):
+        for node_id in self.nodes():
+            node = self.get_node(node_id)
+            yield node.gate
+
     def __init__(self, circuit, node_type=DAGNode):
         self._circuit = circuit
         self._name = f"DAG_{self._circuit.name}"
@@ -157,7 +174,7 @@ class DAGCircuit:
         Args:
             node (DAGNode): The DAG Node
         """
-        assert isinstance(node, DAGNode)
+        assert isinstance(node, DAGNode), TypeError("DagCircuit.add_node.node", "DAGNode", type(node))
         if not self._graph.has_node(node.id):
             self._graph.add_node(node.id, node=node)
 
@@ -215,7 +232,7 @@ class DAGCircuit:
         elif isinstance(start, Iterable):
             visited = set(start)
         else:
-            assert False, 'start must be int or iterable objects'
+            raise TypeError("DagCircuit.all_successors/predecessors.start", "int/Iterable", type(start))
 
         que = deque(visited)
         init_visited = visited.copy()

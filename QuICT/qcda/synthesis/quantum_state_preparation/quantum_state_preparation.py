@@ -4,20 +4,21 @@ from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, GateType, GPhase, X, CX, Ry, Rz
 from QuICT.core.gate.backend import MCTWithoutAux, UniformlyRotation
 from QuICT.qcda.synthesis.unitary_decomposition import UnitaryDecomposition
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 class QuantumStatePreparation(object):
     """
     For a given quantum state |psi>, create a CompositeGate C that |psi> = C |0>
     """
-    def __init__(self, method='unitary_decomposition'):
+    def __init__(self, method='unitary_decomposition', keep_phase=False):
         """
         Choose the method between reference [1] and [2], designing circuit of
         quantum state preparation with uniformly gates and unitary decomposition respectively
 
         Args:
             method(str, optional): chosen method in ['uniformly_gates', 'unitary_decomposition']
+            keep_phase(bool): whether to keep the global phase as a GPhase gate in the output
 
         Reference:
             [1] https://arxiv.org/abs/quant-ph/0407010v1
@@ -26,6 +27,7 @@ class QuantumStatePreparation(object):
         assert method in ['uniformly_gates', 'unitary_decomposition'],\
             ValueError('Invalid quantum state preparation method')
         self.method = method
+        self.keep_phase = keep_phase
 
     def execute(self, state_vector):
         """
@@ -76,7 +78,8 @@ class QuantumStatePreparation(object):
                 alpha = np.sum(omega.reshape(1 << num_qubits - k, 1 << k), axis=1)
                 alpha = (alpha[1::2] - alpha[0::2]) / (1 << k)
                 gates.extend(URz.execute(alpha))
-            gates.append(GPhase(np.average(omega)) & 0)
+            if self.keep_phase:
+                gates.append(GPhase(np.average(omega)) & 0)
 
         return gates
 
@@ -111,7 +114,7 @@ class QuantumStatePreparation(object):
         with gates:
             for i in range(first_half):
                 CX & [i, i + first_half]
-        UD = UnitaryDecomposition()
+        UD = UnitaryDecomposition(include_phase_gate=self.keep_phase)
         # Phase 3
         U_gates, _ = UD.execute(U)
         gates.extend(U_gates)
@@ -130,7 +133,7 @@ class SparseQuantumStatePreparation(object):
     For a sparse quantum state |psi>, i.e. only a few of entries in the statevector is not zero,
     create a circuit C that |psi> = C |0>
     """
-    def __init__(self, input_format='state_vector'):
+    def __init__(self, input_format='state_vector', keep_phase=False):
         """
         Despite the original state vector, we could also use a 'state array' to describe a sparse quantum state.
         That is, each element [basis, amplitude] in the state array gives the amplitude on the computational basis,
@@ -139,6 +142,7 @@ class SparseQuantumStatePreparation(object):
 
         Args:
             input_mode(str, optional): chosen input in ['state_array', 'state_vector']
+            keep_phase(bool): whether to keep the global phase as a GPhase gate in the output
 
         Reference:
             https://ieeexplore.ieee.org/abstract/document/9586240/metrics
@@ -146,6 +150,7 @@ class SparseQuantumStatePreparation(object):
         assert input_format in ['state_array', 'state_vector'],\
             ValueError('Invalid sparse quantum state preparation input format')
         self.input_format = input_format
+        self.keep_phase = keep_phase
 
     def execute(self, state_array) -> CompositeGate:
         """
@@ -169,13 +174,13 @@ class SparseQuantumStatePreparation(object):
             state_vector = np.array(state_array)
 
         gates = CompositeGate()
-        simulator = ConstantStateVectorSimulator()
+        simulator = StateVectorSimulator()
         while len(state) > 1:
             gates_last = self.reduce_state(state, width)
             state_vector = self.dict_to_statevector(state, width)
             cir = Circuit(width)
             cir.extend(gates_last)
-            state_vector = simulator.run(cir, state_vector).get()
+            state_vector = simulator.run(cir, state_vector)
             state, width = self.statevector_to_dict(state_vector)
             gates.extend(gates_last)
 
@@ -184,7 +189,8 @@ class SparseQuantumStatePreparation(object):
             if x[b] == '1':
                 X & b | gates
         phase = -np.angle(state[x])
-        GPhase(phase) & 0 | gates
+        if self.keep_phase:
+            GPhase(phase) & 0 | gates
         return gates.inverse()
 
     def reduce_state(self, state: dict, width: int) -> CompositeGate:
