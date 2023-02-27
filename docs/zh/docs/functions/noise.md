@@ -131,8 +131,8 @@ readout_err = ReadoutError(np.array([[0.8, 0.2], [0.2, 0.8]]))      # 构建单�
 nm = NoiseModel()   # 初始化噪声模型
 nm.add_noise_for_all_qubits(bf_err, ['h'])          # 添加比特翻转噪声，只针对 H 量子门
 nm.add_noise_for_all_qubits(dep_error, ['x', 'y'])  # 添加退极化噪声，针对 X，Y 量子门
-nm.add(bits_err, ['cx', 'ch'], [1, 2])              # 添加双比特泡利信道噪声，针对比特位为1，2的 CX，CY 量子门
-nm.add_readout_error(single_readout, [1, 3])        # 添加Readout噪声，针对位置为1，3的量子比特
+nm.add(bits_err, ['cx', 'cz'], [1, 2])              # 添加双比特泡利信道噪声，针对比特位为1，2的 CX，CZ 量子门
+nm.add_readout_error(readout_err, [1, 3])        # 添加Readout噪声，针对位置为1，3的量子比特
 
 noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
 ```
