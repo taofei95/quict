@@ -9,12 +9,12 @@ hide:
 
 - PYTHON VERSION >= 3.7
 - GPU环境要求
-  - Cupy: [Installing Cupy](https://docs.cupy.dev/en/stable/install.html)
-        
-        ```sh
-        nvcc -V     # 获得cuda版本号
-        pip install cupy-cuda{version}      # 根据cuda版本号进行安装
-        ```
+  - Cuda Toolkit >= 11.1: [Installing CUDA](https://developer.nvidia.com/cuda-toolkit-archive)
+  - Cupy: [Installing Cupy](https://docs.cupy.dev/en/stable/install.html)  
+    ```sh
+    nvcc -V     # 获得cuda版本号
+    pip install cupy-cuda{version}      # 根据cuda版本号进行安装
+    ```
 
 ### 从 pypi 安装
 

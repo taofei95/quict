@@ -34,7 +34,7 @@ qr2 = Qureg([qubit])    # 构建包含 qubit 的 Qureg
 ``` python
 from QuICT.core import Circuit
 from QuICT.core.gate import Measure
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 circuit = Circuit(5)        # 构建 5-qubit 的量子电路
@@ -42,7 +42,7 @@ circuit.random_append(20)   # 在电路中随机放置 20 个量子门
 Measure | circuit           # 将测量门放置在所有量子比特上
 
 # 量子电路模拟
-sim = CircuitSimulator()
+sim = StateVectorSimulator()
 sv = sim.run(circuit)
 print(int(circuit.qubits))  # 展示所有比特的测量结果
 ```
