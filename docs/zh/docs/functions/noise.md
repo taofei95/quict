@@ -164,10 +164,10 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
 - 针对初始量子电路进行模拟
   
     ``` python
-    from QuICT.simulation.state_vector import CircuitSimulator
+    from QuICT.simulation.state_vector import StateVectorSimulator
 
     # 量子电路模拟
-    simulator = CircuitSimulator()
+    simulator = StateVectorSimulator()
     sv = simulator.run(circuit)
     sample_result = simulator.sample(3000)
     ``` 
@@ -184,12 +184,12 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
 
     # 构建噪声模型
     bf_err = BitflipError(0.05)
-    bf2_err = bf_error.tensor(bf_error)
+    bf2_err = bf_err.tensor(bf_err)
     nm = NoiseModel()
-    nm.add_noise_for_all_qubits(bits_err, ['cx'])
+    nm.add_noise_for_all_qubits(bf2_err, ['cx'])
 
     # 含噪声量子电路模拟
-    simulator = DensityMatrixSimulator()
+    dm_simu = DensityMatrixSimulator()
     sv = dm_simu.run(circuit, noise_model=nm)
     sample_result = dm_simu.sample(3000)
     ```

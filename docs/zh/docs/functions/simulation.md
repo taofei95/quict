@@ -117,13 +117,13 @@ $ρ \equiv \sum_i p_i|\psi_i⟩⟨\psi_i| \stackrel{U}{\longrightarrow} \sum_i p
 
 ``` python
 from QuICT.core import Circuit
-from QuICT.simulation.density_matrix import DensityMatrixSimulation
+from QuICT.simulation.density_matrix import DensityMatrixSimulator
 
 # Build circuit with 100 random gates and 5 qubits
 circuit = Circuit(5)
 circuit.random_append(rand_size=100)
 
 # Simulate Quantum Circuit
-simulator = DensityMatrixSimulation(device="CPU", precision="double")
+simulator = DensityMatrixSimulator(device="CPU", precision="double")
 result = simulator.run(circuit)
 ```
