@@ -38,18 +38,17 @@ class Ansatz:
     def trainable_pargs_ptr(self):
         return self._trainable_pargs_ptr
 
-    def __init__(self, n_qubits, circuit=None, device=torch.device("cuda:0")):
+    def __init__(self, n_qubits, device=torch.device("cuda:0")):
         """Initialize an empty Ansatz or from a Circuit.
 
         Args:
             n_qubits (int): The number of qubits.
-            circuit (Circuit, optional): Initialize an Ansatz from a Circuit. Defaults to None.
             device (torch.device, optional): The device to which the Ansatz is assigned.
                 Defaults to torch.device("cuda:0").
         """
-        self._n_qubits = n_qubits if circuit is None else circuit.width()
+        self._n_qubits = n_qubits
         self._device = device
-        self._gates = [] if circuit is None else self._gate_to_tensor(circuit.gates)
+        self._gates = []
         self._trainable_pargs = []
         self._trainable_pargs_ptr = []
         self._algorithm = (
@@ -83,24 +82,6 @@ class Ansatz:
                 ansatz._trainable_pargs.append(other_gate.pargs)
                 ansatz._trainable_pargs_ptr.append(other_gate.pargs.data_ptr())
         return ansatz
-
-    def _gate_to_tensor(self, gates):
-        """Copy the Circuit gates to Ansatz tensor gates."""
-        gates_tensor = []
-        for gate in gates:
-            gate_tensor = BasicGateTensor(
-                gate.controls, gate.targets, gate.params, gate.type, device=self._device
-            )
-            gate_tensor.pargs = torch.tensor(copy.deepcopy(gate.pargs)).to(self._device)
-            gate_tensor.targs = copy.deepcopy(gate.targs)
-            gate_tensor.cargs = copy.deepcopy(gate.cargs)
-            gate_tensor.matrix = torch.from_numpy(gate.matrix).to(self._device)
-            gate_tensor.assigned_qubits = copy.deepcopy(gate.assigned_qubits)
-            if gate.assigned_qubits:
-                gate_tensor.update_name(gate.assigned_qubits[0].id)
-            gates_tensor.append(gate_tensor)
-
-        return gates_tensor
 
     def add_gate(self, gate, act_bits: Union[int, list] = None):
         """Add a gate into the ansatz.

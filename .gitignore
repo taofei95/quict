@@ -37,3 +37,5 @@ unit_test/**/*.jpg
 /QNN_MNIST*
 /docs_
 /QuICT.egg-info
+nohup.out
+circuit_*

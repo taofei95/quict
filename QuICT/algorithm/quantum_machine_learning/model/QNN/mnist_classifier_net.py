@@ -9,6 +9,7 @@ from QuICT.algorithm.quantum_machine_learning.utils import GpuSimulator
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.tools.exception.algorithm import *
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
 
 
 class QuantumNet(nn.Module):
@@ -31,7 +32,7 @@ class QuantumNet(nn.Module):
                 Defaults to torch.device("cuda:0").
         """
         super(QuantumNet, self).__init__()
-        if encoding not in ["qubit", "amplitude"]:
+        if encoding not in ["qubit", "amplitude", "FRQI"]:
             raise QNNModelError("The encoding method should be 'qubit' or 'amplitude'")
         self._layers = layers
         self._device = device
@@ -40,6 +41,8 @@ class QuantumNet(nn.Module):
             self._encoding = Qubit(data_qubits, device)
         elif encoding == "amplitude":
             self._encoding = Amplitude(data_qubits, device)
+        elif encoding == "FRQI":
+            self._encoding = FRQI(device)
         self._n_qubits = self._data_qubits + 1
         self._simulator = GpuSimulator()
         self._pqc = QNNLayer(
@@ -59,14 +62,19 @@ class QuantumNet(nn.Module):
         Y_pred = torch.zeros([X.shape[0]], device=self._device)
         for i in range(X.shape[0]):
             self._encoding.encoding(X[i])
-            data_ansatz = self._encoding.ansatz
+            # data_ansatz = self._encoding.ansatz
             model_ansatz = self._construct_ansatz()
-            ansatz = data_ansatz + model_ansatz
+            # ansatz = data_ansatz + model_ansatz
+            data_circuit = self._encoding.circuit
+            cir_simulator = ConstantStateVectorSimulator()
+            img_state = cir_simulator.run(data_circuit)
+            ansatz = model_ansatz
+            
             if self._device.type == "cpu":
                 state = ansatz.forward()
                 prob = ansatz.measure_prob(self._data_qubits, state)
             else:
-                state = self._simulator.forward(ansatz)
+                state = self._simulator.forward(ansatz, state=img_state)
                 prob = self._simulator.measure_prob(self._data_qubits, state)
             if prob is None:
                 raise QNNModelError("There is no Measure Gate on the readout qubit.")

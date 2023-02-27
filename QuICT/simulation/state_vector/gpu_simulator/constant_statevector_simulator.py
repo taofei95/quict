@@ -218,9 +218,12 @@ class ConstantStateVectorSimulator:
                 matrix,
                 *default_parameters
             )
-        # [Rzx]
+        # [Rzx, CRy, CRz]
         elif matrix_type == MatrixType.diag_normal:
-            t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            if gate.targets == 2:
+                t_indexes = [self._qubits - 1 - targ for targ in gate.targs]
+            else:
+                t_indexes = [self._qubits - 1 - gate.targ, self._qubits - 1 - gate.carg]
             matrix = self._get_gate_matrix(gate)
             self._algorithm.diagonal_normal_targs(
                 t_indexes,

@@ -1,3 +1,5 @@
+import numpy as np
+
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.core import Circuit
@@ -79,21 +81,54 @@ class Amplitude:
 
 
 class FRQI:
+    @property
+    def circuit(self):
+        return self._circuit
+
+    @property
+    def ansatz(self):
+        return self._ansatz
+
     def __init__(self, device=torch.device("cuda:0")):
         self._device = device
         self._circuit = None
         self._ansatz = None
 
-    def encoding(self, img, grayscale=256, circuit=False):
+    def encoding(self, img, grayscale=2):
         img = img.flatten()
-        img_theta = img / grayscale * np.pi
-        pos_qubits = list(range(img.shape[0]))
-        color_qubit = img.shape[0]
-        self._ansatz = Ansatz(color_qubit, device=self._device)
-        for qid in pos_qubits:
-            self._ansatz.add_gate(H_tensor, qid)
+        img_theta = img / (grayscale - 1) * np.pi
+        N = img.shape[0]
+        n_pos_qubits = int(np.log2(N))
+        assert 1 << n_pos_qubits == N
+        n_qubits = n_pos_qubits + 1
+
+        self._circuit = Circuit(n_qubits)
+        for qid in range(n_pos_qubits):
+            H | self._circuit(qid)
+
+        for i in range(N):
+            if i > 0:
+                bin_str = bin((i - 1) ^ i)[2:].zfill(n_pos_qubits)
+                for qid in range(n_pos_qubits):
+                    if bin_str[qid] == "1":
+                        X | self._circuit(qid)
+
+            mcr = MultiControlRotation(GateType.ry, float(img_theta[i]))
+            gates = mcr(control=list(range(n_pos_qubits)), target=n_pos_qubits)
+            gates | self._circuit
 
 
-frqi = FRQI()
-img = torch.rand(4, 4)
-frqi.encoding(img)
+if __name__ == "__main__":
+    import time
+    from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
+
+    frqi = FRQI()
+    img = torch.rand(4, 4)
+    start = time.time()
+    frqi.encoding(img, grayscale=2)
+    print(time.time() - start)
+
+    ansatz = Ansatz(2)
+    ansatz.add_gate(H_tensor)
+    for gate in ansatz.gates:
+        gate.copy()
