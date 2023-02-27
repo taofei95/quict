@@ -12,3 +12,5 @@ simulator = UnitarySimulator(
 )
 result = simulator.run(circuit)
 print(result)
+sample = simulator.sample(1000)
+print(sample)
