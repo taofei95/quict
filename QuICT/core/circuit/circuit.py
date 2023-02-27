@@ -102,6 +102,7 @@ class Circuit(CircuitBased):
 
         self._fidelity = fidelity
 
+    # TODO: Remove fidelity, support ancilla and topology
     def __init__(
         self,
         wires,
@@ -144,6 +145,7 @@ class Circuit(CircuitBased):
         self.topology = None
         self.fidelity = None
 
+    # TODO: refactoring and support circuit | circuit
     def __or__(self, targets):
         """deal the operator '|'
 
@@ -173,6 +175,7 @@ class Circuit(CircuitBased):
     ####################################################################
     ############         Circuit Qubits Operators           ############
     ####################################################################
+    # TODO: using index for all control not qubit
     def __call__(self, indexes: object):
         """ get a smaller qureg from this circuit
 
@@ -187,13 +190,13 @@ class Circuit(CircuitBased):
         Exceptions:
             TypeError: the type of indexes is error.
         """
-        if isinstance(indexes, int) or type(indexes) is list:
-            indexes = self.qubits(indexes)
+        if isinstance(indexes, int):
+            indexes = [indexes]
 
         if isinstance(indexes, Qubit):
-            indexes = Qureg(indexes)
+            indexes = self.qubits.index(indexes)
 
-        if not isinstance(indexes, Qureg):
+        if not isinstance(indexes, list):
             raise TypeError(
                 "Circuit.call", "int/list[int]/Qubit/Qureg", type(indexes)
             )
@@ -201,6 +204,7 @@ class Circuit(CircuitBased):
         self._pointer = indexes
         return self
 
+    # TODO: not use
     def __getitem__(self, item):
         """ to fit the slice operator, overloaded this function.
 
@@ -237,6 +241,7 @@ class Circuit(CircuitBased):
         self._qubits.reset_qubits()
         self._logger.debug(f"Reset qubits' measured result in the Quantum Circuit {self._name}.")
 
+    # TODO: remove
     def remapping(self, qureg: Qureg, mapping: list, circuit_update: bool = False):
         """ Realignment the qubits by the given mapping.
 
@@ -270,11 +275,6 @@ class Circuit(CircuitBased):
             insert_idx = len(self.gates)
         else:
             self.gates.insert(insert_idx, gate)
-
-        self._logger.debug(
-            f"Add quantum gate {gate.type} with qubit indexes {gate.cargs + gate.targs} " +
-            f"with index {insert_idx}."
-        )
 
         # Update gate type dict
         if gate.type in self._gate_type.keys():
@@ -350,6 +350,7 @@ class Circuit(CircuitBased):
     ####################################################################
     ############          Circuit Build Operators           ############
     ####################################################################
+    # TODO: refactoring
     def extend(self, gates: list):
         """ Add list of gates to the circuit
 
@@ -370,6 +371,7 @@ class Circuit(CircuitBased):
 
         self._pointer = None
 
+    # TODO: refactoring and remove checkpoints
     def append(self, op: Union[BasicGate, Operator], is_extend: bool = False, insert_idx: int = -1):
         qureg = self._pointer[:] if self._pointer else None
         if not is_extend:
@@ -422,7 +424,7 @@ class Circuit(CircuitBased):
         gate.cargs = [self.qubits.index(qureg[idx]) for idx in range(gate.controls)]
         gate.targs = [self.qubits.index(qureg[idx]) for idx in range(gate.controls, gate.controls + gate.targets)]
         gate.assigned_qubits = qureg
-        gate.update_name(qureg[0].id, len(self.gates))
+        # gate.update_name(qureg[0].id, len(self.gates))
 
         # Add gate into circuit
         self._add_quantumgate_into_circuit(gate, insert_idx)
@@ -432,7 +434,7 @@ class Circuit(CircuitBased):
             new_gate = gate.copy()
             new_gate.targs = [idx]
             new_gate.assigned_qubits = self.qubits(idx)
-            new_gate.update_name(self.qubits[idx].id, len(self.gates))
+            # new_gate.update_name(self.qubits[idx].id, len(self.gates))
 
             self._add_quantumgate_into_circuit(new_gate)
 
