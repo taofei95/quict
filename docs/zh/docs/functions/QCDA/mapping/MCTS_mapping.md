@@ -14,7 +14,7 @@ $$
 s=(\tau, PC, LC)
 $$
 
-每插入一个 SWAP 门，会使得比特映射关系改变，还可能使得部分逻辑电路中的门可以被执行，因此他们从 LC 中删去，放入了 PC 中，状态从 s 改变为了 s^'。
+每插入一个 SWAP 门，会使得比特映射关系改变，还可能使得部分逻辑电路中的门可以被执行，因此他们从 $LC$ 中删去，放入了 $PC$ 中，状态从 $s$ 改变为了 $s^\prime$。
 每个 SWAP 门对应一个短期奖励，定义为 SWAP 前后逻辑电路中门数量的减少量：
 
 $$
@@ -42,7 +42,7 @@ $$
 当前选择的叶子节点，在此基础上有若干不同方法插入一个 SWAP 门，使得该节点产生若干不同的子节点。为了优化搜索性能，这里限制插入的 SWAP 门至少有一个端点与该节点的逻辑电路 $LC$ 第一层量子门对应的比特 $Q_0$ 重合，即只允许选择交换 $(v_i,v_j )$ 的 SWAP 门：
 
 $$
-SWAP_{LC, \tau} = (v_i, v_j) \in E \land (\tau^{-1}(v_i) \in Q_0 \lor \tau^{-1}(v_j) \in Q_0)
+SWAP_{LC, \tau} = \left\{ (v_i, v_j) | (v_i, v_j) \in E \land (\tau^{-1}(v_i) \in Q_0 \lor \tau^{-1}(v_j) \in Q_0) \right\}
 $$
 
 其中 τ 表示当前的比特映射。
@@ -93,7 +93,7 @@ $$
 
 ## 示例代码
 
-以下代码加载 IBMQX2 拓扑结构，随机生成一个包含 10 个门的电路后执行映射。
+以下代码加载 IBMQX2 拓扑结构，随机生成一个 5 比特包含 10 个门的电路后执行映射。在实际使用中，可能需要调整拓扑描述文件的实际路径。
 
 ```python
 import os
@@ -104,7 +104,7 @@ from QuICT.qcda.mapping import MCTSMapping
 
 
 if __name__ == '__main__':
-    layout_path = os.path.join(os.path.dirname(__file__), "../layout/ibmqx2_layout.json")
+    layout_path = os.path.join(os.path.dirname(__file__), "ibmqx2_layout.json")
     layout = Layout.load_file(layout_path)
 
     circuit = Circuit(5)
