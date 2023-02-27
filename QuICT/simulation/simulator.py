@@ -10,7 +10,7 @@ from QuICT.core import Circuit
 from QuICT.core.noise import NoiseModel
 from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.simulation.unitary import UnitarySimulator
-from QuICT.simulation.density_matrix import DensityMatrixSimulation
+from QuICT.simulation.density_matrix import DensityMatrixSimulator
 from QuICT.simulation.utils import Result
 from QuICT.tools.exception.core import ValueError
 from QuICT.tools.exception.simulation import SimulatorOptionsUnmatchedError
@@ -94,7 +94,7 @@ class Simulator:
         elif self._backend == "unitary":
             simulator = UnitarySimulator(device=self._device, precision=self._precision)
         else:
-            simulator = DensityMatrixSimulation(device=self._device, precision=self._precision)
+            simulator = DensityMatrixSimulator(device=self._device, precision=self._precision)
 
         return simulator
 

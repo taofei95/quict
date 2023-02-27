@@ -1,1 +1,1 @@
-from .density_matrix_simulator import DensityMatrixSimulation
+from .density_matrix_simulator import DensityMatrixSimulator
