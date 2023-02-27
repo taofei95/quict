@@ -146,13 +146,13 @@ from QuICT.core.layout.layout import Layout
 from QuICT.core.utils.gate_type import GateType
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 
-#初始化
+# 初始化
 benchmark = QuICTBenchmark(device="CPU", output_path="./benchmark", output_file_type="txt")
 # 传入拓扑结构
 layout_file = Layout.load_file("./layout/grid_3x3.json")
-#传入指令集
+# 传入指令集
 Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
-#传入物理机接口, 直接进入评分系统
+# 传入物理机接口, 直接进入评分系统
 results = benchmark.run(simulator_interface=machine_interface, quantum_machine_info={"qubits_number":5, "layout_file":layout_file, "Instruction_Set":Inset}, mapping=True, gate_transform=True)
 ```
 
@@ -186,14 +186,14 @@ from QuICT.core.layout.layout import Layout
 from QuICT.core.utils.gate_type import GateType
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 
-#初始化
+# 初始化
 benchmark = QuICTBenchmark(device="CPU", output_path="./benchmark", output_file_type="txt")
 # 传入拓扑结构
 layout_file = Layout.load_file("./layout/grid_3x3.json")
-#传入指令集
+# 传入指令集
 Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
-#获得电路
+# 获得电路
 circuits = benchmark.get_circuits(quantum_machine_info={"qubits_number":5, "layout_file":layout_file, "Instruction_Set":Inset}, mapping=True, gate_transform=True)
-#传入电路组以及物理机模拟结果，进入评分系统
+# 传入电路组以及物理机模拟结果，进入评分系统
 results = benchmark.evaluate(circuits_list, amp_results_list)
 ```
