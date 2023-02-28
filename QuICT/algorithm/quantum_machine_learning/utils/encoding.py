@@ -133,7 +133,7 @@ class NEQR:
         self._ansatz = None
 
     def encoding(self, img):
-        n_color_qubits = np.log(256)
+        n_color_qubits = int(np.log2(256))
         color_list = list()
         img = img.flatten()
         N = img.shape[0]
