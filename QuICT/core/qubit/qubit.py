@@ -4,7 +4,7 @@
 # @Author  : Han Yu, Li Kaiqi
 # @File    : qubit.py
 import random
-from typing import Union
+from typing import Union, List
 
 from QuICT.core.utils import unique_id_generator
 from QuICT.tools.exception.core import TypeError, ValueError, IndexExceedError, QubitMeasureError
@@ -290,13 +290,16 @@ class Qureg(list):
 
         return Qureg(diff_qubit)
 
-    def index(self, qubit: Union[str, Qubit]):
+    def index(self, qubit: Union[List[Qubit], Qubit]) -> Union[int, list]:
         if isinstance(qubit, Qubit):
             return super().index(qubit)
 
-        for idx, item in enumerate(self):
-            if item.id == qubit:
-                return idx
+        if isinstance(qubit, list):
+            idxes = []
+            for q in qubit:
+                idxes.append(super().index(q))
+
+            return idxes
 
         raise ValueError("Qureg.index.qubit", "within current Qureg", "qubit is not")
 

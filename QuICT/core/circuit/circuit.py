@@ -190,11 +190,11 @@ class Circuit(CircuitBased):
         Exceptions:
             TypeError: the type of indexes is error.
         """
+        if isinstance(indexes, (Qubit, Qureg)):
+            indexes = self.qubits.index(indexes)
+
         if isinstance(indexes, int):
             indexes = [indexes]
-
-        if isinstance(indexes, Qubit):
-            indexes = self.qubits.index(indexes)
 
         if not isinstance(indexes, list):
             raise TypeError(
@@ -371,19 +371,12 @@ class Circuit(CircuitBased):
 
         self._pointer = None
 
-    # TODO: refactoring and remove checkpoints
-    def append(self, op: Union[BasicGate, Operator], is_extend: bool = False, insert_idx: int = -1):
-        qureg = self._pointer[:] if self._pointer else None
-        if not is_extend:
-            self._pointer = None
-
+    # TODO: refactoring and remove checkpoints and add insert
+    def append(self, op: Union[BasicGate, Operator], is_extend: bool = False):
         if isinstance(op, BasicGate):
-            self._add_gate(op, qureg, insert_idx)
+            self._add_gate(op)
         elif isinstance(op, Trigger):
-            self._add_trigger(op, qureg)
-        elif isinstance(op, CheckPoint):
-            self._checkpoints.append(op)
-            self._logger.debug(f"Add an CheckPoint which point to index {op.position}.")
+            self._add_trigger(op)
         elif isinstance(op, Operator):
             self._gates.append(op)
             self._logger.debug(f"Add an operator {type(op)}.")
@@ -392,7 +385,10 @@ class Circuit(CircuitBased):
                 "Circuit.append.gate", "Trigger/BasicGate/NoiseGate", {type(op)}
             )
 
-    def _add_gate(self, gate: BasicGate, qureg: Qureg, insert_idx: int):
+        if not is_extend:
+            self._pointer = None
+
+    def _add_gate(self, gate: BasicGate, insert_idx: int = -1):
         """ add a gate into some qureg
 
         Args:
@@ -424,7 +420,6 @@ class Circuit(CircuitBased):
         gate.cargs = [self.qubits.index(qureg[idx]) for idx in range(gate.controls)]
         gate.targs = [self.qubits.index(qureg[idx]) for idx in range(gate.controls, gate.controls + gate.targets)]
         gate.assigned_qubits = qureg
-        # gate.update_name(qureg[0].id, len(self.gates))
 
         # Add gate into circuit
         self._add_quantumgate_into_circuit(gate, insert_idx)
@@ -434,7 +429,6 @@ class Circuit(CircuitBased):
             new_gate = gate.copy()
             new_gate.targs = [idx]
             new_gate.assigned_qubits = self.qubits(idx)
-            # new_gate.update_name(self.qubits[idx].id, len(self.gates))
 
             self._add_quantumgate_into_circuit(new_gate)
 

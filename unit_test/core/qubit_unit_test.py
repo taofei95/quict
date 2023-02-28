@@ -39,6 +39,15 @@ class TestQubit(unittest.TestCase):
         for cq in cqureg:
             assert cq.id in squbit_ids
 
+    def test_qubit_idx(self):
+        qureg = Qureg(5)
+        qbit = qureg[3]
+
+        assert qureg.index(qbit) == 3
+
+        sqreg = qureg[0, 3]
+        assert qureg.index(sqreg) == [0, 3]
+
     def test_qureg_operation(self):
         q1 = Qureg(5)
         q2 = Qureg(5)
