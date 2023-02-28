@@ -742,7 +742,7 @@ class CNFSATOracle:
             dirty_ancilla (int): 0 for clean and >0 for dirty
         """
         # Step 1: Get Circuit
-        cnf_circuit = self.circuit(cnf_para, ancilla_qubits_num, dirty_ancilla)
+        cnf_circuit = self.circuit(cnf_para, ancilla_qubits_num, dirty_ancilla, output_cgate=False)
 
         # Step 2: Simulator
         cnf_sv = self.simulator.run(cnf_circuit)

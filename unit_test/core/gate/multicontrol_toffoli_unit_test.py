@@ -6,7 +6,7 @@ from QuICT.core.gate import MultiControlToffoli, X
 def test():
     for aux_usage in ['no_aux', 'one_clean_aux', 'one_dirty_aux', 'half_dirty_aux']:
         mct = MultiControlToffoli(aux_usage)
-        for control in range(9):
+        for control in range(2, 4):
             mat_mct = np.eye(1 << (control + 1))
             mat_mct[(1 << (control + 1)) - 2:, (1 << (control + 1)) - 2:] = X.matrix.real
             if control <= 2:

@@ -58,4 +58,5 @@ def job_controller_in_local_mode():
     job_manager.list_job()
 
 
-job_controller_in_local_mode()
+if __name__ == "__main__":
+    job_controller_in_local_mode()
