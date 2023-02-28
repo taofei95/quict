@@ -12,15 +12,15 @@ def example_oracle(n):
         # phase-flip on target
         cgate = CompositeGate()
         if controlled:
-            for i in range(1,n+1):
-                CZ | cgate([0,i])
+            for i in range(1, n + 1):
+                CZ | cgate([0, i])
         else:
             for i in range(n):
                 Z | cgate(i)
         return cgate
 
     def is_good_state(state_string):
-        if len(state_string)==0:
+        if len(state_string) == 0:
             return False
         else:
             return bool(int(state_string[0])) ^ is_good_state(state_string[1:])
@@ -31,7 +31,7 @@ def example_oracle(n):
 def test_canonical_QAE_run():
     pr_success = 0
     n_sample = 0
-    for n in range(3,5):
+    for n in range(3, 5):
         eps = 0.1
         oracle = example_oracle(n)
 
@@ -58,7 +58,7 @@ def test_canonical_QAE_run():
 def test_max_likely_QAE_run():
     pr_success = 0
     n_sample = 0
-    for n in range(3,5):
+    for n in range(3, 5):
         eps = 0.1
         oracle = example_oracle(n)
 
@@ -83,7 +83,7 @@ def test_max_likely_QAE_run():
 def test_fast_QAE_run():
     pr_success = 0
     n_sample = 0
-    for n in range(3,5):
+    for n in range(3, 5):
         eps = 0.1
         oracle = example_oracle(n)
 
