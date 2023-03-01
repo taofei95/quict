@@ -131,7 +131,7 @@ from QuICT.algorithm.quantum_algorithm import Grover, PartialGrover
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.gate.backend import MCTOneAux
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 ```
 
 ```python
@@ -158,7 +158,7 @@ n = 4
 target = 0b0110
 f = [target]
 k, oracle = main_oracle(n, f)
-grover = Grover(simulator=ConstantStateVectorSimulator())
+grover = Grover(simulator=StateVectorSimulator())
 result = grover.run(n, k, oracle)
 print(result)
 ```
@@ -228,9 +228,9 @@ circ.draw()
 ```python
 n = 4
 k, oracle = sudoku_oracle()
-circ = Grover(ConstantStateVectorSimulator()).circuit(n, k, oracle, n_solution=2)
+circ = Grover(StateVectorSimulator()).circuit(n, k, oracle, n_solution=2)
 
-amp = ConstantStateVectorSimulator().run(circ)
+amp = StateVectorSimulator().run(circ)
 x = bin(int(circ[list(range(n))]))[2:].rjust(4,'0')[::-1]
 print(f'{x[0]}|{x[1]}\n-+-\n{x[2]}|{x[3]}')
 ```
@@ -449,9 +449,9 @@ def trace_prob(amp, c):
 ```python
 n = 8
 k, oracle = puzzle_oracle()
-circ = Grover(ConstantStateVectorSimulator()).circuit(n, k, oracle, measure=False)
+circ = Grover(StateVectorSimulator()).circuit(n, k, oracle, measure=False)
 
-amp = ConstantStateVectorSimulator().run(circ)
+amp = StateVectorSimulator().run(circ)
 names = [bin(i)[2:].rjust(n,'0') for i in range(1<<n)]
 values = trace_prob(amp,list(range(n))).reshape([1<<n])
 print(f"success rate = {sum([values[i] if bin(i)[2:].rjust(n,'0')=='00101111' else 0 for i in range(len(values))])}")
@@ -487,9 +487,9 @@ n = 8
 n_block = 3
 print(f"run with n = {n}, block size = {n_block}")
 k, oracle = puzzle_oracle()
-circ = PartialGrover(ConstantStateVectorSimulator()).circuit(n, n_block, k, oracle, measure=False)
+circ = PartialGrover(StateVectorSimulator()).circuit(n, n_block, k, oracle, measure=False)
 
-amp = ConstantStateVectorSimulator().run(circ)
+amp = StateVectorSimulator().run(circ)
 names = [bin(i)[2:].rjust(n,'0') for i in range(1<<n)]
 values = trace_prob(amp,list(range(n))).reshape([1<<n])
 print(f"success rate = {sum([values[i] if bin(i)[2:].rjust(n,'0')[:3]=='001' else 0 for i in range(len(values))])}")
@@ -538,7 +538,7 @@ plt.show()
 
 
 ```python
-from QuICT.algorithm.quantum_algorithm.CNF import CNFSATOracle
+from QuICT.algorithm.quantum_algorithm import CNFSATOracle
 ```
 
 以下函数从CNF描述文件中读取信息：
@@ -601,21 +601,21 @@ def check_solution(variable_data, variable_number, clause_number, CNF_data):
 file_path = 'test.cnf'
 variable_number, clause_number, CNF_data = read_CNF(file_path)
 
+simulator=StateVectorSimulator()
 ancilla_qubits_num=5
 dirty_ancilla=1
-cnf = CNFSATOracle()
-cnf.run(file_path, ancilla_qubits_num, dirty_ancilla)
+cnf = CNFSATOracle(simu=simulator)
 
-oracle = cnf.circuit()
-grover = Grover(ConstantStateVectorSimulator())
-    
+oracle = cnf.circuit(file_path, ancilla_qubits_num, dirty_ancilla)
+grover = Grover(simulator)
+
 circ = grover.circuit(variable_number, ancilla_qubits_num + dirty_ancilla, oracle, n_solution=1, measure=False, is_bit_flip=True)
 print(f"constrcution finished.")
-grover.simulator.run(circ)
+simulator.run(circ)
 print(f"simulation   finished.")
 n_hit = 0
 n_all = 1000
-result_samples = grover.simulator.sample(n_all)
+result_samples = simulator.sample(n_all)
 print(f"sampling     finished.")
 ```
 ```
