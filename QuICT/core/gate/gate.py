@@ -522,7 +522,7 @@ class BasicGate(object):
             gate.params = self.params
 
         if gate.type in [GateType.perm, GateType.unitary, GateType.perm_fx]:
-            gate.matrix = self.matrix
+            gate.matrix = copy.deepcopy(self.matrix)
 
         if self.params > 0:
             gate.pargs = self.pargs[:]
@@ -533,7 +533,6 @@ class BasicGate(object):
 
         if self.assigned_qubits:
             gate.assigned_qubits = self.assigned_qubits[:]
-            gate.update_name(gate.assigned_qubits[0].id)
 
         if self.precision == np.complex64:
             gate.convert_precision()

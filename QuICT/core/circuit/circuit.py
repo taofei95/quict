@@ -282,13 +282,6 @@ class Circuit(CircuitBased):
         else:
             self._gate_type[gate.type] = 1
 
-    def _update_gate_index(self):
-        for index, gate in enumerate(self.gates):
-            gate_type, gate_qb, gate_idx = gate.name.split('-')
-
-            if int(gate_idx) != index:
-                gate.name = '-'.join([gate_type, gate_qb, str(index)])
-
     def replace_gate(self, idx: int, gate: BasicGate):
         """ Replace the quantum gate in the target index, only accept BasicGate or NoiseGate.
 
@@ -599,10 +592,6 @@ class Circuit(CircuitBased):
 
             if sub_circuit.size() >= max_size and max_size != -1:
                 break
-
-        if remove:
-            self._update_gate_index()
-            self._logger.warn(f"Remove sub-circuit's gates from quantum circuit {self._name}.")
 
         return sub_circuit
 

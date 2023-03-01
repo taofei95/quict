@@ -83,7 +83,7 @@ class TestGrover(unittest.TestCase):
                 "for n = %d, %d errors in %d tests, error rate = %f"
                 % (n, error, N, error_rate)
             )
-            if error_rate > 0.15:
+            if error_rate > 1 / math.sqrt(N):
                 assert 0
         assert 1
 
@@ -174,7 +174,7 @@ class TestGrover(unittest.TestCase):
                 "for n = %d, %d errors in %d tests, error rate = %f"
                 % (n, error, N, error / N)
             )
-            if error_rate > 0.3:
+            if error_rate > 1 / math.sqrt(2 ** n_block):
                 assert 0
         assert 1
 

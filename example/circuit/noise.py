@@ -103,6 +103,9 @@ if __name__ == "__main__":
 
     nm = build_dampling_noise()
 
+    # 含噪声量子电路
+    noised_cir = nm.transpile(cir)
+
     # 含噪声量子电路模拟
     simulator = DensityMatrixSimulator(accumulated_mode=True)
     sv = simulator.run(cir, noise_model=nm)

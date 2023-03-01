@@ -112,7 +112,6 @@ class CompositeGate(CircuitBased):
             if isinstance(targets, Qureg):
                 target_qureg = targets(args_index)
                 gate.assigned_qubits = target_qureg
-                gate.update_name(target_qureg[0].id)
             else:
                 gate.cargs = [targets[carg] for carg in gate.cargs]
                 gate.targs = [targets[targ] for targ in gate.targs]
