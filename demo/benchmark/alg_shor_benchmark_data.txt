@@ -1,0 +1,18 @@
+mode: BEA
+Quict time : 0.0003
+qubits: 15, circuit qubits:21 
+Quict time : 0.0
+qubits: 22, circuit qubits:25 
+Quict time : 0.0
+qubits: 30, circuit qubits:25 
+Quict time : 0.0001
+qubits: 35, circuit qubits:29 
+mode: HRS
+Quict time : 0.0001
+qubits: 15, circuit qubits:20 
+Quict time : 0.0
+qubits: 22, circuit qubits:24 
+Quict time : 0.0
+qubits: 30, circuit qubits:24 
+Quict time : 0.0001
+qubits: 35, circuit qubits:28 

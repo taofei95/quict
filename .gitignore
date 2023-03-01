@@ -33,8 +33,6 @@ unit_test/**/*.jpg
 /del
 /data/
 .log/
-/demo/
-/QNN_MNIST*
 /docs_
 nohup.out
 circuit_*

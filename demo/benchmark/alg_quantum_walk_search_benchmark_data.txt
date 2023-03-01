@@ -1,0 +1,6 @@
+qubits3 speed: 0.5882
+qubits4 speed: 0.5781
+qubits5 speed: 0.79
+qubits6 speed: 0.9373
+qubits8 speed: 2.4909
+qubits9 speed: 115.4234
