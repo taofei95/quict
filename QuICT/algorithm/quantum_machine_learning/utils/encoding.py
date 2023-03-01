@@ -137,8 +137,11 @@ class NEQR:
         color_list = list()
         img = img.flatten()
         N = img.shape[0]
-        n_pos_qubits = int(np.log2(N))
-        assert 1 << n_pos_qubits == N
+        len_N=len(bin(N))-1
+        n_pos_qubits = len_N
+        assert 1 << n_pos_qubits >= N
+        #n_pos_qubits = int(np.log2(N))
+        #assert 1 << n_pos_qubits == N
         n_qubits = n_pos_qubits + n_color_qubits + 1
         gate_ncnot = MultiControlToffoli()
         self._circuit = Circuit(n_qubits)
@@ -150,41 +153,7 @@ class NEQR:
             bin_str = bin(item)[2:].zfill(n_pos_qubits)
             color_list[img[item]].add(bin_str)
 
-        # start of quantum image compression
-        tp = list()
-        tp.append(set())
-        tp.append(set())
-        old = 0
-        new = 1
-        for sets in color_list:
-            tp[old] = sets.copy()
-            while 1:
-                for pos_bin in sets:
-                    if pos_bin in tp[new]:
-                        continue
-                for pos_jin in sets:
-                    if pos_bin == pos_jin:
-                        continue
-                    mod = int(pos_bin, 2) ^ int(pos_jin, 2)
-                    if bin(mod).count("1") != 1:
-                        break
-                    tp[new].add(bin(int(pos_bin, 2)-mod))
-                    tp[new].add(bin(int(pos_jin, 2)-mod))
-                    tp[old].remove(pos_jin)
-                    break
-                temep = old
-                old = new
-                new = temep
-                tp[new].clear()
-                if not tp[old]:
-                    sets.clear()
-                    for item in tp[new]:
-                        sets.add(item)
-                    break
-            for pos_bin in sets:
-                img[int(pos_bin, 2)] = color_list.index(sets)
-
-        # end of quantum image compression
+        
         for qid in range(n_pos_qubits):
             H | self._circuit(qid)
 
@@ -209,7 +178,7 @@ if __name__ == "__main__":
     img = torch.rand(4, 4)
     start = time.time()
     #frqi.encoding(img, grayscale=2)
-    img1 = torch.randint(0, 255, (1, 4, 4))[0]
+    img1 = torch.randint(0, 255, (1, 16, 16))[0]
     nerq = NEQR()
     nerq.encoding(img=img1)
     print(time.time() - start)
