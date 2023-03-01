@@ -127,11 +127,14 @@ $U_s$门可以由$O(n)=O(\log N)$基础门实现，该实现已包含在QuICT的
 在4位的MCT oracle上执行搜索。
 
 ```python
+from QuICT.algorithm.quantum_algorithm import Grover, PartialGrover
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.core.gate.backend import MCTOneAux
+from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+```
 
+```python
 def main_oracle(n, f):
     result_q = [n]
     cgate = CompositeGate()
@@ -155,19 +158,9 @@ n = 4
 target = 0b0110
 f = [target]
 k, oracle = main_oracle(n, f)
-grover = Grover(simulator=StateVectorSimulator())
+grover = Grover(simulator=ConstantStateVectorSimulator())
 result = grover.run(n, k, oracle)
 print(result)
-```
-
-
-
-
-```python
-from QuICT.core import Circuit
-from QuICT.core.gate import *
-from QuICT.core.gate.backend import MCTOneAux
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator, CircuitSimulator
 ```
 
 ### 二进制数独的求解[<sup>[2]</sup>](#refer2)
@@ -189,8 +182,6 @@ $$f(x)=[(x_0\oplus x_1) \& (x_2\oplus x_3) \& (x_0\oplus x_2) \& (x_1\oplus x_3)
 
 
 ```python
-from QuICT.algorithm.quantum_algorithm.grover import Grover,PartialGrover
-
 def sudoku_oracle():
     clauses_list = [[0,1],[2,3],[0,2],[1,3]]
     reg_q = list(range(4))
@@ -215,6 +206,7 @@ def sudoku_oracle():
         X & result_q[0]
     return 6, cgate
 ```
+
 谕示电路如图所示：
 
 
@@ -236,9 +228,9 @@ circ.draw()
 ```python
 n = 4
 k, oracle = sudoku_oracle()
-circ = Grover(CircuitSimulator()).circuit(n, k, oracle, n_solution=2)
+circ = Grover(ConstantStateVectorSimulator()).circuit(n, k, oracle, n_solution=2)
 
-amp = CircuitSimulator().run(circ)
+amp = ConstantStateVectorSimulator().run(circ)
 x = bin(int(circ[list(range(n))]))[2:].rjust(4,'0')[::-1]
 print(f'{x[0]}|{x[1]}\n-+-\n{x[2]}|{x[3]}')
 ```
@@ -262,7 +254,7 @@ print(f'{x[0]}|{x[1]}\n-+-\n{x[2]}|{x[3]}')
 
 更确切地说，$f(x)=\land_{i=1,2,3,4}((\neg x_i\land\sum_{j\neq i}(1-[x_j])\neq i) \lor (x_i\land\sum_{j\neq i}(1-[x_j])=i))$。但实际上我们用$f_a(x)=f(x)\land(\land_{i=4+1...4+a} x_i)$来区分Grover和Partial Grover模块。
 
-同样，我们可以用Grover模块构建神谕并找到解决方案。
+同样，我们可以用Grover模块构建谕示电路并找到解决方案。
 
 
 ```python
@@ -457,9 +449,9 @@ def trace_prob(amp, c):
 ```python
 n = 8
 k, oracle = puzzle_oracle()
-circ = Grover(CircuitSimulator()).circuit(n, k, oracle, measure=False)
+circ = Grover(ConstantStateVectorSimulator()).circuit(n, k, oracle, measure=False)
 
-amp = CircuitSimulator().run(circ)
+amp = ConstantStateVectorSimulator().run(circ)
 names = [bin(i)[2:].rjust(n,'0') for i in range(1<<n)]
 values = trace_prob(amp,list(range(n))).reshape([1<<n])
 print(f"success rate = {sum([values[i] if bin(i)[2:].rjust(n,'0')=='00101111' else 0 for i in range(len(values))])}")
@@ -495,9 +487,9 @@ n = 8
 n_block = 3
 print(f"run with n = {n}, block size = {n_block}")
 k, oracle = puzzle_oracle()
-circ = PartialGrover(CircuitSimulator()).circuit(n, n_block, k, oracle, measure=False)
+circ = PartialGrover(ConstantStateVectorSimulator()).circuit(n, n_block, k, oracle, measure=False)
 
-amp = CircuitSimulator().run(circ)
+amp = ConstantStateVectorSimulator().run(circ)
 names = [bin(i)[2:].rjust(n,'0') for i in range(1<<n)]
 values = trace_prob(amp,list(range(n))).reshape([1<<n])
 print(f"success rate = {sum([values[i] if bin(i)[2:].rjust(n,'0')[:3]=='001' else 0 for i in range(len(values))])}")
@@ -539,6 +531,8 @@ plt.show()
 | success rate           | $1-O(N^{-1/2})$              | $1-O(N^{-1/4})$                               |
 
 ### CNF公式的求解
+
+> CNF部分的重构尚未完成。此部分tutorial暂不可用。
 
 [CNF](https://en.wikipedia.org/wiki/Conjunctive_normal_form)是布尔逻辑的一种正规表示方法。接下来，我们将根据CNF公式的描述文件来构建谕示电路，并将谕示与Grover模块相结合，以找到解决方案。CNF谕示电路的构造方法已经在QuICT中实现。
 
