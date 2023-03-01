@@ -150,6 +150,7 @@ class NEQR:
             bin_str = bin(item)[2:].zfill(n_pos_qubits)
             color_list[img[item]].add(bin_str)
 
+        # start of quantum image compression
         tp = list()
         tp.append(set())
         tp.append(set())
@@ -183,26 +184,34 @@ class NEQR:
             for pos_bin in sets:
                 img[int(pos_bin, 2)] = color_list.index(sets)
 
+        # end of quantum image compression
         for qid in range(n_pos_qubits):
             H | self._circuit(qid)
 
-        for i in range(n_color_qubits):  # bin_express
+        for i in range(n_color_qubits):
             for qid in range(N):
-                if bin(img[qid])[2:][i] == "0":
+                bin_str = bin(img[qid])[2:].zfill(n_color_qubits)
+                if bin_str[i] == "0":
                     pass
                 else:
-                    gate_ncnot(control=n_pos_qubits) | self.circuit(
-                        i+n_pos_qubits)
+                    fai_list = list()
+                    for item in range(n_pos_qubits):
+                        fai_list .append(item)
+                    fai_list.append(i+n_pos_qubits)
+                    gate_ncnot(control=n_pos_qubits) | self.circuit(fai_list)
 
 
 if __name__ == "__main__":
     import time
     from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 
-    frqi = FRQI()
+    #frqi = FRQI()
     img = torch.rand(4, 4)
     start = time.time()
-    frqi.encoding(img, grayscale=2)
+    #frqi.encoding(img, grayscale=2)
+    img1 = torch.randint(0, 255, (1, 4, 4))[0]
+    nerq = NEQR()
+    nerq.encoding(img=img1)
     print(time.time() - start)
 
     ansatz = Ansatz(2)
