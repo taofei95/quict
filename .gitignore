@@ -34,5 +34,6 @@ unit_test/**/*.jpg
 /data/
 .log/
 /docs_
+/QuICT.egg-info
 nohup.out
 circuit_*
