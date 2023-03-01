@@ -15,12 +15,6 @@ RUN apt-get update -y && \
 
 RUN pip3 install --no-cache-dir -U install setuptools pip
 RUN pip3 install --no-cache-dir "cupy-cuda111"
-
-COPY ./requirements.txt .
-RUN pip install -r ./requirements.txt
-RUN rm ./requirements.txt
-
-ADD ./QuICT /usr/local/lib/python3.8/dist-packages/QuICT/
-ADD ./docker_run_script/scripts /home/quict/
+RUN pip3 install --no-cache-dir quict
 
 CMD ["bash"]
