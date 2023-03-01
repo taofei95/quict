@@ -86,7 +86,7 @@ Thouless ansatz的结构如上图所示，随着目标分子不同，菱形电�
 
 ## 代码实例
 
-本教程所需数据请参见/example/algorithm/molecular_data文件夹，/example/algorithm/hartree_fock_demo.ipynb给出了可以直接运行的代码样例，可供参考。
+本教程所需数据请参见QuICT-ml的/example/molecular_data文件夹，/example/hartree_fock_demo.ipynb给出了可以直接运行的代码样例，可供参考。
 
 ### 获取哈密顿量
 
