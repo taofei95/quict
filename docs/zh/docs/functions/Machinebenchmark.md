@@ -139,33 +139,51 @@ V_{Q} = 2^n
 #### 初始化
 
 ``` python
-from QuICT.benchmark.benchmark import QuICTBenchmark
-from QuICT.core.layout.layout import Layout
+from QuICT.benchmark import QuICTBenchmark
+from QuICT.core import Layout
 from QuICT.core.utils.gate_type import GateType
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 
 # 初始化
 benchmark = QuICTBenchmark(device="CPU", output_path="./benchmark", output_file_type="txt")
 # 传入拓扑结构
-layout_file = Layout.load_file("./layout/grid_3x3.json")
+layout = Layout.load_file(os.path.dirname(os.path.abspath(__file__)) + f"/example/layout/line5.json")
 # 传入指令集
 Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
-
+# 这里模拟待测物理机接口设置
+def quict_simulation(circuit):
+    simulator = StateVectorSimulator()
+    results = simulator.run(circuit)
+    return results
 ```
 
 #### 连待测物理机接口执行
 
 ``` python
 # 传入物理机接口, 直接进入评分系统
-results = benchmark.run(simulator_interface=machine_interface, quantum_machine_info={"qubits_number":5, "layout_file":layout_file, "Instruction_Set":Inset}, mapping=True, gate_transform=True)
+results = benchmark.run(simulator_interface=quict_simulation, quantum_machine_info={"qubits_number":3, "layout_file":layout, "Instruction_Set":Inset}, level=3, mapping=True, gate_transform=True)
 ```
 
 #### 分步执行
 
 ``` python
 # 获得电路
-circuits = benchmark.get_circuits(quantum_machine_info={"qubits_number":5, "layout_file":layout_file, "Instruction_Set":Inset}, mapping=True, gate_transform=True)
+circuits = benchmark.get_circuits(quantum_machine_info={"qubits_number":3, "layout_file":layout_file, "Instruction_Set":Inset}, level=3, mapping=True, gate_transform=True)
 # 传入电路组以及物理机模拟结果，进入评分系统
 results = benchmark.evaluate(circuits_list, amp_results_list)
 ```
 #### 结果展示
+
+<figure markdown>
+
+![radar graph](../assets/images/functions/Machinebenchmark/radar_chart_show.jpg)
+<figcaption>雷达图</figcaption>
+
+</figure>
+
+<figure markdown>
+
+![radar graph](../assets/images/functions/Machinebenchmark/txt_show.jpg)
+<figcaption>文本文件部分截图</figcaption>
+
+</figure>
