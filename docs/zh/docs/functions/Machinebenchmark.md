@@ -103,13 +103,17 @@ V_{Q} = 2^n
 #### 结果展示示例 - 雷达图
 
 <figure markdown>
+
 ![radar graph](../assets/images/functions/Machinebenchmark/benchmark_radar_chart_show.jpg)
+
 </figure>
 
 #### 结果展示示例 - TXT文本文件
 
 <figure markdown>
+
 ![TXT](../assets/images/functions/Machinebenchmark/benchmark_txt.png)
+
 </figure>
 
 ## 基准测试基本用法
@@ -154,6 +158,7 @@ Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateT
 def quict_simulation(circuit):
     simulator = StateVectorSimulator()
     results = simulator.run(circuit)
+
     return results
 ```
 
@@ -161,16 +166,27 @@ def quict_simulation(circuit):
 
 ``` python
 # 传入物理机接口, 直接进入评分系统
-results = benchmark.run(simulator_interface=quict_simulation, quantum_machine_info={"qubits_number":3, "layout_file":layout, "Instruction_Set":Inset}, level=3, mapping=True, gate_transform=True)
+benchmark.run(
+    simulator_interface=quict_simulation,
+    quantum_machine_info={"qubits_number":3, "layout_file":layout, "Instruction_Set":Inset},
+    level=3,
+    mapping=True,
+    gate_transform=True
+)
 ```
 
 #### 分步执行
 
 ``` python
 # 获得电路
-circuits = benchmark.get_circuits(quantum_machine_info={"qubits_number":3, "layout_file":layout_file, "Instruction_Set":Inset}, level=3, mapping=True, gate_transform=True)
+circuits_list = benchmark.get_circuits(
+    quantum_machine_info={"qubits_number":3, "layout_file":layout_file, "Instruction_Set":Inset},
+    level=3,
+    mapping=True,
+    gate_transform=True
+)
 # 传入电路组以及物理机模拟结果，进入评分系统
-results = benchmark.evaluate(circuits_list, amp_results_list)
+benchmark.evaluate(circuits_list, amp_results_list)
 ```
 #### 结果展示
 
