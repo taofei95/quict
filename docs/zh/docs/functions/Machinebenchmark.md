@@ -2,49 +2,53 @@
 
 ## 介绍
 
-量子计算机是一种基于量子理论而工作的计算机。追根溯源，是对可逆机的不断探索促进了量子计算机的发展，它是不断迭代并不断受到评估的，QuICT物理机benchmark是这样一个依据量子电路的属性、物理机模拟振幅以及测试环境等因素通过设计科学的测试方法和测试系统对执行各项任务的能力进行排名，实现对量子物理设备的基准测试。
-
-## 基准测试框架
-
-通过下面基准测试流程框架图可以清晰的观察到基准测试每一步的操作。
+量子计算机是一种可以实现量子计算的机器，是对可逆机的不断探索促进了量子计算机的发展，它是不断迭代并不断受到评估的，QuICT物理机基准测试是通过设计科学的测试方法和测试系统对执行各项任务的能力进行排名，实现对量子物理设备的基准测试。
 
 <figure markdown>
 
 ![benchmark framework](../assets/images/functions/Machinebenchmark/benchmark_framework.png)
+ <figcaption>通过基准测试流程框架图可以清晰的观察到基准测试每一步的操作</figcaption>
 
 </figure>
 
-## 基准测试流程说明
+## 基准测试流程
 
 ### 1. 获得电路
 
-一改仅使用完全随机量子门电路进行基准测试衡量性能，QuICT基准测试采用三种电路组供选择，其中包含特殊基准测试电路、量子算法电路、随机指令集电路，通过不同的方向提供对真实量子物理机性能进行更广泛更准确的测试方法。此电路选择亦可大大提高效率节省时间，提供一站式提供物理机属性输出电路的方法。
+不同于仅使用完全随机量子门电路进行基准测试衡量性能，QuICT基准测试采用三种电路组供选择，其中包含特殊基准测试电路、量子算法电路、随机指令集电路，通过不同的方向提供对真实量子物理机性能进行更广泛更准确的测试方法。
 
-#### 电路组选择
+```markdown
+|    组别     |                        电路                              |
+| ----------- | -------------------------------------------------------- |
+|   第一组    |   特殊随机电路、指令集电路                               |
+|   第二组    |   特殊随机电路、指令集电路、基础算法电路                 |
+|   第三组    |   特殊随机电路、指令集电路、基础算法电路、进阶算法电路   |
+```
+
+
+**特殊随机电路**
+
+- 高度并行化电路：不同量子算法的结构允许不同程度的并行化，通过比较量子门数量，门数和电路深度的比率高度并行的应用将大量运算放入相对较小的电路深度中。
+
+- 高度串行化电路：设置电路深度的最长路径上两个量子位相互作用的数量接近总的双比特数量。
+
+- 高度纠缠电路：通过计算两个量子位相互作用的所有门操作的比例，测试电路种两个量子位相互作用程度。
+
+- 中间态测量电路：对于多个连续层的门操作组成的电路，测量门在不同层数为程序执行期间和之后提取信息。
+
+**指令集电路**
+
+- 由ctrl_unitary, diag, single_bit, ctrl_diag, google, ibmq, ionq, ustc, nam, origin指令集创建的指令集电路
+
+**基础算法电路**
+
+- adder, clifford, qft算法电路
+
+**进阶算法电路**
+
+- grover, cnf, maxcut, qnn, quantum_walk, vqe算法电路
 
 电路组选择根据待测量的量子物理机属性，例如：物理机物理量子比特数、拓扑结构以及物理机特定指令集，在选择电路组后会根据比特数提供该范围内比特数的电路组，并且可以选择每一个量子电路是否通过QuICT平台特有的量子电路设计自动化，即根据待测量物理机拓扑结构执行量子电路映射，根据带测量物理机特定指令集实现量子门指令集转换。
-
-- 第一种
-
-    - 四种特殊benchmark电路【高度并行化电路、高度串行化电路、高度纠缠电路、中间态测量电路】
-
-    - 若干种随机电路【ctrl_unitary, diag, single_bit, ctrl_diag, google, ibmq, ionq, ustc, nam, origin】
-
-- 第二种
-
-    - 四种特殊benchmark电路【高度并行化电路、高度串行化电路、高度纠缠电路、中间态测量电路】
-
-    - 若干种随机电路【ctrl_unitary, diag, single_bit, ctrl_diag, google, ibmq, ionq, ustc, nam, origin】
-
-    - 部分算法电路【adder, clifford, qft】
-
-- 第三种
-
-    - 四种特殊benchmark电路【高度并行化电路、高度串行化电路、高度纠缠电路、中间态测量电路】
-    
-    - 五种随机电路【ctrl_unitary, diag, single_bit, ctrl_diag, google, ibmq, ionq, ustc, nam, origin】
-    
-    - 所有算法电路【adder, clifford, qft, grover, cnf, maxcut, qnn, quantum_walk, vqe】
 
 ### 2. 运行测试
 
@@ -66,23 +70,17 @@
 
 #### 对特殊基准电路进行指标值分析
 
-!!! note "特殊基准电路介绍"
+- 高度并行化电路
+    - P = （ng / nd -1）/ (nw - 1) 其中ng表示门的总数，nd表示电路深度，nw表示电路宽度，P越接近1的电路并行化程度越高。
 
-    - 高度并行化电路
-        - 不同量子算法的结构允许不同程度的并行化，通过比较量子门数量，门数和电路深度的比率高度并行的应用将大量运算放入相对较小的电路深度中。
-        - P = （ng / nd -1）/ (nw - 1) 其中ng表示门的总数，nd表示电路深度，nw表示电路宽度，P越接近1的电路并行化程度越高。
+- 高度串行化电路
+    - S = 1 - ns / ng 其中ng表示门的总数，ns表示不在最长路径上的双比特门数，S越接近1的电路串行化程度越高。
 
-    - 高度串行化电路
-        - 设置电路深度的最长路径上两个量子位相互作用的数量接近总的双比特数量。
-        - S = 1 - ns / ng 其中ng表示门的总数，ns表示不在最长路径上的双比特门数，S越接近1的电路串行化程度越高。
+- 高度纠缠电路
+    - E = 1 - ne / ng 其中ng表示门的总数，ne表示电路完全纠缠下多余的双比特门数，E越接近1的电路纠缠程度越高。
 
-    - 高度纠缠电路
-        - 通过计算两个量子位相互作用的所有门操作的比例，测试电路种两个量子位相互作用程度。
-        - E = 1 - ne / ng 其中ng表示门的总数，ne表示电路完全纠缠下多余的双比特门数，E越接近1的电路纠缠程度越高。
-
-    - 中间态测量电路
-        - 对于多个连续层的门操作组成的电路，测量门在不同层数为程序执行期间和之后提取信息。
-        - M = md / nd 其中md表示电路中测量门所在的层数，nd表示电路深度，E越接近1的电路测量性能越完整。
+- 中间态测量电路
+    - M = md / nd 其中md表示电路中测量门所在的层数，nd表示电路深度，E越接近1的电路测量性能越完整。
 
 #### 对算法电路进行量子体积分析
 
@@ -105,95 +103,103 @@ V_{Q} = 2^n
 #### 结果展示示例 - 雷达图
 
 <figure markdown>
+
 ![radar graph](../assets/images/functions/Machinebenchmark/benchmark_radar_chart_show.jpg)
+
 </figure>
 
 #### 结果展示示例 - TXT文本文件
 
 <figure markdown>
+
 ![TXT](../assets/images/functions/Machinebenchmark/benchmark_txt.png)
+
 </figure>
 
 ## 基准测试基本用法
 
 ### 通过物理机接口实时进行基准测试
 
-#### 参数说明
+`QuICTBenchmark`类于`QuICT.benchmark`，`QuICTBenchmark`初始化的参数包括：
 
-- output_path: 基准测试结果展示文件存储地址。
+1. `device`: 模拟设备，默认为`CPU` 
+2. `output_path`: 基准测试结果展示文件存储地址，默认当前路径下创建benchmark文件夹
+3. `show_type`: 基准测试结果展示形式，默认雷达图和文本文件
 
-- show_type: 基准测试结果展示形式。
+`get_circuits`/`run`的参数包括：
 
-- simulator_interface: 待测物理机接口，使后端串联。
+1. `simulator_interface`: 待测物理机接口，使后端串联
 
-- quantum_machine_info：包含待测物理机量子比特数、拓扑结构、特定指令集。
+2. `quantum_machine_info`：包含待测物理机量子比特数、拓扑结构、特定指令集
 
-- mapping: 是否根据物理机的拓扑结构对每一个电路执行映射。
+3. `mapping`: 是否根据物理机的拓扑结构对每一个电路执行映射，默认关闭
 
-- gate_transform: 是否根据物理机特定指令集对每一个电路执行门转换。
+4. `gate_transform`: 是否根据物理机特定指令集对每一个电路执行门转换，默认关闭
 
-#### 代码实例
+5. `circuits_list`：电路组
 
-!!! tip
+6. `amp_results_list`：物理机模拟振幅
 
-    执行之前，请选择结果分析的存储路径，以及结构分析的类型（雷达图是默认生成的，需要选择Txt文本文件或者Excel表格），如果按照下述构建步骤操作，此库将位于当前目录下的benchmark文件夹下。
-
-具体代码实现如下：
+#### 初始化
 
 ``` python
-from QuICT.benchmark.benchmark import QuICTBenchmark
-from QuICT.core.layout.layout import Layout
+from QuICT.benchmark import QuICTBenchmark
+from QuICT.core import Layout
 from QuICT.core.utils.gate_type import GateType
 from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 
 # 初始化
 benchmark = QuICTBenchmark(device="CPU", output_path="./benchmark", output_file_type="txt")
 # 传入拓扑结构
-layout_file = Layout.load_file("./layout/grid_3x3.json")
+layout = Layout.load_file(os.path.dirname(os.path.abspath(__file__)) + f"/example/layout/line5.json")
 # 传入指令集
 Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
+# 这里模拟待测物理机接口设置
+def quict_simulation(circuit):
+    simulator = StateVectorSimulator()
+    results = simulator.run(circuit)
+
+    return results
+```
+
+#### 连待测物理机接口执行
+
+``` python
 # 传入物理机接口, 直接进入评分系统
-results = benchmark.run(simulator_interface=machine_interface, quantum_machine_info={"qubits_number":5, "layout_file":layout_file, "Instruction_Set":Inset}, mapping=True, gate_transform=True)
+benchmark.run(
+    simulator_interface=quict_simulation,
+    quantum_machine_info={"qubits_number":3, "layout_file":layout, "Instruction_Set":Inset},
+    level=3,
+    mapping=True,
+    gate_transform=True
+)
 ```
 
-### 用电路进行基准测试
-
-从QuICT电路库中得到电路后，拿到物理机模拟后，提供电路组和模拟振幅组进入评分系统进行基准测试。
-
-#### 参数说明
-
-- output_path: 基准测试结果展示文件存储地址。
-
-- show_type: 基准测试结果展示形式。
-
-- quantum_machine_info：包含待测物理机量子比特数、拓扑结构、特定指令集。
-
-- mapping: 是否根据物理机的拓扑结构对每一个电路执行映射。
-
-- gate_transform: 是否根据物理机特定指令集对每一个电路执行门转换。
-
-- circuits_list：电路组。
-
-- amp_results_list：物理机模拟振幅。
-
-#### 代码实例
-
-具体代码实现如下：
+#### 分步执行
 
 ``` python
-from QuICT.benchmark.benchmark import QuICTBenchmark
-from QuICT.core.layout.layout import Layout
-from QuICT.core.utils.gate_type import GateType
-from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
-
-# 初始化
-benchmark = QuICTBenchmark(device="CPU", output_path="./benchmark", output_file_type="txt")
-# 传入拓扑结构
-layout_file = Layout.load_file("./layout/grid_3x3.json")
-# 传入指令集
-Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
 # 获得电路
-circuits = benchmark.get_circuits(quantum_machine_info={"qubits_number":5, "layout_file":layout_file, "Instruction_Set":Inset}, mapping=True, gate_transform=True)
+circuits_list = benchmark.get_circuits(
+    quantum_machine_info={"qubits_number":3, "layout_file":layout_file, "Instruction_Set":Inset},
+    level=3,
+    mapping=True,
+    gate_transform=True
+)
 # 传入电路组以及物理机模拟结果，进入评分系统
-results = benchmark.evaluate(circuits_list, amp_results_list)
+benchmark.evaluate(circuits_list, amp_results_list)
 ```
+#### 结果展示
+
+<figure markdown>
+
+![radar graph](../assets/images/functions/Machinebenchmark/radar_chart_show.jpg)
+<figcaption>雷达图</figcaption>
+
+</figure>
+
+<figure markdown>
+
+![radar graph](../assets/images/functions/Machinebenchmark/txt_show.jpg)
+<figcaption>文本文件部分截图</figcaption>
+
+</figure>
