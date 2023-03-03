@@ -269,19 +269,6 @@ class Circuit(CircuitBased):
     ####################################################################
     ############          Circuit Gates Operators           ############
     ####################################################################
-    def _add_quantumgate_into_circuit(self, gate: BasicGate, insert_idx: int = -1):
-        if insert_idx == -1:
-            self.gates.append(gate)
-            insert_idx = len(self.gates)
-        else:
-            self.gates.insert(insert_idx, gate)
-
-        # Update gate type dict
-        if gate.type in self._gate_type.keys():
-            self._gate_type[gate.type] += 1
-        else:
-            self._gate_type[gate.type] = 1
-
     def replace_gate(self, idx: int, gate: BasicGate):
         """ Replace the quantum gate in the target index, only accept BasicGate or NoiseGate.
 
@@ -381,7 +368,7 @@ class Circuit(CircuitBased):
         if not is_extend:
             self._pointer = None
 
-    def _add_gate(self, gate: BasicGate, insert_idx: int = -1):
+    def _add_gate(self, gate: BasicGate):
         """ add a gate into some qureg
 
         Args:
@@ -390,32 +377,43 @@ class Circuit(CircuitBased):
         """
         args_num = gate.controls + gate.targets
         gate_ctargs = gate.cargs + gate.targs
-        is_assigned = gate.assigned_qubits or gate_ctargs
-        if not qureg:
-            if not is_assigned:
-                if gate.is_single():
-                    self._add_gate_to_all_qubits(gate)
-                    return
-                elif args_num == self.width():
-                    qureg = self.qubits
-                else:
-                    raise CircuitAppendError(f"{gate.type} need assign qubits to add into circuit.")
-            else:
-                qureg = self.qubits[gate_ctargs] if gate_ctargs else gate.assigned_qubits
-        else:
-            if len(qureg) < args_num:
-                raise CircuitAppendError("Assigned qubits must larger or equal to gate size.")
+        assigned_qubits = gate.assigned_qubits
 
-            if len(qureg) > args_num and gate_ctargs:
-                qureg = qureg[gate_ctargs]
+        target_qidxes = []
+        if self._pointer is None and len(gate_ctargs) + len(assigned_qubits) == 0:
+            if gate.is_single():
+                self._add_gate_to_all_qubits(gate)
+                return
+            elif args_num == self.width():
+                target_qidxes = list(range(self.width()))
+            else:
+                raise CircuitAppendError(f"{gate.type} need assign qubits to add into circuit.")
+
+        if not self._pointer or len(self._pointer) > args_num:
+            if gate_ctargs:
+                if max(gate_ctargs) > self.width() or min(gate_ctargs) < 0:
+                    raise CircuitAppendError("Gate's assigned qubit indexes must within circuit's width.")
+
+                target_qidxes = gate_ctargs
+            elif assigned_qubits:
+                for qubit in assigned_qubits:
+                    target_qidxes.append(self.qubits.index(qubit))
+
+        if self._pointer:
+            if len(self._pointer) < args_num:
+                raise CircuitAppendError("Assigned qubits must larger or equal to gate size.")
+            elif len(self._pointer) > args_num:
+                target_qidxes = self._pointer[target_qidxes]
+            else:
+                target_qidxes = self._pointer
 
         gate = gate.copy()
-        gate.cargs = [self.qubits.index(qureg[idx]) for idx in range(gate.controls)]
-        gate.targs = [self.qubits.index(qureg[idx]) for idx in range(gate.controls, gate.controls + gate.targets)]
-        gate.assigned_qubits = qureg
+        gate.cargs = target_qidxes[:gate.controls]
+        gate.targs = target_qidxes[gate.controls:]
+        gate.assigned_qubits = self.qubits(target_qidxes)
 
         # Add gate into circuit
-        self._add_quantumgate_into_circuit(gate, insert_idx)
+        self._add_quantumgate_into_circuit(gate)
 
     def _add_gate_to_all_qubits(self, gate):
         for idx in range(self.width()):
@@ -424,6 +422,19 @@ class Circuit(CircuitBased):
             new_gate.assigned_qubits = self.qubits(idx)
 
             self._add_quantumgate_into_circuit(new_gate)
+
+    def _add_quantumgate_into_circuit(self, gate: BasicGate, insert_idx: int = -1):
+        if insert_idx == -1:
+            self.gates.append(gate)
+            insert_idx = len(self.gates)
+        else:
+            self.gates.insert(insert_idx, gate)
+
+        # Update gate type dict
+        if gate.type in self._gate_type.keys():
+            self._gate_type[gate.type] += 1
+        else:
+            self._gate_type[gate.type] = 1
 
     def _add_trigger(self, op: Trigger, qureg: Qureg):
         if qureg:
