@@ -86,7 +86,7 @@ Label:  tensor(False)
 ```
 
 <figure markdown>
-![Image](../../../assets/images/tutorials/algorithm/QNN/image.png){:width="400px"}
+![Image](../../assets/images/tutorials/algorithm/QNN/image.png){:width="400px"}
 </figure>
 
 
@@ -117,7 +117,7 @@ plt.imshow(resized_train_X[200], cmap="gray")
 ```
 
 <figure markdown>
-![Resized Image](../../../assets/images/tutorials/algorithm/QNN/resized_image.png){:width="400px"}
+![Resized Image](../../assets/images/tutorials/algorithm/QNN/resized_image.png){:width="400px"}
 </figure>
 
 
@@ -217,7 +217,7 @@ qe.circuit.draw()
 ```
 
 <figure markdown>
-![Qubit Encoding](../../../assets/images/tutorials/algorithm/QNN/qubit_encoding.png){:width="400px"}
+![Qubit Encoding](../../assets/images/tutorials/algorithm/QNN/qubit_encoding.png){:width="400px"}
 </figure>
 
 ``` python
@@ -255,7 +255,7 @@ model_circuit.draw()
 ```
 
 <figure markdown>
-![PQC](../../../assets/images/tutorials/algorithm/QNN/pqc.png){:width="400px"}
+![PQC](../../assets/images/tutorials/algorithm/QNN/pqc.png){:width="400px"}
 </figure>
 
 本教程中将使用两层网络，分别是RXX层和RZZ层，可训练参数的数量即为数字比特数x网络层数：
@@ -499,7 +499,7 @@ ax.set_yticks(ticks=[0, 0.2, 0.4, 0.6, 0.8, 1.0])
 ```
 
 <figure markdown>
-![QNN_CNN](../../../assets/images/tutorials/algorithm/QNN/qnn_cnn.png){:width="500px"}
+![QNN_CNN](../../assets/images/tutorials/algorithm/QNN/qnn_cnn.png){:width="500px"}
 </figure>
 
 
