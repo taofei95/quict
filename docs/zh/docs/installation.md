@@ -9,7 +9,8 @@ hide:
 
 - PYTHON VERSION >= 3.7
 - GPU环境要求
-  - Cupy: [Installing Cupy](https://docs.cupy.dev/en/stable/install.html)
+  
+    - Cupy: [Installing Cupy](https://docs.cupy.dev/en/stable/install.html)
         
         ```sh
         nvcc -V     # 获得cuda版本号
@@ -45,7 +46,47 @@ pip install quict
     sudo docker build -t quict/{device} -f dockerfile/{device}.quict.df .
     ```
 
+## QuICT-ml 安装说明
+
+### 预先准备
+
+- PYTHON VERSION >= 3.7
+
+- GPU环境要求
+
+    - Cupy: [Installing Cupy](https://docs.cupy.dev/en/stable/install.html)
+        
+        ```sh
+        nvcc -V     # 获得cuda版本号
+        pip install cupy-cuda{version}      # 根据cuda版本号进行安装
+        ```
+    
+    - Pytorch: [Installing Pytorch](https://pytorch.org/get-started/locally/)
+
+### 从 pypi 安装
+
+``` shell
+pip install quict-ml
+```
+
+### 从Gitee处安装
+
+- 克隆 QuICT 仓库
+
+    ``` sh
+    # git clone
+    git clone https://gitee.com/quictucas/quict-ml.git
+    ```
+
+- QuICT 安装
+    
+    ``` sh
+    # 在quict仓库根目录下
+    python setup.py install
+    ```
+
 ## QuICT-sim 安装说明
+
 ### 预先准备
 - C++ Compiler
     - Windows: [Installing Clang/LLVM for use with Visual Studio](https://devblogs.microsoft.com/cppblog/clang-llvm-support-in-visual-studio/)
