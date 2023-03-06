@@ -188,3 +188,19 @@ circuits_list = benchmark.get_circuits(
 # 传入电路组以及物理机模拟结果，进入评分系统
 benchmark.evaluate(circuits_list, amp_results_list)
 ```
+
+#### 结果展示
+
+<figure markdown>
+
+![radar graph](../assets/images/functions/Machinebenchmark/benchmark_radar_chart_show.jpg)
+<figcaption>雷达图</figcaption>
+
+</figure>
+
+<figure markdown>
+
+![radar graph](../assets/images/functions/Machinebenchmark/benchmark_txt.png)
+<figcaption>文本文件部分截图</figcaption>
+
+</figure>
