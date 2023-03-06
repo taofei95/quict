@@ -52,17 +52,17 @@ circuit.draw(method='command')
 
 QuICT 内置了一个量子算法电路库，里面包含多种经典量子算法，例如 Grover、VQE、QFT等。也支持基于量子指令集的随机电路生成和 benchmark 测试电路生成。
 
-|  算法电路     |   比特数   |   门数   |    电路深度   |
-| ------       |  ------- |  ------  |    ------    |
-|   adder      |   4~100,1535   |  4~132, 32745   |    4~16376   |
-|   clifford   |   1~19   |  3~436   |   3~338   |
-|   grover     |   4~99   |  20~2186  |   11~1507   |
-|   qft        |   2~100  |  2~5050  |   3~199   |
-|   vqe        |   4~50    |  22~3150  |   12~173   |
-|   maxcut     |   4~100   |  17~7625  |   8~542    |
-|   qnn        |   2~100  |  5~253   |   5~200   |
-| quantum walk |   2~20   |  5~10959 |   5~6205  |
-|   cnf        |   7~50  |  3~5668   |   21~3663    |
+| 算法电路     | 比特数     | 门数         | 电路深度 |
+| ------------ | ---------- | ------------ | -------- |
+| adder        | 4~100,1535 | 4~132, 32745 | 4~16376  |
+| clifford     | 1~19       | 3~436        | 3~338    |
+| grover       | 4~99       | 20~2186      | 11~1507  |
+| qft          | 2~100      | 2~5050       | 3~199    |
+| vqe          | 4~50       | 22~3150      | 12~173   |
+| maxcut       | 4~100      | 17~7625      | 8~542    |
+| qnn          | 2~100      | 5~253        | 5~200    |
+| quantum walk | 2~20       | 5~10959      | 5~6205   |
+| cnf          | 7~50       | 3~5668       | 21~3663  |
 
 ```python
 from QuICT.tools.circuit_library import CircuitLib
@@ -81,3 +81,57 @@ cirs = cir_lib.get_algorithm_circuit("grover", [3, 5, 7], max_depth=20)     # �
     ``` sh
     quict --help
     ```
+
+## 算法画图函数
+
+用于QuICT以及QuICT-ml内置算法的相关图像绘制，目前支持绘制量子态采样图，MaxCut算法的无向无权图，以及MaxCut的分割结果图。
+
+- 量子态采样图（以Quantum Walk Search为例）
+  
+    ``` python
+    # 导入运行库
+    from QuICT.algorithm.quantum_algorithm import QuantumWalkSearch
+    from QuICT.simulation.state_vector import StateVectorSimulator
+    from QuICT.algorithm.tools.drawer.graph_drawer import *
+
+    # 初始化状态向量模拟器和QuantumWalkSearch模块：
+    simulator = StateVectorSimulator()
+    qws = QuantumWalkSearch(simulator)
+
+    # 开始搜索
+    N = 5
+    sample = qws.run(index_qubits=N, targets=[4], a_r=5 / 8, a_nr=1 / 8)
+
+    # 画出采样图
+    draw_samples_with_auxiliary(sample, N, int(np.ceil(np.log2(N))))
+    ```
+
+    <figure markdown>
+    ![QWS_result1](../assets/images/tutorials/algorithm/quantum_algorithm/QWS_result1.png){:width="500px"}
+    </figure>
+
+- 绘制无向无权图
+  
+    ```python
+    from QuICT.algorithm.tools.drawer.graph_drawer import *
+
+    n = 5
+    nodes = list(range(n))
+    edges = [[0, 1], [1, 2], [2, 3], [3, 4], [0, 3], [2, 4]]
+    draw_graph(nodes, edges)
+    ```
+
+    <figure markdown>
+    ![Max-Cut Graph](../assets/images/tutorials/algorithm/VQA/QAOA/maxcut_graph.png){:width="500px"}
+    </figure>
+
+- 绘制MaxCut分割结果图
+  
+    ```python
+    solution_bit = '10100'
+    draw_maxcut_result(nodes, edges, solution_bit)
+    ```
+
+    <figure markdown>
+    ![Max-Cut Result](../assets/images/tutorials/algorithm/VQA/QAOA/maxcut_result.png){:width="500px"}
+    </figure>
