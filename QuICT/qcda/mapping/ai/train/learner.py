@@ -10,7 +10,14 @@ from torch.utils.tensorboard import SummaryWriter
 
 from QuICT.core import *
 from QuICT.core.gate.composite_gate import CompositeGate
-from QuICT.qcda.mapping.ai.data_def import CircuitInfo, ReplayMemory, State, StateSlim, TrainConfig, ValidationData
+from QuICT.qcda.mapping.ai.data_def import (
+    CircuitInfo,
+    ReplayMemory,
+    State,
+    StateSlim,
+    ValidationData,
+)
+from QuICT.qcda.mapping.ai.config import Config
 from QuICT.qcda.mapping.ai.net.nn_mapping import NnMapping
 from QuICT.qcda.mapping.ai.net.rl_agent import Agent
 from QuICT.tools.interface import OPENQASMInterface
@@ -33,7 +40,7 @@ def _wrap2circ(cg_or_circ: Union[Circuit, CompositeGate] = None):
 
 
 class Learner:
-    def __init__(self, config: TrainConfig) -> None:
+    def __init__(self, config: Config) -> None:
         self.config = config
 
         if config.inference:
@@ -88,14 +95,16 @@ class Learner:
 
             # Prepare path to save model files during training
             logger.info("Preparing model saving directory...")
-            if not osp.exists(config.model_path):
-                os.makedirs(config.model_path)
-            self._model_path = config.model_path
+            model_path = config.model_path + "_" + config.tag
+            if not osp.exists(model_path):
+                os.makedirs(model_path)
+            self._model_path = model_path
 
             # Prepare summary writer and its logging directory
-            if not osp.exists(config.log_dir):
-                os.makedirs(config.log_dir)
-            self._writer = SummaryWriter(log_dir=config.log_dir)
+            log_dir = config.log_dir + "_" + config.tag
+            if not osp.exists(log_dir):
+                os.makedirs(log_dir)
+            self._writer = SummaryWriter(log_dir=log_dir)
 
             # Validation circuits
             logger.info("Preparing validation data...")
@@ -265,6 +274,7 @@ class Learner:
 
         self._optimizer.zero_grad()
         loss.backward()
+        # nn.utils.clip_grad.clip_grad_norm_(self._policy_net.parameters(), 100.0)
         loss_val = loss.item()
         self._optimizer.step()
         return loss_val
@@ -293,8 +303,9 @@ class Learner:
                     self._target_net.state_dict(),
                     osp.join(self._model_path, f"model_epoch_{epoch_id}.pt"),
                 )
+        tag = self.config.tag
         self._writer.add_scalars(
-            f"Validation Performance ({topo_name})",
+            f"Validation Performance ({topo_name}, {tag})",
             {
                 "#Gate in circuit": original_num[topo_name],
                 "#Gate by RL": rl_num[topo_name],

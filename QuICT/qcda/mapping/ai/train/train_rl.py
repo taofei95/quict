@@ -6,7 +6,7 @@ from time import time
 
 from torch.utils.tensorboard import SummaryWriter
 
-from QuICT.qcda.mapping.ai.data_def import TrainConfig
+from QuICT.qcda.mapping.ai.config import Config
 from QuICT.qcda.mapping.ai.train.actor import Actor
 from QuICT.qcda.mapping.ai.train.learner import Learner
 from QuICT.tools.logger import Logger
@@ -16,7 +16,7 @@ logger = Logger("rl-mapping-trainer")
 
 
 class Trainer:
-    def __init__(self, config: TrainConfig) -> None:
+    def __init__(self, config: Config) -> None:
         logger.info("Initializing trainer...")
 
         # Copy values in.
@@ -36,13 +36,15 @@ class Trainer:
         self._loop.run_forever()
 
     async def write_stat(self, running_loss: float, running_reward: float, g_step: int):
+        topo_name = self.config.topo.name
+        tag = self.config.tag
         self._writer.add_scalar(
-            tag="loss_" + self.config.topo.name,
+            tag=tag + "_" + topo_name + "_loss",
             scalar_value=running_loss,
             global_step=g_step,
         )
         self._writer.add_scalar(
-            tag="reward_" + self.config.topo.name,
+            tag=tag + "_" + topo_name + "_reward",
             scalar_value=running_reward,
             global_step=g_step,
         )
@@ -57,7 +59,7 @@ class Trainer:
         for epoch_id in range(self.config.total_epoch):
             logger.info(f"Epoch {epoch_id}")
 
-            self.actor.agent.reset_explore_state()
+            self.actor.reset_explore_state()
             for it in range(self.config.explore_period):
                 reward = self.actor.explore()
 
@@ -107,11 +109,6 @@ class Trainer:
 
 
 if __name__ == "__main__":
-    import sys
-
-    assert len(sys.argv) > 1
-    topo = sys.argv[1]
-    device = "cuda" if len(sys.argv) == 2 else sys.argv[2]
-    config = TrainConfig(topo=topo, device=device)
+    config = Config()
     trainer = Trainer(config=config)
     trainer.train()

@@ -7,14 +7,15 @@ import torch
 
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.qcda.mapping.ai.data_def import State, StateSlim, TrainConfig
+from QuICT.qcda.mapping.ai.data_def import State, StateSlim
+from QuICT.qcda.mapping.ai.config import Config
 from QuICT.qcda.mapping.ai.net.nn_mapping import NnMapping
 
 
 class Agent:
     def __init__(
         self,
-        config: TrainConfig,
+        config: Config,
     ) -> None:
         # Copy values in.
         self.config = config
