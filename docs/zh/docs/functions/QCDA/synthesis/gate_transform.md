@@ -48,7 +48,7 @@ CustomSet = InstructionSet(
 CustomSet.register_one_qubit_rule(custom_rule)
 ```
 
-其中`custom_rule`将输入的1-qubit门(`BasicGate`)转换为用指定1-qubit门表达的形式(`CompositeGate`)。
+其中`custom_rule`将输入的 $1$ -qubit门(`BasicGate`)转换为用指定 $1$ -qubit门表达的形式(`CompositeGate`)。
 
 ## 代码实例
 
