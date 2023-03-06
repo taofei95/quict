@@ -56,14 +56,14 @@ $$
 
 <figure markdown>
 ![semi_classical_IQFT_circuit](../../../assets/images/tutorials/algorithm/quantum_algorithm/semi_classical_IQFT_circuit.png){:width="500px"}
-    <p markdown="1" style="font-size:8px;"> 图片引用自*Semiclassical Fourier transform for quantum computation.* [<sup>[3]</sup>](#refer3)
+    <p markdown="1" style="font-size:12px;"> 图片引用自*Semiclassical Fourier transform for quantum computation.* [<sup>[3]</sup>](#refer3)
 </figure>
 
 iterative QPE的电路如下图所示，其中 $X^m$ 将量子比特还原到0， $R$ 门受控于之前的测量结果：
 
 <figure markdown>
 ![semi_classical_IQFT_circuit_2](../../../assets/images/tutorials/algorithm/quantum_algorithm/semi_classical_IQFT_circuit_2.png)
-    <p markdown="1" style="font-size:8px;"> 图片引用自*Circuit for Shor's algorithm using 2n+3 qubits.* [<sup>[1]</sup>](#refer1)
+    <p markdown="1" style="font-size:12px;"> 图片引用自*Circuit for Shor's algorithm using 2n+3 qubits.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 ### 经典部分
@@ -87,8 +87,8 @@ $n$ 为输入数的位数， $t$ 为求阶算法中QPE的精度位数。默认 $
 
 | 算法    | 电路宽度 | 电路深度   | 电路规模   | 模拟器上的运行速度 |
 | ------- | -------- | ---------- | ---------- | ------------------ |
-| BEA     | n+2+t   | $O(n^2 t)$ | $O(n^3 t)$ | 快                 |
-| HRS     | n+1+t   | $O(n^2 t)$ | $O(n^3 t)$ | 快                 |
+| BEA     | n+2+t    | $O(n^2 t)$ | $O(n^3 t)$ | 快                 |
+| HRS     | n+1+t    | $O(n^2 t)$ | $O(n^3 t)$ | 快                 |
 | BEA-zip | 2n+3     | $O(n^2 t)$ | $O(n^3 t)$ | 慢                 |
 | HRS-zip | 2n+2     | $O(n^2 t)$ | $O(n^3 t)$ | 慢                 |
 ### 基本用法
@@ -194,6 +194,8 @@ input  = 13
 output = 0
 ```
 
+---
+
 ## 参考文献
 
 <div id="refer1"></div>
@@ -213,3 +215,5 @@ output = 0
 <font size=3>
 [3] Griffiths, & Niu (1995). Semiclassical Fourier transform for quantum computation. Physical review letters, 76 17, 3228-3231. [arXiv:quant-ph/9511007](https://arxiv.org/abs/quant-ph/9511007)
 </font>
+
+---

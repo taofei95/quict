@@ -29,7 +29,7 @@ Cosine-Sine分解对应的电路分解如下图：
 
 <figure markdown>
 ![Cosine-Sine分解](../../../assets/images/functions/QCDA/ud_csd.png)
-<p markdown="1" style="font-size:15px;"> 图片引用自*Synthesis of quantum-logic circuits.* [<sup>[1]</sup>](#refer1)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Synthesis of quantum-logic circuits.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 图中空心小方块代表uniformly控制，亦即对控制位的全部可能的 $0, 1$ 情况对作用位执行对应的量子门。空心大方块则代表任意的一个或多个酉矩阵。
@@ -60,14 +60,14 @@ $$
 
 <figure markdown>
 ![uniformly分解](../../../assets/images/functions/QCDA/ud_demul.png)
-<p markdown="1" style="font-size:15px;"> 图片引用自*Synthesis of quantum-logic circuits.* [<sup>[1]</sup>](#refer1)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Synthesis of quantum-logic circuits.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 综合以上两步分解即得量子Shannon分解如下图：
 
 <figure markdown>
 ![量子Shannon分解](../../../assets/images/functions/QCDA/ud_qsd.png)
-<p markdown="1" style="font-size:15px;"> 图片引用自*Synthesis of quantum-logic circuits.* [<sup>[1]</sup>](#refer1)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Synthesis of quantum-logic circuits.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 这样就将一个 $n$ -qubit酉矩阵分解为 $(n-1)$ -qubit酉矩阵，如此递归并合成每一部分需要的uniformly控制Ry和Rz门即可将给定的酉矩阵转化为量子电路。
@@ -90,7 +90,7 @@ $$
 
 <figure markdown>
 ![KAK分解](../../../assets/images/functions/QCDA/ud_kak.png)
-<p markdown="1" style="font-size:15px;"> 图片引用自*Optimal quantum circuits for general two-qubit gates.* [<sup>[2]</sup>](#refer2)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Optimal quantum circuits for general two-qubit gates.* [<sup>[2]</sup>](#refer2)
 </figure>
 
 通过一系列的矩阵计算即可得到如此合成 $SU(4)$ 矩阵所需的一系列参数，这部分的细节可以参见[<sup>[3]</sup>](#refer3)。
@@ -136,3 +136,5 @@ gates, _ = UD.execute(mat)
 <font size=3>
 [3] Drury, B., & Love, P.J. (2008). Constructive quantum Shannon decomposition from Cartan involutions. Journal of Physics A: Mathematical and Theoretical, 41, 395305. [https://arxiv.org/abs/0806.4015](https://arxiv.org/abs/0806.4015)
 </font>
+
+---

@@ -8,13 +8,13 @@ Clifford+Rz优化 (Clifford+Rz Optimization) 是一种优化大规模Clifford+Rz
 
 Clifford+Rz优化算法包含了5个子算法：
 
-|编号|子算法|原理|时间复杂度|
-| --- | --- | --- | --- |
-| 1 | Hadamard gate reduction | 通过匹配特定的模板减少H门的数量 | $O(g)$ |
-| 2 | Single-qubit gate cancellation | 合并相邻、或者交换对易的门后相邻的Rz门 | $O(g^2)$ |
-| 3 | Two-qubit gate cancellation | 消去相邻、或者交换对易的门后相邻的CNOT门 | $O(g^2)$ |
-| 4 | Rotation merging | 将电路划分为CNOT+Rz的子电路，对每个子电路用相位表达式合并Rz门 | $O(g^2)$ |
-| 5 | Float rotations | 在CNOT+Rz子电路中移动Rz门的位置，消去更多的CNOT门 | $O(g^3)$ |
+| 编号 | 子算法                         | 原理                                                          | 时间复杂度 |
+| ---- | ------------------------------ | ------------------------------------------------------------- | ---------- |
+| 1    | Hadamard gate reduction        | 通过匹配特定的模板减少H门的数量                               | $O(g)$     |
+| 2    | Single-qubit gate cancellation | 合并相邻、或者交换对易的门后相邻的Rz门                        | $O(g^2)$   |
+| 3    | Two-qubit gate cancellation    | 消去相邻、或者交换对易的门后相邻的CNOT门                      | $O(g^2)$   |
+| 4    | Rotation merging               | 将电路划分为CNOT+Rz的子电路，对每个子电路用相位表达式合并Rz门 | $O(g^2)$   |
+| 5    | Float rotations                | 在CNOT+Rz子电路中移动Rz门的位置，消去更多的CNOT门             | $O(g^3)$   |
 
 Light level的优化会采用前4个子算法，按 `1, 3, 2, 3, 1, 2, 4, 3, 2` 的顺序循环执行，直到没有可以消去的门为止。Heavy level会采用所有的5个子算法，按 `1, 3, 2, 3, 1, 2, 4, 5` 的顺序循环执行，直到没有可以消去的门为止。
 
@@ -26,7 +26,7 @@ Clifford+Rz优化算法也支持对CCX/CCZ门的优化，CCX/CCZ门有各种不�
 
 <figure markdown>
 ![H门替换模板](../../../assets/images/functions/QCDA/cro_h_reduce.png)
-<p markdown="1" style="font-size:15px;"> 图片引用自*Automated optimization of large quantum circuits with continuous parameters.* [<sup>[1]</sup>](#refer1)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Automated optimization of large quantum circuits with continuous parameters.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 通过将这些子电路替换为等式右边的电路来减少H门数量，这是因为H门会妨碍之后的Rotation merging优化方法。
@@ -39,7 +39,7 @@ Clifford+Rz优化算法也支持对CCX/CCZ门的优化，CCX/CCZ门有各种不�
 
 <figure markdown>
 ![Rz门对易关系](../../../assets/images/functions/QCDA/cro_rz_cancel.png)
-<p markdown="1" style="font-size:15px;"> 图片引用自*Automated optimization of large quantum circuits with continuous parameters.* [<sup>[1]</sup>](#refer1)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Automated optimization of large quantum circuits with continuous parameters.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 通过贪心地将 $g$ 不断与可交换的相邻电路块交换，当碰到了另一个Rz门时，就可以进行合并。
@@ -50,7 +50,7 @@ Clifford+Rz优化算法也支持对CCX/CCZ门的优化，CCX/CCZ门有各种不�
 
 <figure markdown>
 ![CNOT门对易关系](../../../assets/images/functions/QCDA/cro_cnot_cancel.png)
-<p markdown="1" style="font-size:15px;"> 图片引用自*Automated optimization of large quantum circuits with continuous parameters.* [<sup>[1]</sup>](#refer1)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Automated optimization of large quantum circuits with continuous parameters.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 ### 4. Rotation merging
@@ -59,7 +59,7 @@ Clifford+Rz优化算法也支持对CCX/CCZ门的优化，CCX/CCZ门有各种不�
 
 <figure markdown>
 ![Rotation merging示例电路](../../../assets/images/functions/QCDA/cro_merge.png)
-<p markdown="1" style="font-size:15px;"> 图片引用自*Automated optimization of large quantum circuits with continuous parameters.* [<sup>[1]</sup>](#refer1)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Automated optimization of large quantum circuits with continuous parameters.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 例如在上图中，左边的电路的相位多项式为：
@@ -84,7 +84,7 @@ $$(\theta_1+\theta_4)y+\theta_2(x\oplus y)+\theta_3x$$
 
 <figure markdown>
 ![Float rotations示例电路](../../../assets/images/functions/QCDA/cro_float.png)
-<p markdown="1" style="font-size:15px;"> 图片引用自*Automated optimization of large quantum circuits with continuous parameters.* [<sup>[1]</sup>](#refer1)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Automated optimization of large quantum circuits with continuous parameters.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 子算法5执行类似于子算法3的步骤，在所有CNOT+Rz电路块中合并CNOT门，不同之处是子算法5考虑了每一个Rz门在电路中所有可能的位置，当遇到一个可以被移走的Rz门，会将它移动到其他的地方。
@@ -97,7 +97,7 @@ Clifford+Rz优化算法也支持对CCX/CCZ门的优化，CCX/CCZ门有多种Clif
 
 <figure markdown>
 ![CCX的一种分解方法](../../../assets/images/functions/QCDA/cro_ccx.png)
-<p markdown="1" style="font-size:15px;"> 图片引用自*Automated optimization of large quantum circuits with continuous parameters.* [<sup>[1]</sup>](#refer1)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Automated optimization of large quantum circuits with continuous parameters.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 由于 $CCX^\dagger=CCX$，将上述分解中的所有 $T(T^\dagger)$ 门取共轭后依然是一个CCX门，这两种分解方式只有 $T(T^\dagger)$ 门的相对相位不同，算法事先并不确定用哪一种分解，而是对每个CCX门设一个相对相位变量 $x_i$，在上述优化流程中用符号计算记录每个Rz门关于相对相位变量的表达式。当优化流程执行完后，遍历每一个CCX $i$，贪心地选择当前能导致电路门数最小的 $x_i$ 取值。

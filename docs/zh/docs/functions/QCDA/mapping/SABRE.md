@@ -88,21 +88,21 @@ circuit_initial_map = sabre.execute_initialMapping(circuit)
 print(circuit_initial_map)
 ```
 
-原电路为
+原电路为：
 
 <figure markdown>
 ![Resized Image](../../../assets/images/functions/QCDA/mapping/SABRE_origin.jpg)
 </figure>
 
 
-执行SABRE算法后，电路形式为
+执行SABRE算法后，电路形式为：
 
 <figure markdown>
 ![Resized Image](../../../assets/images/functions/QCDA/mapping/SABRE_final.jpg)
 </figure>
 
 
-SABRE算法为其生成的初始映射为
+SABRE算法为其生成的初始映射为：
 
 ```
 [0, 2, 4, 3, 1]

@@ -36,7 +36,7 @@ nav:
     - 变分量子算法 (quict-ml):
       - 变分量子本征求解器: tutorials/algorithm/VQA/VQE.md
       - 量子近似优化算法: tutorials/algorithm/VQA/QAOA.md
-    - 量子神经网络 (quict-ml): tutorials/algorithm/VQA/QNN.md
+    - 量子神经网络 (quict-ml): tutorials/algorithm/QNN.md
 - API:
   - Algorithm:
     - Quantum Machine Learning:
@@ -98,7 +98,7 @@ extra:
 repo_name: QuICT
 repo_url: https://e.gitee.com/quictucas/repos/quictucas/quict/sources
 edit_uri: ""
-copyright: Copyright &copy; ICT
+copyright: Copyright &copy; 2022 ICT and its contributors
 plugins:
   - glightbox
   - tags

@@ -330,6 +330,8 @@ print(f"success rate [{n_hit}/{n_all}]:{n_hit/n_all:.3f}")
 
     success rate [1000/1000]:1.000
 
+---
+
 ## 参考文献
 
 <div id="refer1"></div>
@@ -343,3 +345,5 @@ print(f"success rate [{n_hit}/{n_all}]:{n_hit/n_all:.3f}")
 <font size=3>
 [2] Grover’s Algorithm. (n.d.). Community.qiskit.org. https://qiskit.org/textbook/ch-algorithms/grover.html
 </font>
+
+---

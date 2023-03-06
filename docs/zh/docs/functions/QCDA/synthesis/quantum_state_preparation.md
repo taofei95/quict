@@ -20,7 +20,7 @@ $$
 
 <figure markdown>
 ![uniformly门制备](../../../assets/images/functions/QCDA/qsp_ug_theory.png)
-<p markdown="1" style="font-size:15px;"> 图片引用自*Transformation of quantum states using uniformly controlled rotations.* [<sup>[1]</sup>](#refer1)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Transformation of quantum states using uniformly controlled rotations.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 ### 基于酉矩阵分解的一般量子态制备
@@ -55,7 +55,7 @@ $$
 
 <figure markdown>
 ![酉矩阵分解制备](../../../assets/images/functions/QCDA/qsp_ud_theory.png){:width="500px"}
-<p markdown="1" style="font-size:15px;"> 图片引用自*Quantum-state preparation with universal gate decompositions.* [<sup>[2]</sup>](#refer2)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Quantum-state preparation with universal gate decompositions.* [<sup>[2]</sup>](#refer2)
 </figure>
 
 ### 稀疏量子态制备
@@ -158,3 +158,5 @@ gates = sparseQSP.execute(state_vector)
 <font size=3>
 [3] Gleinig, N., & Hoefler, T. (2021). An Efficient Algorithm for Sparse Quantum State Preparation. 2021 58th ACM/IEEE Design Automation Conference (DAC), 433-438. [https://ieeexplore.ieee.org/abstract/document/9586240/metrics](https://ieeexplore.ieee.org/abstract/document/9586240/metrics)
 </font>
+
+---

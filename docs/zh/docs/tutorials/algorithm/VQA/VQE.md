@@ -151,6 +151,8 @@ for it in loader:
 
 所得`loss`数值即所求基态能量。
 
+---
+
 ## 参考文献
 
 <div id="refer1"></div>
@@ -172,3 +174,5 @@ for it in loader:
 <font size=3>
 [4] Kivlichan, I.D., McClean, J.R., Wiebe, N., Gidney, C., Aspuru-Guzik, A., Chan, G.K., & Babbush, R. (2017). Quantum Simulation of Electronic Structure with Linear Depth and Connectivity. Physical review letters, 120 11, 110501 . [https://arxiv.org/abs/1711.04789](https://arxiv.org/abs/1711.04789)
 </font>
+
+---

@@ -54,7 +54,7 @@ $$
 
 <figure markdown>
 ![symbolic优化](../../../assets/images/functions/QCDA/symbolic.png)
-<p markdown="1" style="font-size:15px;"> 图片引用自*Clifford Circuit Optimization with Templates and Symbolic Pauli Gates.* [<sup>[1]</sup>](#refer1)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Clifford Circuit Optimization with Templates and Symbolic Pauli Gates.* [<sup>[1]</sup>](#refer1)
 </figure>
 
 接下来需要解决的问题是将哪些CNOT“临时”转化为symbolic X门，这里的做法是取一些qubit作为控制集合 (control set) ，跨越控制集合和非控制集合的CNOT门将被临时“分离”。
@@ -109,3 +109,5 @@ circ_opt = SCO.execute(circ_syn)
 <font size=3>
 [1] Bravyi, S., Shaydulin, R., Hu, S., & Maslov, D.L. (2021). Clifford Circuit Optimization with Templates and Symbolic Pauli Gates. Quantum, 5, 580. [https://arxiv.org/abs/2105.02291](https://arxiv.org/abs/2105.02291)
 </font>
+
+---

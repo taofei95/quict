@@ -238,6 +238,7 @@ draw_samples_with_auxiliary(sample, N, int(np.ceil(np.log2(N))))
 
 但是搜索效果通常会随着标记节点的增加而下降。
 
+---
 
 ## 参考文献
 
@@ -258,3 +259,5 @@ draw_samples_with_auxiliary(sample, N, int(np.ceil(np.log2(N))))
 <font size=3>
 [3] Hristo Tonchev. Alternative Coins for Quantum Random Walk Search Optimized for a Hypercube. Journal of Quantum Information Science, Vol.5 No.1, 2015. [DOI: 10.4236/jqis.2015.51002](https://www.scirp.org/journal/paperinformation.aspx?paperid=55017)
 </font>
+
+---
