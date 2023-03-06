@@ -1,5 +1,9 @@
 # 量子变分本征值求解器
 
+!!! note
+
+    本教程额外依赖quict-ml库
+
 量子变分本征值求解器 (Variational Quantum Eigensolver, VQE) 是一个利用量子变分算法 (Variational Quantum Algorithm, VQA) 求解某一Hermitian矩阵最小本征值的方法。此方法常用于求解如指定分子基态能量等问题。由于这类问题本身基于量子力学提出，经典模拟较为困难，同样基于量子力学的量子模拟常被认为是一种有前景的量子优越性实现方案。
 
 本教程旨在给出一个例子，利用经典机器学习库Pytorch和QuICT中内置的量子近似优化算法模块求解$H_6$链分子的基态能量。

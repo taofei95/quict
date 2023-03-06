@@ -1,5 +1,9 @@
 # 量子近似优化算法（QAOA）
 
+!!! note
+
+    本教程额外依赖quict-ml库
+
 本教程旨在介绍如何使用经典机器学习库Pytorch和QuICT中内置的量子近似优化算法模块（Quantum Approximate Optimization Algorithm, QAOA）进行通用的组合优化问题的求解，并以最大割问题（Max-Cut Problem）为例具体阐述QAOA。
 
 ## 组合优化问题

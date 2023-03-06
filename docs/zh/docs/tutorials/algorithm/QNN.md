@@ -1,5 +1,9 @@
 # 量子神经网络（QNN）
 
+!!! note
+
+    本教程额外依赖quict-ml库
+
 本教程旨在介绍如何使用经典机器学习库Pytorch和QuICT中内置的量子神经网络层构建一个用于分类MNIST手写数据集的量子神经网络（Quantum Neural Network, QNN）。
 
 ## 导入运行库
