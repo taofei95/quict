@@ -187,6 +187,130 @@ class TestGate(unittest.TestCase):
         CX | cir([1, 2])
         assert np.allclose(expand_sdgate1, cir.matrix()) and np.allclose(expand_sdgate2, cir.matrix())
 
+    def test_gate_inverse(self):
+        single_ide = np.identity(2, np.complex128)
+        s_inv = S.inverse()
+        assert np.allclose(np.dot(S.matrix, s_inv.matrix), single_ide)
+
+        sdg_inv = S_dagger.inverse()
+        assert np.allclose(np.dot(S_dagger.matrix, sdg_inv.matrix), single_ide)
+
+        # sx_inv = SX.inverse()
+        # assert np.allclose(np.dot(SX.matrix, sx_inv.matrix), single_ide)
+
+        sy_inv = SY.inverse()
+        assert np.allclose(np.dot(SY.matrix, sy_inv.matrix), single_ide)
+
+        sw_inv = SW.inverse()
+        assert np.allclose(np.dot(SW.matrix, sw_inv.matrix), single_ide)
+
+        t_inv = T.inverse()
+        assert np.allclose(np.dot(T.matrix, t_inv.matrix), single_ide)
+
+        tdg_inv = T_dagger.inverse()
+        assert np.allclose(np.dot(T_dagger.matrix, tdg_inv.matrix), single_ide)
+
+        # Parameter Gate inverse test
+        alpha = np.random.random(1)[0]*np.pi
+        u1 = U1(alpha)
+        u1_inv = u1.inverse()
+        assert np.allclose(np.dot(u1_inv.matrix, u1.matrix), single_ide)
+
+        alpha = np.random.random(1)[0]*np.pi
+        beta = np.random.random(1)[0]*np.pi
+        u2 = U2(alpha, beta)
+        u2_inv = u2.inverse()
+        assert np.allclose(np.dot(u2_inv.matrix, u2.matrix), single_ide)
+
+        alpha = np.random.random(1)[0]*np.pi
+        beta = np.random.random(1)[0]*np.pi
+        gamma = np.random.random(1)[0]*np.pi
+        u3 = U3(alpha, beta, gamma)
+        u3_inv = u3.inverse()
+        assert np.allclose(np.dot(u3_inv.matrix, u3.matrix), single_ide)
+
+        alpha = np.random.random(1)[0]*np.pi
+        rx = Rx(alpha)
+        rx_inv = rx.inverse()
+        assert np.allclose(np.dot(rx_inv.matrix, rx.matrix), single_ide)
+
+        alpha = np.random.random(1)[0]*np.pi
+        ry = Ry(alpha)
+        ry_inv = ry.inverse()
+        assert np.allclose(np.dot(ry_inv.matrix, ry.matrix), single_ide)
+
+        alpha = np.random.random(1)[0]*np.pi
+        rz = Rz(alpha)
+        rz_inv = rz.inverse()
+        assert np.allclose(np.dot(rz_inv.matrix, rz.matrix), single_ide)
+
+        alpha = np.random.random(1)[0]
+        p = Phase(alpha)
+        p_inv = p.inverse()
+        assert np.allclose(np.dot(p_inv.matrix, p.matrix), single_ide)
+
+        alpha = np.random.random(1)[0]
+        gp = GPhase(alpha)
+        gp_inv = gp.inverse()
+        assert np.allclose(np.dot(gp_inv.matrix, gp.matrix), single_ide)
+
+        # 2-qubit gates
+        double_ide = np.identity(4)
+        alpha = np.random.random(1)[0]*np.pi
+        crz = CRz(alpha)
+        crz_inv = crz.inverse()
+        assert np.allclose(np.dot(crz_inv.matrix, crz.matrix), double_ide)
+
+        alpha = np.random.random(1)[0]*np.pi
+        cu1 = CU1(alpha)
+        cu1_inv = cu1.inverse()
+        assert np.allclose(np.dot(cu1_inv.matrix, cu1.matrix), double_ide)
+
+        alpha = np.random.random(1)[0]*np.pi
+        beta = np.random.random(1)[0]*np.pi
+        gamma = np.random.random(1)[0]*np.pi
+        cu3 = CU3(alpha, beta, gamma)
+        cu3_inv = cu3.inverse()
+        assert np.allclose(np.dot(cu3_inv.matrix, cu3.matrix), double_ide)
+
+        alpha = np.random.random(1)[0]*np.pi
+        beta = np.random.random(1)[0]
+        fsim = FSim(alpha, beta)
+        fsim_inv = fsim.inverse()
+        assert np.allclose(np.dot(fsim_inv.matrix, fsim.matrix), double_ide)
+
+        alpha = np.random.random(1)[0]
+        rxx = Rxx(alpha)
+        rxx_inv = rxx.inverse()
+        assert np.allclose(np.dot(rxx_inv.matrix, rxx.matrix), double_ide)
+
+        alpha = np.random.random(1)[0]
+        ryy = Ryy(alpha)
+        ryy_inv = ryy.inverse()
+        assert np.allclose(np.dot(ryy_inv.matrix, ryy.matrix), double_ide)
+
+        alpha = np.random.random(1)[0]
+        rzz = Rzz(alpha)
+        rzz_inv = rzz.inverse()
+        assert np.allclose(np.dot(rzz_inv.matrix, rzz.matrix), double_ide)
+
+        alpha = np.random.random(1)[0]
+        rzx = Rzx(alpha)
+        rzx_inv = rzx.inverse()
+        assert np.allclose(np.dot(rzx_inv.matrix, rzx.matrix), double_ide)
+
+        # from scipy.stats import unitary_group
+
+        # matrix = unitary_group.rvs(2 ** 2)
+        # uni = Unitary(matrix)
+        # u2 = uni.inverse()
+        # assert np.allclose(np.dot(matrix, u2.matrix), double_ide)
+
+        alpha = np.random.random(1)[0]
+        ccrz = CCRz(alpha)
+        ccrz_inv = ccrz.inverse()
+        assert np.allclose(np.dot(ccrz_inv.matrix, ccrz.matrix), np.identity(8, np.complex128))
+
 
 if __name__ == "__main__":
     unittest.main()
