@@ -2306,11 +2306,7 @@ class UnitaryGate(BasicGate):
 
     def inverse(self):
         _U = super().copy()
-        inverse_matrix = np.array(
-            np.mat(self._matrix).reshape(1 << self.targets, 1 << self.targets).H.reshape(1, -1),
-            dtype=self._precision
-        )
-        _U.matrix = inverse_matrix
+        _U.matrix = np.asmatrix(self._matrix).H
         _U.targets = self.targets
 
         return _U
