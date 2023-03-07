@@ -32,7 +32,7 @@ class QuantumNet(nn.Module):
                 Defaults to torch.device("cuda:0").
         """
         super(QuantumNet, self).__init__()
-        if encoding not in ["qubit", "amplitude", "FRQI"]:
+        if encoding not in ["qubit", "amplitude", "FRQI","NEQR"]:
             raise QNNModelError("The encoding method should be 'qubit' or 'amplitude'")
         self._layers = layers
         self._device = device
@@ -43,6 +43,8 @@ class QuantumNet(nn.Module):
             self._encoding = Amplitude(data_qubits, device)
         elif encoding == "FRQI":
             self._encoding = FRQI(device)
+        elif encoding == "NEQR":
+            self._encoding = NEQR(device)
         self._n_qubits = self._data_qubits + 1
         self._simulator = GpuSimulator()
         self._pqc = QNNLayer(
