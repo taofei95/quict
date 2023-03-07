@@ -17,13 +17,11 @@
 
 不同于仅使用完全随机量子门电路进行基准测试衡量性能，QuICT基准测试采用三种电路组供选择，其中包含特殊基准测试电路、量子算法电路、随机指令集电路，通过不同的方向提供对真实量子物理机性能进行更广泛更准确的测试方法。
 
-```markdown
-| 组别   | 电路                                                 |
-| ------ | ---------------------------------------------------- |
-| 第一组 | 特殊随机电路、指令集电路                             |
-| 第二组 | 特殊随机电路、指令集电路、基础算法电路               |
-| 第三组 | 特殊随机电路、指令集电路、基础算法电路、进阶算法电路 |
-```
+|  组别  |   电路   |
+|   ------    | ------- |
+|   第一组    | 特殊随机电路、指令集电路 |
+|   第二组    | 特殊随机电路、指令集电路、基础算法电路 |
+|   第三组    | 特殊随机电路、指令集电路、基础算法电路、进阶算法电路 |
 
 
 **特殊随机电路**
@@ -188,19 +186,18 @@ circuits_list = benchmark.get_circuits(
 # 传入电路组以及物理机模拟结果，进入评分系统
 benchmark.evaluate(circuits_list, amp_results_list)
 ```
-
 #### 结果展示
 
 <figure markdown>
 
-![radar graph](../assets/images/functions/Machinebenchmark/benchmark_radar_chart_show.jpg)
+![radar graph](../assets/images/functions/Machinebenchmark/radar_chart_show.jpg)
 <figcaption>雷达图</figcaption>
 
 </figure>
 
 <figure markdown>
 
-![radar graph](../assets/images/functions/Machinebenchmark/benchmark_txt.png)
+![radar graph](../assets/images/functions/Machinebenchmark/txt_show.jpg)
 <figcaption>文本文件部分截图</figcaption>
 
 </figure>
