@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 from typing import Union
 import numpy as np
@@ -11,6 +13,8 @@ from QuICT.tools.exception.core import (
     TypeError, ValueError, GateAppendError, GateQubitAssignedError,
     QASMError, GateMatrixError, GateParametersAssignedError
 )
+
+from .utils import GateMatrixGenerator, ComplexGateBuilder, InverseGate
 
 
 class BasicGate(object):
@@ -71,27 +75,6 @@ class BasicGate(object):
         # TODO: get from GateMatrix
         return self.matrix
 
-    ################    Quantum Gate's Control Qubits   ################
-    @property
-    def controls(self) -> int:
-        return self._controls
-
-    @property
-    def carg(self):
-        return self.cargs[0]
-
-    @property
-    def cargs(self):
-        return self._cargs
-
-    @cargs.setter
-    def cargs(self, cargs: Union[list, int]):
-        if isinstance(cargs, int):
-            cargs = [cargs]
-
-        assert len(cargs) == len(set(cargs)), ValueError("BasicGate.cargs", "not have duplicated value", cargs)
-        self._cargs = cargs
-
     ################    Quantum Gate's Target Qubits    ################
     @property
     def targets(self) -> int:
@@ -116,6 +99,29 @@ class BasicGate(object):
         )
         self._targs = targs
 
+    ################    Quantum Gate's Control Qubits   ################
+    @property
+    def controls(self) -> int:
+        return self._controls
+
+    @property
+    def carg(self):
+        assert self._controls > 0, f"There is no control qubits for this gate, {self.type}"
+        return self.cargs[0]
+
+    @property
+    def cargs(self):
+        assert self._controls > 0, f"There is no control qubits for this gate, {self.type}"
+        return self._cargs
+
+    @cargs.setter
+    def cargs(self, cargs: Union[list, int]):
+        if isinstance(cargs, int):
+            cargs = [cargs]
+
+        assert len(cargs) == len(set(cargs)), ValueError("BasicGate.cargs", "not have duplicated value", cargs)
+        self._cargs = cargs
+
     #################    Quantum Gate's parameters    ##################
     @property
     def params(self) -> int:
@@ -123,10 +129,12 @@ class BasicGate(object):
 
     @property
     def parg(self):
+        assert self._params > 0, f"There is no parameters for this gate, {self.type}"
         return self.pargs[0]
 
     @property
     def pargs(self):
+        assert self._params > 0, f"There is no parameters for this gate, {self.type}"
         return self._pargs
 
     @pargs.setter
@@ -146,23 +154,36 @@ class BasicGate(object):
         params: int,
         type_: GateType,
         matrix_type: MatrixType = MatrixType.normal,
-        pargs: list = []
+        pargs: list = [],
+        precision: str = "double"
     ):
-        self._controls = controls
+        assert isinstance(controls, int), TypeError("BasicGate.controls", "int", type(controls))
+        assert isinstance(targets, int), TypeError("BasicGate.targets", "int", type(targets))
+        assert isinstance(params, int), TypeError("BasicGate.params", "int", type(params))
         self._targets = targets
-        self._params = params
-        self._cargs = []    # list of int
         self._targs = []    # list of int
-        self._pargs = []    # list of float/..
+
+        self._controls = controls
+        if self._controls > 0:
+            self._cargs = []    # list of int
+
+        self._params = params
+        if self._params > 0:
+            if len(pargs) > 0:
+                self.permit_element(pargs)
+
+            self._pargs = pargs    # list of float/..
 
         assert isinstance(type_, GateType), TypeError("BasicGate.type", "GateType", type(type_))
+        assert isinstance(matrix_type, MatrixType), TypeError("BasicGate.matrixtype", "MatrixType", type(type_))
         self._type = type_
-        assert isinstance(matrix_type, MatrixType), TypeError("BasicGate.type", "MatrixType", type(type_))
         self._matrix_type = matrix_type
-        self._precision = np.complex128
-        self._qasm_name = str(type_.name)
 
+        assert precision in ["double", "single"], \
+            ValueError("BasicGate.precision", "not within [double, single]", precision)
+        self._precision = np.complex128 if precision == "double" else np.complex64
         self._matrix = None
+        self._qasm_name = str(type_.name)
         self.assigned_qubits = []   # list of qubits' id
 
     def __or__(self, targets):
@@ -315,7 +336,22 @@ class BasicGate(object):
         Return:
             BasicGate: the inverse of the gate
         """
-        return self.copy()
+        if self.params > 0:
+            inverse_gargs = InverseGate.get_inverse_gate(self.type, self.pargs)
+        else:
+            inverse_gargs = InverseGate.get_inverse_gate(self.type)
+
+        # Deal with inverse_gargs
+        if inverse_gargs is None:
+            return self
+
+        if isinstance(inverse_gargs, tuple):
+            gate_type, parameters = inverse_gargs
+        else:
+            gate_type = inverse_gargs
+
+        # TODO: return new gate with parameters
+        return None
 
     def commutative(self, goal, eps=1e-7):
         """ decide whether gate is commutative with another gate
@@ -347,16 +383,13 @@ class BasicGate(object):
         ):
             return False
 
+        # It means commuting that any of the target matrices is close to identity
+        if (self.is_identity() or goal.is_identity()):
+            return True
+
         # Check the target matrices of the gates
         A = self.target_matrix
         B = goal.target_matrix
-        # It means commuting that any of the target matrices is close to identity
-        if (
-            np.allclose(A, np.identity(1 << self.targets), rtol=eps, atol=eps) or
-            np.allclose(B, np.identity(1 << goal.targets), rtol=eps, atol=eps)
-        ):
-            return True
-
         # For gates whose number of target qubits is 1, optimized judgment could be used
         if self.targets == 1 and goal.targets == 1:
             # Diagonal target gates commutes with the control qubits
@@ -422,13 +455,7 @@ class BasicGate(object):
         Returns:
             bool: True if gate's matrix is diagonal
         """
-        return (
-            self.type in DIAGONAL_GATE_SET or
-            (self.type == GateType.unitary and self._is_diagonal())
-        )
-
-    def _is_diagonal(self) -> bool:
-        return np.allclose(np.diag(np.diag(self.matrix)), self.matrix)
+        return (self.type in DIAGONAL_GATE_SET or self.matrix_type == MatrixType.diagonal)
 
     def is_pauli(self) -> bool:
         """ judge whether gate's matrix is a Pauli gate
@@ -448,11 +475,9 @@ class BasicGate(object):
         return self.type in SPECIAL_GATE_SET
 
     def is_identity(self) -> bool:
-        if self.type in [GateType.reset, GateType.measure, GateType.barrier]:
-            return False
+        return self.matrix_type == MatrixType.identity 
 
-        return np.allclose(self.matrix, np.identity(1 << (self.controls + self.targets), dtype=self.precision))
-
+    # TODO: keep or remove? weird
     def expand(self, qubits: Union[int, list]) -> bool:
         """ expand self matrix into the circuit's unitary linear space. If input qubits is integer, please make sure
         the indexes of current gate is within [0, qubits).
@@ -477,6 +502,7 @@ class BasicGate(object):
         updated_args = [qubits.index(garg) for garg in gate_args]
         return matrix_product_to_circuit(self.matrix, updated_args, qubits_num)
 
+    # TODO: try to refactoring this
     def copy(self):
         """ return a copy of this gate
 
@@ -520,5 +546,14 @@ class BasicGate(object):
         Returns:
             bool: True if the type of element is int/float/complex
         """
-        if not isinstance(element, (int, float, complex, np.complex64)):
-            raise TypeError(self.type, "int/float/complex", type(element))
+        if not isinstance(element, list):
+            element = [element]
+
+        for el in element
+            if not isinstance(el, (int, float, complex, np.complex64)):
+                raise TypeError("basicGate.targs", "int/float/complex", type(el))
+
+
+# TODO: using as copy
+def gate_builder():
+    pass

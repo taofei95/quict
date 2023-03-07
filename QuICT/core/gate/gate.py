@@ -798,7 +798,7 @@ class IDGate(BasicGate):
             targets=1,
             params=0,
             type_=GateType.id,
-            matrix_type=MatrixType.diagonal
+            matrix_type=MatrixType.identity
         )
 
         self.matrix = np.array([
@@ -2287,6 +2287,10 @@ class UnitaryGate(BasicGate):
         return _u
 
     def _validate_matrix_type(self):
+        if np.allclose(self.matrix, np.identity(1 << (self.controls + self.targets), dtype=self.precision)):
+            self._matrix_type == MatrixType.identity
+
+        # TODO: diagonal check here
         if self._is_diagonal():
             is_control = np.allclose(self.matrix[:-1, :-1], np.identity((2 ** self.targets - 1), dtype=self._precision))
             self._matrix_type = MatrixType.control if is_control else MatrixType.diagonal

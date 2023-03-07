@@ -130,7 +130,7 @@ class MatrixType(Enum):
                        [0, 0, a, b],
                        [0, 0, c, d]]
     """
-
+    identity = "identity matrix"
     normal = "normal matrix"
     diagonal = "diagonal matrix"
     control = "control matrix"
