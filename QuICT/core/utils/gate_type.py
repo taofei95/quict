@@ -143,38 +143,51 @@ class MatrixType(Enum):
     diag_normal = "diagonal * normal"
 
 
-SPECIAL_GATE_SET = [
-    GateType.measure,
-    GateType.reset,
-    GateType.barrier,
-    GateType.unitary,
-    GateType.perm,
-    GateType.perm_fx,
-    GateType.qft,
-    GateType.iqft,
-]
-
-
-DIAGONAL_GATE_SET = [
-    GateType.s,
-    GateType.sdg,
-    GateType.z,
-    GateType.id,
-    GateType.u1,
-    GateType.rz,
-    GateType.t,
-    GateType.tdg,
-    GateType.phase,
-    GateType.gphase,
-    GateType.cz,
-    GateType.crz,
-    GateType.cu1,
-    GateType.rzz,
-    GateType.ccrz,
-]
-
-
-SUPREMACY_GATE_SET = [GateType.sx, GateType.sy, GateType.sw]
+GATEINFO_MAP = {
+    GateType.h: (0, 1, 0, MatrixType.normal),
+    GateType.hy: (0, 1, 0, MatrixType.normal),
+    GateType.s: (0, 1, 0, MatrixType.control),
+    GateType.sdg: (0, 1, 0, MatrixType.control),
+    GateType.x: (0, 1, 0, MatrixType.swap),
+    GateType.y: (0, 1, 0, MatrixType.reverse),
+    GateType.z: (0, 1, 0, MatrixType.control),
+    GateType.sx: (0, 1, 0, MatrixType.normal),
+    GateType.sy: (0, 1, 0, MatrixType.normal),
+    GateType.sw: (0, 1, 0, MatrixType.normal),
+    GateType.id: (0, 1, 0, MatrixType.identity),
+    GateType.u1: (0, 1, 1, MatrixType.control),
+    GateType.u2: (0, 1, 2, MatrixType.normal),
+    GateType.u3: (0, 1, 3, MatrixType.normal),
+    GateType.rx: (0, 1, 1, MatrixType.normal),
+    GateType.ry: (0, 1, 1, MatrixType.normal),
+    GateType.rz: (0, 1, 1, MatrixType.diagonal),
+    GateType.t: (0, 1, 0, MatrixType.control),
+    GateType.tdg: (0, 1, 0, MatrixType.control),
+    GateType.phase: (0, 1, 1, MatrixType.control),
+    GateType.gphase: (0, 1, 1, MatrixType.diagonal),
+    GateType.cz: (1, 1, 0, MatrixType.control),
+    GateType.cx: (1, 1, 0, MatrixType.reverse),
+    GateType.cy: (1, 1, 0, MatrixType.reverse),
+    GateType.ch: (1, 1, 0, MatrixType.normal),
+    GateType.crz: (1, 1, 1, MatrixType.diagonal),
+    GateType.cu1: (1, 1, 1, MatrixType.control),
+    GateType.cu3: (1, 1, 3, MatrixType.diagonal),
+    GateType.fsim: (0, 2, 2, MatrixType.ctrl_normal),
+    GateType.rxx: (0, 2, 1, MatrixType.normal_normal),
+    GateType.ryy: (0, 2, 1, MatrixType.normal_normal),
+    GateType.rzz: (0, 2, 1, MatrixType.diag_diag),
+    GateType.rzx: (0, 2, 1, MatrixType.diag_normal),
+    GateType.measure: (0, 1, 0, MatrixType.special),
+    GateType.reset: (0, 1, 0, MatrixType.special),
+    GateType.barrier: (0, 1, 0, MatrixType.special),
+    GateType.swap: (0, 2, 0, MatrixType.swap),
+    GateType.iswapdg: (0, 2, 0, MatrixType.swap),
+    GateType.sqiswap: (0, 2, 0, MatrixType.swap),
+    GateType.ccx: (2, 1, 0, MatrixType.reverse),
+    GateType.ccz: (2, 1, 0, MatrixType.control),
+    GateType.ccrz: (2, 1, 1, MatrixType.diagonal),
+    GateType.cswap: (1, 2, 0, MatrixType.swap),
+}
 
 
 PAULI_GATE_SET = [GateType.x, GateType.y, GateType.z, GateType.id]

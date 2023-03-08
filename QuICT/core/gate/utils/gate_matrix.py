@@ -5,18 +5,21 @@ from .gate_type import GateType
 
 class GateMatrixGenerator:
     @classmethod
-    def get_matrix(cls, gate, controlled_by: int = 0, special_array_generator: Callable = None):
+    def get_matrix(cls, gate, is_get_target: bool = False, controlled_by: int = 0, special_array_generator: Callable = None):
         # Step 1: Assigned array generator
         cls._array_generator = special_array_generator if special_array_generator is not None else np
 
         # Step 2: Get based matrix's value
         gate_type = gate.type
-        gate_precision = gate.precision
+        gate_precision = np.complex128 if gate.precision == "double" else np.complex64
         gate_params = gate.params
         if gate_params == 0:
             based_matrix = cls.based_matrix(gate_type, gate_precision)
         else:
             based_matrix = cls.matrix_with_param(gate_type, gate_params, gate_precision)
+
+        if is_get_target:
+            return based_matrix
 
         # Step 3: Depending on controlled_by, generate final matrix
         assert controlled_by >= 0, "The number of controlled qubits should be positive integer."

@@ -5,8 +5,8 @@ from typing import Union
 import numpy as np
 
 from QuICT.core.utils import (
-    GateType, MatrixType, SPECIAL_GATE_SET, DIAGONAL_GATE_SET, CGATE_LIST,
-    PAULI_GATE_SET, CLIFFORD_GATE_SET,
+    GateType, MatrixType, CGATE_LIST,
+    PAULI_GATE_SET, CLIFFORD_GATE_SET, GATEINFO_MAP
     perm_decomposition, matrix_product_to_circuit
 )
 from QuICT.tools.exception.core import (
@@ -63,17 +63,17 @@ class BasicGate(object):
     
     @property
     def matrix(self) -> np.ndarray:
-        # TODO: get from GateMatrix
-        return self._matrix
+        if self._matrix is None:
+            self._matrix = GateMatrixGenerator.get_matrix(self)
 
-    @matrix.setter
-    def matrix(self, matrix):
-        self._matrix = matrix
+        return self._matrix
 
     @property
     def target_matrix(self) -> np.ndarray:
-        # TODO: get from GateMatrix
-        return self.matrix
+        if self._target_matrix is None:
+            self._target_matrix = GateMatrixGenerator.get_matrix(self, is_get_target=True)
+
+        return self._target_matrix
 
     ################    Quantum Gate's Target Qubits    ################
     @property
@@ -139,23 +139,25 @@ class BasicGate(object):
 
     @pargs.setter
     def pargs(self, pargs: list):
-        if isinstance(pargs, list):
-            self._pargs = pargs
-        else:
-            self._pargs = [pargs]
+        if isinstance(pargs, int):
+            pargs = [pargs]
 
-        if len(self._pargs) != self.params:
-            raise ValueError("BasicGate.pargs:length", f"equal to gate's parameter number {self._pargs}", len(pargs))
+        self.permit_element(pargs)
+        assert len(self._pargs) == self.params, \
+            ValueError("BasicGate.pargs:length", f"equal to gate's parameter number {self._pargs}", len(pargs))
+
+        self._pargs = pargs
 
     def __init__(
         self,
+        type_: GateType,
         controls: int,
         targets: int,
         params: int,
-        type_: GateType,
         matrix_type: MatrixType = MatrixType.normal,
         pargs: list = [],
-        precision: str = "double"
+        precision: str = "double",
+        **kwargs
     ):
         assert isinstance(controls, int), TypeError("BasicGate.controls", "int", type(controls))
         assert isinstance(targets, int), TypeError("BasicGate.targets", "int", type(targets))
@@ -181,10 +183,15 @@ class BasicGate(object):
 
         assert precision in ["double", "single"], \
             ValueError("BasicGate.precision", "not within [double, single]", precision)
-        self._precision = np.complex128 if precision == "double" else np.complex64
+        self._precision = precision
         self._matrix = None
+        self._target_matrix = None
         self._qasm_name = str(type_.name)
         self.assigned_qubits = []   # list of qubits' id
+        if "is_original_gate" in kwargs.keys():
+            self._is_original = kwargs["is_original_gate"]
+        else:
+            self._is_original = False
 
     def __or__(self, targets):
         """deal the operator '|'
@@ -234,45 +241,57 @@ class BasicGate(object):
         Raise:
             TypeError: the type of targets is wrong
         """
-        _gate = self.copy()
-
         if isinstance(targets, int):
-            assert _gate.is_single(), GateQubitAssignedError("The qubits number should equal to the quantum gate.")
+            targets = [targets]
 
-            _gate.targs = [targets]
-        elif isinstance(targets, list):
-            if len(targets) != _gate.controls + _gate.targets:
-                raise GateQubitAssignedError("The qubits number should equal to the quantum gate.")
-
-            _gate.cargs = targets[:_gate.controls]
-            _gate.targs = targets[_gate.controls:]
-        else:
+        if not isinstance(targets, list):
             raise TypeError("BasicGate.&", "int or list<int>", type(targets))
+
+        assert len(targets) == self.controls + self.targets, \
+            GateQubitAssignedError("The qubits number should equal to the quantum gate.")
+
+        if self._is_original:
+            _gate = self.copy()
+        else:
+            _gate = self
+
+        _gate.cargs = targets[:_gate.controls]
+        _gate.targs = targets[_gate.controls:]
 
         if CGATE_LIST:
             CGATE_LIST[-1].append(_gate)
         else:
             return _gate
 
-    def __call__(self):
+    def __call__(self, *args):
         """ give parameters for the gate, and give parameters by "()", and parameters should be one of int/float/complex
 
         Some Examples are like this:
 
-        Rz(np.pi / 2)           | qubit
-        U3(np.pi / 2, 0, 0)     | qubit
+        Rz(np.pi / 2)
+        U3(np.pi / 2, 0, 0)
 
-        *Important*: There is no parameters for current quantum gate.
+        *Important*: There is no parameters for some quantum gate.
 
         Returns:
             BasicGate: the gate after filled by parameters
         """
-        return self.copy()
+        assert len(args) == self.params, \
+            GateParametersAssignedError("The number of given parameters not matched the quantum gate.")
+
+        if self._is_original:
+            _gate = self.copy()
+        else:
+            _gate = self
+
+        _gate.pargs = list(args)
+        return _gate
 
     def __eq__(self, other):
         assert isinstance(other, BasicGate), TypeError("BasicGate.==", "BasicGate", type(other))
         if (
             self.type != other.type or
+            self.matrix_type != other.matrix_type or
             (self.cargs + self.targs) != (other.cargs + other.targs) or
             self.pargs != other.pargs
         ):
@@ -314,8 +333,8 @@ class BasicGate(object):
         Return:
             string: the OpenQASM 2.0 describe of the gate
         """
-        if self.type in SPECIAL_GATE_SET[4:]:
-            raise QASMError(f"The gate do not support qasm, {self.type}")
+        if self.type in [GateType.perm, GateType.perm_fx, GateType.qft, GateType.iqft]:
+            raise QASMError(f"This gate do not support qasm, {self.type}")
 
         qasm_string = self.qasm_name
         if self.params > 0:
@@ -346,12 +365,14 @@ class BasicGate(object):
             return self
 
         if isinstance(inverse_gargs, tuple):
-            gate_type, parameters = inverse_gargs
+            gate_type, pargs = inverse_gargs
         else:
             gate_type = inverse_gargs
 
-        # TODO: return new gate with parameters
-        return None
+        return build_gate(gate_type, pargs)
+
+    def build_gate(self):
+        return ComplexGateBuilder.build_gate(self)
 
     def commutative(self, goal, eps=1e-7):
         """ decide whether gate is commutative with another gate
@@ -455,7 +476,7 @@ class BasicGate(object):
         Returns:
             bool: True if gate's matrix is diagonal
         """
-        return (self.type in DIAGONAL_GATE_SET or self.matrix_type == MatrixType.diagonal)
+        return self.matrix_type == MatrixType.diagonal
 
     def is_pauli(self) -> bool:
         """ judge whether gate's matrix is a Pauli gate
@@ -467,12 +488,12 @@ class BasicGate(object):
 
     def is_special(self) -> bool:
         """ judge whether gate's is special gate, which is one of
-        [Measure, Reset, Barrier, Perm, Unitary, ...]
+        [Measure, Reset, Barrier, Perm, ...]
 
         Returns:
             bool: True if gate's matrix is special
         """
-        return self.type in SPECIAL_GATE_SET
+        return self.matrix_type == MatrixType.special
 
     def is_identity(self) -> bool:
         return self.matrix_type == MatrixType.identity 
@@ -502,26 +523,16 @@ class BasicGate(object):
         updated_args = [qubits.index(garg) for garg in gate_args]
         return matrix_product_to_circuit(self.matrix, updated_args, qubits_num)
 
-    # TODO: try to refactoring this
     def copy(self):
         """ return a copy of this gate
 
         Returns:
             gate(BasicGate): a copy of this gate
         """
-        class_name = str(self.__class__.__name__)
-        gate = globals()[class_name]()
-
-        if gate.type in SPECIAL_GATE_SET:
-            gate.controls = self.controls
-            gate.targets = self.targets
-            gate.params = self.params
-
-        if gate.type in [GateType.perm, GateType.unitary, GateType.perm_fx]:
-            gate.matrix = copy.deepcopy(self.matrix)
-
-        if self.params > 0:
-            gate.pargs = self.pargs[:]
+        gate = BasicGate(
+            self.controls, self.targets, self.params, self.type,
+            self.matrix_type, self.pargs, self.precision
+        )
 
         gate.targs = self.targs[:]
         if self.controls > 0:
@@ -529,9 +540,6 @@ class BasicGate(object):
 
         if self.assigned_qubits:
             gate.assigned_qubits = self.assigned_qubits[:]
-
-        if self.precision == np.complex64:
-            gate.convert_precision()
 
         return gate
 
@@ -554,6 +562,101 @@ class BasicGate(object):
                 raise TypeError("basicGate.targs", "int/float/complex", type(el))
 
 
-# TODO: using as copy
-def gate_builder():
-    pass
+class Unitary(BasicGate):
+    @property
+    def matrix(self):
+        return self._matrix
+
+    @property
+    def target_matrix(self):
+        return self._matrix
+
+    def __init__(self, matrix: Union[list, np.ndarray], controlled_by: int = 0, matrix_type: MatrixType = None):
+        # Validate matrix type
+        assert isinstance(matrix, (list, np.ndarray)), TypeError("unitary.matrix", "list/ndarray", type(matrix))
+        if isinstance(matrix, list):
+            matrix = np.array(matrix)
+
+        # Validate precision
+        assert isinstance(matrix.dtype, (np.complex128, np.complex64)), \
+            TypeError("unitary.matrix.dtype", "complex64/128", matrix.dtype)
+        precision = "double" if matrix.dtype == np.complex64 else "single"
+
+        # Validate matrix shape is square
+        length, width = matrix.shape
+        if length != width:
+            N = int(np.log2(matrix.size))
+            assert N ^ 2 == matrix.size, GateMatrixError("the shape of unitary matrix should be square.")
+            matrix = matrix.reshape(N, N)
+
+        n = int(np.log2(matrix.shape[0]))
+        if (1 << n) != matrix.shape[0]:
+            raise GateMatrixError("the length of list should be the square of power(2, n)")
+
+        if matrix_type is None:
+            matrix_type, controls = self.validate_matrix_type(matrix)
+        else:
+            matrix_type = MatrixType.normal
+            controls = 0
+
+        super().__init__(
+            controls=controls, targets=n-controls, params=0,
+            type_=GateType.unitary, matrix_type=matrix_type, precision=precision
+        )
+        self._matrix = matrix
+
+    @staticmethod
+    def validate_matrix_type(matrix) -> MatrixType:
+        length = matrix.shape[0]
+        matrix_type = matrix.dtype
+
+        controls = 0
+        row_counter = 0
+        while length // 2 > 0:
+            id_length = length // 2
+            if (
+                np.allclose(
+                    matrix[row_counter:(row_counter + id_length), row_counter:(row_counter + id_length)],
+                    np.identity(id_length, dtype=matrix_type)
+                ) and
+                np.sum(matrix[row_counter:(row_counter + id_length), (row_counter + id_length):]) == 0 and
+                np.sum(matrix[(row_counter + id_length):, row_counter:(row_counter + id_length)]) == 0
+            ):
+                controls += 1
+                row_counter += id_length
+                length //= 2
+            else:
+                break
+
+        # Validate Identity Matrix or Control Matrix
+        if length == 1:
+            matrix_type = MatrixType.identity if matrix[-1, -1] == 1 else MatrixType.control
+            return matrix_type, controls
+
+        # Validate Diagonal Matrix or Reverse Matrix or Normal Matrix
+        if np.allclose(matrix[row_counter:, row_counter:], np.diag(np.diag(matrix[row_counter:, row_counter:]))):
+            matrix_type = MatrixType.diagonal
+        else:
+            reverse_mat = np.fliplr(matrix[row_counter:, row_counter:])
+            if np.allclose(reverse_mat, np.diag(np.diag(reverse_mat))):
+                matrix_type = MatrixType.reverse
+            else:
+                matrix_type = MatrixType.normal
+
+        return matrix_type, controls
+
+
+def gate_builder(gate_type, pargs: list = [], precision: str = "double"):
+    if gate_type not in GATEINFO_MAP.keys():
+        raise TypeError("gate_builder.gate_type", "only support for fixed qubits gate", gate_type)
+
+    controls, targets, params, matrix_type = GATEINFO_MAP[gate_type]
+    return BasicGate(
+        controls, targets, params,
+        gate_type, matrix_type, pargs, precision
+    )
+
+
+H = BasicGate(
+    GateType.h, *GATEINFO_MAP[GateType.h], is_original_gate=True
+)
