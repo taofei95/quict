@@ -7,8 +7,9 @@ from enum import Enum
 from typing import List
 import numpy as np
 
-from .circuit_matrix import CircuitMatrix, get_gates_order_by_depth
 from .gate_type import GateType
+from .circuit_matrix import CircuitMatrix, get_gates_order_by_depth
+
 
 
 class CircuitBased(object):
@@ -32,7 +33,6 @@ class CircuitBased(object):
     def __init__(self, name: str):
         self._name = name
         self._gates = []
-        self._gate_type = {}        # gate_type: # of gates
         self._pointer = None
         self._precision = np.complex128
 
@@ -73,7 +73,7 @@ class CircuitBased(object):
         """
         count = 0
         for gate in self._gates:
-            if hasattr(gate, "is_single") and gate.controls + gate.targets == 2:
+            if gate.controls + gate.targets == 2:
                 count += 1
 
         return count
@@ -86,7 +86,7 @@ class CircuitBased(object):
         """
         count = 0
         for gate in self._gates:
-            if hasattr(gate, "is_single") and gate.is_single():
+            if gate.controls + gate.targets == 1:
                 count += 1
 
         return count
@@ -100,10 +100,12 @@ class CircuitBased(object):
         Returns:
             int: the number of the gates which are some type
         """
-        if gate_type in self._gate_type.keys():
-            return self._gate_type[gate_type]
+        count = 0
+        for gate in self._gates:
+            if gate.type == gate_type:
+                count += 1
 
-        return 0
+        return count
 
     def __str__(self):
         circuit_info = {

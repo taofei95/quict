@@ -8,6 +8,7 @@ import numpy as np
 
 from QuICT.core.qubit import Qureg, Qubit
 from QuICT.core.gate import BasicGate
+from QuICT.core.operator import CheckPointChild, Operator
 from QuICT.core.utils import (
     CircuitBased,
     CGATE_LIST,
@@ -39,6 +40,11 @@ class CompositeGate(CircuitBased):
         if gates is not None:
             self.extend(gates)
 
+    def clean(self):
+        self._gates = []
+        self._min_qubit, self._max_qubit = np.inf, 0
+        self._pointer = None
+
     ####################################################################
     ############          CompositeGate Context             ############
     ####################################################################
@@ -69,6 +75,7 @@ class CompositeGate(CircuitBased):
         """
         return self._max_qubit
 
+    # TODO: update_limit?
     def __call__(self, indexes: Union[list, int]):
         if isinstance(indexes, int):
             indexes = [indexes]
@@ -77,11 +84,7 @@ class CompositeGate(CircuitBased):
         self._pointer = indexes
         return self
 
-    def clean(self):
-        self._gates = []
-        self._min_qubit, self._max_qubit = np.inf, 0
-        self._pointer = None
-
+    # TODO: why CGATE_LIST here?
     def __and__(self, targets: Union[int, list, Qubit, Qureg]):
         """ assign qubits or indexes for given gates
 
@@ -90,8 +93,7 @@ class CompositeGate(CircuitBased):
         """
         if isinstance(targets, int):
             targets = [targets]
-
-        if isinstance(targets, Qubit):
+        elif isinstance(targets, Qubit):
             targets = Qureg(targets)
 
         if len(targets) != self._max_qubit:
@@ -165,7 +167,7 @@ class CompositeGate(CircuitBased):
             TypeError: the type of other is wrong
         """
         try:
-            targets.extend(self.inverse().gates)
+            targets.extend(self.inverse())
         except Exception as e:
             raise CompositeGateAppendError(f"Failure to append the inverse of current CompositeGate, due to {e}.")
 
@@ -187,18 +189,10 @@ class CompositeGate(CircuitBased):
         self._pointer = None
 
     def append(self, gate, is_extend: bool = False, insert_idx: int = -1):
-        from QuICT.core.operator import CheckPointChild, Operator
-
         if isinstance(gate, BasicGate):
             self._append_gate(gate, insert_idx)
             if not is_extend:
                 self._pointer = None
-
-            # Update gate type dict
-            if gate.type in self._gate_type.keys():
-                self._gate_type[gate.type] += 1
-            else:
-                self._gate_type[gate.type] = 1
         elif isinstance(gate, CheckPointChild):
             self._check_point = gate
         else:
@@ -215,7 +209,8 @@ class CompositeGate(CircuitBased):
         self._pointer = None
 
     def _append_gate(self, gate, insert_idx: int = -1):
-        gate = gate.copy()
+        if gate._is_original:
+            gate = gate.copy()
 
         if self._pointer is not None:
             qubit_index = self._pointer[:]
@@ -224,8 +219,7 @@ class CompositeGate(CircuitBased):
                 gate.cargs = [qubit_index[carg] for carg in gate.cargs]
                 gate.targs = [qubit_index[targ] for targ in gate.targs]
             elif len(self._pointer) == gate_args:
-                gate.cargs = qubit_index[:gate.controls]
-                gate.targs = qubit_index[gate.controls:]
+                gate & qubit_index
             else:
                 raise GateQubitAssignedError(f"{gate.type} need {gate_args} indexes, but given {len(self._pointer)}")
         else:
@@ -249,12 +243,11 @@ class CompositeGate(CircuitBased):
         Returns:
             CompositeGate: the inverse of the gateSet
         """
-        inverse_cgate = CompositeGate()
-        inverse_gates = [gate.inverse() for gate in self._gates[::-1]]
-        inverse_cgate.extend(inverse_gates)
+        self._gates = [gate.inverse() for gate in self._gates[::-1]]
 
-        return inverse_cgate
+        return self
 
+    # TODO: return matrix only with used qubits
     def matrix(self, device: str = "CPU", local: bool = False) -> np.ndarray:
         """ matrix of these gates
 

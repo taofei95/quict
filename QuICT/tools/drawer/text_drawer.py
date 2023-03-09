@@ -1087,22 +1087,23 @@ class TextDrawing:
 
         ctrl_label = ""
         box_label = gate.qasm_name
+        gate_type = gate.type
 
-        if isinstance(gate, MeasureGate):
+        if gate_type == GateType.measure:
             mgate = MeasureFrom()
             layer.set_qubit(gate.targs[0], mgate)
-        elif isinstance(gate, BarrierGate):
+        elif gate_type == GateType.barrier:
             layer.set_qubit(gate.targ, Barrier())
-        elif isinstance(gate, SwapGate):
+        elif gate_type == GateType.swap:
             # swap
             gates = [Ex(conditional=conditional) for _ in range(len(gate.cargs + gate.targs))]
             add_connected_gate(gate, gates, layer, current_cons)
 
-        elif isinstance(gate, ResetGate):
+        elif gate_type == GateType.reset:
             # reset
             layer.set_qubit(gate.targs[0], Reset(conditional=conditional))
 
-        elif isinstance(gate, RzzGate):
+        elif gate_type == GateType.rzz:
             # rzz
             connection_label = "ZZ(%s)" % TextDrawing.params_for_label(gate)[0]
             gates = [Bullet(conditional=conditional), Bullet(conditional=conditional)]

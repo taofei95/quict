@@ -1,11 +1,11 @@
 import numpy as np
 
-from .gate_type import GateType
+from QuICT.core.utils import GateType
 
 
 class GateMatrixGenerator:
     @classmethod
-    def get_matrix(cls, gate, is_get_target: bool = False, controlled_by: int = 0, special_array_generator: Callable = None):
+    def get_matrix(cls, gate, is_get_target: bool = False, controlled_by: int = 0, special_array_generator = None):
         # Step 1: Assigned array generator
         cls._array_generator = special_array_generator if special_array_generator is not None else np
 
@@ -245,12 +245,10 @@ class GateMatrixGenerator:
 
 class ComplexGateBuilder:
     @classmethod
-    def build_gate(cls, gate):
+    def build_gate(cls, gate_type, parg):
         from QuICT.core.gate import CompositeGate
 
-        gate_type = gate.type
         cgate = CompositeGate()
-        parg = gate.parg
         if gate_type in [GateType.cu3, GateType.unitary]:
             cgate = cls.build_unitary(gate.matrix)
         elif gate_type == GateType.cu1:
@@ -280,10 +278,6 @@ class ComplexGateBuilder:
         else:
             return None
 
-        gate_args = gate.cargs + gate.targs
-        if len(gate_args) > 0:
-            cgate & gate_args
-
         return cgate
 
     @staticmethod
@@ -295,7 +289,7 @@ class ComplexGateBuilder:
         return cgate
 
     @staticmethod
-    def build_qft(cgate)
+    def build_qft(cgate):
         with cgate:
             for i in range(targets):
                 H & i
@@ -429,18 +423,16 @@ class ComplexGateBuilder:
 
 
 class InverseGate:
-    self.__GATE_INVERSE_MAP = {
+    __GATE_INVERSE_MAP = {
         GateType.s: GateType.sdg,
         GateType.sdg: GateType.s,
         GateType.sx: (GateType.rx, [-np.pi / 2]),
         GateType.sy: (GateType.ry, [-np.pi / 2]),
-        GateType.sw: (GateType.u2, [3 * np.pi / 4, 5 * np.pi / 4])
+        GateType.sw: (GateType.u2, [3 * np.pi / 4, 5 * np.pi / 4]),
         GateType.t: GateType.tdg,
-        GateType.tdg: GateType.t,
-        GateType.qft: GateType.iqft,
-        GateType.iqft: GateType.qft
+        GateType.tdg: GateType.t
     }
-    self.__INVERSE_GATE_WITH_NEGATIVE_PARAMS = [
+    __INVERSE_GATE_WITH_NEGATIVE_PARAMS = [
         GateType.u1, GateType.rx, GateType.ry, GateType.phase, GateType.gphase,
         GateType.cu1, GateType.rxx, GateType.ryy, GateType.rzz, GateType.rzx,
         GateType.rz, GateType.crz, GateType.ccrz, GateType.fsim
@@ -471,7 +463,7 @@ class InverseGate:
         return inverse_matrix
 
     @staticmethod
-    def inverse_perm_gate(targets: int, targs: list)
+    def inverse_perm_gate(targets: int, targs: list):
         inverse_targs = [targets - 1 - t for t in targs]
 
         return inverse_targs

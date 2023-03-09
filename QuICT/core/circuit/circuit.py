@@ -5,10 +5,11 @@
 # @File    : circuit.py
 from typing import Union, List
 import numpy as np
+import random
 
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.layout import Layout, SupremacyLayout
-from QuICT.core.gate import BasicGate, H, Measure, build_random_gate, build_gate
+from QuICT.core.gate import BasicGate, H, Measure, gate_builder
 from QuICT.core.utils import (
     GateType,
     CircuitBased,
@@ -430,12 +431,6 @@ class Circuit(CircuitBased):
         else:
             self.gates.insert(insert_idx, gate)
 
-        # Update gate type dict
-        if gate.type in self._gate_type.keys():
-            self._gate_type[gate.type] += 1
-        else:
-            self._gate_type[gate.type] = 1
-
     def _add_trigger(self, op: Trigger, qureg: Qureg):
         if qureg:
             if len(qureg) != op.targets:
@@ -497,9 +492,11 @@ class Circuit(CircuitBased):
         gate_indexes = list(range(len(typelist)))
         n_qubit = self.width()
         for _ in range(rand_size):
-            rand_type = np.random.choice(gate_indexes, p=gate_prob)
-            gate_type = typelist[rand_type]
-            self.append(build_random_gate(gate_type, n_qubit, random_params))
+            gate_type = typelist[np.random.choice(gate_indexes, p=gate_prob)]
+            r_gate = gate_builder(gate_type, random_params=True)
+            random_assigned_qubits = random.sample(range(self.width()), r_gate.controls + r_gate.targets)
+            r_gate & random_assigned_qubits
+            self._gates.append(r_gate)
 
     def supremacy_append(self, repeat: int = 1, pattern: str = "ABCDCDAB"):
         """
