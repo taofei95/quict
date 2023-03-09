@@ -10,18 +10,18 @@ from QuICT.qcda.mapping.ai.data_def import DataFactory
 class Config:
     def __init__(
         self,
-        topo: Union[str, Layout] = "grid_4x4",
+        topo: Union[str, Layout] = "grid_3x3",
         max_gate_num: int = 300,
-        feat_dim: int = 96,
+        feat_dim: int = 192,
         gamma: float = 0.95,
         replay_pool_size: int = 10_000_000,
-        lr: float = 0.00001,
+        lr: float = 0.00002,
         batch_size: int = 64,
         total_epoch: int = 2000,
         explore_period: int = 10000,
         target_update_period: int = 10,
         model_sync_period: int = 10,
-        device: str = "cuda:2" if torch.cuda.is_available() else "cpu",
+        device: str = "cuda:0" if torch.cuda.is_available() else "cpu",
         model_path: str = None,
         log_dir: str = None,
         epsilon_start: float = 0.95,
@@ -30,7 +30,7 @@ class Config:
         reward_scale: float = 10.0,
         inference: bool = False,
         inference_model_dir: str = "./model",
-        tag: str = "sage_gnrom_lnb_aggr",
+        tag: str = "wide_feat",
     ) -> None:
         self.factory = DataFactory(topo=topo, max_gate_num=max_gate_num)
 

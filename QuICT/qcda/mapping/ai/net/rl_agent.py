@@ -145,6 +145,7 @@ class Agent:
 
         # next_circ_state = self.state.circ_info.copy()
         action_penalty = -scale / qubit_number
+        # action_penalty = 0.0
         reward = action_penalty
         # Execute as many as possible
         cnt = self.state.eager_exec(
