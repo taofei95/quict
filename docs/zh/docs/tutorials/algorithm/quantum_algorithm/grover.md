@@ -2,21 +2,17 @@
 
 Grover搜索算法是一种无结构量子搜索算法，对于单个目标的情况，其查询复杂度是 $O(\sqrt{N})$ ，其中 $N$ 是状态空间大小。其实际运行时间取决于oracle电路的复杂程度。本教程旨在介绍如何使用QuICT中的Grover模块，并结合代码实例进一步阐述此算法。
 
-本教程主要针对教科书版本[<sup>[1]</sup>](#refer1)的Grover算子，此外还支持多解情况，支持bit-flip和phase-flip oracle（前者是$O|x\rangle|y\rangle=|x\rangle|f(x)\oplus y\rangle$，后者是$O|x\rangle=(-1)^{f(x)}|x\rangle$）。当解的数目所占比例较大（超过一半）时，Grover迭代次数为0，算法退化为均匀随机采样。
+本教程主要针对QCQI中介绍的Grover算子[<sup>[1]</sup>](#refer1)，此外还支持多解情况，支持bit-flip和phase-flip oracle（前者是$O|x\rangle|y\rangle=|x\rangle|f(x)\oplus y\rangle$，后者是$O|x\rangle=(-1)^{f(x)}|x\rangle$）。当解的数目所占比例较大（超过一半）时，Grover迭代次数为0，算法退化为均匀随机采样。
 
-## 算法设置
+## 无结构搜索问题
 
-量子计算机的无结构搜索问题的二次加速是其最著名的优势之一，这一优势是通过Grover算法实现的。Grover算法不仅可以二次加速非结构化搜索问题，还可以用作一般技巧或子例程，以获得各种其他算法的二次加速。这种技巧通常被称为振幅放大（Amplitude Estimation）。
-
-### 无结构搜索问题
-
-无结构搜索问题是指在没有关于搜索对象的任何先验知识的情况下，需要在给定的数据集或数据库中搜索目标对象的问题。在这种情况下，通常需要对数据集中的每个元素进行逐一比较，以找到目标对象，其时间复杂度是线性的。Grover算法是一种在量子计算机上实现无结构搜索问题的算法，可以实现二次加速。虽然不比指数加速，但二次加速对依然是一个可观的时间节省。此外，该算法不对列表的内部结构做任何假设，这使得它为许多经典问题立即提供了二次量子化的加速。
+无结构搜索问题是指在没有关于搜索对象的任何先验知识的情况下，需要在给定的数据集或数据库中搜索目标对象的问题。在这种情况下，通常需要对数据集中的每个元素进行逐一比较，以找到目标对象，其时间复杂度是线性的。Grover算法是一种在量子计算机上实现无结构搜索问题的算法，可以实现二次加速。量子计算机的无结构搜索问题的二次加速是其最著名的优势之一，虽然不比指数加速，但二次加速对依然是一个可观的时间节省。此外，该算法不对列表的内部结构做任何假设，这使得它不仅可以二次加速非结构化搜索问题，还可以用作一般技巧或子例程，从而为许多经典问题立即提供了二次量子化的加速。这种技巧通常被称为振幅放大（Amplitude Estimation）。
 
 ## 算法原理
 
 ### oracle的构造
 
-考虑这样的例子，我们的搜索空间是由我们的量子比特可能处于的所有计算基状态组成的，而我们的搜索目标是$\omega = \text{011}$。Grover算法需要的oracle输入翻转了标记状态的相位。也就是说，对于计算基中的任何状态 $|x\rangle$ ，有：
+考虑这样的例子，我们的搜索空间是由我们的量子比特可能处于的所有计算基状态组成的，而我们的搜索目标是 $\omega = \text{011}$ 。Grover算法需要的oracle输入翻转了标记状态的相位。也就是说，对于计算基中的任何状态 $|x\rangle$ ，有：
 
 $$
 U_\omega|x\rangle = \bigg\{
@@ -54,7 +50,7 @@ U_\omega =
 \end{aligned}
 $$
 
-观察这个oracle。它本质上只是*验证*一个解决方案而非*找到*一个解决方案，这使得构建oracle的难度大大下降。这正是Grover算法的强大之处：只要知道如何验证一个解决方案，我们就可以利用Grover算法来寻找解。例如，我们可以通过检查所有的规则是否被满足来轻松验证[数独](https://en.wikipedia.org/wiki/Sudoku)的解决方案。对于这些问题，我们可以创建一个函数 $f$ ，它接收一个解决方案 $x$ ，如果 $x$ 不是一个解决方案（ $x\neq\omega$ ），则返回 $f(x)=0$ ，如果是一个有效的解决方案（ $x=\omega$ ），则返回 $f(x)=1$ 。那么我们的oracle对应的酉矩阵可以描述为
+观察这个oracle。它本质上只是**验证**一个解决方案而非**找到**一个解决方案，这使得构建oracle的难度大大下降。这正是Grover算法的强大之处：只要知道如何验证一个解决方案，我们就可以利用Grover算法来寻找解。例如，我们可以通过检查所有的规则是否被满足来轻松验证[数独](https://en.wikipedia.org/wiki/Sudoku)的解决方案。对于这些问题，我们可以创建一个函数 $f$ ，它接收一个解决方案 $x$ ，如果 $x$ 不是一个解决方案（ $x\neq\omega$ ），则返回 $f(x)=0$ ，如果是一个有效的解决方案（ $x=\omega$ ），则返回 $f(x)=1$ 。那么我们的oracle对应的酉矩阵可以描述为：
 
 $$
 U_\omega|x\rangle = (-1)^{f(x)}|x\rangle
@@ -83,30 +79,30 @@ $$
 其中 $|s⟩$ 是均匀叠加态而 $|\omega⟩$ 是标记状态。在 $|\omega⟩$ 与 $|s'⟩=\frac{1}{N-1}\sum_{x\neq\omega}|x⟩$ 构成的平面上，这个电路将状态做了一个逆时针旋转：
 
 <figure markdown>
-![grover_step3](../../../assets/images/tutorials/algorithm/quantum_algorithm/grover_step3.jpg)
+![grover_step3](../../../assets/images/tutorials/algorithm/quantum_algorithm/grover_step3.jpg){width='400px'}
 </figure>
 
 
-在这个平面上，$U_s$是对状态$|s\rangle$的反转，$U_f$是对状态$|w\rangle$的反转，两者总是对应于一个旋转。Grover算子使初始状态 $|s\rangle$ 向标记状态 $|w\rangle$ 旋转。这个过程将重复数次，以锁定标记状态。经过 $t$ 步，我们将处于 $|\psi_t\rangle$ 状态，其中 $| \psi_t \rangle = (U_s U_f)^t | s \rangle$ 。可以证明约 $\sqrt{N}$ 的旋转是足够的。观察 $\|\langle w|\psi_t\rangle\|$ ，它随着Grover算子的使用次数而增长，并且在旋转到$|w\rangle$时达到最大。我们可以写出旋转角度的表达式：
+在这个平面上，$U_s$是对状态 $|s\rangle$ 的反转， $U_f$ 是对状态 $|w\rangle$ 的反转，两者总是对应于一个旋转。Grover算子使初始状态 $|s\rangle$ 向标记状态 $|w\rangle$ 旋转。这个过程将重复数次，以锁定标记状态。经过 $t$ 步，我们将处于 $|\psi_t\rangle$ 状态，其中 $| \psi_t \rangle = (U_s U_f)^t | s \rangle$ 。可以证明约 $\sqrt{N}$ 的旋转是足够的。观察 $\|\langle w|\psi_t\rangle\|$ ，它随着Grover算子的使用次数而增长，并且在旋转到 $|w\rangle$ 时达到最大。我们可以写出旋转角度的表达式：
 
 $$
 \sin\theta = \frac{\|w\cdot s\|}{\| w \|\cdot\| s \|}=\sqrt{1/N}
 $$
 
-于是在$\frac{\pi/2}{\theta}\sim N^{1/2}$次旋转后，我们可以找到目标状态，以小于$\sin^2\theta\sim N^{-1}$的失败率。这实现了查询复杂度上的二次加速。在有多个解决方案的情况下，可以证明大约 $\sqrt{(N/M)}$ 的旋转就足够了，其中 $M$ 是解的数目。
+于是在 $\frac{\pi/2}{\theta}\sim N^{1/2}$ 次旋转后，我们可以以小于 $\sin^2\theta\sim N^{-1}$ 的失败率找到目标状态。这实现了查询复杂度上的二次加速。在有多个解决方案的情况下，可以证明大约 $\sqrt{(N/M)}$ 的旋转就足够了，其中 $M$ 是解的数目。
 
 ### 算法流程
 
-具体而言，算法使用$\lceil\frac{\pi}{4}\sqrt{N}\rceil$次oracle，其整体结构与Grover算子的构造如图所示：
+具体而言，算法使用 $\lceil\frac{\pi}{4}\sqrt{N}\rceil$ 次oracle，其整体结构与Grover算子的构造如图所示：
 
 <figure markdown>
 ![图片名](../../../assets/images/tutorials/algorithm/quantum_algorithm/basic_Grover_circuit.png)
-<p markdown="1" style="font-size:15px;"> 图片引用自*Quantum computation and quantum information*. [<sup>[1]</sup>](#refer1)
+<p markdown="1" style="font-size:12px;"> 图片引用自*Quantum computation and quantum information*. [<sup>[1]</sup>](#refer1)
 </figure>
 
-$U_s$门可以由$O(n)=O(\log N)$基础门实现，该实现已包含在QuICT的qcda部分中。
+$U_s$ 门可以由 $O(n)=O(\log N)$ 基础门实现，该实现已包含在QuICT的qcda部分中。
 
-### Grover与PartialGrover的比较
+### PartialGrover
 
 QuICT也实现了部分搜索。与标准搜索相比，部分搜索使用较少的Oracle调用，并且只以寻找块地址为目的。下面给出了一个详细的比较：
 
@@ -117,7 +113,7 @@ QuICT也实现了部分搜索。与标准搜索相比，部分搜索使用较少
 | other elementary gates | $O(\sqrt{N}\log N)$          | $O(\sqrt{N}\log N)$                           |
 | success rate           | $1-O(N^{-1/2})$              | $1-O(N^{-1/4})$                               |
 
-## 代码示例
+## 代码实例
 
 ### 基本用法
 
