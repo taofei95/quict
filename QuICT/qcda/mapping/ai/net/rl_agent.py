@@ -144,7 +144,7 @@ class Agent:
         self.state.phy2logic = next_phy2logic
 
         # next_circ_state = self.state.circ_info.copy()
-        action_penalty = -scale / qubit_number
+        action_penalty = -scale * 2 / qubit_number
         # action_penalty = 0.0
         reward = action_penalty
         # Execute as many as possible
@@ -152,7 +152,7 @@ class Agent:
             physical_circ=self.mapped_circ,
         )
         # if action == self._last_action:
-            # reward += -1 * scale
+        # reward += -1 * scale
         # If no gate is executed, avoid the same selection next time.
         self._last_action = action if cnt == 0 else None
         self._last_exec_cnt = cnt

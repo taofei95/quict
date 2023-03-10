@@ -10,7 +10,7 @@ from QuICT.qcda.mapping.ai.data_def import DataFactory
 class Config:
     def __init__(
         self,
-        topo: Union[str, Layout] = "grid_3x3",
+        topo: Union[str, Layout] = "grid_4x4",
         max_gate_num: int = 300,
         feat_dim: int = 192,
         gamma: float = 0.95,
