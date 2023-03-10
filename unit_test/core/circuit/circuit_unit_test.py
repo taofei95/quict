@@ -98,19 +98,6 @@ class TestCircuit(unittest.TestCase):
 
         assert mp_data.shape == (1 << 5, 1 << 5)
 
-    def test_circuit_remapping(self):
-        cir = Circuit(TestCircuit.qubits)
-        q1 = cir[1:4]
-        assert q1[0] == cir[1]
-
-        cir.remapping(q1, [2, 1, 0])
-        assert q1[0] == cir[3]
-
-        q2 = cir[0, 1, 4]
-        cir.remapping(q2, [0, 2, 1], circuit_update=True)
-
-        assert q2[0] == cir[0]
-
     def test_circuit_decomposition(self):
         # Gate with build_gate function
         build_gate_typelist = [GateType.ccrz, GateType.cswap, GateType.ccz, GateType.ccx]
