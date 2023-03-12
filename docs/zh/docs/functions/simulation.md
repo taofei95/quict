@@ -127,3 +127,26 @@ circuit.random_append(rand_size=100)
 simulator = DensityMatrixSimulator(device="CPU", precision="double")
 result = simulator.run(circuit)
 ```
+
+## 高性能状态向量模拟器 （QuICT_sim)
+    !!! warning
+        使用前需要安装 QuICT_sim， 可以使用 ‘pip install quict-sim’ 来安装。
+
+为达到更快的模拟速度，充分利用经典计算机的计算性能，QuICT 基于CPU的AVX指令集和SSE指令集开发了一款更高性能的状态向量模拟器。与QuICT的基础状态向量模拟器相比，高性能状态向量模拟器可达到数倍到数十倍的性能提升，并且随着比特数的增加，其优势也愈发明显。
+
+# TODO： add graph between based and high-performance
+
+### 如何使用高性能状态向量模拟器
+``` python
+from QuICT.core import Circuit
+from QuICT.simulation.state_vector import HPStateVecotrSimulator
+
+# Build circuit with 100 random gates and 5 qubits
+circuit = Circuit(5)
+circuit.random_append(rand_size=100)
+
+# Simulate Quantum Circuit
+simulator = HPStateVecotrSimulator(precision="double")
+result = simulator.run(circuit)
+```
+

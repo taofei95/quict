@@ -72,16 +72,6 @@ cirs = cir_lib.get_algorithm_circuit("grover", [3, 5, 7], max_depth=20)     # �
 ```
 
 
-## 命令行界面
-
-为了更方便也更灵活的使用QuICT的相关功能，我们开发了 QuICT CLI 相关功能。QuICT CLI 一方面支持电路生成和 benchmark 测试功能，另一方面也支持单机和远端分布式的一键式任务部署。它构建有一套本地任务管理流程，支持相关电路优化、映射、指令集转换和电路模拟功能，它也支持部署相关任务到远程分布式服务器中。
-
-- 使用 QuICT CLI
-
-    ``` sh
-    quict --help
-    ```
-
 ## 算法画图函数
 
 用于QuICT以及QuICT-ml内置算法的相关图像绘制，目前支持绘制量子态采样图，MaxCut算法的无向无权图，以及MaxCut的分割结果图。
@@ -135,3 +125,22 @@ cirs = cir_lib.get_algorithm_circuit("grover", [3, 5, 7], max_depth=20)     # �
     <figure markdown>
     ![Max-Cut Result](../assets/images/tutorials/algorithm/VQA/QAOA/maxcut_result.png){:width="500px"}
     </figure>
+
+
+## 命令行界面
+
+为了更方便也更灵活的使用QuICT的相关功能，我们开发了 QuICT CLI 相关功能。QuICT CLI 一方面支持电路生成和 benchmark 测试功能，另一方面也支持单机的一键式任务部署。它构建有一套本地任务管理流程，支持相关电路优化、映射、指令集转换和电路模拟功能，在之后的开发中，它也将会支持部署相关任务到远程分布式服务器中。
+
+- 使用 QuICT CLI
+
+    ``` sh
+    quict --help
+    ```
+
+- 使用命令行指令生成并管理电路
+
+    ``` sh
+    # 生成量子随机电路和量子算法电路
+    
+    ```
+
