@@ -86,9 +86,9 @@
 
       <el-dialog title="Change Password" v-model="dialogPsw" width="30%" :close-on-click-modal="false"
         :close-on-press-escape="false" :show-close="false">
-        <label>Old<el-input v-model="reg_psw" type="password" show-password></el-input></label>
-        <label>New<el-input v-model="reg_psw" type="password" show-password></el-input></label>
-        <label>Confirm<el-input v-model="reg_psw" type="password" show-password></el-input></label>
+        <label>Old<el-input v-model="ch_old_psw" type="password" show-password></el-input></label>
+        <label>New<el-input v-model="ch_psw" type="password" show-password></el-input></label>
+        <label>Confirm<el-input v-model="ch_psw2" type="password" show-password></el-input></label>
 
         <template #footer>
           <span class="dialog-footer">
@@ -148,6 +148,7 @@ export default {
       reg_email: "",
       for_user: "",
       for_email: "",
+      ch_old_psw: "",
       ch_psw: "",
       ch_psw_2: "",
       CurrentPage: "QuCompuser",
@@ -180,6 +181,17 @@ export default {
     },
 
     login() {
+      if(this.user.length==0 || this.psw.length == 0)
+      {
+        this.ShowError("User or Password cannot be Null.");
+        return;
+      }
+      // var pattern = / ^[A-Za-z0-9]{6,10}$/ ;
+      // if(!pattern.test(this.psw) )
+      // {
+      //   this.ShowError("The Password should be 6-10 characters long and contains letters and numbers.");
+      //   return;
+      // }
       this.socket.emit("login", {
         uuid: this.uuid,
         content: {
@@ -216,6 +228,17 @@ export default {
       this.dialogLogin = true;
     },
     Register() {
+      if(this.reg_user.length==0 || this.reg_psw.length == 0 || this.reg_email.length == 0)
+      {
+        this.ShowError("User or Password or Email cannot be Null.");
+        return;
+      }
+      var pattern = / ^[A-Za-z0-9]{6,10}$/ ;
+      if(!pattern.test(this.reg_psw) )
+      {
+        this.ShowError("The Password should be 6-10 characters long and contains letters and numbers.");
+        return;
+      }
       this.socket.emit("register", {
         uuid: this.uuid,
         content: {
@@ -230,6 +253,11 @@ export default {
       this.dialogForget = true;
     },
     Forget() {
+      if(this.for_user.length==0 || this.for_email.length == 0)
+      {
+        this.ShowError("User or Email cannot be Null.");
+        return;
+      }
       this.socket.emit("forget", {
         uuid: this.uuid,
         content: {
@@ -239,15 +267,21 @@ export default {
       });
     },
     ChangePsw() {
+      if(this.ch_psw.length==0 || this.ch_psw.length == 0 || this.ch_psw.length == 0)
+      {
+        this.ShowError("Password cannot be Null.");
+        return;
+      }
       if (this.ch_psw != this.ch_psw_2) {
-        this.ShowError('Password not the same.')
+        this.ShowError('New Password not the same.')
       }
       else {
         this.socket.emit("changepsw", {
           uuid: this.uuid,
           content: {
             user: this.user,
-            new_password: this.ch_psw
+            new_password: this.ch_psw,
+            old_password: this.ch_old_psw,
           },
         });
       }
@@ -350,8 +384,16 @@ export default {
       if (!content.uuid == this.uuid) {
         return;
       }
-      this.ShowError("Login failed.")
+      this.ShowError("Failed to Login, enter the correct Password.")
       this.socket.emit("testLogin", { uuid: this.uuid });
+    });
+
+    this.socket.on("error_msg", (content) => {
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      this.ShowError(content.error_msg);
     });
   },
   watch: {},

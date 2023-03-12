@@ -44,7 +44,7 @@
     <el-dialog title="Topology" v-model="dialogTpVisible" width="30%">
       <div>
         <div>
-          <el-input v-model="dialogTpNodeCount" label="n=" @change="TpNodeCountChange"></el-input>
+          <el-input v-model="dialogTpNodeCount" label="n="></el-input>
         </div>
         <div>
           <el-radio v-for="item in dialogTpTypeOptions" :key="item" :label="item" v-model="dialogTpType"
@@ -67,9 +67,9 @@
               <el-button type="primary" style="font-family: 'Segoe UI Symbol'"> LOAD</el-button>
             </el-upload>
             <el-button type="primary" @click="
-  dialogTpVisible = false;
-TpConfirm();
-            ">OK</el-button>
+              dialogTpVisible = false;
+            TpConfirm();
+                                                                    ">OK</el-button>
           </div>
         </span>
       </template>
@@ -95,8 +95,7 @@ TpConfirm();
         <el-col :span="2"></el-col>
         <el-col :span="14" style="text-align:start">
           <el-select v-model="dialogBe_Backend" placeholder="Backend">
-            <el-option v-for="item in dialogBe_Backend_options" :key="item.value" :label="item.label"
-              :value="item.value">
+            <el-option v-for="item in dialogBe_Backend_options" :key="item.value" :label="item.label" :value="item.value">
             </el-option>
           </el-select>
         </el-col>
@@ -125,7 +124,7 @@ TpConfirm();
         </el-col>
         <el-col :span="2"></el-col>
         <el-col :span="14" style="text-align:start">
-          <el-space direction="vertical" :size="1" style="line-height: 19px !important;align-items:start">
+          <el-space direction="horizontal" :size="1" style="line-height: 19px !important;align-items:start">
             <el-radio v-model="dialogSe_Precision" label="single">single</el-radio>
             <el-radio v-model="dialogSe_Precision" label="double">double</el-radio>
           </el-space>
@@ -140,15 +139,15 @@ TpConfirm();
     </el-dialog>
 
     <el-col :span="12" style="
-        display: inline-flex;
-        justify-content: flex-end;
-        align-items: center;
-      ">
+                display: inline-flex;
+                justify-content: flex-end;
+                align-items: center;
+              ">
       <el-button size="small" type="primary" @click="dialogCmdVisible = true" style="
-          margin: 0px 10px;
-          font-family: 'Segoe UI Symbol';
-          background: transparent !important;
-        ">Instruction Set ⏷</el-button>
+                  margin: 0px 10px;
+                  font-family: 'Segoe UI Symbol';
+                  background: transparent !important;
+                ">Instruction Set</el-button>
       <el-button size="small" @click="showTopologyEdit"
         style="margin: 0px 20px 0px 10px; background: transparent !important" type="primary"><img
           src="/assets/topology.2x.png" style="height: 10px" />Topology</el-button>
@@ -159,15 +158,15 @@ TpConfirm();
       </el-space>
       <span style="color: #409eff; font-size: large; margin: 0px 0px 0px 10px">|</span>
       <el-button size="small" type="primary" @click="dialogBeVisible = true" style="
-          margin: 0px 10px;
-          font-family: 'Segoe UI Symbol';
-          background: transparent !important;
-        ">Backend ⏷</el-button>
+                  margin: 0px 10px;
+                  font-family: 'Segoe UI Symbol';
+                  background: transparent !important;
+                ">Backend</el-button>
       <el-button v-if="show_save_run_load" size="small" type="primary" @click="dialogSeVisible = true" style="
-          margin: 0px 10px;
-          font-family: 'Segoe UI Symbol';
-          background: transparent !important;
-        "> Setting</el-button>
+                  margin: 0px 10px;
+                  font-family: 'Segoe UI Symbol';
+                  background: transparent !important;
+                "> Setting</el-button>
       <span v-if="show_save_run_load" style="color: #409eff; font-size: large">|</span>
       <el-upload v-if="show_save_run_load" class="upload-demo" :action="uploadBackend" :multiple="multipleUpload"
         :show-file-list="showFileList" :before-upload="loadQCDA" style="margin: 0px">
@@ -282,7 +281,6 @@ export default {
     },
     pvAll() {
       // topology设为全连接
-      this.pvClear();
       for (let i = 0; i < this.fullTp.length; i++) {
         this.tp.push(`${this.fullTp[i][0]}_${this.fullTp[i][1]}`);
       }
@@ -555,11 +553,8 @@ export default {
           }
         }
       }
-      this.clear_tp();
-    },
-    clear_tp() {
       this.SetFullTp();
-      let tmp_tp = [];
+      /* let tmp_tp = [];
       for (let i = 0; i < this.fullTp.length; i++) {
         for (let k = this.tp.length - 1; k >= 0; k--) {
           let u = Number(this.tp[k].split("_")[0]);
@@ -573,8 +568,13 @@ export default {
             break;
           }
         }
-      }
-      this.tp = tmp_tp;
+      } 
+      this.tp = tmp_tp; */
+      this.updateTopology();
+    },
+    clear_tp() {
+      this.SetFullTp();
+      this.tp = [];
       this.updateTopology();
     },
     SetFullTp() {
@@ -638,34 +638,59 @@ export default {
       console.log(file);
       let reader = new FileReader();
       reader.readAsText(file, "UTF-8");
-
+      this.dialogTpType = "customer";
       reader.onload = (evt) => {
         let text = evt.target.result;
         console.log(text);
-        let l_text = text.split("\n");
-        console.log(l_text);
-        let new_tp = [];
         try {
-          let new_q = Number(l_text[1]);
-          for (let i = 2; i < l_text.length; i++) {
-            if (l_text[i].length == 0) {
-              continue;
-            }
-            let u = Number(l_text[i].split(" ")[0]);
-            let v = Number(l_text[i].split(" ")[1]);
-            new_tp.push(`${u}_${v}`);
+          let tp_load = JSON.parse(text);
+          let new_q = Number(tp_load.qubit_number)
+          let edges = tp_load.edges;
+          let new_tp = [];
+          for (let i = 0; i < edges.length; i++) {
+            new_tp.push(`${edges[i].u}_${edges[i].v}`);
           }
-          this.dialogTpNodeCount = new_q;
+          this.dialogTpNodeCount = new_q;      
           this.tp = new_tp;
-          this.dialogTpType = "customer";
-          this.TpNodeCountChange();
-        } catch (error) {
-          console.log(error);
+          this.updateTopology();
         }
+        catch (error) {
+          console.log(error);
+          let l_text = text.split("\n");
+          console.log(l_text);
+          let new_tp = [];
+          try {
+            let new_q = Number(l_text[1]);
+            for (let i = 2; i < l_text.length; i++) {
+              if (l_text[i].length == 0) {
+                continue;
+              }
+              let u = Number(l_text[i].split(" ")[0]);
+              let v = Number(l_text[i].split(" ")[1]);
+              new_tp.push(`${u}_${v}`);
+            }
+            this.dialogTpNodeCount = new_q;
+            this.tp = new_tp;
+            this.updateTopology();
+          } catch (error) {
+            console.log(error);
+            this.$message({
+              showClose: true,
+              message: 'Load Topology Failed, please try again.',
+              type: 'error'
+            });
+          }
+        }
+
       };
 
       reader.onerror = (evt) => {
-        console.error(evt);
+        console.log(evt);
+        this.$message({
+          showClose: true,
+          message: 'Load Topology Failed, please try again.',
+          type: 'error'
+        });
       };
     },
     TpConfirm() {
@@ -814,6 +839,9 @@ export default {
     dialogTpType() {
       this.clear_tp();
     },
+    dialogTpNodeCount() {
+      this.TpNodeCountChange();
+    }
   },
   emits: {
     SaveQCDA: null,

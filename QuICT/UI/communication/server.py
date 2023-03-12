@@ -170,14 +170,19 @@ def login(content):
     content = content['content']
     usr = content['user']
     psw = content['psw']
-    if SQLManger().validation_password(usr, psw) : #psw == users[usr]['password']:
-        user = User()
-        user.id = usr
-        userinfo = SQLManger().get_user_info(usr)
-        flask_login.login_user(user)
-        emit('login_success', {'uuid': uid, 'info':userinfo}, namespace="/api/pty")
+    if SQLManger().validate_user(usr) :
+
+        if SQLManger().validation_password(usr, psw) : #psw == users[usr]['password']:
+            user = User()
+            user.id = usr
+            userinfo = SQLManger().get_user_info(usr)
+            flask_login.login_user(user)
+            emit('login_success', {'uuid': uid, 'info':userinfo}, namespace="/api/pty")
+        else:
+            emit('login_error', {'uuid': uid,}, namespace="/api/pty")
+
     else:
-        emit('login_error', {'uuid': uid,}, namespace="/api/pty")
+        emit('error_msg', {'uuid': uid, 'error_msg': 'Failed to Login, enter the correct User.'})
     
 @socketio.on("testLogin", namespace="/api/pty")
 def testLogin(content):
@@ -209,12 +214,21 @@ def register(content):
             }
 
     # Create user folder
-    create_user_folder(usr)
+    try:
+        if not SQLManger().validate_user(usr) :
 
-    # Update user info for SQL and Redis
-    SQLManger().add_user(json_dict)
-    # RedisController().update_user_dynamic_info(usr, get_default_user_config(usr))
-    emit('register_ok', {'uuid': uid,}, namespace="/api/pty")
+            create_user_folder(usr)
+
+            # Update user info for SQL and Redis
+            SQLManger().add_user(json_dict)
+            # RedisController().update_user_dynamic_info(usr, get_default_user_config(usr))
+            emit('register_ok', {'uuid': uid,}, namespace="/api/pty")
+
+        else:
+            emit('error_msg', {'uuid': uid, 'error_msg': 'User existed.'})
+
+    except:
+        emit('error_msg', {'uuid': uid, 'error_msg': 'Failed to register.'})
 
 @socketio.on("unsubscribe", namespace="/api/pty")
 @authenticated_only
@@ -243,16 +257,19 @@ def forget_password(content):
     usr = content['user']
     email = content['email']
     """ Send email for user for activate new password. """
-    user_info = SQLManger().get_user_info(usr)
-    user_email = user_info[1]
-    if user_email != email:
-        raise KeyError("Unmatched Email address with user.")
+    if not SQLManger().validate_user(usr) :
+        user_info = SQLManger().get_user_info(usr)
+        user_email = user_info[1]
+        if user_email != email:
+            emit('error_msg', {'uuid': uid, 'error_msg': 'Email not correct.'})
+        else:
+            # Send email to user
+            reset_password = send_reset_password_email(user_email)
+            SQLManger().update_password(usr, reset_password)
 
-    # Send email to user
-    reset_password = send_reset_password_email(user_email)
-    SQLManger().update_password(usr, reset_password)
-
-    emit('forget_ok', {'uuid': uid,}, namespace="/api/pty")
+            emit('forget_ok', {'uuid': uid,}, namespace="/api/pty")
+    else:
+        emit('error_msg', {'uuid': uid, 'error_msg': 'User not existed.'})
 
 @socketio.on("changepsw", namespace="/api/pty")
 @authenticated_only    
@@ -260,11 +277,15 @@ def update_password(content):
     uid = content['uuid']
     content = content['content']
     usr = content['user']
+    old_password = content['old_password']
     new_password = content['new_password']
-    """ Update user's password. """
-    SQLManger().update_password(usr, new_password)
+    if SQLManger().validation_password(usr, old_password):
+        """ Update user's password. """
+        SQLManger().update_password(usr, new_password)
 
-    emit('update_psw_ok', {'uuid': uid,}, namespace="/api/pty")
+        emit('update_psw_ok', {'uuid': uid,}, namespace="/api/pty")
+    else:
+        emit('error_msg', {'uuid': uid, 'error_msg': 'Old Password Not Correct.'})
 
 # QCDA PART
 

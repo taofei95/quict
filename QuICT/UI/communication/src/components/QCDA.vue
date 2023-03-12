@@ -107,7 +107,7 @@
         <el-tabs type="border-card" style="background: transparent !important; border: 0px solid"
           v-if="Output_type == 0">
           <el-tab-pane label="Table">
-            <el-row style="height: 40px" v-if="Object.keys(OutputContent).length > 0">
+            <el-row style="height: 40px" v-if="OutputContent && Object.keys(OutputContent).length > 0">
               <el-col :span="4"></el-col>
               <el-col :span="6"><b>State</b></el-col>
               <el-col :span="4"></el-col>
@@ -137,7 +137,7 @@
         <el-tabs type="border-card" style="background: transparent !important; border: 0px solid"
           v-if="Output_type == 1">
           <el-tab-pane label="Table">
-            <el-row style="height: 40px" v-if="OutputContent_state_vector.length > 0">
+            <el-row style="height: 40px" v-if="OutputContent_state_vector && OutputContent_state_vector.length > 0">
               <el-col :span="4"></el-col>
               <el-col :span="6"><b>State</b></el-col>
               <el-col :span="4"></el-col>
