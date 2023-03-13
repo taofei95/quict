@@ -91,6 +91,7 @@ $n$ 为输入数的位数， $t$ 为求阶算法中QPE的精度位数。默认 $
 | HRS     | n+1+t    | $O(n^2 t)$ | $O(n^3 t)$ | 快                 |
 | BEA-zip | 2n+3     | $O(n^2 t)$ | $O(n^3 t)$ | 慢                 |
 | HRS-zip | 2n+2     | $O(n^2 t)$ | $O(n^3 t)$ | 慢                 |
+
 ### 基本用法
 
 `ShorFactor`类位于`QuICT.algorithm.quantum_algorithm`，初始化参数包括：

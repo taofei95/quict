@@ -63,6 +63,16 @@ pip install quict
     
     - Pytorch: [Installing Pytorch](https://pytorch.org/get-started/locally/)
 
+- RL mapping额外要求
+
+    - pytorch_geometric: [Installing pytorch-geometric](https://pytorch-geometric.readthedocs.io/en/latest/install/installation.html)
+    - torch_sparse: [Installing torch-sparse](https://pypi.org/project/torch-sparse/)
+    - tensorboard:
+
+        ``` shell
+        pip install tensorboard
+        ```
+
 ### 从 pypi 安装
 
 ``` shell
