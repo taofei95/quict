@@ -140,7 +140,67 @@ cirs = cir_lib.get_algorithm_circuit("grover", [3, 5, 7], max_depth=20)     # �
 - 使用命令行指令生成并管理电路
 
     ``` sh
-    # 生成量子随机电路和量子算法电路
-    
+    # 生成量子随机电路
+    quict circuit get_random -i ibmq -q 10 -ms 100 -md 100 .
+    # 生成量子算法电路
+    quict circuit get_algorithm clifford . -q 5
+    # 电路管理
+    quict circuit add test_circuit /path/to/circuit
+    quict circuit list
+    quict circuit delete test_circuit
     ```
 
+- 使用命令行进行基准测试
+
+    ``` sh
+    quict benchmark     # 如需使用GPU基准测试，请添加 --gpu 在指令中
+    ```
+
+- 使用命令行进行QuICT任务部署，包括电路模拟和电路优化、映射
+
+    ``` sh
+    # 获得命令行任务模版
+    quict local job get_template .
+    ```
+
+    - 命令行任务模板
+    ```yml
+        job_name: experience-qcda           # The name of job
+        circuit: /path/to/circuit/qasm      # The path of circuit's qasm file
+        device: CPU                         # Device Type: [CPU/GPU];
+
+        simulation:
+        shots: 100                        # The repeat times of experience
+        precision: single                 # The precision of simualtor
+        backend: state_vector             # The backend of simualtor, one of [unitary, state_vector, density_matrix].
+
+        qcda:
+        methods:                          # QCDA method should within ["GateTransform", "Clifford", "CliffordRz", "Commutative", "SymbolicClifford", "Template", "CNOT"]
+            - Commutative
+
+        instruction_set: Google           # Instruction Set, Extra args for GateTransform; one of ["USTC", "Google", "IBMQ", "IonQ", "Nam", "Origin"]
+        auto_mode: light                  # The mode for AutoOptimization, one of [light, heavy]
+        para: True                        # The args for CommutativeOpt
+        depara: False                     # The args for CommutativeOpt
+        templates:                        # The list of templates for TemplateOpt
+            max_width: 3
+            max_size: 5
+            max_depth: 3
+
+        mapping:
+            enable: False                   # Enable mapping or not
+            layout_path: /path/to/topology  # The path of the file which store the topology
+
+        output_path: /path/to/result        # the folder to store result
+    ```
+
+    ```sh
+    # 启动任务
+    quict local job start /path/to/job/file
+    # 查看任务状态
+    quict local job status job_name
+    # 展示当前所有任务
+    quict local job list
+    # 删除任务
+    quict local job delete job_name
+    ```
