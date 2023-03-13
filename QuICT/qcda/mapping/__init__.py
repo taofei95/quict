@@ -2,7 +2,7 @@ from .mcts import MCTSMapping
 from .sabre import SABREMapping
 
 try:
-    from QuICT_ml.rl_mapping import rl_mapping as RLMapping
+    from QuICT_ml.rl_mapping.rl_mapping import RlMapping as RLMapping
 
 except:
     RLMapping = None
