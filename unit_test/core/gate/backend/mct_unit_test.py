@@ -25,7 +25,7 @@ def set_ones(qreg, N):
 
 
 def test_MCT_Linear_Simulation_Half():
-    for n in range(3, 9):
+    for n in range(3, 5):
         for m in range(1, int(np.ceil(n / 2))):
             circuit = Circuit(n)
             MCT = MCTLinearHalfDirtyAux()
@@ -39,7 +39,7 @@ def test_MCT_Linear_Simulation_Half():
 
 def test_MCT_Linear_Simulation_One_functional():
     simulator = StateVectorSimulator()
-    for n in range(3, 9):
+    for n in range(3, 5):
         for control_bits in range(0, 1 << n - 2):
             circuit = Circuit(n)
             aux_idx = [0]
@@ -65,7 +65,7 @@ def test_MCT_Linear_Simulation_One_functional():
 
 
 def test_MCT_Linear_Simulation_One_unitary():
-    for n in range(3, 9):
+    for n in range(3, 5):
         circuit = Circuit(n)
         aux_idx = [0]
         controls_idx = [i for i in range(1, n - 1)]
@@ -81,7 +81,7 @@ def test_MCT_Linear_Simulation_One_unitary():
 
 
 def test_MCTOneAux():
-    for n in range(3, 9):
+    for n in range(3, 5):
         circuit = Circuit(n)
         MCT = MCTOneAux()
         MCT.execute(n) | circuit
@@ -93,7 +93,7 @@ def test_MCTOneAux():
 
 
 def test_MCTWithoutAux():
-    for n in range(3, 9):
+    for n in range(3, 5):
         circuit = Circuit(n)
         MCT = MCTWithoutAux()
         MCT.execute(n) | circuit

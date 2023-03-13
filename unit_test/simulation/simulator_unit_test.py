@@ -7,7 +7,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.simulation.state_vector import StateVectorSimulator
-from QuICT.simulation.density_matrix import DensityMatrixSimulation
+from QuICT.simulation.density_matrix import DensityMatrixSimulator
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
 from QuICT.simulation import Simulator
 
@@ -66,11 +66,11 @@ class TestGPUSimulator(unittest.TestCase):
         assert np.allclose(sv["data"]["state_vector"], TestGPUSimulator.sv_data_single, atol=1e-6)
 
     def test_density_matrix(self):
-        sim = DensityMatrixSimulation("GPU")
+        sim = DensityMatrixSimulator("GPU")
         DM = sim.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(DM, TestGPUSimulator.dm_data)
 
-        sim = DensityMatrixSimulation("GPU", precision="single")
+        sim = DensityMatrixSimulator("GPU", precision="single")
         DM = sim.run(deepcopy(TestGPUSimulator.circuit)).get()
         assert np.allclose(DM, TestGPUSimulator.dm_data_single, atol=1e-6)
 
@@ -135,7 +135,7 @@ class TestCPUSimulator(unittest.TestCase):
         assert np.allclose(sv["data"]["state_vector"], TestCPUSimulator.sv_data)
 
     def test_densitymatrix(self):
-        simulator = DensityMatrixSimulation()
+        simulator = DensityMatrixSimulator()
         DM = simulator.run(deepcopy(TestCPUSimulator.circuit))
         assert np.allclose(DM, TestCPUSimulator.dm_data)
 
@@ -161,7 +161,7 @@ class TestSample(unittest.TestCase):
             CX | TestSample.cir([i, i + 1])
 
         # double
-        simulator = DensityMatrixSimulation()
+        simulator = DensityMatrixSimulator()
         _ = simulator.run(TestSample.cir)
         a = simulator.sample(100)
         assert a[0] + a[-1] == 100
@@ -177,7 +177,7 @@ class TestSample(unittest.TestCase):
         assert c[0] + c[-1] == 100
 
         # single
-        simulator = DensityMatrixSimulation(precision="single")
+        simulator = DensityMatrixSimulator(precision="single")
         _ = simulator.run(TestSample.cir)
         d = simulator.sample(100)
         assert d[0] + d[-1] == 100

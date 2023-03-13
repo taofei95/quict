@@ -6,7 +6,7 @@ from QuICT.core.noise import (
     BitflipError, DampingError, DepolarizingError, PauliError, PhaseflipError, PhaseBitflipError,
     NoiseModel, ReadoutError
 )
-from QuICT.simulation.density_matrix.density_matrix_simulator import DensityMatrixSimulation
+from QuICT.simulation.density_matrix.density_matrix_simulator import DensityMatrixSimulator
 
 
 def build_dampling_noise():
@@ -103,8 +103,11 @@ if __name__ == "__main__":
 
     nm = build_dampling_noise()
 
+    # 含噪声量子电路
+    noised_cir = nm.transpile(cir)
+
     # 含噪声量子电路模拟
-    simulator = DensityMatrixSimulation(accumulated_mode=True)
+    simulator = DensityMatrixSimulator(accumulated_mode=True)
     sv = simulator.run(cir, noise_model=nm)
     sample_result = simulator.sample(1000)
 

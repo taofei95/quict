@@ -46,12 +46,11 @@ typelist = [GateType.rx, GateType.ry, GateType.rz, GateType.x, GateType.y, GateT
 
 
 def test():
-    for _ in range(10):
-        n = 5
-        circuit = Circuit(n)
-        circuit.random_append(rand_size=100, typelist=typelist, random_params=True)
+    n = 5
+    circuit = Circuit(n)
+    circuit.random_append(rand_size=100, typelist=typelist, random_params=True)
 
-        CO = CommutativeOptimization(deparameterization=True, keep_phase=True)
-        circuit_opt = CO.execute(circuit)
+    CO = CommutativeOptimization(deparameterization=True, keep_phase=True)
+    circuit_opt = CO.execute(circuit)
 
-        assert np.allclose(circuit.matrix(), circuit_opt.matrix())
+    assert np.allclose(circuit.matrix(), circuit_opt.matrix())

@@ -9,12 +9,10 @@ from QuICT.core.gate import *
 
 
 circuit = Circuit(4)
-for _ in range(10):
+for _ in range(1000):
     for i in range(3):
         CX | circuit([i, i + 1])
 
-circuit.draw(filename="before_cnotopt")
 CA = CnotAncilla(size=1)
 result_circuit = CA.execute(circuit)
-
-result_circuit.draw(filename="after_cnotopt")
+print(result_circuit)

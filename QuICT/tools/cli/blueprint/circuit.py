@@ -44,6 +44,9 @@ def get_algorithm_circuit(alg: str, qubits: list, output_path: str = "."):
 
 def store_quantum_circuit(name: str, file: str):
     """ Save the given quantum circuit into Quantum Circuit Library. """
+    if not os.path.exists(default_customed_circuit_folder):
+        os.makedirs(default_customed_circuit_folder)
+
     get_folder_name = os.listdir(default_customed_circuit_folder)
     if not name.endswith(".qasm"):
         name += ".qasm"

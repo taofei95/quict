@@ -271,23 +271,11 @@ class Circuit(CircuitBased):
         else:
             self.gates.insert(insert_idx, gate)
 
-        self._logger.debug(
-            f"Add quantum gate {gate.type} with qubit indexes {gate.cargs + gate.targs} " +
-            f"with index {insert_idx}."
-        )
-
         # Update gate type dict
         if gate.type in self._gate_type.keys():
             self._gate_type[gate.type] += 1
         else:
             self._gate_type[gate.type] = 1
-
-    def _update_gate_index(self):
-        for index, gate in enumerate(self.gates):
-            gate_type, gate_qb, gate_idx = gate.name.split('-')
-
-            if int(gate_idx) != index:
-                gate.name = '-'.join([gate_type, gate_qb, str(index)])
 
     def replace_gate(self, idx: int, gate: BasicGate):
         """ Replace the quantum gate in the target index, only accept BasicGate or NoiseGate.
@@ -422,7 +410,6 @@ class Circuit(CircuitBased):
         gate.cargs = [self.qubits.index(qureg[idx]) for idx in range(gate.controls)]
         gate.targs = [self.qubits.index(qureg[idx]) for idx in range(gate.controls, gate.controls + gate.targets)]
         gate.assigned_qubits = qureg
-        gate.update_name(qureg[0].id, len(self.gates))
 
         # Add gate into circuit
         self._add_quantumgate_into_circuit(gate, insert_idx)
@@ -432,7 +419,6 @@ class Circuit(CircuitBased):
             new_gate = gate.copy()
             new_gate.targs = [idx]
             new_gate.assigned_qubits = self.qubits(idx)
-            new_gate.update_name(self.qubits[idx].id, len(self.gates))
 
             self._add_quantumgate_into_circuit(new_gate)
 
@@ -603,10 +589,6 @@ class Circuit(CircuitBased):
 
             if sub_circuit.size() >= max_size and max_size != -1:
                 break
-
-        if remove:
-            self._update_gate_index()
-            self._logger.warn(f"Remove sub-circuit's gates from quantum circuit {self._name}.")
 
         return sub_circuit
 
