@@ -6,7 +6,6 @@ from QuICT.core import Qureg, Circuit, Qubit
 from QuICT.core.gate import *
 from QuICT.core.utils import GateType
 from scipy.stats import unitary_group
-from QuICT.core.gate.gate_builder import build_random_gate, build_gate
 
 
 class TestGate(unittest.TestCase):
@@ -97,39 +96,39 @@ class TestGate(unittest.TestCase):
             # build 1qubit gate
             gate_type = GateType.h
             q6 = Qureg(1)
-            g6 = build_gate(gate_type, q6)
+            g6 = gate_builder(gate_type) & q6
             assert g6.type == gate_type and g6.assigned_qubits == q6
 
             # build 1qubit gate with params
             gate_type = typelist_1qubit[random.randint(0, len(typelist_1qubit) - 1)]
             q1 = Qureg(1)
             params = [random.random()]
-            g1 = build_gate(gate_type, q1, params)
+            g1 = gate_builder(gate_type, params=params) & q1
             assert g1.type == gate_type and g1.assigned_qubits == q1
 
             # build 2qubits gate
             gate_type = typelist_2qubit[random.randint(0, len(typelist_2qubit) - 1)]
             q2 = Qureg(2)
-            g2 = build_gate(gate_type, q2)
+            g2 = gate_builder(gate_type) & q2
             assert g2.type == gate_type and g2.assigned_qubits == q2
 
             # build 2qubits gate with params
             gate_type = GateType.cu3
             q3 = Qureg(2)
             params = [1, 1, 1]
-            g3 = build_gate(gate_type, q3, params)
+            g3 = gate_builder(gate_type) & q3
             assert g3.pargs == params and g3.assigned_qubits == q3
 
             # build unitary gate
             gate_type = GateType.unitary
             matrix = unitary_group.rvs(2 ** 3)
-            g4 = build_gate(gate_type, [1, 2, 3], matrix)
+            g4 = Unitary(matrix)
             assert g4.matrix.shape == (8, 8)
 
             # build special gate
             gate_type = GateType.measure
             q5 = Qubit()
-            g5 = build_gate(gate_type, q5)
+            g5 = gate_builder(gate_type) & q5
             assert g5.assigned_qubits[0] == q5
 
     def test_build_random_gate(self):
@@ -142,12 +141,12 @@ class TestGate(unittest.TestCase):
             ]
             # build random 1qubit gate
             gate_type = typelist_1qubit[random.randint(0, len(typelist_1qubit) - 1)]
-            rg1 = build_random_gate(gate_type, 10, random_params=True)
+            rg1 = gate_builder(gate_type, random_params=True)
             assert rg1.type == gate_type
 
             # build random 2qubits gate
             gate_type = typelist_2qubit[random.randint(0, len(typelist_2qubit) - 1)]
-            rg2 = build_random_gate(gate_type, 10, random_params=True)
+            rg2 = gate_builder(gate_type, random_params=True)
             assert rg2.type == gate_type
 
     def test_gate_expand(self):

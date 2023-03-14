@@ -8,7 +8,7 @@ import itertools
 
 import numpy as np
 
-from QuICT.core.gate import build_gate, BasicGate, CompositeGate, GateType, PAULI_GATE_SET, CX, H
+from QuICT.core.gate import gate_builder, BasicGate, CompositeGate, GateType, PAULI_GATE_SET, CX, H
 
 
 class PauliOperator(object):
@@ -228,11 +228,11 @@ class PauliOperator(object):
         for qubit, gate_type in enumerate(self.operator):
             if not keep_id and gate_type == GateType.id:
                 continue
-            gate = build_gate(gate_type, qubit)
+            gate = gate_builder(gate_type) & qubit
             gates.append(gate)
         if keep_phase and not np.isclose(self.phase, 1 + 0j):
             phase = -1j * np.log(self.phase)
-            gate = build_gate(GateType.gphase, 0, phase.real)
+            gate = gate_builder(GateType.gphase, params=[phase.real]) & 0
             gates.append(gate)
         return gates
 
@@ -423,7 +423,7 @@ class PauliOperator(object):
         for qubit in range(pauli_x.width):
             gates, form = PauliOperator.standardize_rules[pauli_x.operator[qubit], pauli_z.operator[qubit]]
             for gate_type in gates:
-                gate = build_gate(gate_type, qubit)
+                gate = gate_builder(gate_type) & qubit
                 pauli_x.conjugate_act(gate)
                 pauli_z.conjugate_act(gate)
                 standardizer.append(gate)
@@ -469,13 +469,13 @@ class PauliOperator(object):
             pauli_x.conjugate_act(gate)
             pauli_z.conjugate_act(gate)
         if pauli_x.phase == 1 and pauli_z.phase == -1:
-            gate = build_gate(GateType.x, target)
+            gate = gate_builder(GateType.x) & target
             standardizer.append(gate)
         if pauli_x.phase == -1 and pauli_z.phase == -1:
-            gate = build_gate(GateType.y, target)
+            gate = gate_builder(GateType.y) & target
             standardizer.append(gate)
         if pauli_x.phase == -1 and pauli_z.phase == 1:
-            gate = build_gate(GateType.z, target)
+            gate = gate_builder(GateType.z) & target
             standardizer.append(gate)
 
         return standardizer
