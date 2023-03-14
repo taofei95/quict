@@ -54,6 +54,7 @@ class BasicGate(object):
         type(GateType, read only): gate's type described by GateType
 
         matrix(np.array): the unitary matrix of the quantum gate act on targets
+        required_grad(bool): True for required grad,false for non required grad
     """
 
     @property
@@ -184,6 +185,9 @@ class BasicGate(object):
     @property
     def qasm_name(self):
         return self._qasm_name
+    @property
+    def is_require_grad(self):
+        return self._require_grad
 
     def __init__(
         self,
@@ -192,6 +196,7 @@ class BasicGate(object):
         params: int,
         type_: GateType,
         matrix_type: MatrixType = MatrixType.normal,
+        required_grad:bool = False,
     ):
         self._matrix = None
 
@@ -201,6 +206,7 @@ class BasicGate(object):
         self._cargs = []  # list of int
         self._targs = []  # list of int
         self._pargs = []  # list of float/..
+        self._require_grad = required_grad
 
         assert isinstance(type_, GateType), TypeError(
             "BasicGate.type", "GateType", type(type_)

@@ -4,6 +4,7 @@
 # @Author  : Han Yu
 # @File    : _simulator
 import numpy as np
+import torch
 from typing import Union
 
 from QuICT.core import Circuit
@@ -14,6 +15,7 @@ from QuICT.simulation.density_matrix import DensityMatrixSimulation
 from QuICT.simulation.utils import Result, options_validation
 from QuICT.tools.exception.core import ValueError
 from QuICT.tools.exception.simulation import SimulatorOptionsUnmatchedError
+from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
 
 
 class Simulator:
@@ -62,6 +64,7 @@ class Simulator:
         self._result_recorder = Result(
             device, backend, precision, circuit_record, amplitude_record, self._options, output_path
         )
+        self.isRun=False
 
     def _load_simulator(self):
         """ Initial simulator. """
@@ -129,5 +132,30 @@ class Simulator:
 
         sample_result = simulator.sample(shots)
         self._result_recorder.record_sample(sample_result)
+        self.isRun = True
 
         return self._result_recorder.__dict__()
+    
+    def get_expectation(self,state_vector,Hamiltonian:Hamiltonian,n_qubits:int ):
+        """ a toy method that get the expectation acted on targetr qubit of a qcircuit with hermitian obersered operator 
+
+        Args:
+            state_vector(tensor): 
+            Hamiltonian(): a  hermitian obersered operator 
+            n_qubits(int):the number of the circuit Hamiltonian acting on 
+        Returns:
+            the expectation of the circuit
+        """
+        e_val = 0
+        if not self.isRun:
+            raise TypeError("StateVectorSimulation.get_expetation should be executed after StateVectorSimulation.run!")
+        bra=state_vector.copy()
+        ket=state_vector.copy()
+        #non_trivial =[bra[2**t_wires],bra[2**t_wires+2]]
+        #non_trivial =np.dot( non_trivial, Hamiltonian.get_hamiton_matrix(1))
+        #bra[2**t_wires]=non_trivial[0]
+        #bra[2**t_wires+2]=non_trivial[1]
+        e_val = np.dot(bra,Hamiltonian.get_hamiton_matrix(n_qubits=n_qubits))
+        e_val = np.dot(e_val,ket)
+
+        return e_val

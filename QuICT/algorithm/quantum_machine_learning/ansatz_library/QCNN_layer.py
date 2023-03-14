@@ -7,6 +7,8 @@ from QuICT_ml.utils.gate_tensor import Ry,CX_tensor
 from QuICT.core.operator import Trigger
 from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
 from QuICT.algorithm.quantum_machine_learning.ansatz_library.QNN_layer import QNNLayer
+from QuICT.simulation.simulator import Simulator
+from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
 class qconv2:
     """The qconv2 class, which is a quatnum convoluitional used in QCNN model"""
     def __init__(self,) -> None:
@@ -149,5 +151,13 @@ if __name__ =='__main__':
     fc_gate= fc(param[2],param[3],wires)
     fc_gate|gate
     gate|cir
-    cir.draw(filename="QCNN")
-    
+    '''
+    #cir.draw(filename="QCNN")
+    sim = Simulator()
+    state_vector=sim.run(circuit=cir)
+    state_vector= state_vector['data']['state_vector']
+    ham = Hamiltonian([[0.4, 'Y0', 'X1', 'Z2', 'I5'], [0.6]])
+    e_val=sim.get_expectation(state_vector,ham,13)
+    '''
+    for gate in cir._gates:
+        if gate.re
