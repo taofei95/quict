@@ -88,7 +88,7 @@
         :close-on-press-escape="false" :show-close="false">
         <label>Old<el-input v-model="ch_old_psw" type="password" show-password></el-input></label>
         <label>New<el-input v-model="ch_psw" type="password" show-password></el-input></label>
-        <label>Confirm<el-input v-model="ch_psw2" type="password" show-password></el-input></label>
+        <label>Confirm<el-input v-model="ch_psw_2" type="password" show-password></el-input></label>
 
         <template #footer>
           <span class="dialog-footer">
@@ -181,8 +181,7 @@ export default {
     },
 
     login() {
-      if(this.user.length==0 || this.psw.length == 0)
-      {
+      if (this.user.length == 0 || this.psw.length == 0) {
         this.ShowError("User or Password cannot be Null.");
         return;
       }
@@ -228,14 +227,12 @@ export default {
       this.dialogLogin = true;
     },
     Register() {
-      if(this.reg_user.length==0 || this.reg_psw.length == 0 || this.reg_email.length == 0)
-      {
+      if (this.reg_user.length == 0 || this.reg_psw.length == 0 || this.reg_email.length == 0) {
         this.ShowError("User or Password or Email cannot be Null.");
         return;
       }
-      var pattern = / ^[A-Za-z0-9]{6,10}$/ ;
-      if(!pattern.test(this.reg_psw) )
-      {
+      var pattern = /^[A-Za-z0-9]{6,10}$/;
+      if (!pattern.test(this.reg_psw)) {
         this.ShowError("The Password should be 6-10 characters long and contains letters and numbers.");
         return;
       }
@@ -253,8 +250,7 @@ export default {
       this.dialogForget = true;
     },
     Forget() {
-      if(this.for_user.length==0 || this.for_email.length == 0)
-      {
+      if (this.for_user.length == 0 || this.for_email.length == 0) {
         this.ShowError("User or Email cannot be Null.");
         return;
       }
@@ -267,13 +263,20 @@ export default {
       });
     },
     ChangePsw() {
-      if(this.ch_psw.length==0 || this.ch_psw.length == 0 || this.ch_psw.length == 0)
-      {
-        this.ShowError("Password cannot be Null.");
+      if (this.ch_old_psw.length == 0) {
+        this.ShowError("Old Password cannot be Null.");
+        return;
+      }
+      if (this.ch_psw.length == 0) {
+        this.ShowError("New Password cannot be Null.");
+        return;
+      }
+      if (this.ch_psw_2.length == 0) {
+        this.ShowError("Confirm Password cannot be Null.");
         return;
       }
       if (this.ch_psw != this.ch_psw_2) {
-        this.ShowError('New Password not the same.')
+        this.ShowError('New Password and Confirm Password are not the same.')
       }
       else {
         this.socket.emit("changepsw", {
