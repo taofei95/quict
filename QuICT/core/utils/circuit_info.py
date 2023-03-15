@@ -11,7 +11,6 @@ from .gate_type import GateType
 from .circuit_matrix import CircuitMatrix, get_gates_order_by_depth
 
 
-
 class CircuitBased(object):
     """ Based Class for Circuit and Composite Gate. """
     @property
@@ -42,7 +41,11 @@ class CircuitBased(object):
         Returns:
             int: the number of gates in circuit
         """
-        return len(self._gates)
+        tsize = 0
+        for _, _, size in self._gates:
+            tsize += size
+
+        return tsize
 
     def width(self):
         """ the number of qubits in circuit
@@ -50,7 +53,7 @@ class CircuitBased(object):
         Returns:
             int: the number of qubits in circuit
         """
-        return len(self.qubits)
+        return len(self._qubits)
 
     def depth(self) -> int:
         """ the depth of the circuit/CompositeGate.
@@ -59,9 +62,9 @@ class CircuitBased(object):
             int: the depth
         """
         depth = np.zeros(self.width(), dtype=int)
-        for gate in self._gates:
-            targs = gate.cargs + gate.targs
-            depth[targs] = np.max(depth[targs]) + 1
+        for gate, targs, gsize in self._gates:
+            gdepth = 1 if gsize == 1 else gate.depth()
+            depth[targs] = np.max(depth[targs]) + gdepth
 
         return np.max(depth)
 
@@ -72,7 +75,7 @@ class CircuitBased(object):
             int: the number of the two qubit gates
         """
         count = 0
-        for gate in self._gates:
+        for gate, _, _ in self._gates:
             if gate.controls + gate.targets == 2:
                 count += 1
 
@@ -85,7 +88,7 @@ class CircuitBased(object):
             int: the number of the one qubit gates
         """
         count = 0
-        for gate in self._gates:
+        for gate, _, _ in self._gates:
             if gate.controls + gate.targets == 1:
                 count += 1
 
@@ -101,8 +104,10 @@ class CircuitBased(object):
             int: the number of the gates which are some type
         """
         count = 0
-        for gate in self._gates:
-            if gate.type == gate_type:
+        for gate, _, size in self._gates:
+            if size > 1:
+                count += gate.count_gate_by_gatetype(gate_type)
+            elif gate.type == gate_type:
                 count += 1
 
         return count
@@ -119,7 +124,7 @@ class CircuitBased(object):
 
         return str(circuit_info)
 
-    def qasm(self, output_file: str = None):
+    def qasm(self, output_file: str = None, header_required: bool = True):
         """ The qasm of current CompositeGate/Circuit.
 
         Args:
@@ -128,23 +133,28 @@ class CircuitBased(object):
         Returns:
             str: The string of Circuit/CompositeGate's qasm.
         """
+        qasm_string = ""
         qreg = self.width()
         creg = min(self.count_gate_by_gatetype(GateType.measure), qreg)
         if creg == 0:
             creg = qreg
 
-        qasm_string = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n'
-        qasm_string += f"qreg q[{qreg}];\n"
-        qasm_string += f"creg c[{creg}];\n"
+        if header_required:
+            qasm_string = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n'
+            qasm_string += f"qreg q[{qreg}];\n"
+            qasm_string += f"creg c[{creg}];\n"
 
         cbits = 0
-        for gate in self._gates:
-            if gate.qasm_name == "measure":
-                qasm_string += f"measure q[{gate.targ}] -> c[{cbits}];\n"
-                cbits += 1
-                cbits = cbits % creg
+        for gate, targs, size in self._gates:
+            if size > 1:
+                qasm_string += gate.qasm(header_required=False)
             else:
-                qasm_string += gate.qasm()
+                if gate.qasm_name == "measure":
+                    qasm_string += f"measure q[{targs}] -> c[{cbits}];\n"
+                    cbits += 1
+                    cbits = cbits % creg
+                else:
+                    qasm_string += gate.qasm(targs)
 
         if output_file is not None:
             with open(output_file, 'w+') as of:
@@ -152,12 +162,13 @@ class CircuitBased(object):
 
         return qasm_string
 
+    # TODO: refactoring
     def get_lastcall_for_each_qubits(self) -> List[GateType]:
         lastcall_per_qubits = [None] * self.width()
         inside_qargs = []
         for i in range(self.size() - 1, -1, -1):
-            gate_args = self._gates[i].cargs + self._gates[i].targs
-            gate_type = self._gates[i].type
+            gate_args = self._gates[i][1]
+            gate_type = self._gates[i][0].type
             for garg in gate_args:
                 if lastcall_per_qubits[garg] is None:
                     lastcall_per_qubits[garg] = gate_type
@@ -168,6 +179,7 @@ class CircuitBased(object):
 
         return lastcall_per_qubits
 
+    # TODO: refactoring
     def get_gates_order_by_depth(self) -> List[List]:
         """ Order the gates of circuit by its depth layer
 
@@ -176,6 +188,7 @@ class CircuitBased(object):
         """
         return get_gates_order_by_depth(self.gates)
 
+    # TODO: refactoring
     def matrix(self, device: str = "CPU", mini_arg: int = 0) -> np.ndarray:
         """ Generate the circuit's unitary matrix which compose by all quantum gates' matrix in current circuit.
 
@@ -201,6 +214,7 @@ class CircuitBased(object):
 
         return circuit_matrix.get_unitary_matrix(self.gates, self.width(), mini_arg)
 
+    # TODO: refactoring
     def convert_precision(self):
         """ Convert all gates in Cicuit/CompositeGate into single precision. """
         for gate in self.gates:
@@ -209,6 +223,7 @@ class CircuitBased(object):
 
         self._precision = np.complex64 if self._precision == np.complex128 else np.complex128
 
+    # TODO: refactoring
     def gate_decomposition(self):
         added_idxes = 0     # The number of gates which add from gate.build_gate()
         for i in range(self.size()):

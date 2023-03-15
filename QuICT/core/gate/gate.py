@@ -338,7 +338,7 @@ class BasicGate(object):
 
         return gate_info
 
-    def qasm(self):
+    def qasm(self, targs: list = None):
         """ generator OpenQASM string for the gate
 
         Return:
@@ -354,7 +354,8 @@ class BasicGate(object):
 
             qasm_string += params_string
 
-        ctargs = [f"q[{ctarg}]" for ctarg in self.cargs + self.targs]
+        qubit_idxes = self.cargs + self.targs if targs is None else targs
+        ctargs = [f"q[{ctarg}]" for ctarg in qubit_idxes]
         ctargs_string = " " + ', '.join(ctargs) + ";\n"
         qasm_string += ctargs_string
 
