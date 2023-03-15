@@ -52,7 +52,7 @@ class StateVectorSimulator:
     @vector.setter
     def vector(self, vec):
         if self._device == "GPU":
-            with self._array_helper.cuda.Device(self._device_id):
+            with self._gpu_dev:
                 if type(vec) is np.ndarray:
                     self._vector = self._array_helper.array(vec)
                 else:
@@ -151,7 +151,7 @@ class StateVectorSimulator:
         if state_vector is not None:
             assert 2 ** self._qubits == state_vector.size, \
                 StateVectorUnmatchedError("The state vector should has the same qubits with the circuit.")
-            self.vector = self._array_helper.array(state_vector, dtype=self._precision)
+            self.vector = state_vector
         elif not use_previous:
             self.initial_state_vector()
 
