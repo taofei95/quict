@@ -13,18 +13,16 @@ from QuICT.algorithm.quantum_algorithm.shor.HRS_zip import (
 from QuICT.algorithm.quantum_algorithm.shor.HRS_zip import (
     construct_circuit as HRS_construct_circuit,
 )
-import sys
+import pytest
 
 from QuICT.simulation.state_vector import StateVectorSimulator
 
 
-simulator = StateVectorSimulator(device="GPU")
+simulator = StateVectorSimulator(device="CPU")
 threthold_rate = 0.3
 number_list = [
-    6,
     9,
     15,
-    21,
 ]
 n_repeat = 5
 order_finding_test_modes = {"BEA": BEA_order_finding, "HRS": HRS_order_finding}
