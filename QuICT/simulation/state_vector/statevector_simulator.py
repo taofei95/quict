@@ -92,7 +92,7 @@ class StateVectorSimulator:
             self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
 
             # Set gpu id
-            cp.cuda.runtime.setDevice(self._device_id)
+            self._gpu_dev = cp.cuda.Device(self._device_id)
         else:
             self._array_helper = np
 
@@ -122,11 +122,14 @@ class StateVectorSimulator:
     def initial_state_vector(self, all_zeros: bool = False):
         """ Initial qubits' vector states. """
         vector_size = 1 << int(self._qubits)
-        self._vector = self._array_helper.zeros(vector_size, dtype=self._precision)
+        # self._vector = cp.zeros(vector_size, dtype=self._precision)
         if self._device == "CPU" and not all_zeros:
+            self._vector = self._array_helper.zeros(vector_size, dtype=self._precision)
             self._vector[0] = self._precision(1)
         elif self._device == "GPU" and not all_zeros:
-            self._vector.put(0, self._precision(1))
+            with self._gpu_dev:
+                self._vector = self._array_helper.zeros(vector_size, dtype=self._precision)
+                self._vector.put(0, self._precision(1))
 
     def run(
         self,
@@ -152,6 +155,15 @@ class StateVectorSimulator:
         elif not use_previous:
             self.initial_state_vector()
 
+        if self._device == "CPU":
+            self._run()
+        else:
+            with self._gpu_dev:
+                self._run()
+
+        return self.vector
+
+    def _run(self):
         idx = 0
         while idx < len(self._pipeline):
             gate = self._pipeline[idx]
@@ -162,8 +174,6 @@ class StateVectorSimulator:
                 self.apply_trigger(gate, idx)
             else:
                 raise TypeError("StateVectorSimulation.run.circuit", "[BasicGate, Trigger]". type(gate))
-
-        return self.vector
 
     def _apply_gate_cpu(self, gate: BasicGate):
         matrix_type = gate.matrix_type
@@ -603,6 +613,7 @@ class StateVectorSimulator:
         """
         assert (self._circuit is not None), \
             SampleBeforeRunError("StateVectorSimulation sample without run any circuit.")
+    
         original_sv = self._vector.copy()
         state_list = [0] * (1 << self._qubits)
         lastcall_per_qubit = self._circuit.get_lastcall_for_each_qubits()
