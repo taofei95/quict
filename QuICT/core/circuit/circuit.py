@@ -13,6 +13,7 @@ from QuICT.core.gate import BasicGate, H, Measure, gate_builder
 from QuICT.core.utils import (
     GateType,
     CircuitBased,
+    CircuitMatrix,
     unique_id_generator
 )
 from QuICT.core.operator import (
@@ -357,7 +358,7 @@ class Circuit(CircuitBased):
         if self._pointer:
             if len(self._pointer) < args_num:
                 raise CircuitAppendError("Assigned qubits must larger or equal to gate size.")
-            
+
             if len(self._pointer) > args_num:
                 target_qidxes = [self._pointer[qargs] for qargs in gate_args]
             else:
@@ -469,7 +470,8 @@ class Circuit(CircuitBased):
         for i in range(repeat * len(pattern)):
             for q in range(qubits):
                 gate_type = supremacy_typelist[np.random.randint(0, 3)]
-                self.append(build_gate(gate_type, q))
+                fgate = gate_builder(gate_type) & q
+                self.append(fgate)
 
             current_pattern = pattern[i % (len(pattern))]
             if current_pattern not in "ABCD":
@@ -479,7 +481,7 @@ class Circuit(CircuitBased):
             for e in edges:
                 gate_params = [np.pi / 2, np.pi / 6]
                 gate_args = [int(e[0]), int(e[1])]
-                fgate = build_gate(GateType.fsim, gate_args, gate_params)
+                fgate = gate_builder(GateType.fsim, gate_params) & gate_args
 
                 self.append(fgate)
 
@@ -488,6 +490,19 @@ class Circuit(CircuitBased):
     ####################################################################
     ############                Circuit Utils               ############
     ####################################################################
+    def matrix(self, device: str = "CPU") -> np.ndarray:
+        """ Generate the circuit's unitary matrix which compose by all quantum gates' matrix in current circuit.
+
+        Args:
+            device (str, optional): The device type for generate circuit's matrix, one of [CPU, GPU]. Defaults to "CPU".
+            target_width (int, optional): The minimal qubit args, only use for CompositeGate mode. Default to 0.
+        """
+        assert device in ["CPU", "GPU"]
+        circuit_matrix = CircuitMatrix(device, self._precision)
+        flat_gates = self.gate_decomposition()
+
+        return circuit_matrix.get_unitary_matrix(flat_gates, self.width())
+
     def sub_circuit(
         self,
         start: int = 0,

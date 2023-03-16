@@ -8,7 +8,6 @@ from typing import List
 import numpy as np
 
 from .gate_type import GateType
-from .circuit_matrix import CircuitMatrix, get_gates_order_by_depth
 
 
 class CircuitBased(object):
@@ -23,11 +22,9 @@ class CircuitBased(object):
 
     @property
     def gates(self) -> list:
-        return self._gates
+        combined_gates = [gate & targs for gate, targs, _ in self._gates]
 
-    @gates.setter
-    def gates(self, gates):
-        self._gates = gates
+        return combined_gates
 
     def __init__(self, name: str):
         self._name = name
@@ -162,7 +159,7 @@ class CircuitBased(object):
 
         return qasm_string
 
-    # TODO: refactoring
+    # TODO: refactoring, may remove
     def get_lastcall_for_each_qubits(self) -> List[GateType]:
         lastcall_per_qubits = [None] * self.width()
         inside_qargs = []
@@ -180,41 +177,6 @@ class CircuitBased(object):
         return lastcall_per_qubits
 
     # TODO: refactoring
-    def get_gates_order_by_depth(self) -> List[List]:
-        """ Order the gates of circuit by its depth layer
-
-        Returns:
-            List[List[BasicGate]]: The list of gates which at same layers in circuit.
-        """
-        return get_gates_order_by_depth(self.gates)
-
-    # TODO: refactoring
-    def matrix(self, device: str = "CPU", mini_arg: int = 0) -> np.ndarray:
-        """ Generate the circuit's unitary matrix which compose by all quantum gates' matrix in current circuit.
-
-        Args:
-            device (str, optional): The device type for generate circuit's matrix, one of [CPU, GPU]. Defaults to "CPU".
-            mini_arg (int, optional): The minimal qubit args, only use for CompositeGate local mode. Default to 0.
-        """
-        assert device in ["CPU", "GPU"]
-        circuit_matrix = CircuitMatrix(device)
-
-        if self.size() == 0:
-            if device == "CPU":
-                circuit_matrix = np.identity(1 << self.width(), dtype=self._precision)
-            else:
-                import cupy as cp
-
-                circuit_matrix = cp.identity(1 << self.width(), dtype=self._precision)
-
-            return circuit_matrix
-
-        if self.size() > self.count_1qubit_gate() + self.count_2qubit_gate():
-            self.gate_decomposition()
-
-        return circuit_matrix.get_unitary_matrix(self.gates, self.width(), mini_arg)
-
-    # TODO: refactoring
     def convert_precision(self):
         """ Convert all gates in Cicuit/CompositeGate into single precision. """
         for gate in self.gates:
@@ -223,19 +185,24 @@ class CircuitBased(object):
 
         self._precision = np.complex64 if self._precision == np.complex128 else np.complex128
 
-    # TODO: refactoring
-    def gate_decomposition(self):
-        added_idxes = 0     # The number of gates which add from gate.build_gate()
-        for i in range(self.size()):
-            gate = self.gates[i + added_idxes]
-            if hasattr(gate, "build_gate"):
-                decomp_gates = gate.build_gate()
-                self.gates.remove(gate)
-                for g in decomp_gates:
-                    self._gates.insert(i + added_idxes, g)
-                    added_idxes += 1
+    def gate_decomposition(self) -> list:
+        decomp_gates = []
+        for gate, qidxes, size in self._gates:
+            if size > 1:
+                decomp_gates += gate.gate_decomposition()
+                continue
 
-                added_idxes -= 1    # minus the original gate
+            if hasattr(gate, "build_gate"):
+                cgate = gate.build_gate()
+                if cgate is not None:
+                    cgate & qidxes
+                    decomp_gates += cgate._gates
+                    continue
+
+            decomp_gates.append((gate, qidxes, size))
+
+        self._gates = decomp_gates
+        return self._gates
 
 
 class CircuitMode(Enum):

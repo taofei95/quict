@@ -1,19 +1,18 @@
 from __future__ import annotations
 
-import copy
 from typing import Union
 import numpy as np
 
-from QuICT.core.utils import CGATE_LIST, perm_decomposition, matrix_product_to_circuit, GateType, MatrixType, PAULI_GATE_SET, CLIFFORD_GATE_SET, GATEINFO_MAP
+from QuICT.core.utils import (
+    matrix_product_to_circuit, GateType, MatrixType,
+    CGATE_LIST, GATE_ARGS_MAP, PAULI_GATE_SET, CLIFFORD_GATE_SET, GATEINFO_MAP
+)
 from QuICT.tools.exception.core import (
     TypeError, ValueError, GateAppendError, GateQubitAssignedError,
     QASMError, GateMatrixError, GateParametersAssignedError
 )
 
-from .utils import (
-    GateMatrixGenerator, ComplexGateBuilder, InverseGate
-    
-)
+from .utils import GateMatrixGenerator, ComplexGateBuilder, InverseGate
 
 
 class BasicGate(object):
@@ -68,11 +67,11 @@ class BasicGate(object):
     @property
     def qasm_name(self):
         return self._qasm_name
-    
+
     @property
     def matrix(self) -> np.ndarray:
         if self._matrix is None or self._is_matrix_update:
-            self._matrix = GateMatrixGenerator.get_matrix(self)
+            self._matrix = GateMatrixGenerator().get_matrix(self)
             self._is_matrix_update = False
 
         return self._matrix
@@ -80,7 +79,7 @@ class BasicGate(object):
     @property
     def target_matrix(self) -> np.ndarray:
         if self._target_matrix is None or self._is_matrix_update:
-            self._target_matrix = GateMatrixGenerator.get_matrix(self, is_get_target=True)
+            self._target_matrix = GateMatrixGenerator().get_matrix(self, is_get_target=True)
             self._is_matrix_update = False
 
         return self._target_matrix
@@ -140,6 +139,9 @@ class BasicGate(object):
     @property
     def parg(self):
         # assert self._params > 0, f"There is no parameters for this gate, {self.type}"
+        if self._params == 0:
+            return None
+
         return self.pargs[0]
 
     @property
@@ -147,7 +149,7 @@ class BasicGate(object):
         # assert self._params > 0, f"There is no parameters for this gate, {self.type}"
         if self._params == 0:
             return []
-        
+
         return self._pargs
 
     @pargs.setter
@@ -183,10 +185,12 @@ class BasicGate(object):
         self._cargs = []    # list of int
 
         self._params = params
+        self._pargs = []
         if self._params > 0:
             if len(pargs) > 0:
                 self.permit_element(pargs)
-
+            else:
+                pargs = GATE_ARGS_MAP[type_]
             self._pargs = pargs    # list of float/..
 
         assert isinstance(type_, GateType), TypeError("BasicGate.type", "GateType", type(type_))
@@ -381,16 +385,30 @@ class BasicGate(object):
         else:
             gate_type = inverse_gargs
 
-        return build_gate(gate_type, pargs)
+        return gate_builder(gate_type, params=pargs)
 
     def build_gate(self):
-        cgate = ComplexGateBuilder.build_gate(self.type, self.parg)
-        if cgate is None:
+        if self.type == GateType.cu3:
+            return ComplexGateBuilder.build_gate(self.type, self.parg, self.matrix)
+
+        gate_list = ComplexGateBuilder.build_gate(self.type, self.parg)
+        if gate_list is None:
             return None
 
+        cgate = self._cgate_generator_from_build_gate(gate_list)
         gate_args = self.cargs + self.targs
         if len(gate_args) > 0:
             cgate & gate_args
+
+        return cgate
+
+    def _cgate_generator_from_build_gate(self, cgate_list: list):
+        from QuICT.core.gate import CompositeGate
+
+        cgate = CompositeGate()
+        for gate_type, qidxes, pargs in cgate_list:
+            gate = gate_builder(gate_type, params=pargs)
+            gate | cgate(qidxes)
 
         return cgate
 
@@ -516,7 +534,7 @@ class BasicGate(object):
         return self.matrix_type == MatrixType.special
 
     def is_identity(self) -> bool:
-        return self.matrix_type == MatrixType.identity 
+        return self.matrix_type == MatrixType.identity
 
     # TODO: keep or remove? weird
     def expand(self, qubits: Union[int, list]) -> bool:
@@ -622,7 +640,7 @@ class Unitary(BasicGate):
             controls = 0
 
         super().__init__(
-            controls=controls, targets=n-controls, params=0,
+            controls=controls, targets=(n - controls), params=0,
             type_=GateType.unitary, matrix_type=matrix_type, precision=precision
         )
         self._matrix = matrix
@@ -666,6 +684,9 @@ class Unitary(BasicGate):
                 matrix_type = MatrixType.normal
 
         return matrix_type, controls
+
+    def build_gate(self):
+        return ComplexGateBuilder.build_unitary(self._matrix)
 
 
 class Perm(BasicGate):
@@ -728,12 +749,12 @@ class PermFx(Perm):
         if not isinstance(params, list) or not isinstance(targets, int):
             raise TypeError(f"targets must be int {type(targets)}, params must be list {type(params)}")
 
-        N = 1 << n
+        N = 1 << targets
         for p in params:
             assert p >= 0 and p < N, Exception("the params should be less than N")
 
-        parameters = 1 << (n + 1)
-        targets = n + 1
+        targets = targets + 1
+        parameters = 1 << targets
         pargs = []
         for idx in range(1 << targets):
             if idx >> 1 in params:

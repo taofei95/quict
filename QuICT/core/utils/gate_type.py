@@ -1,4 +1,5 @@
 from enum import Enum
+import numpy as np
 
 
 class GateType(Enum):
@@ -143,6 +144,7 @@ class MatrixType(Enum):
     diag_normal = "diagonal * normal"
 
 
+# Mapping: GateType: (controls, targets, parameters, type, matrix_type)
 GATEINFO_MAP = {
     GateType.h: (0, 1, 0, GateType.h, MatrixType.normal),
     GateType.hy: (0, 1, 0, GateType.hy, MatrixType.normal),
@@ -188,6 +190,28 @@ GATEINFO_MAP = {
     GateType.ccz: (2, 1, 0, GateType.ccz, MatrixType.control),
     GateType.ccrz: (2, 1, 1, GateType.ccrz, MatrixType.diagonal),
     GateType.cswap: (1, 2, 0, GateType.cswap, MatrixType.swap),
+}
+
+
+# Mapping: GateType: default_parameters
+GATE_ARGS_MAP = {
+    GateType.u1: [np.pi / 2],
+    GateType.u2: [np.pi / 2, np.pi / 2],
+    GateType.u3: [0, 0, np.pi / 2],
+    GateType.rx: [np.pi / 2],
+    GateType.ry: [np.pi / 2],
+    GateType.rz: [np.pi / 2],
+    GateType.phase: [0],
+    GateType.gphase: [0],
+    GateType.crz: [np.pi / 2],
+    GateType.cu1: [np.pi / 2],
+    GateType.cu3: [np.pi / 2, 0, 0],
+    GateType.fsim: [np.pi / 2, 0],
+    GateType.rxx: [0],
+    GateType.ryy: [np.pi / 2],
+    GateType.rzz: [np.pi / 2],
+    GateType.rzx: [np.pi / 2],
+    GateType.ccrz: [0],
 }
 
 

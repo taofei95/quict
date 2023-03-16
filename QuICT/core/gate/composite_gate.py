@@ -9,9 +9,10 @@ from typing import Union
 import numpy as np
 
 from QuICT.core.gate import BasicGate
-from QuICT.core.operator import CheckPointChild, Operator
+from QuICT.core.operator import CheckPointChild
 from QuICT.core.utils import (
     CircuitBased,
+    CircuitMatrix,
     CGATE_LIST,
     unique_id_generator
 )
@@ -241,20 +242,34 @@ class CompositeGate(CircuitBased):
 
         return self
 
-    # TODO: return matrix only with used qubits
     def matrix(self, device: str = "CPU", local: bool = False) -> np.ndarray:
         """ matrix of these gates
 
         Args:
             device (str, optional): The device type for generate circuit's matrix, one of [CPU, GPU]. Defaults to "CPU".
-            local: whether consider only about 
+            local: whether consider only about qubits or not
 
         Returns:
             np.ndarray: the matrix of the gates
         """
-        if local and isinstance(self._min_qubit, int):
-            min_value = self._min_qubit
-        else:
-            min_value = 0
+        assert device in ["CPU", "GPU"]
+        matrix_width = self.width() if local else max(self.qubits) + 1
 
-        return super().matrix(device, min_value)
+        circuit_matrix = CircuitMatrix(device, self._precision)
+        self.gate_decomposition()
+        assigned_gates = self.gates if not local else self._get_local_gates()
+
+        return circuit_matrix.get_unitary_matrix(assigned_gates, matrix_width)
+
+    def _get_local_gates(self) -> list:
+        local_qidx_mapping = {}
+        for i, qidx in enumerate(self.qubits):
+            local_qidx_mapping[qidx] = i
+
+        local_gates = []
+        for gate, qidx, _ in self._gates:
+            related_qidx = [local_qidx_mapping[q] for q in qidx]
+            lgate = gate & related_qidx
+            local_gates.append(lgate)
+
+        return local_gates
