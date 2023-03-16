@@ -149,13 +149,19 @@ class Simulator:
         e_val = 0
         if not self.isRun:
             raise TypeError("StateVectorSimulation.get_expetation should be executed after StateVectorSimulation.run!")
-        bra=state_vector.copy()
+        bra=state_vector.copy().conj()
         ket=state_vector.copy()
         #non_trivial =[bra[2**t_wires],bra[2**t_wires+2]]
         #non_trivial =np.dot( non_trivial, Hamiltonian.get_hamiton_matrix(1))
         #bra[2**t_wires]=non_trivial[0]
         #bra[2**t_wires+2]=non_trivial[1]
         e_val = np.dot(bra,Hamiltonian.get_hamiton_matrix(n_qubits=n_qubits))
-        e_val = np.dot(e_val,ket)
+        e_val = np.dot(e_val,ket).real
 
+        return e_val
+    def forward(self,cir:Circuit, ):
+        state_vector=self.run(cir)
+        state_vector= state_vector['data']['state_vector']
+        ham = Hamiltonian([[0.5, 'Y0', 'X4', 'Z2', 'I6'], [0.0]])
+        e_val=self.get_expectation(state_vector,ham,len(cir._qubits))
         return e_val

@@ -185,9 +185,7 @@ class BasicGate(object):
     @property
     def qasm_name(self):
         return self._qasm_name
-    @property
-    def is_require_grad(self):
-        return self._require_grad
+    
 
     def __init__(
         self,
@@ -196,7 +194,7 @@ class BasicGate(object):
         params: int,
         type_: GateType,
         matrix_type: MatrixType = MatrixType.normal,
-        required_grad:bool = False,
+        requires_grad:bool = False,
     ):
         self._matrix = None
 
@@ -206,7 +204,7 @@ class BasicGate(object):
         self._cargs = []  # list of int
         self._targs = []  # list of int
         self._pargs = []  # list of float/..
-        self._require_grad = required_grad
+        self._requires_grad = requires_grad
 
         assert isinstance(type_, GateType), TypeError(
             "BasicGate.type", "GateType", type(type_)
@@ -601,6 +599,12 @@ class BasicGate(object):
                 return True
 
             raise TypeError(self.type, "int/float/complex", type(element))
+    def is_requires_grad(self):
+        return self._requires_grad
+    
+    def set_requires_grad(self,requires_grad:bool):
+        self._requires_grad = requires_grad
+        return 
 
 
 class HGate(BasicGate):
@@ -1024,15 +1028,16 @@ class RyGate(BasicGate):
     """Rotation around the y-axis gate"""
 
     def __init__(self, params: list = [np.pi / 2]):
-        super().__init__(controls=0, targets=1, params=1, type_=GateType.ry)
+        super().__init__(controls=0, targets=1, params=1, type_=GateType.ry,requires_grad=False)
 
         self.pargs = params
 
-    def __call__(self, alpha):
+    def __call__(self, alpha,requires_grad:bool=False):
         """Set parameters for the gate.
 
         Args:
             alpha (int/float/complex): The parameter for gate
+            requires_grad(bool): tag of gate indicates wheather update is needed
 
         Raises:
             TypeError: param not one of int/float/complex
@@ -1041,6 +1046,7 @@ class RyGate(BasicGate):
             BasicGate: The gate with parameters
         """
         self.permit_element(alpha)
+        self._requires_grad=requires_grad
 
         return RyGate([alpha])
 
@@ -1078,11 +1084,12 @@ class RzGate(BasicGate):
 
         self.pargs = params
 
-    def __call__(self, alpha):
+    def __call__(self, alpha,requires_grad:bool=False):
         """Set parameters for the gate.
 
         Args:
             alpha (int/float/complex): The parameter for gate
+            requires_grad(bool): tag of gate indicates wheather update is needed
 
         Raises:
             TypeError: param not one of int/float/complex
@@ -1091,6 +1098,7 @@ class RzGate(BasicGate):
             BasicGate: The gate with parameters
         """
         self.permit_element(alpha)
+        self._requires_grad=requires_grad
 
         return RzGate([alpha])
 
