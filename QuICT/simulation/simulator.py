@@ -165,3 +165,11 @@ class Simulator:
         ham = Hamiltonian([[0.5, 'Y0', 'X4', 'Z2', 'I6'], [0.0]])
         e_val=self.get_expectation(state_vector,ham,len(cir._qubits))
         return e_val
+    def backward(self,cir:Circuit,idx_gate:int,idx_param:int,grad,lr:float):
+        gate =cir.gates[idx_gate]
+        param_list = gate.pargs.copy()
+        param_list[idx_param] +=lr*grad
+        gate.pargs=param_list.copy()
+        cir.replace_gate(idx_gate,gate)
+        return cir
+

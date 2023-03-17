@@ -2,13 +2,16 @@ import numpy as np
 import math
 import torch
 from QuICT.core import Circuit
-from QuICT.core.gate import H, CX,Rz,UnitaryGate,CU3Gate,U3Gate,CompositeGate
+from QuICT.core.gate import H, CX,Rz,UnitaryGate,CU3Gate,U3Gate,CompositeGate,BasicGate,RyGate
 from QuICT_ml.utils.gate_tensor import Ry,CX_tensor
 from QuICT.core.operator import Trigger
 from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
 from QuICT.algorithm.quantum_machine_learning.ansatz_library.QNN_layer import QNNLayer
 from QuICT.simulation.simulator import Simulator
 from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
+from QuICT.algorithm.quantum_machine_learning.utils.encoding import NEQR,FRQI
+from QuICT.algorithm.quantum_machine_learning.differentiators.parameter_shift import  ParameterShift
+#from QuICT.algorithm.quantum_machine_learning.model.VQA import vqe_net
 class qconv2:
     """The qconv2 class, which is a quatnum convoluitional used in QCNN model"""
     def __init__(self,) -> None:
@@ -26,11 +29,14 @@ class qconv2:
         kernal_gate =CompositeGate()
         if _type == "0":
             Ry(float(self.param[0]))|kernal_gate(wires[0])
-            Ry(float(self.param[1]))|kernal_gate(wires[1])
+            Ry(float(self.param[1]),)|kernal_gate(wires[1])
             CX | kernal_gate([wires[1] ,wires[0]])
-            Ry(float(self.param[2]))|kernal_gate(wires[0])
-            Ry(float(self.param[3]))|kernal_gate(wires[1])
+            Ry(float(self.param[2]),)|kernal_gate(wires[0])
+            Ry(float(self.param[3]),)|kernal_gate(wires[1])
             CX | kernal_gate([wires[0],wires[1]])
+        for gate in kernal_gate.gates:
+            if isinstance(gate,RyGate):
+                gate._requires_grad =True   
         return kernal_gate
     def _construct_ansatz(self,param):
         self.param = param
@@ -63,6 +69,10 @@ class pool:
             Rz(float(self.param[3])).inverse() |pool_gate(wires[1])
             Ry(float(self.param[4])).inverse() |pool_gate(wires[1])
             Rz(float(self.param[5])).inverse() |pool_gate(wires[1])
+        for gate in pool_gate.gates:
+            if gate.type ==CX().type:
+                continue
+            gate._requires_grad = True
             
         return pool_gate
 class FC:
@@ -98,6 +108,8 @@ class FC:
             cu3_gate.targs=[wires[l-i-1]]
             cu3_gate & [wires[(l-i)%l],wires[l-i-1]]|fc_gate  
             #cu3_gate |fc_gate  ([(l-i)%len(G2_param),l-i-1])
+        for gate in fc_gate.gates:
+            gate._requires_grad = True
         return fc_gate
 class QCNNLayer(QNNLayer):
     def __init__(self, data_qubits, result_qubit, device,):
@@ -137,27 +149,5 @@ class QCNNLayer(QNNLayer):
         for i in range(0,len(wires),2):
             new_wires.append(i)
         wires=new_wires
-        return com_gate,wires
         
-if __name__ =='__main__':
-    param= tuple()
-    param =param+ (torch.rand(13+11,4),)+(torch.rand(7,6),)+(torch.rand(20,3).tolist(),)+(torch.rand(20,3).tolist(),)
-    qcnn = QCNNLayer(data_qubits=[0,1,2,3,4,5,6,7,8,9,10,11,12],result_qubit=13,device="cuda:0")
-    cir = Circuit(13)
-    wires = [i for i in range(13)]
-    [gate,wires]=qcnn.circuit_layer(params=param,qconv= qconv2(),pool=pool(),wires=wires,com_gate=CompositeGate())
-    [gate,wires]=qcnn.circuit_layer(params=param,qconv= qconv2(),pool=pool(),wires=wires,com_gate=gate)
-    fc =FC(len(wires))
-    fc_gate= fc(param[2],param[3],wires)
-    fc_gate|gate
-    gate|cir
-    '''
-    #cir.draw(filename="QCNN")
-    sim = Simulator()
-    state_vector=sim.run(circuit=cir)
-    state_vector= state_vector['data']['state_vector']
-    ham = Hamiltonian([[0.4, 'Y0', 'X1', 'Z2', 'I5'], [0.6]])
-    e_val=sim.get_expectation(state_vector,ham,13)
-    '''
-    for gate in cir._gates:
-        if gate.re
+        return com_gate,wires

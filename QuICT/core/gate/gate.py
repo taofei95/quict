@@ -186,6 +186,7 @@ class BasicGate(object):
     def qasm_name(self):
         return self._qasm_name
     
+    
 
     def __init__(
         self,
@@ -194,7 +195,7 @@ class BasicGate(object):
         params: int,
         type_: GateType,
         matrix_type: MatrixType = MatrixType.normal,
-        requires_grad:bool = False,
+        requires_grad:bool=False
     ):
         self._matrix = None
 
@@ -291,7 +292,7 @@ class BasicGate(object):
         else:
             return _gate
 
-    def __call__(self):
+    def __call__(self,requires_grad:bool=False):
         """give parameters for the gate, and give parameters by "()", and parameters should be one of int/float/complex
 
         Some Examples are like this:
@@ -304,7 +305,9 @@ class BasicGate(object):
         Returns:
             BasicGate: the gate after filled by parameters
         """
+        self._requires_grad=requires_grad
         return self.copy()
+    
 
     def __eq__(self, other):
         assert isinstance(other, BasicGate), TypeError(
@@ -572,6 +575,7 @@ class BasicGate(object):
         gate.pargs = copy.deepcopy(self.pargs)
         gate.targs = copy.deepcopy(self.targs)
         gate.cargs = copy.deepcopy(self.cargs)
+        gate._requires_grad = copy.deepcopy(self._requires_grad)
 
         if self.assigned_qubits:
             gate.assigned_qubits = copy.deepcopy(self.assigned_qubits)
@@ -599,9 +603,10 @@ class BasicGate(object):
                 return True
 
             raise TypeError(self.type, "int/float/complex", type(element))
+    
+   
     def is_requires_grad(self):
         return self._requires_grad
-    
     def set_requires_grad(self,requires_grad:bool):
         self._requires_grad = requires_grad
         return 
@@ -1028,11 +1033,11 @@ class RyGate(BasicGate):
     """Rotation around the y-axis gate"""
 
     def __init__(self, params: list = [np.pi / 2]):
-        super().__init__(controls=0, targets=1, params=1, type_=GateType.ry,requires_grad=False)
+        super().__init__(controls=0, targets=1, params=1, type_=GateType.ry)
 
         self.pargs = params
 
-    def __call__(self, alpha,requires_grad:bool=False):
+    def __call__(self, alpha,):
         """Set parameters for the gate.
 
         Args:
@@ -1046,7 +1051,6 @@ class RyGate(BasicGate):
             BasicGate: The gate with parameters
         """
         self.permit_element(alpha)
-        self._requires_grad=requires_grad
 
         return RyGate([alpha])
 
