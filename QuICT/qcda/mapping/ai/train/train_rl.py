@@ -25,7 +25,7 @@ class Trainer:
         self.actor = Actor(rank=1, config=config)
         self.actor.policy_net = self.learner._policy_net
 
-        log_dir = config.tag + "_" + config.log_dir
+        log_dir = config.log_dir + "_" + config.tag
         self._writer = SummaryWriter(log_dir=log_dir)
 
         self._loop = aio.new_event_loop()
