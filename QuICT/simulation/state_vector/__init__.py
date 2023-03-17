@@ -1,9 +1,7 @@
-try:
-    from .cpu_simulator import CircuitSimulator
-except AttributeError:
-    CircuitSimulator = None
+from .statevector_simulator import StateVectorSimulator
 
 try:
-    from .gpu_simulator import ConstantStateVectorSimulator
-except Exception:
-    pass
+    from QuICT_sim.cpu_simulator import CircuitSimulator as HPStateVecotrSimulator
+except:
+    HPStateVecotrSimulator = None
+    print("Please install quict_sim first, you can use 'pip install quict_sim' to install. ")

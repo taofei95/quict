@@ -4,7 +4,7 @@ from typing import Dict, List, Union
 from .graph import Graph
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 class QuantumWalk:
@@ -23,12 +23,12 @@ class QuantumWalk:
         """ The quantum circuit of the random walk algorithm, including UnitaryGate. """
         return self._circuit
 
-    def __init__(self, simulator=CircuitSimulator()):
+    def __init__(self, simulator=StateVectorSimulator()):
         """ Initialize the simulator circuit of quantum random walk.
 
         Args:
-            simulator (Union[ConstantStateVectorSimulator, CircuitSimulator], optional):
-                The simulator for simulating quantum circuit. Defaults to CircuitSimulator().
+            simulator (Union[StateVectorSimulator, StateVectorSimulator], optional):
+                The simulator for simulating quantum circuit. Defaults to StateVectorSimulator().
         """
         self._simulator = simulator
         self._step = None

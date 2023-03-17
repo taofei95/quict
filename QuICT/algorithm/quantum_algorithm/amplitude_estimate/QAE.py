@@ -1,4 +1,4 @@
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 from .backend.canonical_QAE import amplitude_estimate as canonical_run
 from .backend.max_likely_QAE import amplitude_estimate as max_likely_run
@@ -16,14 +16,14 @@ class QAE:
     }
     _CIRCUIT_METHOD_OF_MODE = {"canonical": canonical_circuit}
 
-    def __init__(self, mode, eps=0.1, simulator=CircuitSimulator(),) -> None:
+    def __init__(self, mode, eps=0.1, simulator=StateVectorSimulator(),) -> None:
         """set up QAE algorithm parameters. mode=="canonical" is not suggested for use\
         due to lower success rate than theoretical expectation
 
         Args:
             mode (string): _description_
             eps (float, optional): _description_. Defaults to 0.1.
-            simulator (_type_, optional): _description_. Defaults to CircuitSimulator().
+            simulator (_type_, optional): _description_. Defaults to StateVectorSimulator().
         """
         if mode not in QAE._ALLOWED_MODES:
             raise ValueError(f"allowed mode are {QAE._ALLOWED_MODES}.")

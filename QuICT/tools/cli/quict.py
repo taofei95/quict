@@ -26,69 +26,6 @@ def cli_construct():
     parser.add_argument('--version', action='version', version='QuICT CLI 1.0', help="Show the current version.")
     subparsers = parser.add_subparsers()
 
-    # Build env management
-    from QuICT.tools.cli.blueprint.remote import login, logout, register, unsubscribe
-
-    # Login
-    login_sp = subparsers.add_parser(
-        name="login",
-        description="Login to QuICT Cloud System.",
-        help="Login to QuICT Cloud System.",
-    )
-    login_sp.add_argument(
-        "username", type=str,
-        help="The username used to login."
-    )
-    login_sp.add_argument(
-        "password", type=str,
-        help="The password of user."
-    )
-    login_sp.set_defaults(func=login)
-
-    # Logout
-    logout_sp = subparsers.add_parser(
-        name="logout",
-        description="Logout from the QuICT.",
-        help="Logout from the QuICT."
-    )
-    logout_sp.set_defaults(func=logout)
-
-    # Register
-    register_sp = subparsers.add_parser(
-        name="register",
-        description="User Register for QuICT Cloud System.",
-        help="User Register",
-    )
-    register_sp.add_argument(
-        "username", type=str,
-        help="The username used."
-    )
-    register_sp.add_argument(
-        "password", type=str,
-        help="The password for user."
-    )
-    register_sp.add_argument(
-        "email", type=str,
-        help="The email address for registed user."
-    )
-    register_sp.set_defaults(func=register)
-
-    # unsubscribe
-    unsubscribe_sp = subparsers.add_parser(
-        name="unsubscribe",
-        description="Unsubscribe user to QuICT Cloud System.",
-        help="Unsubscribe to QuICT Cloud System.",
-    )
-    unsubscribe_sp.add_argument(
-        "username", type=str,
-        help="The username used to unsubscribe."
-    )
-    unsubscribe_sp.add_argument(
-        "password", type=str,
-        help="The password of user."
-    )
-    unsubscribe_sp.set_defaults(func=unsubscribe)
-
     # Circuit
     circuit_sp = subparsers.add_parser(
         name="circuit",
@@ -104,14 +41,6 @@ def cli_construct():
         help="QuICT job's management in Local Mode."
     )
     job_cli_construct(local_sp, mode="local")
-
-    # Local Mode's Job
-    remote_sp = subparsers.add_parser(
-        name="remote",
-        description="Remote Modes QuICT Job Management.",
-        help="QuICT job's management in Remote Mode."
-    )
-    job_cli_construct(remote_sp, mode="remote")
 
     # Benchmark
     benchmark_sp = subparsers.add_parser(
@@ -238,14 +167,9 @@ def job_cli_construct(mode_sp: ArgumentParser, mode: str):
         mode_sp (ArgumentParser): Job Mode Parser
         mode (str): mode description, one of [local, remote]
     """
-    from QuICT.tools.cli.blueprint.job import get_template
-
-    if mode == "local":
-        from QuICT.tools.cli.blueprint.job import (
-            start_job, stop_job, restart_job, delete_job, status_job, list_jobs
-        )
-    elif mode == "remote":
-        from QuICT.tools.cli.blueprint.remote import start_job, delete_job, status_job, list_jobs
+    from QuICT.tools.cli.blueprint.job import (
+        get_template, start_job, stop_job, restart_job, delete_job, status_job, list_jobs
+    )
 
     mode_subparser = mode_sp.add_subparsers()
     job_sp = mode_subparser.add_parser(

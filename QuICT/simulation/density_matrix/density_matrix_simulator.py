@@ -11,7 +11,7 @@ from QuICT.tools.exception.core import TypeError, ValueError
 from QuICT.tools.exception.simulation import SimulationMatrixError, SampleBeforeRunError
 
 
-class DensityMatrixSimulation:
+class DensityMatrixSimulator:
     """ The Density Matrix Simulator
 
     Args:
@@ -43,7 +43,7 @@ class DensityMatrixSimulation:
             self._computer = GPUCalculator
             self._array_helper = cp
         else:
-            raise ValueError("DensityMatrixSimulation.device", "[CPU, GPU]", device)
+            raise ValueError("DensityMatrixSimulator.device", "[CPU, GPU]", device)
 
     def initial_circuit(self, circuit: Circuit, noise_model: NoiseModel):
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
@@ -139,7 +139,7 @@ class DensityMatrixSimulation:
             elif isinstance(gate, NoiseGate):
                 self.apply_noise(gate, self._qubits)
             else:
-                raise TypeError("DensityMatrixSimulation.run.circuit", "[BasicGate, NoiseGate]", type(gate))
+                raise TypeError("DensityMatrixSimulator.run.circuit", "[BasicGate, NoiseGate]", type(gate))
 
         if cgate.size() > 0:
             self.apply_gates(cgate)
@@ -209,7 +209,7 @@ class DensityMatrixSimulation:
 
     def sample(self, shots: int) -> list:
         assert (self._density_matrix is not None), \
-            SampleBeforeRunError("DensityMatrixSimulation sample without run any circuit.")
+            SampleBeforeRunError("DensityMatrixSimulator sample without run any circuit.")
         if self._accumulated_mode or self._noise_model is None:
             original_dm = self._density_matrix.copy()
 
