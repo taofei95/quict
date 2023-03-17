@@ -3,7 +3,7 @@ from QuICT.core.gate import *
 from QuICT.algorithm.quantum_algorithm.hhl import HHL
 
 
-class LinearEquation(object):
+class LinearSolver(object):
     def __init__(self, matrix, vector):
         """ linear equation Ax=b,
             where A is the given matrix and b is the given vector
@@ -26,15 +26,14 @@ class LinearEquation(object):
         """
         return np.linalg.solve(self.matrix, self.vector)
 
-    def hhl(self, t=None, e=None, method=None, measure=None, order=None, simulator=None):
+    def hhl(self, t=None, e=None, method=None, measure=None, simulator=None):
         """ solving linear equation by HHL algorithm
 
         Args:
-            t(float): the coefficient makes matrix (t*A/2pi)'s eigenvalues are in (1/e, 1)
+            t(float): the coefficient makes matrix (t*A/2pi)'s eigenvalues are in (1/2^e, 1)
             e(int): number of qubits representing the Phase
             method: method is Hamiltonian simulation, default "trotter"
             measure(bool): measure the ancilla qubit or not
-            order(int): trotter number if method is "trotter"
             simulator: CPU or GPU simulator
 
         Return:
@@ -46,25 +45,22 @@ class LinearEquation(object):
             if t is None:
                 t = np.pi / max(abs(evalue))
             if e is None:
-                e = int(np.ceil(np.log2(max(abs(evalue)) / min(abs(evalue))))) + 2
+                e = 9
         if method is None:
-            method = 'trotter'
-            if order is None:
-                order = 1
+            method = 'unitary'
         if measure is None:
             measure = False
         if simulator is None:
-            simulator = StateVectorSimulator()
+            simulator = StateVectorSimulator(device="GPU")
 
-        solution = HHL(simulator=simulator).run(
+        solution, msg = HHL(simulator=simulator).run(
             matrix=self.matrix,
             vector=self.vector,
             t=t,
             e=e,
             method=method,
-            measure=measure,
-            order=order)
+            measure=measure)
         if solution is not None:
-            return solution
+            return solution, msg
         else:
-            return "Failed."
+            return None, None
