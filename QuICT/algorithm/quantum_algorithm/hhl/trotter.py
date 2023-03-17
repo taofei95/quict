@@ -66,7 +66,7 @@ class Trotter(object):
         ancilla = self.ancilla
         for idx in range(len(self.matrix) ** 2):
             st = []
-            a = -2 * p[idx]
+            a = p[idx]
             s = idx
             if abs(a) > 1e-6:
                 a /= self.order
