@@ -33,7 +33,6 @@ class LinearSolver(object):
             t(float): the coefficient makes matrix (t*A/2pi)'s eigenvalues are in (1/2^e, 1)
             e(int): number of qubits representing the Phase
             method: method is Hamiltonian simulation, default "trotter"
-            measure(bool): measure the ancilla qubit or not
             simulator: CPU or GPU simulator
 
         Return:
@@ -43,24 +42,18 @@ class LinearSolver(object):
         if t is None or e is None:
             evalue = np.linalg.eigvals(self.matrix)
             if t is None:
-                t = np.pi / max(abs(evalue))
+                t = 0.5 * np.pi / max(abs(evalue))
             if e is None:
                 e = 9
         if method is None:
             method = 'unitary'
-        if measure is None:
-            measure = False
         if simulator is None:
             simulator = StateVectorSimulator(device="GPU")
 
-        solution, msg = HHL(simulator=simulator).run(
+        solution = HHL(simulator=simulator).run(
             matrix=self.matrix,
             vector=self.vector,
             t=t,
             e=e,
-            method=method,
-            measure=measure)
-        if solution is not None:
-            return solution, msg
-        else:
-            return None, None
+            method=method)
+        return solution
