@@ -33,7 +33,7 @@ class HHL:
         m = np.identity(n, dtype=np.complex128)
         m[n - row:, n - row:] = matrix
         v = np.zeros(n, dtype=np.complex128)
-        v[n- len(vector):] = vector
+        v[n - len(vector):] = vector
         if not (m == m.T.conj()).all():
             m0 = np.zeros((2 * n, 2 * n), dtype=np.complex128)
             m0[:n, n:] = m
@@ -82,28 +82,21 @@ class HHL:
         X & target | gates
         return gates
 
-    def solve(self, state_vector, matrix, vector):
-        eps = 1e-8
-        if state_vector is not None:
-            for idx, x in enumerate(vector):
-                if abs(x) > eps:
-                    k = np.vdot(state_vector, matrix[idx])
-                    if abs(k) > eps:
-                        return state_vector * x / k
-
-    def circuit(self, matrix, vector, t, e, measure=True, method='unitary'):
+    def circuit(
+        self,
+        matrix,
+        vector,
+        e,
+        method='unitary'
+    ):
         """
         Args:
             matrix(ndarray/circuit): the matrix A above
                 [A must be invertible]
             vector(array): the vector b above, need to be prepared previously
                 matrix and vector MUST have the same number of ROWS!
-            t(float): the coefficient makes matrix (t*A/2pi)'s eigenvalues are in (1/e, 1)
             e(int): number of qubits representing the Phase
-            method: method is Hamiltonian simulation, default "trotter"
-            measure(bool): measure the ancilla qubit or not
-            order(int): trotter number if method is "trotter"
-
+            method: method is Hamiltonian simulation, default "unitary"
         Returns:
             Circuit: HHL circuit
         """
@@ -131,18 +124,19 @@ class HHL:
             Ry(2 * np.arcsin(vector[1])) | circuit(x)
 
         if method == 'trotter':
-            CU = Trotter(matrix * t, order).excute(phase, x, trotter)
-        elif method == 'unitary':
+            CU = Trotter(matrix, order).excute(phase, x, trotter)
+        else:
             from scipy.linalg import expm
             CU = CompositeGate()
+            m = expm(matrix * 1j)
             for idx in reversed(phase):
                 c = [idx]
                 c.extend(x)
-                U, _ = ControlledUnitaryDecomposition().execute(np.identity(2 ** n, dtype=np.complex128), expm(matrix * t * 0.5j))
+                U, _ = ControlledUnitaryDecomposition().execute(
+                    np.identity(2 ** n, dtype=np.complex128), m
+                )
                 U | CU(c)
-                t *= 2.0
-        else:
-            raise Exception(f"unknown method: {method}")
+                m = np.dot(m, m)
 
         for idx in phase:
             H | circuit(idx)
@@ -158,12 +152,9 @@ class HHL:
 
         for idx in phase:
             H | circuit(idx)
-        
-        if measure:
-            Measure | circuit(ancilla)
 
-        self.hs = CU.size()
-        self.hd = CU.depth()
+        Measure | circuit(ancilla)
+
         logger.info(
             f"circuit width    = {circuit.width():4}\n" +
             f"circuit size     = {circuit.size():4}\n" +
@@ -173,7 +164,14 @@ class HHL:
 
         return circuit
 
-    def run(self, matrix, vector, t, e, measure=True, method='unitary'):
+    def run(
+        self,
+        matrix,
+        vector,
+        t,
+        e,
+        method
+    ):
         """ hhl algorithm to solve linear equation such as Ax=b,
             where A is the given matrix and b is the given vector
 
@@ -184,9 +182,7 @@ class HHL:
                 matrix and vector MUST have the same number of ROWS!
             t(float): the coefficient makes matrix (t*A/2pi)'s eigenvalues are in (1/e, 1)
             e(int): number of qubits representing the Phase
-            method: method is Hamiltonian simulation, default "trotter"
-            measure(bool): measure the ancilla qubit or not
-            order(int): trotter number if method is "trotter"
+            method: method is Hamiltonian simulation, default "unitary"
 
         Returns:
             array: the goal state vector if the algorithm success
@@ -195,22 +191,13 @@ class HHL:
         simulator = self.simulator
         size = len(vector)
         m, v = self.reconstruct(matrix, vector)
-        nv = np.linalg.norm(v)
-        circuit = self.circuit(m, v / nv, t, e, measure, method)
+        norm_v = np.linalg.norm(v)
+        circuit = self.circuit(m * t, v / norm_v, e, method)
 
-        import time
-        rt = time.time()
         state_vector = simulator.run(circuit)
-        rt = round(time.time() - rt, 6)
         x = np.array(state_vector[len(v) - size: len(v)].get(), dtype=np.complex128)
-        a0 = np.array(state_vector[:len(state_vector) / 2].get())
-        a0 = np.vdot(a0, a0)
-        a1 = np.array(state_vector[len(state_vector) / 2:].get())
-        a1 = np.vdot(a1, a1)
-        print(f"p(0) = {a0}; p(1) = {a1}")
-        msg = [circuit.width(), circuit.size(),self.hs, rt]
 
-        if not measure or int(circuit[0]) == 0:
-            return x, msg
+        if int(circuit[0]) == 0:
+            return x / t * 2 ** 9
         else:
-            return None, msg
+            return None
