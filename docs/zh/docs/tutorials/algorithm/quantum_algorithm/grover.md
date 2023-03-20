@@ -165,9 +165,27 @@ n = 4
 target = 0b0110
 f = [target]
 k, oracle = main_oracle(n, f)
+
+n_shots = 100
+n_success = 0
 grover = Grover(simulator=StateVectorSimulator())
-result = grover.run(n, k, oracle)
-print(result)
+for _ in range(n_shots):
+    result = grover.run(n, k, oracle)
+    if(result==target):
+        n_success+=1
+print(f"success rate: {n_success/n_shots:.2f}")
+```
+
+```
+2023-03-14 20:25:29 | Grover | INFO | circuit width          =    6
+oracle  calls          =    3
+other circuit size     =   92
+...
+2023-03-14 20:25:35 | Grover | INFO | circuit width          =    6
+oracle  calls          =    3
+other circuit size     =   92
+
+success rate: 0.95
 ```
 
 当然，也可以进行部分搜索：
@@ -238,11 +256,10 @@ circ = Circuit(10)
 cgate | circ
 circ.draw()
 ```
-```
-    2023-02-06 10:10:25 | circuit | INFO | Initial Quantum Circuit circuit_6b80df2ca5c311ed91250242ac110007 with 10 qubits.
-    
-    <Figure size 3416.11x2556.11 with 1 Axes>
-```
+<figure markdown>
+![图片名](../../../assets/images/tutorials/algorithm/quantum_algorithm/binary_sudoku_oracle_circuit.png)
+</figure>
+
 
 运行Grover算法：
 
