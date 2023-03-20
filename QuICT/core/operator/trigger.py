@@ -28,7 +28,7 @@ class Trigger(Operator):
 
         # Deal with state - compositegate mapping
         self._state_gate_mapping = {}
-        if isinstance(state_gate_mapping, (list, tuple, dict, FunctionType)):
+        if not isinstance(state_gate_mapping, (list, tuple, dict, FunctionType)):
             raise TypeError("Trigger.state_gate_mapping", "[list, tuple, dict, Function]", {type(state_gate_mapping)})
 
     def mapping(self, state: int):

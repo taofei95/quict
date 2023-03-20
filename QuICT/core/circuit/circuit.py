@@ -11,7 +11,7 @@ import random
 
 from QuICT.core.qubit import Qubit, Qureg
 from QuICT.core.layout import Layout, SupremacyLayout
-from QuICT.core.gate import BasicGate, H, Measure, gate_builder
+from QuICT.core.gate import BasicGate, H, Measure, gate_builder, CompositeGate
 from QuICT.core.utils import (
     GateType,
     CircuitBased,
@@ -84,7 +84,6 @@ class Circuit(CircuitBased):
 
         self._topology = topology
 
-    # TODO: support ancilla and topology
     def __init__(
         self,
         wires,
@@ -107,6 +106,7 @@ class Circuit(CircuitBased):
             self._qubits = Qureg(wires)
 
         if ancilla_qubits is not None:
+            assert max(ancilla_qubits) < self.width()
             self.ancilla_qubits = ancilla_qubits
 
         self._logger.debug(f"Initial Quantum Circuit {name} with {len(self._qubits)} qubits.")
@@ -120,7 +120,6 @@ class Circuit(CircuitBased):
         self._qubits = None
         self.topology = None
 
-    # TODO: refactoring and support circuit | circuit
     def __or__(self, targets):
         """deal the operator '|'
 
@@ -136,21 +135,13 @@ class Circuit(CircuitBased):
         Raise:
             TypeError: the type of targets is wrong
         """
-        if not isinstance(targets, Circuit):
-            raise TypeError(
-                "Circuit.or", "Circuit", type(targets)
-            )
-
-        if not self.qubits == targets.qubits:
-            diff_qubits = targets.qubits.diff(self.qubits)
-            targets.update_qubit(diff_qubits, is_append=True)
+        assert isinstance(targets, Circuit), TypeError("Circuit.or", "Circuit", type(targets))
 
         targets.extend(self)
 
     ####################################################################
     ############         Circuit Qubits Operators           ############
     ####################################################################
-    # TODO: using index for all control not qubit
     def __call__(self, indexes: object):
         """ get a smaller qureg from this circuit
 
@@ -199,9 +190,7 @@ class Circuit(CircuitBased):
             is_ancillae_qubit (bool, optional): whether the given qubits is ancillae, default to False.
         """
         if isinstance(qubits, int):
-            if qubits <= 0:
-                raise IndexExceedError("Circuit.add_qubit", ">= 0", {qubits})
-
+            assert qubits > 0, IndexExceedError("Circuit.add_qubit", ">= 0", {qubits})
             qubits = Qureg(qubits)
 
         self._qubits = self._qubits + qubits
@@ -235,6 +224,7 @@ class Circuit(CircuitBased):
         self._logger.debug(f"The origin gate {self._gates[idx]} is replaced by {gate}")
         self._gates[idx] = gate
 
+    # TODO: refactoring
     def find_position(self, cp_child: CheckPointChild):
         position = -1
         if cp_child is None:
@@ -279,7 +269,7 @@ class Circuit(CircuitBased):
     ####################################################################
     ############          Circuit Build Operators           ############
     ####################################################################
-    # TODO: consider circuit | circuit
+    # TODO: consider circuit | circuit; OpenQASM support
     def extend(self, gates):
         """ Add list of gates to the circuit
 
@@ -300,20 +290,18 @@ class Circuit(CircuitBased):
                 f"{gates.name} need {gate_args} indexes, but given {len(self._pointer)}"
             )
 
-            gates & self._pointer
+            gate_qidxes = self._pointer[:]
+        else:
+            gate_qidxes = gates.qubits
 
-        self._gates.append((gates, gates.qubits, gates.size()))
+        self._gates.append((gates, gate_qidxes, gates.size()))
         self._pointer = None
 
-    # TODO: refactoring and remove checkpoints and add insert
     def append(self, op: Union[BasicGate, Operator]):
         if isinstance(op, BasicGate):
             self._add_gate(op)
-        elif isinstance(op, Trigger):
-            self._add_trigger(op)
         elif isinstance(op, Operator):
-            self._gates.append(op)
-            self._logger.debug(f"Add an operator {type(op)}.")
+            self._add_operator(op)
         else:
             raise TypeError(
                 "Circuit.append.gate", "BasicGate/Operator", {type(op)}
@@ -364,23 +352,24 @@ class Circuit(CircuitBased):
         for idx in range(self.width()):
             self._gates.append((gate, [idx], 1))
 
-    # TODO: Add operator to contain everything
-    def _add_trigger(self, op: Trigger, qureg: Qureg):
-        if qureg:
-            if len(qureg) != op.targets:
+    def _add_operator(self, op: Operator):
+        if self._pointer is not None:
+            if len(self._pointer) != op.targets:
                 raise CircuitAppendError("Failure to add Trigger into Circuit, as un-matched qureg.")
 
-            op.targs = [self.qubits.index(qureg[idx]) for idx in range(op.targets)]
+            op_qidxes = self._pointer[:]
         else:
             if not op.targs:
-                raise CircuitAppendError("Trigger need assign qubits to add into circuit.")
+                raise CircuitAppendError("Operators need be assigned qubits before add into circuit.")
 
             for targ in op.targs:
                 if targ >= self.width():
                     raise CircuitAppendError("The trigger's target exceed the width of the circuit.")
 
-        self.gates.append(op)
-        self._logger.debug(f"Add an operator Trigger with qubit indexes {op.targs}.")
+            op_qidxes = op.targs
+
+        self._gates.append((op, op_qidxes, 1))
+        self._logger.debug(f"Add an Operator {type(op)} with qubit indexes {op_qidxes}.")
 
     def random_append(
         self,
@@ -484,7 +473,6 @@ class Circuit(CircuitBased):
 
         return circuit_matrix.get_unitary_matrix(self.gates, self.width())
 
-    # TODO: refactoring
     def sub_circuit(
         self,
         start: int = 0,
@@ -498,36 +486,36 @@ class Circuit(CircuitBased):
         Args:
             start(int): the start gate's index, default 0
             max_size(int): max size of the sub circuit, default -1 without limit
-            qubit_limit(int/list<int>/Qureg): the required qubits' indexes, if [], accept all qubits. default to be [].
+            qubit_limit(int/list<int>/Qubit/Qureg): the required qubits' indexes, if [], accept all qubits. default to be [].
             gate_limit(List[GateType]): list of required gate's type, if [], accept all quantum gate. default to be [].
             remove(bool): whether deleting the slice gates from origin circuit, default False
         Return:
             Circuit: the sub circuit
         """
-        max_size_for_logger = max_size if max_size == -1 else len(self.gates) - start
+        max_size_for_logger = self.size() if max_size == -1 else max_size
         self._logger.debug(
             f"Get {max_size_for_logger} gates from gate index {start}" +
             f" with target qubits {qubit_limit} and gate limit {gate_limit}."
         )
         if qubit_limit:
-            target_qubits = qubit_limit
             if isinstance(qubit_limit, Qureg):
-                target_qubits = [self._qubits.index(qubit) for qubit in qubit_limit]
+                qubit_limit = [self._qubits.index(qubit) for qubit in qubit_limit]
+            elif isinstance(qubit_limit, Qubit):
+                qubit_limit = [self._qubits.index(qubit_limit)]
             elif isinstance(qubit_limit, int):
-                target_qubits = [qubit_limit]
+                qubit_limit = [qubit_limit]
 
-            for target in target_qubits:
+            for target in qubit_limit:
                 if target < 0 or target >= self.width():
                     raise IndexExceedError("Circuit.sub_circuit.qubit_limit", [0, self.width()], target)
 
-            set_tqubits = set(target_qubits)
+            set_tqubits = set(qubit_limit)
 
-        sub_circuit = Circuit(self.width()) if not qubit_limit else Circuit(len(target_qubits))
-        sub_gates = self._gates[:]
+        sub_circuit = Circuit(self.width()) if not qubit_limit else Circuit(len(qubit_limit))
+        temp_gates, temp_size = self._gates[:], 0
         for gate_index in range(start, len(self._gates)):
-            gate = sub_gates[gate_index]
-            _gate = gate.copy()
-            gate_args = set(gate.cargs + gate.targs)
+            gate, qidxes, size = temp_gates[gate_index]
+            gate_args = set(qidxes)
             is_append_in_subc = True
             if (qubit_limit and gate_args & set(set_tqubits) != gate_args):
                 is_append_in_subc = False
@@ -536,17 +524,14 @@ class Circuit(CircuitBased):
                 is_append_in_subc = False
 
             if is_append_in_subc:
-                if qubit_limit:
-                    _gate.targs = [target_qubits.index(targ) for targ in _gate.targs]
-                    _gate.cargs = [target_qubits.index(carg) for carg in _gate.cargs]
-                    _gate | sub_circuit
-                else:
-                    _gate | sub_circuit
+                new_qidxes = [qubit_limit.index(q) for q in qidxes] if qubit_limit else qubit_limit
+                gate & new_qidxes | sub_circuit
+                temp_size += size
 
                 if remove:
-                    self._gates.remove(gate)
+                    self._gates.remove(temp_gates[gate_index])
 
-            if sub_circuit.size() >= max_size and max_size != -1:
+            if max_size != -1 and temp_size >= max_size:
                 break
 
         return sub_circuit

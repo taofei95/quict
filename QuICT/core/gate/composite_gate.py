@@ -104,11 +104,15 @@ class CompositeGate(CircuitBased):
             qidx_mapping[q] = targets[i]
 
         new_gates = []
-        for gate, qidxes, _ in self._gates:
+        for gate, qidxes, size in self._gates:
             new_q = [qidx_mapping[qidx] for qidx in qidxes]
-            new_gates.append((gate, new_q))
+            if size > 1:
+                gate & new_q
+
+            new_gates.append((gate, new_q, size))
 
         self._qubits = targets
+        self._gates = new_gates
 
     def _update_qubit_limit(self, indexes: list):
         for idx in indexes:
@@ -169,7 +173,7 @@ class CompositeGate(CircuitBased):
         Return:
             [BasicGates]: the gates
         """
-        gate, qidxes = self._gates[item]
+        gate, qidxes, _ = self._gates[item]
 
         return gate & qidxes
 
@@ -202,13 +206,21 @@ class CompositeGate(CircuitBased):
 
     def insert(self, gate, insert_idx: int):
         """ Insert a Quantum Gate into current CompositeGate, only support BasicGate. """
-        assert isinstance(gate, BasicGate), TypeError("CompositeGate.insert", "BasicGate", type(gate))
-        gate_args = gate.cargs + gate.targs
+        assert isinstance(gate, (BasicGate, CompositeGate)), \
+            TypeError("CompositeGate.insert", "BasicGate/CompositeGate", type(gate))
+
+        if isinstance(gate, BasicGate):
+            gate_args = gate.cargs + gate.targs
+            gate_size = 1
+        else:
+            gate_args = gate.qubits
+            gate_size = gate.size()
+
         if len(gate_args) == 0:
             raise GateQubitAssignedError(f"{gate.type} need qubit indexes to insert into Composite Gate.")
 
         self._update_qubit_limit(gate_args)
-        self._gates.insert(insert_idx, (gate, gate_args, 1))
+        self._gates.insert(insert_idx, (gate, gate_args, gate_size))
 
     def _append_gate(self, gate: BasicGate):
         if self._pointer is not None:
@@ -271,3 +283,27 @@ class CompositeGate(CircuitBased):
             local_gates.append(lgate)
 
         return local_gates
+
+    def qasm_gates_only(self, creg: int, cbits: int, target_qubits: list = None):
+        qasm_string = ""
+        if target_qubits is not None:
+            qidx_mapping = {}
+            for i, q in enumerate(self._qubits):
+                qidx_mapping[q] = target_qubits[i]
+
+        for gate, targs, size in self._gates:
+            if target_qubits is not None:
+                targs = [qidx_mapping[targ] for targ in targs]
+
+            if size > 1:
+                qasm_string += gate.qasm_gates_only(creg, cbits, targs)
+                continue
+
+            if gate.qasm_name == "measure":
+                qasm_string += f"measure q[{targs}] -> c[{cbits}];\n"
+                cbits += 1
+                cbits = cbits % creg
+            else:
+                qasm_string += gate.qasm(targs)
+
+        return qasm_string

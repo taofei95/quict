@@ -121,7 +121,7 @@ class CircuitBased(object):
 
         return str(circuit_info)
 
-    def qasm(self, output_file: str = None, header_required: bool = True):
+    def qasm(self, output_file: str = None):
         """ The qasm of current CompositeGate/Circuit.
 
         Args:
@@ -136,22 +136,22 @@ class CircuitBased(object):
         if creg == 0:
             creg = qreg
 
-        if header_required:
-            qasm_string = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n'
-            qasm_string += f"qreg q[{qreg}];\n"
-            qasm_string += f"creg c[{creg}];\n"
+        qasm_string = 'OPENQASM 2.0;\ninclude "qelib1.inc";\n'
+        qasm_string += f"qreg q[{qreg}];\n"
+        qasm_string += f"creg c[{creg}];\n"
 
         cbits = 0
         for gate, targs, size in self._gates:
             if size > 1:
-                qasm_string += gate.qasm(header_required=False)
+                qasm_string += gate.qasm_gates_only(creg, cbits, targs)
+                continue
+
+            if gate.qasm_name == "measure":
+                qasm_string += f"measure q[{targs}] -> c[{cbits}];\n"
+                cbits += 1
+                cbits = cbits % creg
             else:
-                if gate.qasm_name == "measure":
-                    qasm_string += f"measure q[{targs}] -> c[{cbits}];\n"
-                    cbits += 1
-                    cbits = cbits % creg
-                else:
-                    qasm_string += gate.qasm(targs)
+                qasm_string += gate.qasm(targs)
 
         if output_file is not None:
             with open(output_file, 'w+') as of:
@@ -185,7 +185,7 @@ class CircuitBased(object):
 
         self._precision = np.complex64 if self._precision == np.complex128 else np.complex128
 
-    def gate_decomposition(self) -> list:
+    def gate_decomposition(self, self_flatten: bool = True) -> list:
         decomp_gates = []
         for gate, qidxes, size in self._gates:
             if size > 1:
@@ -201,8 +201,11 @@ class CircuitBased(object):
 
             decomp_gates.append((gate, qidxes, size))
 
-        self._gates = decomp_gates
-        return self._gates
+        if not self_flatten:
+            return decomp_gates
+        else:
+            self._gates = decomp_gates
+            return self._gates
 
 
 class CircuitMode(Enum):
