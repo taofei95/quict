@@ -974,6 +974,46 @@ class U3Gate(BasicGate):
             ],
             dtype=self._precision,
         )
+    @property
+    def  partial_derivative(self):
+        return np.array(
+            [
+            [
+                [
+                    -np.sin(self.pargs[0] / 2)/2,
+                    -np.exp(1j * self.pargs[2]) * np.cos(self.pargs[0] / 2)/2,
+                ],
+                [
+                    np.exp(1j * self.pargs[1]) * np.cos(self.pargs[0] / 2)/2,
+                    -np.exp(1j * (self.pargs[1] + self.pargs[2]))
+                    * np.cos(self.pargs[0] / 2)/2,
+                ],
+            ],
+            [
+                [
+                    0,
+                    0,
+                ],
+                [
+                    np.exp(1j * self.pargs[1]) * np.sin(self.pargs[0] / 2),
+                    np.exp(1j * (self.pargs[1] + self.pargs[2]))
+                    * np.cos(self.pargs[0] / 2),
+                ],
+            ],
+            [
+                [
+                    0,
+                    -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2),
+                ],
+                [
+                    0,
+                    np.exp(1j * (self.pargs[1] + self.pargs[2]))
+                    * np.cos(self.pargs[0] / 2),
+                ],
+            ],
+            ],
+            dtype=self._precision,
+        )
 
     def inverse(self):
         _U3 = self.copy()
@@ -1063,6 +1103,15 @@ class RyGate(BasicGate):
             ],
             dtype=self._precision,
         )
+    @property
+    def  partial_derivative(self):
+        return np.array(
+            [
+                [-np.sin(self.pargs[0] / 2)/2, -np.cos(self.pargs[0] / 2)/2],
+                [np.cos(self.pargs[0] / 2)/2, -np.sin(self.pargs[0] / 2)/2],
+            ],
+            dtype=self._precision,
+        )
 
     def inverse(self):
         _Ry = self.copy()
@@ -1110,6 +1159,15 @@ class RzGate(BasicGate):
     def matrix(self):
         return np.array(
             [[np.exp(-self.parg / 2 * 1j), 0], [0, np.exp(self.parg / 2 * 1j)]],
+            dtype=self._precision,
+        )
+    @property
+    def  partial_derivative(self):
+        return np.array(
+            [
+            [[-np.exp(-self.parg / 2 * 1j)/2, 0], [0, np.exp(self.parg / 2 * 1j)/2]],
+            
+            ],
             dtype=self._precision,
         )
 
@@ -1655,6 +1713,59 @@ class CU3Gate(BasicGate):
                     np.exp(1j * (self.pargs[1] + self.pargs[2]))
                     * np.cos(self.pargs[0] / 2),
                 ],
+            ],
+            dtype=self._precision,
+        )
+    @property
+    def matrix(self):
+        return np.array(
+            [
+            [
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [
+                    0,
+                    0,
+                    -np.sin(self.pargs[0] / 2)/2,
+                    -np.exp(1j * self.pargs[2]) * np.cos(self.pargs[0] / 2)/2,
+                ],
+                [
+                    0,
+                    0,
+                    np.exp(1j * self.pargs[1]) * np.cos(self.pargs[0] / 2)/2,
+                    -np.exp(1j * (self.pargs[1] + self.pargs[2]))
+                    * np.sin(self.pargs[0] / 2)/2,
+                ],
+            ],
+             [
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [0, 0, 0, 0],
+                [
+                    0,
+                    0,
+                    np.exp(1j * self.pargs[1]) * np.sin(self.pargs[0] / 2),
+                    np.exp(1j * (self.pargs[1] + self.pargs[2]))
+                    * np.cos(self.pargs[0] / 2),
+                ],
+            ],
+             [
+                [1, 0, 0, 0],
+                [0, 1, 0, 0],
+                [
+                    0,
+                    0,
+                    0,
+                    -np.exp(1j * self.pargs[2]) * np.sin(self.pargs[0] / 2),
+                ],
+                [
+                    0,
+                    0,
+                    0,
+                    np.exp(1j * (self.pargs[1] + self.pargs[2]))
+                    * np.cos(self.pargs[0] / 2),
+                ],
+            ],
             ],
             dtype=self._precision,
         )
