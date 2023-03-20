@@ -3,6 +3,8 @@
 # @TIME    : 2022/1/17 9:41
 # @Author  : Han Yu, Kaiqi Li
 # @File    : circuit.py
+from __future__ import annotations
+
 from typing import Union, List
 import numpy as np
 import random
@@ -40,22 +42,22 @@ class Circuit(CircuitBased):
         topology(list<tuple<int, int>>):
             The topology of the circuit. When the topology list is empty, it will be seemed as fully connected.
         fidelity(float): the fidelity of the circuit
-        ancillae_qubits(list<int>): The indexes of ancilla qubits for current circuit.
+        ancilla_qubits(list<int>): The indexes of ancilla qubits for current circuit.
     """
     @property
     def qubits(self) -> Qureg:
         return self._qubits
 
     @property
-    def ancillae_qubits(self) -> List[int]:
+    def ancilla_qubits(self) -> List[int]:
         return self._ancillae_qubits
 
-    @ancillae_qubits.setter
-    def ancillae_qubits(self, ancillae_qubits: List[int]):
-        for idx in ancillae_qubits:
+    @ancilla_qubits.setter
+    def ancilla_qubits(self, ancilla_qubits: List[int]):
+        for idx in ancilla_qubits:
             if idx < 0 or idx >= self.width():
                 raise IndexExceedError(
-                    "circuit.ancillae_qubits", [0, self.width()], idx
+                    "circuit.ancilla_qubits", [0, self.width()], idx
                 )
 
             self._ancillae_qubits.append(idx)
@@ -82,36 +84,13 @@ class Circuit(CircuitBased):
 
         self._topology = topology
 
-    @property
-    def fidelity(self) -> float:
-        return self._fidelity
-
-    @fidelity.setter
-    def fidelity(self, fidelity):
-        if fidelity is None:
-            self._fidelity = None
-            return
-
-        if not isinstance(fidelity, float):
-            raise TypeError(
-                "Circuit.fidelity", "float", type(fidelity)
-            )
-
-        if fidelity < 0 or fidelity > 1.0:
-            raise ValueError(
-                "Circuit.fidelity", "within [0, 1]", {fidelity}
-            )
-
-        self._fidelity = fidelity
-
-    # TODO: Remove fidelity, support ancilla and topology
+    # TODO: support ancilla and topology
     def __init__(
         self,
         wires,
         name: str = None,
         topology: Layout = None,
-        fidelity: float = None,
-        ancillae_qubits: List[int] = None
+        ancilla_qubits: List[int] = None
     ):
         if name is None:
             name = "circuit_" + unique_id_generator()
@@ -119,7 +98,6 @@ class Circuit(CircuitBased):
         super().__init__(name)
         self._ancillae_qubits = []
         self._topology = None
-        self._fidelity = None
         self._checkpoints = []
         self._logger = Logger("circuit")
 
@@ -128,24 +106,19 @@ class Circuit(CircuitBased):
         else:
             self._qubits = Qureg(wires)
 
-        if ancillae_qubits is not None:
-            self.ancillae_qubits = ancillae_qubits
+        if ancilla_qubits is not None:
+            self.ancilla_qubits = ancilla_qubits
 
         self._logger.debug(f"Initial Quantum Circuit {name} with {len(self._qubits)} qubits.")
         if topology is not None:
             self.topology = topology
             self._logger.debug(f"The Layout for Quantum Circuit is {self._topology}.")
 
-        if fidelity is not None:
-            self.fidelity = fidelity
-            self._logger.debug(f"The Fidelity for Quantum Circuit is {self.fidelity}.")
-
     def __del__(self):
         """ release the memory """
-        self.gates = None
+        self._gates = None
         self._qubits = None
         self.topology = None
-        self.fidelity = None
 
     # TODO: refactoring and support circuit | circuit
     def __or__(self, targets):
@@ -172,7 +145,7 @@ class Circuit(CircuitBased):
             diff_qubits = targets.qubits.diff(self.qubits)
             targets.update_qubit(diff_qubits, is_append=True)
 
-        targets.extend(self.gates)
+        targets.extend(self)
 
     ####################################################################
     ############         Circuit Qubits Operators           ############
@@ -206,7 +179,6 @@ class Circuit(CircuitBased):
         self._pointer = indexes
         return self
 
-    # TODO: not use
     def __getitem__(self, item):
         """ to fit the slice operator, overloaded this function.
 
@@ -307,29 +279,38 @@ class Circuit(CircuitBased):
     ####################################################################
     ############          Circuit Build Operators           ############
     ####################################################################
-    # TODO: refactoring
-    def extend(self, gates: list):
+    # TODO: consider circuit | circuit
+    def extend(self, gates, reverse: bool = False):
         """ Add list of gates to the circuit
 
         Args:
-            gates(list<BasicGate>): the gate to be added to the circuit
+            gates(CompositeGate|Circuit): the compositegate or circuit to be added to the circuit
         """
-        position = -1
-        if not isinstance(gates, list):
-            position = self.find_position(gates.checkpoint)
-            gates = gates.gates
+        if isinstance(gates, Circuit):
+            aqubit_idxes = gates.ancilla_qubits
+            for idx, qubit in enumerate(gates.qubits):
+                is_ancilla = True if idx in aqubit_idxes else False
+                self.add_qubit(qubit, is_ancilla)
 
-        for gate in gates:
-            if position == -1:
-                self.append(gate, is_extend=True)
-            else:
-                self.append(gate, is_extend=True, insert_idx=position)
-                position += 1
+            gates = gates.to_compositegate()
+
+        if self._pointer is not None:
+            gate_args = gates.width()
+            assert gate_args == len(self._pointer), GateQubitAssignedError(
+                f"{gates.name} need {gate_args} indexes, but given {len(self._pointer)}"
+            )
+
+            gates & self._pointer
+
+        if not reverse:
+            self._gates.append((gates, gates.qubits, gates.size()))
+        else:
+            self._gates.insert(0, (gates, gates.qubits, gates.size()))
 
         self._pointer = None
 
     # TODO: refactoring and remove checkpoints and add insert
-    def append(self, op: Union[BasicGate, Operator], is_extend: bool = False):
+    def append(self, op: Union[BasicGate, Operator]):
         if isinstance(op, BasicGate):
             self._add_gate(op)
         elif isinstance(op, Trigger):
@@ -339,11 +320,10 @@ class Circuit(CircuitBased):
             self._logger.debug(f"Add an operator {type(op)}.")
         else:
             raise TypeError(
-                "Circuit.append.gate", "Trigger/BasicGate/NoiseGate", {type(op)}
+                "Circuit.append.gate", "BasicGate/Operator", {type(op)}
             )
 
-        if not is_extend:
-            self._pointer = None
+        self._pointer = None
 
     def _add_gate(self, gate: BasicGate):
         """ add a gate into some qureg
@@ -352,37 +332,33 @@ class Circuit(CircuitBased):
             gate(BasicGate)
             qureg(Qureg)
         """
-        args_num = gate.controls + gate.targets
-        gate_args = gate.cargs + gate.targs
-        gate_qubits = gate.assigned_qubits
-        if self._pointer:
-            if len(self._pointer) < args_num:
-                raise CircuitAppendError("Assigned qubits must larger or equal to gate size.")
+        if self._pointer is not None:
+            gate_args = gate.controls + gate.targets
+            assert len(self._pointer) == gate_args, \
+                GateQubitAssignedError(f"{gate.type} need {gate_args} indexes, but given {len(self._pointer)}")
 
-            if len(self._pointer) > args_num:
-                target_qidxes = [self._pointer[qargs] for qargs in gate_args]
-            else:
-                target_qidxes = self._pointer[:]
-        elif len(gate_args) > 0:
-            target_qidxes = gate_args
-        elif len(gate_qubits) > 0:
-            target_qidxes = [self.qubits.index(q) for q in gate_qubits]
+            qubit_index = self._pointer[:]
         else:
-            if gate.is_single():
-                self._add_gate_to_all_qubits(gate)
-                return
-            elif args_num == self.width():
-                target_qidxes = list(range(self.width()))
+            gate_qargs = gate.cargs + gate.targs
+            gate_aqubits = gate.assigned_qubits
+            if len(gate_qargs) == 0 and len(gate_aqubits) == 0:
+                if gate.is_single():
+                    self._add_gate_to_all_qubits(gate)
+                    return
+                elif gate.targets + gate.controls == self.width():
+                    qubit_index = list(range(self.width()))
+                else:
+                    raise GateQubitAssignedError(f"{gate.type} need qubit indexes to add into Composite Gate.")
             else:
-                raise CircuitAppendError(f"{gate.type} need assign qubits to add into circuit.")
+                qubit_index = gate_qargs if len(gate_qargs) > 0 else [self.qubits.index(aq) for aq in gate.assigned_qubits]
 
-        # Add gate into circuit
-        self._gates.append((gate, target_qidxes))
+        self._gates.append((gate, qubit_index, 1))
 
     def _add_gate_to_all_qubits(self, gate):
         for idx in range(self.width()):
-            self._gates.append((gate, [idx]))
+            self._gates.append((gate, [idx], 1))
 
+    # TODO: Add operator to contain everything
     def _add_trigger(self, op: Trigger, qureg: Qureg):
         if qureg:
             if len(qureg) != op.targets:
@@ -442,13 +418,12 @@ class Circuit(CircuitBased):
         self._logger.debug(f"Random append {rand_size} quantum gates from {typelist} with probability {probabilities}.")
         gate_prob = probabilities
         gate_indexes = list(range(len(typelist)))
-        n_qubit = self.width()
         for _ in range(rand_size):
             gate_type = typelist[np.random.choice(gate_indexes, p=gate_prob)]
-            r_gate = gate_builder(gate_type, random_params=True)
+            r_gate = gate_builder(gate_type, random_params=random_params)
             random_assigned_qubits = random.sample(range(self.width()), r_gate.controls + r_gate.targets)
-            r_gate & random_assigned_qubits
-            self._gates.append(r_gate)
+
+            self._gates.append((r_gate, random_assigned_qubits, 1))
 
     def supremacy_append(self, repeat: int = 1, pattern: str = "ABCDCDAB"):
         """
@@ -470,8 +445,8 @@ class Circuit(CircuitBased):
         for i in range(repeat * len(pattern)):
             for q in range(qubits):
                 gate_type = supremacy_typelist[np.random.randint(0, 3)]
-                fgate = gate_builder(gate_type) & q
-                self.append(fgate)
+                fgate = gate_builder(gate_type)
+                self.append((fgate, q, 1))
 
             current_pattern = pattern[i % (len(pattern))]
             if current_pattern not in "ABCD":
@@ -481,9 +456,9 @@ class Circuit(CircuitBased):
             for e in edges:
                 gate_params = [np.pi / 2, np.pi / 6]
                 gate_args = [int(e[0]), int(e[1])]
-                fgate = gate_builder(GateType.fsim, gate_params) & gate_args
+                fgate = gate_builder(GateType.fsim, gate_params)
 
-                self.append(fgate)
+                self.append((fgate, gate_args, 1))
 
         self._add_gate_to_all_qubits(Measure)
 
@@ -503,6 +478,7 @@ class Circuit(CircuitBased):
 
         return circuit_matrix.get_unitary_matrix(flat_gates, self.width())
 
+    # TODO: refactoring
     def sub_circuit(
         self,
         start: int = 0,

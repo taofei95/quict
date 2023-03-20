@@ -187,7 +187,6 @@ class CompositeGate(CircuitBased):
         else:
             self._gates.insert(0, (gates, gates.qubits, gates.size()))
 
-        print(gates.qubits)
         self._update_qubit_limit(gates.qubits)
         self._pointer = None
 
@@ -214,13 +213,10 @@ class CompositeGate(CircuitBased):
     def _append_gate(self, gate: BasicGate):
         if self._pointer is not None:
             gate_args = gate.controls + gate.targets
-            if len(self._pointer) < gate_args:
-                raise GateQubitAssignedError(f"{gate.type} need {gate_args} indexes, but given {len(self._pointer)}")
+            assert len(self._pointer) == gate_args, \
+                GateQubitAssignedError(f"{gate.type} need {gate_args} indexes, but given {len(self._pointer)}")
 
-            if len(self._pointer) > gate_args:
-                qubit_index = [self._pointer[qarg] for qarg in gate.cargs + gate.targs]
-            else:
-                qubit_index = self._pointer[:]
+            qubit_index = self._pointer[:]
         else:
             qubit_index = gate.cargs + gate.targs
             if not qubit_index:
@@ -238,9 +234,11 @@ class CompositeGate(CircuitBased):
         Returns:
             CompositeGate: the inverse of the gateSet
         """
-        self._gates = [(gate.inverse(), indexes, size) for gate, indexes, size in self._gates[::-1]]
+        _gates = CompositeGate()
+        inverse_gates = [(gate.inverse(), indexes, size) for gate, indexes, size in self._gates[::-1]]
+        _gates._gates = inverse_gates
 
-        return self
+        return _gates
 
     def matrix(self, device: str = "CPU", local: bool = False) -> np.ndarray:
         """ matrix of these gates

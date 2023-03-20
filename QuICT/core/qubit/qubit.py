@@ -21,7 +21,7 @@ class Qubit(object):
             the measure result of the qubit.
             After apply measure gate on the qubit, the measured will be 0 or 1,
             otherwise raise an exception
-        prob(float):
+        fidelity(float):
             the probability of measure result to be 1, which range in [0, 1].
             After apply measure gate on the qubit, this attribute can be read,
             otherwise raise an exception
@@ -48,14 +48,28 @@ class Qubit(object):
         return self._historical_measured
 
     @property
-    def prob(self) -> float:
-        return self._prob
+    def fidelity(self) -> float:
+        return self._fidelity
 
-    @prob.setter
-    def prob(self, prob):
-        self._prob = prob
+    @fidelity.setter
+    def fidelity(self, fidelity):
+        if fidelity is None:
+            self._fidelity = None
+            return
 
-    def __init__(self, prob: float = random.random()):
+        if not isinstance(fidelity, float):
+            raise TypeError(
+                "Circuit.fidelity", "float", type(fidelity)
+            )
+
+        if fidelity < 0 or fidelity > 1.0:
+            raise ValueError(
+                "Circuit.fidelity", "within [0, 1]", {fidelity}
+            )
+
+        self._fidelity = fidelity
+
+    def __init__(self, fidelity: float = random.random()):
         """ initial a qubit with a circuit
 
         Args:
@@ -63,7 +77,7 @@ class Qubit(object):
         """
         self._id = unique_id_generator()
         self._measured = None
-        self._prob = prob
+        self._fidelity = fidelity
         self._historical_measured = []
 
     def __str__(self):
