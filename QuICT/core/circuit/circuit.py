@@ -280,7 +280,7 @@ class Circuit(CircuitBased):
     ############          Circuit Build Operators           ############
     ####################################################################
     # TODO: consider circuit | circuit
-    def extend(self, gates, reverse: bool = False):
+    def extend(self, gates):
         """ Add list of gates to the circuit
 
         Args:
@@ -302,11 +302,7 @@ class Circuit(CircuitBased):
 
             gates & self._pointer
 
-        if not reverse:
-            self._gates.append((gates, gates.qubits, gates.size()))
-        else:
-            self._gates.insert(0, (gates, gates.qubits, gates.size()))
-
+        self._gates.append((gates, gates.qubits, gates.size()))
         self._pointer = None
 
     # TODO: refactoring and remove checkpoints and add insert
@@ -324,6 +320,16 @@ class Circuit(CircuitBased):
             )
 
         self._pointer = None
+
+    def insert(self, gate, insert_idx: int):
+        """ Insert a Quantum Gate into current CompositeGate, only support BasicGate. """
+        assert isinstance(gate, (BasicGate, Operator, CompositeGate)), TypeError("CompositeGate.insert", "BasicGate", type(gate))
+        gate_args = gate.cargs + gate.targs
+        if len(gate_args) == 0:
+            raise GateQubitAssignedError(f"{gate.type} need qubit indexes to insert into Composite Gate.")
+
+        self._update_qubit_limit(gate_args)
+        self._gates.insert(insert_idx, (gate, gate_args, 1))
 
     def _add_gate(self, gate: BasicGate):
         """ add a gate into some qureg
@@ -474,9 +480,9 @@ class Circuit(CircuitBased):
         """
         assert device in ["CPU", "GPU"]
         circuit_matrix = CircuitMatrix(device, self._precision)
-        flat_gates = self.gate_decomposition()
+        self.gate_decomposition()
 
-        return circuit_matrix.get_unitary_matrix(flat_gates, self.width())
+        return circuit_matrix.get_unitary_matrix(self.gates, self.width())
 
     # TODO: refactoring
     def sub_circuit(

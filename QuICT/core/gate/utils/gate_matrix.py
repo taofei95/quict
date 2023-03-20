@@ -321,7 +321,7 @@ class ComplexGateBuilder:
             (GateType.h, [0], None),
             (GateType.h, [1], None),
             (GateType.cx, [0, 1], None),
-            (GateType.rz, [1], parg),
+            (GateType.rz, [1], [parg]),
             (GateType.cx, [0, 1], None),
             (GateType.h, [0], None),
             (GateType.h, [1], None),
@@ -333,7 +333,7 @@ class ComplexGateBuilder:
             (GateType.hy, [0], None),
             (GateType.hy, [1], None),
             (GateType.cx, [0, 1], None),
-            (GateType.rz, [1], parg),
+            (GateType.rz, [1], [parg]),
             (GateType.cx, [0, 1], None),
             (GateType.hy, [0], None),
             (GateType.hy, [1], None),
@@ -343,7 +343,7 @@ class ComplexGateBuilder:
     def build_rzz(parg):
         return [
             (GateType.cx, [0, 1], None),
-            (GateType.rz, [1], parg),
+            (GateType.rz, [1], [parg]),
             (GateType.cx, [0, 1], None),
         ]
 
@@ -352,7 +352,7 @@ class ComplexGateBuilder:
         return [
             (GateType.h, [0], None),
             (GateType.cx, [0, 1], None),
-            (GateType.rz, [1], parg),
+            (GateType.rz, [1], [parg]),
             (GateType.cx, [0, 1], None),
             (GateType.h, [0], None),
         ]
