@@ -101,6 +101,9 @@ edit_uri: ""
 copyright: Copyright &copy; 2022 ICT and its contributors
 plugins:
   - glightbox
+  - mkdocstrings:
+      default_handler: python
+      enable_inventory: true
   - tags
   - search:
       lang:
