@@ -1,8 +1,10 @@
 from collections import deque
+import random
 
 import numpy as np
 
 from QuICT.core import Circuit
+from QuICT.core.circuit import DAGCircuit
 from QuICT.core.gate import BasicGate
 from QuICT.core.utils import GateType
 from QuICT.core.utils.circuit_info import CircuitMode
@@ -20,51 +22,65 @@ class CircuitPartitionOptimization(object):
     def __init__(self,
                  level='light',
                  verbose=False,
-                 merge_threshold=10,
-                 optimize_methods=None,
-                 keep_phase=False):
+                 keep_phase=False,
+                 partition_method='dag_based',
+                 optimize_methods=None):
 
         """
         Args:
             level(str): optimizing level (heavy or light). By default is light.
-            merge_threshold(int): a heuristic parameter controlling block size.
             keep_phase(bool): whether to keep the global phase as a GPhase gate in the output.
-            optimize_methods(dict): Customize sub optimizers. optimize_methods[m]
-                is a list of methods that are applied to a block of mode m.
+            partition_method(str): choose partition method (circuit_based or dag_based).
+            optimize_methods(dict): Used if you want to customize sub optimizers.
+                optimize_methods[m] is a list of methods that are applied to a block of mode m.
         """
 
-        self.partition_method = 'circuit_based'
         self.optimize_methods = optimize_methods
         if optimize_methods is None:
             self._add_default_optimizers(level, keep_phase)
 
-        self.merge_threshold = merge_threshold
         self.verbose = verbose
         self.keep_phase = keep_phase
+        self.partition_method = partition_method
 
-    def _add_default_optimizers(self, level, keep_phase):
+        # heuristic parameters
+        self.merge_threshold = 30
+        self.clifford_threshold = 0.6
+        self.merge_iterations = 4
+
+    def _add_default_optimizers(self, level, kp_ph):
         self.optimize_methods = {}
         if level == 'light':
             self.add_optimizer(CircuitMode.Clifford, SymbolicCliffordOptimization())
-            # self.add_optimizer(CircuitMode.CliffordRz, CommutativeOptimization())
-            self.add_optimizer(CircuitMode.CliffordRz, CliffordRzOptimization(level='light', keep_phase=keep_phase))
+            self.add_optimizer(
+                CircuitMode.CliffordRz,
+                CliffordRzOptimization(level='light', keep_phase=kp_ph, optimize_toffoli=False)
+            )
             self.add_optimizer(
                 CircuitMode.Arithmetic,
                 TemplateOptimization(template_typelist=[GateType.x, GateType.cx, GateType.ccx])
             )
-            self.add_optimizer(CircuitMode.Misc, CommutativeOptimization(keep_phase=keep_phase))
+            self.add_optimizer(CircuitMode.Misc, CommutativeOptimization(keep_phase=kp_ph))
 
         elif level == 'heavy':
             self.add_optimizer(CircuitMode.Clifford, SymbolicCliffordOptimization())
-            self.add_optimizer(CircuitMode.Clifford, CliffordRzOptimization(level='light', keep_phase=keep_phase))
-            self.add_optimizer(CircuitMode.CliffordRz, CliffordRzOptimization(level='heavy', keep_phase=keep_phase))
+            self.add_optimizer(
+                CircuitMode.Clifford,
+                CliffordRzOptimization(level='light', keep_phase=kp_ph, optimize_toffoli=True)
+            )
+            self.add_optimizer(
+                CircuitMode.CliffordRz,
+                CliffordRzOptimization(level='heavy', keep_phase=kp_ph, optimize_toffoli=True)
+            )
             self.add_optimizer(
                 CircuitMode.Arithmetic,
                 TemplateOptimization(template_typelist=[GateType.x, GateType.cx, GateType.ccx]),
             )
-            self.add_optimizer(CircuitMode.Arithmetic, CliffordRzOptimization(level='light', keep_phase=keep_phase))
-
-            self.add_optimizer(CircuitMode.Misc, CommutativeOptimization(keep_phase=keep_phase))
+            self.add_optimizer(
+                CircuitMode.Arithmetic,
+                CliffordRzOptimization(level='light', keep_phase=kp_ph, optimize_toffoli=True)
+            )
+            self.add_optimizer(CircuitMode.Misc, CommutativeOptimization(keep_phase=kp_ph))
 
     def __repr__(self):
         return f'CircuitPartitionOptimization(partition_method={self.partition_method}, ' \
@@ -110,7 +126,9 @@ class CircuitPartitionOptimization(object):
         if mode_prev == self._get_init_mode(g):
             return mode_prev
         if mode_prev == CircuitMode.CliffordRz and g.is_clifford():
-            return CircuitMode.CliffordRz
+            # merge a clf gate into a clf+rz block with half probability
+            if random.random() > self.clifford_threshold:
+                return CircuitMode.CliffordRz
         if mode_prev == CircuitMode.Arithmetic and g.type in [GateType.x, GateType.cx, GateType.ccx]:
             return CircuitMode.Arithmetic
         return None
@@ -120,17 +138,36 @@ class CircuitPartitionOptimization(object):
         Returns:
             CircuitMode: the mode if `prev` and `succ` is merged
         """
+
+        # Case 1: merge circuits with the same mode
         if prev.mode == succ.mode:
             return prev.mode
 
         robust_mode = {CircuitMode.CliffordRz, CircuitMode.Misc}
         if min(prev.circuit.size(), succ.circuit.size()) <= self.merge_threshold:
-            if {prev.mode, succ.mode} == {CircuitMode.Clifford, CircuitMode.CliffordRz}:
-                return CircuitMode.CliffordRz
+            if (prev.mode, succ.mode) == (CircuitMode.Clifford, CircuitMode.CliffordRz):
+                # Case 2.1 [Clf & Clf+Rz]: The smaller Clf is, the more possible to merge
+                r = prev.circuit.size() / (prev.circuit.size() + succ.circuit.size())
+                if random.random() > r:
+                    return CircuitMode.CliffordRz
+            elif (succ.mode, prev.mode) == (CircuitMode.Clifford, CircuitMode.CliffordRz):
+                # Case 2.2 [Clf+Rz & Clf]: The smaller Clf is, the more likely to merge
+                r = succ.circuit.size() / (prev.circuit.size() + succ.circuit.size())
+                if random.random() > r:
+                    return CircuitMode.CliffordRz
+
             elif prev.size() >= succ.size() and prev.mode in robust_mode:
+                # Case 3.1: merge small succ into robust mode
                 return prev.mode
             elif succ.size() >= prev.size() and succ.mode in robust_mode:
+                # Case 3.2: merge small prev into robust mode
                 return succ.mode
+
+            elif {prev.mode, succ.mode} == {CircuitMode.Clifford, CircuitMode.Arithmetic}:
+                # Case 4 [Clf & Arithmetic]: the smaller they are, the more likely to merge
+                r = 1 - max(prev.circuit.size(), succ.circuit.size()) / self.merge_threshold
+                if random.random() > r:
+                    return CircuitMode.CliffordRz
         return None
 
     def _topo_sort_blocks(self, blocks):
@@ -172,6 +209,17 @@ class CircuitPartitionOptimization(object):
                 que.append(nxt)
         return False
 
+    def _merge_blocks(self, blocks):
+        ret = blocks[0:1]
+        for b in blocks[1:]:
+            m = self._get_merged_mode(ret[-1], b)
+            if m is not None:
+                ret[-1].extend(b.circuit.gates)
+                ret[-1].mode = m
+            else:
+                ret.append(b)
+        return ret
+
     def _circuit_based_partition(self, circuit: Circuit):
         """
         Partition circuit into blocks based on circuit net-list.
@@ -209,12 +257,12 @@ class CircuitPartitionOptimization(object):
             for i in filter(lambda n: cur_circ[n] != -1, args):
                 sub_circ = blocks[cur_circ[i]]
 
-                # condition 1: gate type is compatible
+                # Condition 1: gate type is compatible
                 appended_mode = self._get_appended_mode(sub_circ.mode, g)
                 if appended_mode is None:
                     continue
 
-                # condition 2: appending to block i forms no cycle
+                # Condition 2: appending to block i forms no cycle
                 flag = True
                 for j in filter(lambda n: cur_circ[n] != -1, args):
                     if cur_circ[j] != cur_circ[i] and \
@@ -243,22 +291,66 @@ class CircuitPartitionOptimization(object):
         # topological sort blocks
         blocks = self._topo_sort_blocks(blocks)
 
-        # merge blocks
-        for i in range(1, len(blocks)):
-            merged_mode = self._get_merged_mode(blocks[i - 1], blocks[i])
-            if merged_mode is not None:
-                blocks[i - 1].extend(blocks[i].circuit.gates)
-                blocks[i - 1].mode = merged_mode
-                blocks[i] = blocks[i - 1]
-                blocks[i - 1] = None
+        for _ in range(self.merge_iterations):
+            blocks = self._merge_blocks(blocks)
 
-        return list(filter(lambda x: x is not None, blocks))
+        return blocks
 
     def _dag_based_partition(self, circuit):
         """
         Partition circuit into blocks based on DAG.
         """
-        assert False, 'not supported yet'
+        dag = DAGCircuit(circuit)
+        blocks = []
+        assigned_blk = [-1] * dag.size
+        reachable = np.zeros(shape=(dag.size,), dtype=bool)
+        for idx, g in enumerate(dag.gates):
+            init_mode = self._get_init_mode(g)
+            reachable[: idx] = True
+            for prev in reversed(range(idx)):
+                g_prev = dag.get_node(prev).gate
+                if reachable[prev]:
+                    # FIXME better order
+                    sub_circ = blocks[assigned_blk[prev]]
+
+                    # Condition 1: gate type is compatible
+                    appended_mode = self._get_appended_mode(sub_circ.mode, g)
+                    if appended_mode is None:
+                        continue
+
+                    # Condition 2: form no cycle
+                    flag = True
+                    for j in dag.get_node(idx).predecessors:
+                        if assigned_blk[prev] != assigned_blk[j] and \
+                                self._is_reachable(assigned_blk[prev], assigned_blk[j], blocks):
+                            flag = False
+                            break
+
+                    if flag:
+                        sub_circ.append(g)
+                        assigned_blk[idx] = assigned_blk[prev]
+                        sub_circ.mode = appended_mode
+                        break
+
+                    if not g.commutative(g_prev):
+                        reachable[list(dag.all_predecessors(prev))] = False
+
+            if assigned_blk[idx] == -1:
+                blocks.append(self.SubCircuit(circuit.width(), init_mode))
+                assigned_blk[idx] = len(blocks) - 1
+                blocks[assigned_blk[idx]].append(g)
+
+            for j in dag.get_node(idx).predecessors:
+                if assigned_blk[idx] != assigned_blk[j]:
+                    blocks[assigned_blk[j]].succ.add(assigned_blk[idx])
+
+        # topological sort blocks
+        blocks = self._topo_sort_blocks(blocks)
+
+        for _ in range(self.merge_iterations):
+            blocks = self._merge_blocks(blocks)
+
+        return blocks
 
     def partition(self, circuit):
         """
@@ -270,7 +362,7 @@ class CircuitPartitionOptimization(object):
 
         if self.partition_method == 'circuit_based':
             return self._circuit_based_partition(circuit)
-        elif self.partition_method == 'circuit_based':
+        elif self.partition_method == 'dag_based':
             return self._dag_based_partition(circuit)
 
         return []
@@ -282,7 +374,6 @@ class CircuitPartitionOptimization(object):
 
         Args:
             circuit(Circuit): the circuit to optimize
-            verbose(bool): if verbose
 
         Returns:
             Circuit: the optimized circuit

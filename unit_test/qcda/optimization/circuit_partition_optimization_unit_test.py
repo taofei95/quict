@@ -8,10 +8,10 @@ from QuICT.qcda.optimization.circuit_partition import CircuitPartitionOptimizati
 
 
 def test_default_light_optimization():
-    n_iter = 1
-    n_qubit = 4
-    n_block = 4
-    n_gate = 20
+    n_iter = 3
+    n_qubit = 6
+    n_block = 6
+    n_gate = 100
     mode_list = [
         [CircuitMode.Misc, None],
         [CircuitMode.Arithmetic, [GateType.x, GateType.cx, GateType.ccx]],
@@ -19,23 +19,24 @@ def test_default_light_optimization():
         [CircuitMode.CliffordRz, CLIFFORD_GATE_SET + [GateType.t, GateType.tdg, GateType.rz]]
     ]
 
-    qcda_heavy = CircuitPartitionOptimization(level='light', verbose=True, keep_phase=True)
+    cp_light = CircuitPartitionOptimization(level='light', verbose=True, keep_phase=True)
 
     for _ in range(n_iter):
         circ = Circuit(n_qubit)
         for __ in range(n_block):
             mode, typelist = choice(mode_list)
+            print(__, mode)
             circ.random_append(n_gate, typelist)
 
-        circ_l = qcda_heavy.execute(circ)
+        circ_l = cp_light.execute(circ)
         assert np.allclose(circ_l.matrix(), circ.matrix())
 
 
 def test_default_heavy_optimization():
-    n_iter = 1
+    n_iter = 3
     n_qubit = 4
     n_block = 4
-    n_gate = 20
+    n_gate = 40
     mode_list = [
         [CircuitMode.Misc, None],
         [CircuitMode.Arithmetic, [GateType.x, GateType.cx, GateType.ccx]],
@@ -43,13 +44,14 @@ def test_default_heavy_optimization():
         [CircuitMode.CliffordRz, CLIFFORD_GATE_SET + [GateType.t, GateType.tdg, GateType.rz]]
     ]
 
-    qcda_heavy = CircuitPartitionOptimization(level='heavy', verbose=True, keep_phase=True)
+    cp_heavy = CircuitPartitionOptimization(level='heavy', verbose=True, keep_phase=True)
 
     for _ in range(n_iter):
         circ = Circuit(n_qubit)
         for __ in range(n_block):
             mode, typelist = choice(mode_list)
+            print(__, mode)
             circ.random_append(n_gate, typelist)
 
-        circ_l = qcda_heavy.execute(circ)
-        assert np.allclose(circ_l.matrix(), circ.matrix())
+        circ_h = cp_heavy.execute(circ)
+        assert np.allclose(circ_h.matrix(), circ.matrix())
