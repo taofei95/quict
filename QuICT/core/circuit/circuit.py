@@ -441,7 +441,7 @@ class Circuit(CircuitBased):
             for q in range(qubits):
                 gate_type = supremacy_typelist[np.random.randint(0, 3)]
                 fgate = gate_builder(gate_type)
-                self.append((fgate, q, 1))
+                self._gates.append((fgate, q, 1))
 
             current_pattern = pattern[i % (len(pattern))]
             if current_pattern not in "ABCD":
@@ -451,9 +451,9 @@ class Circuit(CircuitBased):
             for e in edges:
                 gate_params = [np.pi / 2, np.pi / 6]
                 gate_args = [int(e[0]), int(e[1])]
-                fgate = gate_builder(GateType.fsim, gate_params)
+                fgate = gate_builder(GateType.fsim, params=gate_params)
 
-                self.append((fgate, gate_args, 1))
+                self._gates.append((fgate, gate_args, 1))
 
         self._add_gate_to_all_qubits(Measure)
 

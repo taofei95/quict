@@ -36,15 +36,15 @@ class MultiControlToffoli(object):
         # Special cases, no MCT would be executed.
         if control == 0:
             gates = CompositeGate()
-            X & 0 | gates
+            X | gates(0)
             return gates
         if control == 1:
             gates = CompositeGate()
-            CX & [0, 1] | gates
+            CX | gates([0, 1])
             return gates
         if control == 2:
             gates = CompositeGate()
-            CCX & [0, 1, 2] | gates
+            CCX | gates([0, 1, 2])
             return gates
 
         # Otherwise

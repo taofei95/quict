@@ -788,11 +788,22 @@ class QFT(BasicGate):
 
         return inverse_gate
 
+    def build_gate(self):
+        gate_list = ComplexGateBuilder.build_qft(self.targets)
+
+        cgate = self._cgate_generator_from_build_gate(gate_list)
+        gate_args = self.cargs + self.targs
+        if len(gate_args) > 0:
+            cgate & gate_args
+
+        return cgate
+
 
 class IQFT(QFT):
     def __init__(self, targets: int):
         assert targets >= 2, "QFT Gate need at least two targets."
-        super().__init__(0, targets, 0, GateType.iqft, MatrixType.normal)
+        super().__init__(targets)
+        self._type = GateType.iqft
 
     def inverse(self):
         inverse_gate = QFT(self.targets)
@@ -800,6 +811,16 @@ class IQFT(QFT):
             inverse_gate.targs = self.targs[:]
 
         return inverse_gate
+
+    def build_gate(self):
+        gate_list = ComplexGateBuilder.build_iqft(self.targets)
+
+        cgate = self._cgate_generator_from_build_gate(gate_list)
+        gate_args = self.cargs + self.targs
+        if len(gate_args) > 0:
+            cgate & gate_args
+
+        return cgate
 
 
 def gate_builder(gate_type, precision: str = "double", params: list = [], random_params: bool = False):

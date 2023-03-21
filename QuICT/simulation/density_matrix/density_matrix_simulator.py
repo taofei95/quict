@@ -2,7 +2,7 @@ import numpy as np
 import random
 
 from QuICT.core.circuit.circuit import Circuit
-from QuICT.core.gate import BasicGate, UnitaryGate, Unitary, CompositeGate
+from QuICT.core.gate import BasicGate, CompositeGate
 from QuICT.core.noise import NoiseModel
 from QuICT.core.operator import NoiseGate
 from QuICT.core.utils import GateType, matrix_product_to_circuit
