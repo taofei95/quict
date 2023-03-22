@@ -10,7 +10,7 @@
     \alpha |0⟩ + \beta |1⟩
     $$
 
-    变换到$|0⟩$和$|1⟩$互换角色的新状态
+    变换到 $|0⟩$ 和 $|1⟩$ 互换角色的新状态
     
     $$
     \alpha |1⟩ + \beta |0⟩
@@ -25,7 +25,7 @@
     \end{bmatrix}
     $$
 
-    再将量子态$\alpha |0⟩ + \beta |1⟩$写成向量模式为
+    再将量子态 $\alpha |0⟩ + \beta |1⟩$ 写成向量模式为
     
     $$
     \begin{bmatrix}
@@ -48,8 +48,8 @@
 
 ## 基础量子门 (Basic Gate)
 
-在QuICT中，我们使用BasicGate类来实现量子门，包括单/多量子比特门和参数/非参数门。
-对于 QuICT 中的每个量子门，它都具有以下属性(以CX门为例)：
+在QuICT中，我们使用 BasicGate 类来实现量子门，包括单/多量子比特门和参数/非参数门。
+对于 QuICT 中的每个量子门，它都具有以下属性(以 CX 门为例)：
 
 ``` python
 from QuICT.core.gate import CX
@@ -99,15 +99,15 @@ my_CXGate.commutative(other_gate)   # 当前量子门是否能和目标量子门
 inverse_gate = my_CXGate.inverse()  # 得到当前量子门的反转量子门
 ```
 
-### 当前QuICT所支持的量子门种类
+### 当前 QuICT 所支持的量子门种类
 
-|  量子门种类  |   名称   |
-|   ------    | ------- |
-|    单比特门    | H, HY, S, S_dagger, X, Y, Z, SX, SY, SW, ID, U1, U2, U3, Rx, Ry, Rz, Ri, T, T_dagger, Phase |
-|    双比特门    | FSim, Rxx, Ryy, Rzz, Rzx, Swap |
-|  受控双比特门  | CZ, CX, CY, CH, CRz, CU1, CU3 |
-|  多比特门(>=3) | CCX, CCZ, CCRz, QFT, IQFT, CSwap |
-|  特殊量子门    | Measure, Reset, Barrier, Perm, Unitary, Multi-Control Toffoli, uniformly control gate |
+| 量子门种类    | 名称                                                                                        |
+| ------------- | ------------------------------------------------------------------------------------------- |
+| 单比特门      | H, HY, S, S_dagger, X, Y, Z, SX, SY, SW, ID, U1, U2, U3, Rx, Ry, Rz, Ri, T, T_dagger, Phase |
+| 双比特门      | FSim, Rxx, Ryy, Rzz, Rzx, Swap                                                              |
+| 受控双比特门  | CZ, CX, CY, CH, CRz, CU1, CU3                                                               |
+| 多比特门(>=3) | CCX, CCZ, CCRz, QFT, IQFT, CSwap                                                            |
+| 特殊量子门    | Measure, Reset, Barrier, Perm, Unitary, Multi-Control Toffoli, uniformly control gate       |
 
 
 ## 组合量子门 (Composite Gate)
@@ -144,7 +144,7 @@ with CompositeGate() as cg_context:
 print(cg_context.qasm())
 ```
 
-在QuICT中，我们内置了一些常见的组合量子门，例如：QFT、多控Toffoli门、CCRz等量子门组合。
+在 QuICT 中，我们内置了一些常见的组合量子门，例如： QFT 、多控 Toffoli 门、 CCRz 等量子门组合。
 
 ``` python
 from QuICT.core.gate import QFT, MultiControlToffoli

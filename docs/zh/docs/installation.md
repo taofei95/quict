@@ -8,7 +8,7 @@ hide:
 ### 预先准备
 
 - PYTHON VERSION >= 3.7
-- GPU环境要求
+- GPU 环境要求
   
     - Cupy: [Installing Cupy](https://docs.cupy.dev/en/stable/install.html)
         
@@ -23,7 +23,7 @@ hide:
 pip install quict
 ```
 
-### 从Gitee处安装
+### 从 Gitee 处安装
 
 - 克隆 QuICT 仓库
 
@@ -52,7 +52,7 @@ pip install quict
 
 - PYTHON VERSION >= 3.7
 
-- GPU环境要求
+- GPU 环境要求
 
     - Cupy: [Installing Cupy](https://docs.cupy.dev/en/stable/install.html)
         
@@ -63,7 +63,7 @@ pip install quict
     
     - Pytorch: [Installing Pytorch](https://pytorch.org/get-started/locally/)
 
-- RL mapping额外要求
+- RL mapping 额外要求
 
     - pytorch_geometric: [Installing pytorch-geometric](https://pytorch-geometric.readthedocs.io/en/latest/install/installation.html)
     - torch_sparse: [Installing torch-sparse](https://pypi.org/project/torch-sparse/)
@@ -79,7 +79,7 @@ pip install quict
 pip install quict-ml
 ```
 
-### 从Gitee处安装
+### 从 Gitee 处安装
 
 - 克隆 QuICT 仓库
 
@@ -120,9 +120,9 @@ pip install quict-sim
     ```
 
 - Linux 系统 \
-推荐使用 Python venv。在系统范围内安装软件包可能会导致权限错误。以下命令将构建 QuICT 并安装它。如果您在安装时遇到权限错误，请尝试使用 venv 或为 install.sh 附加 --user 标志。
+推荐使用 Python venv 。在系统范围内安装软件包可能会导致权限错误。以下命令将构建 QuICT 并安装它。如果您在安装时遇到权限错误，请尝试使用 venv 或为 install.sh 附加 --user 标志。
 
-    > 由于低版本 GCC (<=11) 中缺少一些功能，建议使用 clang 构建当前的 QuICT。在未来的版本中，将支持 GCC。
+    > 由于低版本 GCC (<=11) 中缺少一些功能，建议使用 clang 构建当前的 QuICT 。在未来的版本中，将支持 GCC 。
     ```sh
     export CC=clang && export CXX=clang++ && ./build.sh && ./install.sh
 
@@ -131,7 +131,7 @@ pip install quict-sim
     ```
 
 - Windows 系统 \
-推荐使用 clang-cl.exe，它是带有 MSVC CLI 的 clang 编译器。其他编译器可能工作但未经测试。打开“PowerShell"，将工作目录更改为 QuICT 存储库根目录。然后使用以下命令构建：
+推荐使用 clang-cl.exe ，它是带有 MSVC CLI 的 clang 编译器。其他编译器可能工作但未经测试。打开 “PowerShell" ，将工作目录更改为 QuICT 存储库根目录。然后使用以下命令构建：
 
     ```powershell
     .\build.ps1

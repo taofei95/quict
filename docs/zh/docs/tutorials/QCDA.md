@@ -4,7 +4,7 @@
 
 ## 核心逻辑
 
-QCDA模块实质上连缀了一系列以`execute()`函数为主执行函数的电路合成、优化、映射方法，其中`execute()`函数以`CompositeGate`对象或`Circuit`对象为输入和输出。依据这一规则用户可以按照自己的需求构建新的电路变换方法并接入QCDA中。
+QCDA模块实质上连缀了一系列以 `execute()` 函数为主执行函数的电路合成、优化、映射方法，其中 `execute()` 函数以 `CompositeGate` 对象或 `Circuit` 对象为输入和输出。依据这一规则用户可以按照自己的需求构建新的电路变换方法并接入 QCDA 中。
 
 ## 代码实例
 
@@ -25,7 +25,7 @@ qcda.add_gate_transform(USTCSet)
 circuit_phy = qcda.compile(circuit)
 ```
 
-以上的代码给出了QCDA的一个典型使用例，以下给出了一组原电路及其对应的物理电路。
+以上的代码给出了 QCDA 的一个典型使用例，以下给出了一组原电路及其对应的物理电路。
 
 原逻辑电路：
 

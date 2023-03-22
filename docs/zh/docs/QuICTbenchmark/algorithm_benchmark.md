@@ -1,8 +1,8 @@
 # 算法基准测试
 
-## Shor因数分解算法
+## Shor 因数分解算法
 
-用HRS_zip变体和BEA_zip变体，用Shor算法分解2的5次方至2的9次方因数。
+用 HRS_zip 变体和 BEA_zip 变体，用 Shor 算法分解2的5次方至2的9次方因数。
 
 <figure markdown>
 
@@ -10,9 +10,9 @@
 
 </figure>
 
-## Grover搜索算法
+## Grover 搜索算法
 
-Grover算法在空间中搜索2的4次方至2的7次方求解单个解SAT问题。
+Grover 算法在空间中搜索2的4次方至2的7次方求解单个解 SAT 问题。
 
 <figure markdown>
 
@@ -32,7 +32,7 @@ Grover算法在空间中搜索2的4次方至2的7次方求解单个解SAT问题�
 
 ## 量子游走搜索算法
 
-在3, 4, 5, 6, 8维的超立方体上进行量子游走搜索算法
+在3, 4, 5, 6, 8维的超立方体上进行量子游走搜索算法。
 
 <figure markdown>
 

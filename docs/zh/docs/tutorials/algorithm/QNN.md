@@ -2,9 +2,9 @@
 
 !!! note
 
-    本教程额外依赖quict-ml库
+    本教程额外依赖 quict-ml 库
 
-本教程旨在介绍如何使用经典机器学习库Pytorch和QuICT中内置的量子神经网络层构建一个用于分类MNIST手写数据集的量子神经网络（Quantum Neural Network, QNN）。
+本教程旨在介绍如何使用经典机器学习库 Pytorch 和 QuICT 中内置的量子神经网络层构建一个用于分类 MNIST 手写数据集的量子神经网络（Quantum Neural Network, QNN）。
 
 ## 导入运行库
 
@@ -27,14 +27,14 @@ from QuICT_ml.utils.ml_utils import *
 from QuICT_ml.model.QNN import QuantumNet
 ```
 
-## 加载和预处理MNIST数据
+## 加载和预处理 MNIST 数据
 
-在本教程中，我们将遵循Farhi et al.[<sup>[1]</sup>](#refer1)的实验，对数字3和6进行分类。对MNIST数据集的预处理主要目的是使图片能够被编码为量子电路。
+在本教程中，我们将遵循 Farhi et al.[<sup>[1]</sup>](#refer1) 的实验，对数字3和6进行分类。对MNIST数据集的预处理主要目的是使图片能够被编码为量子电路。
 
 
-### 1. 加载原始MNIST数据
+### 1. 加载原始 MNIST 数据
 
-Pytorch的torchvision库中的datasets能够自动下载MNIST数据集：
+Pytorch 的 torchvision 库中的 datasets 能够自动下载 MNIST 数据集：
 
 ``` python
 train_data = datasets.MNIST(root="./data/", train=True, download=True)
@@ -55,7 +55,7 @@ Testing examples:  10000
 
 ### 2. 筛选数据集使其仅包含数字3和6
 
-为了实现对数字3和6的二分类，我们需要删除其他数字，只保留标签为3和6的数据。并且定义标签`y = 6`为正类，`y = 3`为负类：
+为了实现对数字3和6的二分类，我们需要删除其他数字，只保留标签为3和6的数据。并且定义标签 `y = 6` 为正类， `y = 3` 为负类：
 
 ``` python
 def filter_targets(X, Y, class0=3, class1=6):
@@ -96,7 +96,7 @@ Label:  tensor(False)
 
 ### 3. 缩小图像
 
-原始的MNIST数据集图片尺寸是28x28，这对于目前的量子计算来说太大了，无法被编码，因此需要将其缩小到4x4：
+原始的 MNIST 数据集图片尺寸是28x28，这对于目前的量子计算来说太大了，无法被编码，因此需要将其缩小到4x4：
 
 ``` python
 def downscale(X, resize):
@@ -190,7 +190,7 @@ bin_test_X = binary_img(nocon_test_X, threshold)
     Remaining testing examples:  93
     ```
 
-最后，将数据转移到GPU上以便进行训练：
+最后，将数据转移到 GPU 上以便进行训练：
 
 ``` python
 device = torch.device("cuda:0")
@@ -203,15 +203,15 @@ test_Y = nocon_test_Y.to(device)
 
 !!! warning
 
-    不推荐使用CPU进行训练，速度上很难保证，并且容易失败。
+    不推荐使用 CPU 进行训练，速度上很难保证，并且容易失败。
 
 
 
 ## 将图像数据编码为量子电路
 
-本教程将使用量子比特编码（qubit encoding）将图片数据转为量子电路。每个像素对应一个量子比特，像素值为0对应量子态 $\left | 0 \right \rangle$，像素值为1对应量子态 $\left | 1 \right \rangle$。为了达成这一目的，值为1的像素所对应的量子比特上会被施加一个X门使量子态由 $\left | 0 \right \rangle$ 转为 $\left | 1 \right \rangle$。
+本教程将使用量子比特编码（qubit encoding）将图片数据转为量子电路。每个像素对应一个量子比特，像素值为0对应量子态 $\left | 0 \right \rangle$ ，像素值为1对应量子态 $\left | 1 \right \rangle$ 。为了达成这一目的，值为1的像素所对应的量子比特上会被施加一个 X 门使量子态由 $\left | 0 \right \rangle$ 转为 $\left | 1 \right \rangle$ 。
 
-QuICT中内置了量子比特编码方式，以2x2的图片为例:
+QuICT 中内置了量子比特编码方式，以2x2的图片为例:
 
 ``` python
 img = torch.tensor([[0, 1], [0, 0]]).to(device)
@@ -243,13 +243,13 @@ ansatz_test_X = qubit_encoding(test_X, device)
 
 ## 量子神经网络
 
-本教程根据Farhi et al.[<sup>[1]</sup>](#refer1)使用的方法进行简化构建模型量子电路，主要用始终作用于读出量子比特的双比特门进行电路构建。
+本教程根据 Farhi et al.[<sup>[1]</sup>](#refer1) 使用的方法进行简化构建模型量子电路，主要用始终作用于读出量子比特的双比特门进行电路构建。
 
 ### 1. 构建模型电路
 
-模型电路除了数据量子比特之外，还额外有一个读出量子比特，用于存储预测的分类结果，根据Measure门的测量结果是 $\left | 1 \right \rangle$ 和 $\left | 0 \right \rangle$ 判定输入图片属于正类还是负类。Farhi et al.[<sup>[1]</sup>](#refer1)使用的模型量子电路，是用双比特门（通常是RXX，RYY，RZZ和RZX门）始终作用在读出量子比特，和全部数据量子比特上构建的。QuICT内置了这样的QNN模型电路，我们规定前16个量子比特是数据量子比特，最后一个量子比特是读出量子比特比特：
+模型电路除了数据量子比特之外，还额外有一个读出量子比特，用于存储预测的分类结果，根据 Measure 门的测量结果是 $\left | 1 \right \rangle$ 和 $\left | 0 \right \rangle$ 判定输入图片属于正类还是负类。 Farhi et al.[<sup>[1]</sup>](#refer1) 使用的模型量子电路，是用双比特门（通常是 RXX，RYY，RZZ 和 RZX 门）始终作用在读出量子比特，和全部数据量子比特上构建的。 QuICT 内置了这样的 QNN 模型电路，我们规定前16个量子比特是数据量子比特，最后一个量子比特是读出量子比特比特：
 
-以含4个数据量子比特的情况为例，单层RXX的QNN模型电路应为：
+以含4个数据量子比特的情况为例，单层 RXX 的 QNN 模型电路应为：
 
 ``` python
 pqc = QNNLayer(list(range(4)), 4, device=device)
@@ -262,7 +262,7 @@ model_circuit.draw()
 ![PQC](../../assets/images/tutorials/algorithm/QNN/pqc.png){:width="400px"}
 </figure>
 
-本教程中将使用两层网络，分别是RXX层和RZZ层，可训练参数的数量即为数字比特数x网络层数：
+本教程中将使用两层网络，分别是 RXX 层和 RZZ 层，可训练参数的数量即为数字比特数 * 网络层数：
 
 ``` python
 data_qubits = list(range(16))
@@ -276,9 +276,9 @@ model_ansatz = pqc(layers, params)
 接下来只需要将数据电路与模型电路连接即可开始训练。
 
 
-### 2. 用QuICT内置的QuantumNet进行训练
+### 2. 用 QuICT 内置的 QuantumNet 进行训练
 
-以上对图片进行编码和构建模型电路的过程可以认为是构建QNN模型，QuICT的QuantumNet集成了这些步骤，只需定义网络之后按照经典神经网络的训练过程进行训练即可。
+以上对图片进行编码和构建模型电路的过程可以认为是构建 QNN 模型， QuICT 的 QuantumNet 集成了这些步骤，只需定义网络之后按照经典神经网络的训练过程进行训练即可。
 
 首先，设置机器学习相关参数：
 
@@ -291,7 +291,7 @@ SEED = 17       # 随机数种子
 set_seed(SEED)  # 设置全局随机种子
 ```
 
-然后将预处理后的MNIST图像数据集装入DataLoader：
+然后将预处理后的 MNIST 图像数据集装入 DataLoader ：
 
 ``` python
 train_dataset = data.TensorDataset(train_X, train_Y)
@@ -304,14 +304,14 @@ test_loader = data.DataLoader(
 )
 ```
 
-定义待训练的QNN网络和经典优化器：
+定义待训练的 QNN 网络和经典优化器：
 
 ``` python
 net = QuantumNet(16, layers, encoding="qubit", device=device)
 optim = torch.optim.Adam([dict(params=net.parameters(), lr=LR)])
 ```
 
-定义损失函数，此处使用hinge loss：
+定义损失函数，此处使用 hinge loss ：
 
 ``` python
 def loss_func(y_true, y_pred):
@@ -380,9 +380,9 @@ Validating epoch 3: 100%|██████████| 56/56 [05:07<00:00,  5.
 Validation Average Loss: 0.3986954092979431, Accuracy: 0.8364955357142857
 ```
 
-### 3. 用QuICT提供的模型进行测试
+### 3. 用 QuICT 提供的模型进行测试
 
-QuICT提供了一个已经训练好的模型，并内置了保存和加载模型的函数，可以用来测试QNN分类效果。
+QuICT 提供了一个已经训练好的模型，并内置了保存和加载模型的函数，可以用来测试 QNN 分类效果。
 
 ``` python
 # Restore checkpoint
@@ -413,9 +413,9 @@ Testing Average Accuracy: 0.8364955357142857
 
 ## 与经典卷积神经网络对比
 
-接下来我们将构建经典CNN，并在相同的条件下（相同的预处理数据，优化器和损失函数）进行对比测试。
+接下来我们将构建经典 CNN ，并在相同的条件下（相同的预处理数据，优化器和损失函数）进行对比测试。
 
-首先，针对4x4图片构建经典CNN：
+首先，针对4x4图片构建经典 CNN ：
 
 ``` python
 class ClassicalNet(nn.Module):
@@ -433,7 +433,7 @@ class ClassicalNet(nn.Module):
         return x
 ```
 
-对于CNN来说任务简单，网络参数较少，为了避免过拟合，训练轮数将缩减为1：
+对于 CNN 来说任务简单，网络参数较少，为了避免过拟合，训练轮数将缩减为1：
 
 ``` python
 EPOCH = 1
@@ -495,7 +495,7 @@ Validating epoch 1: 100%|██████████| 56/56 [00:00<00:00, 124
 Validation Average Loss: 0.21558025479316711, Accuracy: 0.9375
 ```
 
-QNN与CNN对MNIST手写数据集数字3和6分类的准确率对比：
+QNN 与 CNN 对 MNIST 手写数据集数字3和6分类的准确率对比：
 
 ``` python
 ax = sns.barplot(x=["QNN", "CNN"], y=[qnn_avg_acc, classical_avg_acc])

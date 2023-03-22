@@ -1,10 +1,10 @@
 # 量子振幅估计算法
 
-量子振幅估计算法（Quantum Amplitude Estimation, QAE）用于计算一个量子态在目标空间上的振幅，常作为其他算法的组件，例如用于量子蒙特卡洛方法[<sup>[4]</sup>](#refer4)中。本教程旨在介绍如何使用QuICT中的QAE模块，并结合代码实例进一步阐述此算法。
+量子振幅估计算法（Quantum Amplitude Estimation, QAE）用于计算一个量子态在目标空间上的振幅，常作为其他算法的组件，例如用于量子蒙特卡洛方法[<sup>[4]</sup>](#refer4)中。本教程旨在介绍如何使用 QuICT 中的 QAE 模块，并结合代码实例进一步阐述此算法。
 
 ## 算法原理 
 
-QAE算法的输入是期望精度 $\epsilon$ ，oracle电路 $S_\chi$（与Grover算法中的输入相同），以及状态制备电路 $\mathcal{A}$ ；以高概率输出振幅估计 $\tilde a$，满足 $|a-\tilde a|<\epsilon$ 。
+QAE算法的输入是期望精度 $\epsilon$ ， oracle 电路 $S_\chi$（与 Grover 算法中的输入相同），以及状态制备电路 $\mathcal{A}$ ；以高概率输出振幅估计 $\tilde a$ ，满足 $|a-\tilde a|<\epsilon$ 。
 
 量子振幅估计问题的直观理解是考虑一个概率量子算子 $\mathcal{A}$ ，它以一定的概率输出期望状态 $|\Psi_1\rangle$ ，即：
 
@@ -18,9 +18,9 @@ $$
 a = \|\langle\Psi_1 | \mathcal{A} | 0\rangle\|^2
 $$
 
-Brassard等人[<sup>[1]</sup>](#refer1)在2000年提出的算法主要使用了以下两个技术：
+Brassard 等人[<sup>[1]</sup>](#refer1)在2000年提出的算法主要使用了以下两个技术：
 
-- 一是振幅放大，使用了Grover算子：
+- 一是振幅放大，使用了 Grover 算子：
 
     $$
     \mathcal{Q} = \mathcal{A}\mathcal{S}_0\mathcal{A}^\dagger\mathcal{S}_{\chi}
@@ -36,37 +36,37 @@ Brassard等人[<sup>[1]</sup>](#refer1)在2000年提出的算法主要使用了�
 
 - 二是相位估计，观察到 $\mathcal{Q}$ 的两个本征值是 $e^{-i2\arcsin {\sqrt{a}}}$ ，从其相位的估计就直接得到了振幅的估计
 
-然而，该算法需要带有受控位的Grover算子电路，计算成本很高。因此，QAE算法的其他变体被提出。
+然而，该算法需要带有受控位的 Grover 算子电路，计算成本很高。因此， QAE 算法的其他变体被提出。
 
-## 用QuICT实现三种QAE算法
+## 用 QuICT 实现三种 QAE 算法
 
-QuICT中实现了三种振幅估计问题的算法：Canonical QAE[<sup>[1]</sup>](#refer1)、MLAE[<sup>[2]</sup>](#refer2)、FQAE[<sup>[3]</sup>](#refer3)。查询复杂度上第一个算法最优；而电路宽度上第二个算法最优；第三个算法在电路宽度与第二个算法基本一致（常数差距）的同时有更小的查询复杂度，而且在实际应用中表现较好。具体表现见下表：
+QuICT 中实现了三种振幅估计问题的算法： Canonical QAE[<sup>[1]</sup>](#refer1) 、 MLAE[<sup>[2]</sup>](#refer2) 、 FQAE[<sup>[3]</sup>](#refer3) 。查询复杂度上第一个算法最优；而电路宽度上第二个算法最优；第三个算法在电路宽度与第二个算法基本一致（常数差距）的同时有更小的查询复杂度，而且在实际应用中表现较好。具体表现见下表：
 
 | 文献/方法                          | 量子查询复杂度                           | 后处理                                        | 电路深度、宽度                                    |
 | ---------------------------------- | ---------------------------------------- | --------------------------------------------- | ------------------------------------------------- |
-| canonical[<sup>[1]</sup>](#refer1) | 严格最优                                 | 常数（测量得到θ）                             | $\epsilon^{-1}$, QPE宽度+Grover宽度               |
-| MLAE [<sup>[2]</sup>](#refer2)     | 只给出了下界，使用指数队列则包含对数因子 | $\epsilon^{-1}$（在[0,1]区间以ε精度暴力搜索） | 数列最大值，指数队列则$\epsilon^{-1}$, Grover宽度 |
-| FQAE[<sup>[3]</sup>](#refer3)      | 包含了double-log因子                     | $\log \epsilon$                               | $\epsilon^{-1}$, Grover宽度+1 ancilla             |
+| canonical[<sup>[1]</sup>](#refer1) | 严格最优                                 | 常数（测量得到 θ ）                             | $\epsilon^{-1}$, QPE 宽度+ Grover 宽度               |
+| MLAE [<sup>[2]</sup>](#refer2)     | 只给出了下界，使用指数队列则包含对数因子 | $\epsilon^{-1}$（在 [0,1] 区间以 ε 精度暴力搜索） | 数列最大值，指数队列则 $\epsilon^{-1}$ , Grover 宽度 |
+| FQAE[<sup>[3]</sup>](#refer3)      | 包含了 double-log 因子                     | $\log \epsilon$                               | $\epsilon^{-1}$, Grover 宽度+1 ancilla             |
 
 ### 基本用法
 
-`QAE`类位于`QuICT.algorithm.quantum_algorithm`。初始化参数包括：
+`QAE` 类位于 `QuICT.algorithm.quantum_algorithm` 。初始化参数包括：
 
-- `eps`：输出的期望精度。默认为0.1
-- `simulator`：模拟器。默认为`StateVectorSimulator()`
-- `mode`：字符串，可以是`canonical`，`max_likely`，`fast`中的一个，分别代表Canonical QAE，MLAE，和FQAE
+- `eps`： 输出的期望精度。默认为0.1
+- `simulator`： 模拟器。默认为 `StateVectorSimulator()`
+- `mode`： 字符串，可以是 `canonical` ， `max_likely` ， `fast` 中的一个，分别代表 Canonical QAE，MLAE，和 FQAE
 
 函数包括：
 
-- `circuit()`：用于输出电路（只在`canonical`模式可用）
+- `circuit()`： 用于输出电路（只在 `canonical` 模式可用）
 
-- `run()`：用于直接执行算法。为了准备算法所需的输入，需要构造`OracleInfo`对象和`StatePreparationInfo`对象（可选，默认为一层H门）
+- `run()`： 用于直接执行算法。为了准备算法所需的输入，需要构造 `OracleInfo` 对象和 `StatePreparationInfo` 对象（可选，默认为一层 H 门）
 
 ### Canonical QAE
 
-Canonical QAE采用了量子相位估计（QPE）的形式。该算法使用 $m$ 个量子比特来记录想要估计的相位。最终，被测量的整数 $y\in\{0\cdots 2^m - 1\}$ 被映射为一个角度 $\tilde θ_a = y\pi/M$ ，从而得到振幅的估计值$\tilde a =\sin^2(\tilde\theta_a)$。
+Canonical QAE 采用了量子相位估计（QPE）的形式。该算法使用 $m$ 个量子比特来记录想要估计的相位。最终，被测量的整数 $y\in\{0\cdots 2^m - 1\}$ 被映射为一个角度 $\tilde θ_a = y\pi/M$ ，从而得到振幅的估计值 $\tilde a =\sin^2(\tilde\theta_a)$ 。
 
-canonical QAE的电路图如下：
+canonical QAE 的电路图如下：
 
 <figure markdown>
 ![canonical_QAE_ref](../../../assets/images/tutorials/algorithm/quantum_algorithm/canonical_QAE_ref.png){:width="500px"}
@@ -74,7 +74,7 @@ canonical QAE的电路图如下：
 
 #### 代码实例
 
-接下来，我们将以如下的条件为例用QuICT内置的QAE模块实现三种QAE算法：
+接下来，我们将以如下的条件为例用 QuICT 内置的 QAE 模块实现三种 QAE 算法：
 
 $$
 \mathcal{A}=H^{\otimes n}, \quad S_\chi=CZ \otimes I_{n-2}
@@ -89,7 +89,7 @@ from QuICT.algorithm.quantum_algorithm import QAE, OracleInfo
 from QuICT.core.gate import *
 ```
 
-构造Grover算子：
+构造 Grover 算子：
 
 ``` python
 def example_oracle(n):
@@ -125,7 +125,7 @@ pr_function_good /= 1 << n
 
 ```
 
-使用QuICT的QAE模块进行100轮振幅估计，允许误差为0.05：
+使用 QuICT 的 QAE 模块进行100轮振幅估计，允许误差为0.05：
 
 ``` python
 eps = 0.05
@@ -159,11 +159,11 @@ success rate 1.00 with  100 samples
 
 ### MLAE
 
-MLAE（Maximum Likelihood Amplitude Estimation）不使用QPE组件，而是使用最大似然估计方法作为替代，从而使得该算法更有希望在NISQ设备上运行。该算法的量子部分为一层状态制备电路加上若干Grover算子。
+MLAE（Maximum Likelihood Amplitude Estimation）不使用 QPE 组件，而是使用最大似然估计方法作为替代，从而使得该算法更有希望在 NISQ 设备上运行。该算法的量子部分为一层状态制备电路加上若干 Grover 算子。
 
 #### 代码实例
 
-只需在初始化时将`mode`改为`max_likely`即可：
+只需在初始化时将 `mode` 改为 `max_likely` 即可：
 
 ``` python
 pr_quantum_good = QAE(mode="max_likely", eps=eps).run(oracle=oracle)
@@ -177,11 +177,11 @@ pr_quantum_good = QAE(mode="max_likely", eps=eps).run(oracle=oracle)
 
 ### FQAE
 
-FQAE（Faster Amplitude Estimation）同样没有使用QPE组件，而是通过迭代缩小致信域，来给出振幅估计。该算法的量子部分与MLAE基本相同。
+FQAE（Faster Amplitude Estimation）同样没有使用 QPE 组件，而是通过迭代缩小致信域，来给出振幅估计。该算法的量子部分与 MLAE 基本相同。
 
 #### 代码实例
 
-只需在初始化时将`mode`改为`fast`即可：
+只需在初始化时将 `mode` 改为 `fast` 即可：
 
 
 ``` python

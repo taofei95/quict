@@ -50,7 +50,7 @@ circuit.draw(method='command')
 
 ## 量子电路算法库
 
-QuICT 内置了一个量子算法电路库，里面包含多种经典量子算法，例如 Grover、VQE、QFT等。也支持基于量子指令集的随机电路生成和 benchmark 测试电路生成。
+QuICT 内置了一个量子算法电路库，里面包含多种经典量子算法，例如 Grover、VQE、QFT 等。也支持基于量子指令集的随机电路生成和 benchmark 测试电路生成。
 
 | 算法电路     | 比特数     | 门数         | 电路深度 |
 | ------------ | ---------- | ------------ | -------- |
@@ -74,9 +74,9 @@ cirs = cir_lib.get_algorithm_circuit("grover", [3, 5, 7], max_depth=20)     # �
 
 ## 算法画图函数
 
-用于QuICT以及QuICT-ml内置算法的相关图像绘制，目前支持绘制量子态采样图，MaxCut算法的无向无权图，以及MaxCut的分割结果图。
+用于 QuICT 以及 QuICT-ml 内置算法的相关图像绘制，目前支持绘制量子态采样图， MaxCut 算法的无向无权图，以及 MaxCut 的分割结果图。
 
-- 量子态采样图（以Quantum Walk Search为例）
+- 量子态采样图（以 Quantum Walk Search 为例）
   
     ``` python
     # 导入运行库
@@ -115,7 +115,7 @@ cirs = cir_lib.get_algorithm_circuit("grover", [3, 5, 7], max_depth=20)     # �
     ![Max-Cut Graph](../assets/images/tutorials/algorithm/VQA/QAOA/maxcut_graph.png){:width="500px"}
     </figure>
 
-- 绘制MaxCut分割结果图
+- 绘制 MaxCut 分割结果图
   
     ```python
     solution_bit = '10100'
@@ -129,7 +129,7 @@ cirs = cir_lib.get_algorithm_circuit("grover", [3, 5, 7], max_depth=20)     # �
 
 ## 命令行界面
 
-为了更方便也更灵活的使用QuICT的相关功能，我们开发了 QuICT CLI 相关功能。QuICT CLI 一方面支持电路生成和 benchmark 测试功能，另一方面也支持单机的一键式任务部署。它构建有一套本地任务管理流程，支持相关电路优化、映射、指令集转换和电路模拟功能，在之后的开发中，它也将会支持部署相关任务到远程分布式服务器中。
+为了更方便也更灵活的使用 QuICT 的相关功能，我们开发了 QuICT CLI 相关功能。 QuICT CLI 一方面支持电路生成和 benchmark 测试功能，另一方面也支持单机的一键式任务部署。它构建有一套本地任务管理流程，支持相关电路优化、映射、指令集转换和电路模拟功能，在之后的开发中，它也将会支持部署相关任务到远程分布式服务器中。
 
 - 使用 QuICT CLI
 
@@ -156,7 +156,7 @@ cirs = cir_lib.get_algorithm_circuit("grover", [3, 5, 7], max_depth=20)     # �
     quict benchmark     # 如需使用GPU基准测试，请添加 --gpu 在指令中
     ```
 
-- 使用命令行进行QuICT任务部署，包括电路模拟和电路优化、映射
+- 使用命令行进行 QuICT 任务部署，包括电路模拟和电路优化、映射
 
     ``` sh
     # 获得命令行任务模版

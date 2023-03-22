@@ -1,6 +1,6 @@
 # 量子游走算法
 
-量子游走（Quantum Walk）有两种常见的模型，分别是带硬币的量子游走（Coined quantum walk）和Szegedy量子游走（Szegedy quantum walk），前者是在图的顶点上进行的游走，而后者是沿图的边进行的游走，它们在某些情况下是等价的。本教程旨在介绍如何使用QuICT中内置的量子游走模块，并结合量子游走搜索这一重要应用进一步阐述此算法。
+量子游走（Quantum Walk）有两种常见的模型，分别是带硬币的量子游走（Coined quantum walk）和 Szegedy 量子游走（Szegedy quantum walk），前者是在图的顶点上进行的游走，而后者是沿图的边进行的游走，它们在某些情况下是等价的。本教程旨在介绍如何使用 QuICT 中内置的量子游走模块，并结合量子游走搜索这一重要应用进一步阐述此算法。
 
 !!! note
 
@@ -19,12 +19,12 @@
 
 - 两个算子
 
-    - 硬币算子 $C$ （Coin Operator）：一个酉矩阵，模拟抛硬币的过程以获得硬币状态 $|\psi_C⟩$。
+    - 硬币算子 $C$ （Coin Operator）：一个酉矩阵，模拟抛硬币的过程以获得硬币状态 $|\psi_C⟩$ 。
     - 移动算子 $S$ （Shift Operator）：一个置换矩阵，根据硬币状态 $|\psi_C⟩$ 决定粒子的移动情况。
 
 !!! note
 
-    一种常用的硬币是Hadamard硬币：
+    一种常用的硬币是 Hadamard 硬币：
 
     $$
     H=\frac{1}{\sqrt{2}} \begin{bmatrix}
@@ -33,7 +33,7 @@
     \end{bmatrix}
     $$
 
-    Hadamard硬币可以视为公平硬币，能够使粒子处于相等的叠加状态。
+    Hadamard 硬币可以视为公平硬币，能够使粒子处于相等的叠加状态。
 
 带硬币的量子游走本质上就是，先抛硬币，然后根据抛硬币结果让粒子进行移动：
 
@@ -56,11 +56,11 @@ $$U = S \cdot C$$
    
 2. 对最终的状态进行量子测量。
 
-### 用QuICT实现量子游走
+### 用 QuICT 实现量子游走
 
 #### 基本用法
 
-`QuantumWalk` 位于 `QuICT.algorithm.quantum_algorithm`，运行函数的输入参数为：
+`QuantumWalk` 位于 `QuICT.algorithm.quantum_algorithm` ，运行函数的输入参数为：
 
 - `step`: 自定义的量子游走轮数
 - `position`: 给定图的节点数
@@ -74,7 +74,7 @@ $$U = S \cdot C$$
 
 #### 代码实例
 
-接下来，我们将以下图为例使用QuICT进行量子游走模拟，初始位置为节点0。
+接下来，我们将以下图为例使用 QuICT 进行量子游走模拟，初始位置为节点0。
 
 <figure markdown>
 ![quantum_walk](../../../assets/images/tutorials/algorithm/quantum_algorithm/quantum_walk.png){:width="400px"}
@@ -89,7 +89,7 @@ from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.algorithm.tools.drawer.graph_drawer import *
 ```
 
-初始化状态向量模拟器和`QuantumWalk`模块：
+初始化状态向量模拟器和 `QuantumWalk` 模块：
 
 ``` python
 simulator = StateVectorSimulator()
@@ -110,7 +110,7 @@ position = 4
 edges = [[1, 3], [2, 0], [3, 1], [0, 2]]
 ```
 
-用均匀的Hadamard硬币模拟1step的量子游走，并使用内置的画图函数画出1step后的采样结果：
+用均匀的 Hadamard 硬币模拟 1 step 的量子游走，并使用内置的画图函数画出 1 step 后的采样结果：
 
 ``` python
 sample = qw.run(step=1, position=position, edges=edges, coin_operator=H.matrix)
@@ -121,7 +121,7 @@ draw_samples_with_auxiliary(sample, 2, 1)
 ![QW_result](../../../assets/images/tutorials/algorithm/quantum_algorithm/QW_result.png){:width="500px"}
 </figure>
 
-可以见得1step后，原本处于节点0的量子游走到节点1和3上。
+可以见得 1 step 后，原本处于节点0的量子游走到节点1和3上。
 
 ## 基于硬币的量子游走搜索算法
 
@@ -135,7 +135,7 @@ $$S=\sum_{d=0}^{n-1} \sum_{\vec{x}}^{} |d,\vec{x} \oplus \vec{e}_d⟩ ⟨d,\vec{
 
 其中 $d$ 为粒子游走的方向， $\vec{e}_d$ 为超立方体第 $d$ 个方向基向量。
 
-给定一个黑盒硬币 $C'$ （Coin Oracle）用于标记其中 $M$ 个节点为待搜索节点，在标记节点与非标记节点上使用不同的硬币。通常选用Grover硬币用作非标记硬币 $C_0$ ：
+给定一个黑盒硬币 $C'$ （Coin Oracle）用于标记其中 $M$ 个节点为待搜索节点，在标记节点与非标记节点上使用不同的硬币。通常选用 Grover 硬币用作非标记硬币 $C_0$ ：
 
 $$C_0=G=I-2|S^C⟩⟨S^C|$$
 
@@ -143,7 +143,7 @@ $$C_0=G=I-2|S^C⟩⟨S^C|$$
 
 $$|S^C⟩=\frac{1}{\sqrt{N}}\sum_{j=0}^{N-1}|j⟩$$
 
-$|j⟩=|0,\dots,0,1,0,\dots,0⟩$ 为第 $j$ 个位置基向量。可见Grover硬币可以视作超立方体上的公平硬币。
+$|j⟩=|0,\dots,0,1,0,\dots,0⟩$ 为第 $j$ 个位置基向量。可见 Grover 硬币可以视作超立方体上的公平硬币。
 
 标记硬币 $C_1$ 为：
 
@@ -169,11 +169,11 @@ $$U' = S \cdot C'$$
    
 3. 对最终的状态进行量子测量
 
-### 用QuICT实现N维超立方体上的量子游走搜索
+### 用 QuICT 实现 N 维超立方体上的量子游走搜索
 
 #### 基本用法
 
-`QuantumWalkSearch` 位于 `QuICT.algorithm.quantum_algorithm`，运行函数的输入参数为：
+`QuantumWalkSearch` 位于 `QuICT.algorithm.quantum_algorithm` ，运行函数的输入参数为：
 
 - `index_qubits`: 超立方体维度 $n$
 - `targets`: 标记的节点编号
@@ -188,7 +188,7 @@ $$U' = S \cdot C'$$
 
 #### 代码实例
 
-接下来，我们将以5-cube为例使用QuICT进行量子游走搜索，即节点数为32个，标记节点4。
+接下来，我们将以 5-cube 为例使用 QuICT 进行量子游走搜索，即节点数为32个，标记节点4。
 
 ``` python
 # 导入运行库
@@ -225,7 +225,7 @@ draw_samples_with_auxiliary(sample, N, int(np.ceil(np.log2(N))))
     ![QWS_result3](../../../assets/images/tutorials/algorithm/quantum_algorithm/QWS_result3.png){:width="400px"}
     </figure>
 
-特别地，QuICT支持多节点的量子游走搜索，如同时标记节点4和节点15：
+特别地， QuICT 支持多节点的量子游走搜索，如同时标记节点4和节点15：
 
 ``` python
 sample = qws.run(index_qubits=N, targets=[4, 15], a_r=5 / 8, a_nr=1 / 8)
