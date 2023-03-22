@@ -34,6 +34,8 @@ $$
 在 QuICT 中，这种形式对应于 `FermionOperator` ，以下是一个使用案例：
 
 ``` python
+from QuICT_ml.model.VQE.operators.fermion_operator import FermionOperator
+
 n_qubits = obi.shape[0]
 fermion_operator = FermionOperator([], nuclear_repulsion)
 for index in it.product(range(n_qubits), repeat=2):
@@ -63,14 +65,23 @@ $$
 本教程采用比较直接的 Jordan-Wigner 编码，其规则如下：
 
 $$
-|f_{n-1} \cdots f_0⟩ = |q_{n-1} \cdots q_0⟩, f_i = q_i \\
-a_i^\dagger = Q_i^\dagger \otimes Z_{i-1} \otimes \cdots \otimes Z_0 \\
+|f_{n-1} \cdots f_0⟩ = |q_{n-1} \cdots q_0⟩, f_i = q_i
+$$
+
+$$
+a_i^\dagger = Q_i^\dagger \otimes Z_{i-1} \otimes \cdots \otimes Z_0
+$$
+
+$$
 a_i = Q_i \otimes Z_{i-1} \otimes \cdots \otimes Z_0
 $$
 
 其中 $f_i$ 表示在费米子二次量子化表述中的占据 ($1$) 与否 ($0$)，而 $q_i$ 则对应表示qubit的 $1, 0$ 。显然在这样的转化下， `FermionOperator` 将被转化为 Pauli 算符线性组合的形式，即 `QubitOperator` 。由此获取 `QubitOperator` 并将其转化为优化过程所需 `Hamiltonian` 的代码示例如下：
 
 ``` python
+from QuICT_ml.model.VQE.operators.encoder import JordanWigner
+from QuICT_ml.utils import Hamiltonian
+
 qubit_op = JordanWigner(orbitals).encode(fermi_op)
 hamiltonian = Hamiltonian(qubit_op.to_hamiltonian())
 ```
@@ -97,6 +108,13 @@ Thouless ansatz 的结构如上图所示，随着目标分子不同，菱形电�
 请注意，这一部分代码基于本教程使用的数据格式，用户通常应当根据自己获取数据的方法与格式自行编写相关函数，获取分子哈密顿量的 FermionOperator 形式后，再行执行后续步骤。
 
 ``` python
+import numpy as np
+import scipy as sp
+
+from molecular_data import MolecularData, obi_basis_rotation, tbi_basis_rotation, generate_hamiltonian
+from QuICT_ml.model.VQE.operators.encoder import JordanWigner
+from QuICT_ml.utils import Hamiltonian
+
 # 读取数据
 moldir = "./molecular_data"
 molfile = moldir + "/H6_sto-3g_singlet_linear_r-1.3.hdf5"
@@ -133,6 +151,10 @@ LR = 0.1
 初始化网络、经典优化器以及学习率更新
 
 ``` python
+import torch
+
+from QuICT_ml.model.VQE import HartreeFockVQENet
+
 hfvqe_net = HartreeFockVQENet(orbitals, electrons, hamiltonian)
 optim = torch.optim.Adam([dict(params=hfvqe_net.parameters(), lr=LR)])
 scheduler = torch.optim.lr_scheduler.StepLR(optim, step_size=500, gamma=0.1)
@@ -141,6 +163,8 @@ scheduler = torch.optim.lr_scheduler.StepLR(optim, step_size=500, gamma=0.1)
 开始进行训练
 
 ``` python
+import tqdm
+
 hfvqe_net.train()
 loader = tqdm.trange(MAX_ITERS, desc="Training", leave=True)
 for it in loader:
