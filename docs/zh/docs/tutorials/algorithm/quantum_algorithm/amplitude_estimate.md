@@ -129,7 +129,7 @@ pr_function_good /= 1 << n
 
 ``` python
 eps = 0.05
-N = 100
+n_sample = 100
 pr_success = 0
 
 for i in range(N):
@@ -143,7 +143,7 @@ for i in range(N):
     if np.abs(pr_function_good - pr_quantum_good) < eps:
         pr_success += 1
 
-pr_success /= N
+pr_success /= n_sample
 print(f"success rate {pr_success:.2f} with {n_sample:4} samples")
 ```
 

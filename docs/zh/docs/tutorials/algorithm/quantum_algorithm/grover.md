@@ -193,7 +193,7 @@ success rate: 0.95
 ```python
 n_block = 3
 print(f"run with n = {n}, block size = {n_block}")
-k, oracle = main_oracle()
+k, oracle = main_oracle(n, f)
 circ = PartialGrover(StateVectorSimulator()).circuit(n, n_block, k, oracle, measure=False)
 
 amp = StateVectorSimulator().run(circ)
@@ -294,11 +294,11 @@ print(f'{x[0]}|{x[1]}\n-+-\n{x[2]}|{x[3]}')
 from QuICT.algorithm.quantum_algorithm import CNFSATOracle
 ```
 
-我们试图在`test.cnf`中找到一个16变量的CNF公式的解决方案：
+我们试图在`test.cnf`(CNF文件在example/algorithm文件夹中)找到一个16变量的CNF公式的解决方案：
 
 
 ```python
-file_path = 'test.cnf'
+file_path = 'example/algorithm/test.cnf'
 variable_number, clause_number, CNF_data = CNFSATOracle.read_CNF(file_path)
 
 simulator=StateVectorSimulator()

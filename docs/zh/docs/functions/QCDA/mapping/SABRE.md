@@ -74,7 +74,7 @@ $$
 以在一个5比特、50个量子门的随机电路为例，运行SABRE映射算法与初始映射生成
 
 ```python
-layout = Layout.load_file("../layout/ibmqx2_layout.json")
+layout = Layout.load_file("example/layout/ibmqx2_layout.json")
 
 circuit = Circuit(5)
 circuit.random_append(50, typelist=[GateType.cx])

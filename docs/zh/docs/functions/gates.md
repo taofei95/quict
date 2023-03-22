@@ -129,7 +129,7 @@ cg1 = CompositeGate()
 # using default quantum gates
 H | cg1(1)                                # append H gate with qubit 1
 cx_gate | cg1                             # append pre-defined gates
-u2_gate | cg1
+u2_gate | cg1(0)
 QFT.build_gate(3) | cg1([0, 3, 4])        # append QFT composite gate with qubit [0, 3, 4]
 U1(1) | cg1(4)                            # append U1 gate with parameters 1 and qubit 4   
 

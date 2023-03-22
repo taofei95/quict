@@ -108,7 +108,7 @@ $n$ 为输入数的位数， $t$ 为求阶算法中QPE的精度位数。默认 $
 
 ### 正确性测试
 
-周期寻找算法实现的行为与理论预测一致。
+周期寻找算法实现的行为与理论预测一致。该数据集是 $[4,54)$ 中的合数，共36个，其中9个是奇合数。
 
 | mode    | original | reinforced(MAX_ROUND=3) | $Pr(r\neq 0\text{ and }r\nmid\text{order}(a,N))$ | repetitions |
 | ------- | -------- | ----------------------- | ------------------------------------------------ | ----------- |
@@ -117,25 +117,6 @@ $n$ 为输入数的位数， $t$ 为求阶算法中QPE的精度位数。默认 $
 | HRS     | 0.44     | 0.06                    | 0                                                | 108         |
 | HRS_zip | 0.44     | 0.03                    | 0                                                | 108         |
 
-该数据集是 $[4,54)$ 中的合数，共36个，其中9个是奇合数。测试程序如下：
-
-```python
-for mode in order_finding_test_modes.keys():
-    failure = 0
-    for N in number_list:
-        p = random.choice(
-            list(filter(lambda x: gcd(x, N) == 1 and x != 1, list(range(N))))
-        )
-        print(f"testing ({p:2},{N:2})...", end="")
-        a = order_finding_test_modes[mode](p, N, simulator=simulator)
-        print(f"{'T' if (p**a)%N==1 and a!=0 else 'F'}: {p}**{a}==1 mod {N}")
-        if a == 0 or (p ** a) % N != 1:
-            failure += 1
-print(f"success rate: {1-failure/len(number_list):.3f}")
-if 1 - failure / len(number_list) < threthold_rate:
-    assert False
-```
-
 Shor算法正确性测试结果如下。表格中给出了不同模式下的错误率，`original`指的是上面给出的**原始**程序，`forced`只在第3步不同，我们挑选一个满足$gcd(x,N)=1$的数$x$来**强制**执行周期寻找子程序。数字指第4步中重复子程序的次数。
 
 | mode    | original-2 | forced-2 | original-3 | forced-3 |
@@ -143,27 +124,11 @@ Shor算法正确性测试结果如下。表格中给出了不同模式下的错�
 | BEA_zip | 0.028      | 0.028    | 0.0        | 0.0      |
 | HRS_zip | 0.028      | 0.028    | 0.0        | 0.0      |
 
-测试程序如下：
-
-```python
-for mode in run_test_modes:
-    print(f"mode: {mode}")
-    failure = 0
-    for number in number_list:
-        a = ShorFactor(mode=mode).run(N=number)
-        if a == 0 or number % a != 0:
-            failure += 1
-    print(f"success rate: {1-failure/len(number_list):.3f}")
-    if 1 - failure / len(number_list) < threthold_rate:
-        assert False
-```
-
 ### 代码实例
 
 接下来，将以21为例用QuICT内置的Shor模块对其进行因数分解，使用的是加入iterative QPE的Beauregard[<sup>[1]</sup>](#refer1)的电路：
 
 ```python
-from QuICT.simulation.state_vector.cpu_simulator import CircuitSimulator
 from QuICT.algorithm.quantum_algorithm import ShorFactor
 
 input  = 21
