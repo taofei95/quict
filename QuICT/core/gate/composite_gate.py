@@ -92,6 +92,7 @@ class CompositeGate(CircuitBased):
             raise ValueError("CompositeGate.&", f"not equal {self.width}", len(targets))
 
         self._mapping(targets)
+        return self
 
     def _mapping(self, targets: list):
         """ remapping the gates' target qubits
@@ -184,14 +185,16 @@ class CompositeGate(CircuitBased):
                 f"{gates.name} need {gate_args} indexes, but given {len(self._pointer)}"
             )
 
-            gates & self._pointer
+            gate_qidxes = self._pointer[:]
+        else:
+            gate_qidxes = gates.qubits
 
         if not reverse:
-            self._gates.append((gates, gates.qubits, gates.size()))
+            self._gates.append((gates, gate_qidxes, gates.size()))
         else:
-            self._gates.insert(0, (gates, gates.qubits, gates.size()))
+            self._gates.insert(0, (gates, gate_qidxes, gates.size()))
 
-        self._update_qubit_limit(gates.qubits)
+        self._update_qubit_limit(gate_qidxes)
         self._pointer = None
 
     def append(self, gate):
@@ -240,6 +243,20 @@ class CompositeGate(CircuitBased):
     ####################################################################
     ############            CompositeGate Utils             ############
     ####################################################################
+    def depth(self, depth_per_qubits: bool = False):
+        """ the depth of the circuit/CompositeGate.
+
+        Returns:
+            int: the depth
+        """
+        depth = np.zeros(self.width(), dtype=int)
+        for gate, targs, gsize in self._gates:
+            targs = [self._qubits.index(targ) for targ in targs]
+            gdepth = 1 if gsize == 1 else gate.depth()
+            depth[targs] = np.max(depth[targs]) + gdepth
+
+        return np.max(depth) if not depth_per_qubits else depth
+
     def inverse(self):
         """ the inverse of CompositeGate
 
@@ -249,6 +266,15 @@ class CompositeGate(CircuitBased):
         _gates = CompositeGate()
         inverse_gates = [(gate.inverse(), indexes, size) for gate, indexes, size in self._gates[::-1]]
         _gates._gates = inverse_gates
+        _gates._qubits = self.qubits
+
+        return _gates
+
+    def copy(self):
+        _gates = CompositeGate()
+        copy_gates = [(gate.copy(), indexes, size) for gate, indexes, size in self._gates]
+        _gates._gates = copy_gates
+        _gates._qubits = self.qubits
 
         return _gates
 

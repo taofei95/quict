@@ -269,20 +269,14 @@ class Circuit(CircuitBased):
     ####################################################################
     ############          Circuit Build Operators           ############
     ####################################################################
-    # TODO: consider circuit | circuit; OpenQASM support
     def extend(self, gates):
-        """ Add list of gates to the circuit
+        """ Add a CompositeGate/Circuit to the circuit.
 
         Args:
             gates(CompositeGate|Circuit): the compositegate or circuit to be added to the circuit
         """
-        if isinstance(gates, Circuit):
-            aqubit_idxes = gates.ancilla_qubits
-            for idx, qubit in enumerate(gates.qubits):
-                is_ancilla = True if idx in aqubit_idxes else False
-                self.add_qubit(qubit, is_ancilla)
-
-            gates = gates.to_compositegate()
+        assert isinstance(gates, (Circuit, CompositeGate)), \
+            "The circuit extend method only accept CompositeGate or Circuit."
 
         if self._pointer is not None:
             gate_args = gates.width()
@@ -292,7 +286,13 @@ class Circuit(CircuitBased):
 
             gate_qidxes = self._pointer[:]
         else:
-            gate_qidxes = gates.qubits
+            if isinstance(gates, CompositeGate):
+                gate_qidxes = gates.qubits
+            else:
+                gate_qidxes = self._get_extend_circuit_qidxes(gates)
+
+        if isinstance(gates, Circuit):
+            gates = gates.to_compositegate()
 
         self._gates.append((gates, gate_qidxes, gates.size()))
         self._pointer = None
@@ -312,19 +312,21 @@ class Circuit(CircuitBased):
     def insert(self, gate, insert_idx: int):
         """ Insert a Quantum Gate into current CompositeGate, only support BasicGate. """
         assert isinstance(gate, (BasicGate, Operator, CompositeGate)), TypeError("CompositeGate.insert", "BasicGate", type(gate))
-        gate_args = gate.cargs + gate.targs
+        gate_args = gate.qubits if isinstance(gate, CompositeGate) else gate.cargs + gate.targs
+        gate_size = gate.size() if isinstance(gate, CompositeGate) else 1
         if len(gate_args) == 0:
             raise GateQubitAssignedError(f"{gate.type} need qubit indexes to insert into Composite Gate.")
 
-        self._update_qubit_limit(gate_args)
-        self._gates.insert(insert_idx, (gate, gate_args, 1))
+        for garg in gate_args:
+            assert garg >= 0 and garg < self.width(), GateQubitAssignedError(f"Gate's assigned qubits should within [0, {self.width()}]")
+
+        self._gates.insert(insert_idx, (gate, gate_args, gate_size))
 
     def _add_gate(self, gate: BasicGate):
-        """ add a gate into some qureg
+        """ add a quantum gate into circuit.
 
         Args:
-            gate(BasicGate)
-            qureg(Qureg)
+            gate(BasicGate): The Quantum Gate want to append in current circuit
         """
         if self._pointer is not None:
             gate_args = gate.controls + gate.targets
@@ -370,6 +372,19 @@ class Circuit(CircuitBased):
 
         self._gates.append((op, op_qidxes, 1))
         self._logger.debug(f"Add an Operator {type(op)} with qubit indexes {op_qidxes}.")
+
+    def _get_extend_circuit_qidxes(self, circuit: Circuit):
+        ec_qidxes = []
+        aqubit_idxes = circuit.ancilla_qubits
+        for idx, qubit in enumerate(circuit.qubits):
+            if qubit in self.qubits:
+                ec_qidxes.append(self._qubits.index(qubit))
+            else:
+                is_ancilla = True if idx in aqubit_idxes else False
+                self.add_qubit(qubit, is_ancilla)
+                ec_qidxes.append(self.width() - 1)
+
+        return ec_qidxes
 
     def random_append(
         self,
@@ -441,7 +456,7 @@ class Circuit(CircuitBased):
             for q in range(qubits):
                 gate_type = supremacy_typelist[np.random.randint(0, 3)]
                 fgate = gate_builder(gate_type)
-                self._gates.append((fgate, q, 1))
+                self._gates.append((fgate, [q], 1))
 
             current_pattern = pattern[i % (len(pattern))]
             if current_pattern not in "ABCD":
@@ -460,6 +475,14 @@ class Circuit(CircuitBased):
     ####################################################################
     ############                Circuit Utils               ############
     ####################################################################
+    def to_compositegate(self) -> CompositeGate:
+        """ Get CompositeGate from current Circuit. """
+        _cgate = CompositeGate()
+        for gate in self.gates:
+            gate | _cgate
+
+        return _cgate
+
     def matrix(self, device: str = "CPU") -> np.ndarray:
         """ Generate the circuit's unitary matrix which compose by all quantum gates' matrix in current circuit.
 
@@ -525,7 +548,7 @@ class Circuit(CircuitBased):
 
             if is_append_in_subc:
                 new_qidxes = [qubit_limit.index(q) for q in qidxes] if qubit_limit else qubit_limit
-                gate & new_qidxes | sub_circuit
+                gate | sub_circuit(new_qidxes)
                 temp_size += size
 
                 if remove:

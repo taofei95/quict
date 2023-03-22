@@ -22,9 +22,19 @@ class CircuitBased(object):
 
     @property
     def gates(self) -> list:
-        combined_gates = [gate & targs for gate, targs, _ in self._gates]
+        """ Return the list of BasicGate/CompositeGate/Operator in the current circuit. \n
+        *Warning*: this is slowly due to the copy of gates, you can use self.fast_gates to
+        get list of tuple(gate, qidxes, size) for further using. 
+        """
+        combined_gates = [gate.copy() & targs for gate, targs, _ in self._gates]
 
         return combined_gates
+
+    @property
+    def fast_gates(self) -> list:
+        """ Return the list of tuple(gates' info) in the current circuit. it contains the gate, 
+        the qubit indexes and the gate's size."""
+        return self._gates
 
     def __init__(self, name: str):
         self._name = name
@@ -60,8 +70,12 @@ class CircuitBased(object):
         """
         depth = np.zeros(self.width(), dtype=int)
         for gate, targs, gsize in self._gates:
-            gdepth = 1 if gsize == 1 else gate.depth()
-            depth[targs] = np.max(depth[targs]) + gdepth
+            if gsize > 1:
+                gdepth = gate.depth(True)
+                for i, targ in enumerate(targs):
+                    depth[targ] += gdepth[i]
+            else:
+                depth[targs] = np.max(depth[targs]) + 1
 
         return np.max(depth)
 
@@ -72,7 +86,11 @@ class CircuitBased(object):
             int: the number of the two qubit gates
         """
         count = 0
-        for gate, _, _ in self._gates:
+        for gate, _, size in self._gates:
+            if size > 1:
+                count += gate.count_2qubit_gate()
+                continue
+
             if gate.controls + gate.targets == 2:
                 count += 1
 
@@ -85,7 +103,11 @@ class CircuitBased(object):
             int: the number of the one qubit gates
         """
         count = 0
-        for gate, _, _ in self._gates:
+        for gate, _, size in self._gates:
+            if size > 1:
+                count += gate.count_1qubit_gate()
+                continue
+
             if gate.controls + gate.targets == 1:
                 count += 1
 
