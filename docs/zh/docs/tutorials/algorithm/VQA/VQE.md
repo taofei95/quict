@@ -34,6 +34,8 @@ $$
 在 QuICT 中，这种形式对应于 `FermionOperator` ，以下是一个使用案例：
 
 ``` python
+import itertools as it
+
 from QuICT_ml.model.VQE.operators.fermion_operator import FermionOperator
 
 n_qubits = obi.shape[0]
