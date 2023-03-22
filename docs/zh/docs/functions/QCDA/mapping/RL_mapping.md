@@ -73,7 +73,7 @@ from os import path as osp
 from QuICT.core import Circuit, Layout
 from QuICT.core.gate import *
 
-from QuICT.qcda.mapping.ai.rl_mapping import RlMapping
+from QuICT_ml.rl_mapping import RlMapping
 
 
 def test_main():

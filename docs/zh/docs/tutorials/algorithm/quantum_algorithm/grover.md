@@ -193,7 +193,7 @@ success rate: 0.95
 ```python
 n_block = 3
 print(f"run with n = {n}, block size = {n_block}")
-k, oracle = main_oracle()
+k, oracle = main_oracle(n, f)
 circ = PartialGrover(StateVectorSimulator()).circuit(n, n_block, k, oracle, measure=False)
 
 amp = StateVectorSimulator().run(circ)
