@@ -35,7 +35,7 @@ class ParameterShift:
         param_list[i] = shift_param
         gate.pargs = param_list.copy()
         self._cir.replace_gate(idx_gate, gate)
-        e_val = sim.forward(self._cir)
+        e_val,_ = sim.forward(self._cir)
 
         param_list[i] = old_param
         gate.pargs = param_list.copy()

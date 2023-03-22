@@ -2,8 +2,7 @@ import numpy as np
 import math
 import torch
 from QuICT.core import Circuit
-from QuICT.core.gate import H, CX,Rz,UnitaryGate,CU3Gate,U3Gate,CompositeGate,BasicGate,RyGate
-from QuICT_ml.utils.gate_tensor import Ry,CX_tensor
+from QuICT.core.gate import H, CX,Rz,Ry,UnitaryGate,CU3Gate,U3Gate,CompositeGate,BasicGate,RyGate
 from QuICT.core.operator import Trigger
 from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
 from QuICT.algorithm.quantum_machine_learning.ansatz_library.QNN_layer import QNNLayer
