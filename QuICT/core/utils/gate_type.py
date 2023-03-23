@@ -28,6 +28,7 @@ class GateType(Enum):
     cx = "controlled-X gate"
     cy = "controlled-Y gate"
     ch = "controlled-Hadamard gate"
+    cry = "controlled-Ry gate"
     crz = "controlled-Rz gate"
     cu1 = "controlled-U1 gate"
     cu3 = "controlled-U3 gate"
