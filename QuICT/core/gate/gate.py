@@ -366,26 +366,18 @@ class BasicGate(object):
         return qasm_string
 
     def inverse(self):
-        """ the inverse of the gate
+        """ the inverse of the quantum gate, if there is no inverse gate, return itself.
 
         Return:
             BasicGate: the inverse of the gate
         """
-        if self.params > 0:
-            inverse_gargs = InverseGate.get_inverse_gate(self.type, self.pargs)
-        else:
-            inverse_gargs = InverseGate.get_inverse_gate(self.type)
+        inverse_gargs, inverse_pargs = InverseGate.get_inverse_gate(self.type, self.pargs)
 
         # Deal with inverse_gargs
         if inverse_gargs is None:
             return self
 
-        if isinstance(inverse_gargs, tuple):
-            gate_type, pargs = inverse_gargs
-        else:
-            gate_type = inverse_gargs
-
-        return gate_builder(gate_type, params=pargs)
+        return gate_builder(inverse_gargs, params=inverse_pargs)
 
     def build_gate(self):
         if self.type == GateType.cu3:
@@ -611,7 +603,7 @@ class Unitary(BasicGate):
     def target_matrix(self):
         return self._matrix
 
-    def __init__(self, matrix: Union[list, np.ndarray], controlled_by: int = 0, matrix_type: MatrixType = None):
+    def __init__(self, matrix: Union[list, np.ndarray], matrix_type: MatrixType = None):
         # Validate matrix type
         assert isinstance(matrix, (list, np.ndarray)), TypeError("unitary.matrix", "list/ndarray", type(matrix))
         if isinstance(matrix, list):
@@ -688,6 +680,11 @@ class Unitary(BasicGate):
     def build_gate(self):
         return ComplexGateBuilder.build_unitary(self._matrix)
 
+    def inverse(self):
+        inverse_matrix = np.asmatrix(self.matrix).H
+
+        return Unitary(inverse_matrix)
+
 
 class Perm(BasicGate):
     @property
@@ -735,6 +732,11 @@ class Perm(BasicGate):
 
         return matrix_
 
+    def inverse(self):
+        inverse_targs = [self.targets - 1 - t for t in self.pargs]
+
+        return Perm(self.targets, inverse_targs)
+
 
 class PermFx(Perm):
     def __init__(self, targets: int, params: list):
@@ -763,64 +765,6 @@ class PermFx(Perm):
                 pargs.append(idx)
 
         super().__init__(0, targets, parameters, GateType.perm_fx, MatrixType.normal, pargs)
-
-
-class QFT(BasicGate):
-    @property
-    def matrix(self) -> np.ndarray:
-        if self._matrix is None:
-            cgate = self.build_gate()
-            self._matrix = cgate.matrix()
-        return self._matrix
-
-    @property
-    def target_matrix(self) -> np.ndarray:
-        return self.matrix
-
-    def __init__(self, targets: int):
-        assert targets >= 2, "QFT Gate need at least two targets."
-        super().__init__(0, targets, 0, GateType.qft, MatrixType.normal)
-
-    def inverse(self):
-        inverse_gate = IQFT(self.targets)
-        if len(self.targs) > 0:
-            inverse_gate.targs = self.targs[:]
-
-        return inverse_gate
-
-    def build_gate(self):
-        gate_list = ComplexGateBuilder.build_qft(self.targets)
-
-        cgate = self._cgate_generator_from_build_gate(gate_list)
-        gate_args = self.cargs + self.targs
-        if len(gate_args) > 0:
-            cgate & gate_args
-
-        return cgate
-
-
-class IQFT(QFT):
-    def __init__(self, targets: int):
-        assert targets >= 2, "QFT Gate need at least two targets."
-        super().__init__(targets)
-        self._type = GateType.iqft
-
-    def inverse(self):
-        inverse_gate = QFT(self.targets)
-        if len(self.targs) > 0:
-            inverse_gate.targs = self.targs[:]
-
-        return inverse_gate
-
-    def build_gate(self):
-        gate_list = ComplexGateBuilder.build_iqft(self.targets)
-
-        cgate = self._cgate_generator_from_build_gate(gate_list)
-        gate_args = self.cargs + self.targs
-        if len(gate_args) > 0:
-            cgate & gate_args
-
-        return cgate
 
 
 def gate_builder(gate_type, precision: str = "double", params: list = [], random_params: bool = False):

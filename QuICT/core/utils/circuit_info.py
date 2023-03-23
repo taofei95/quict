@@ -36,6 +36,24 @@ class CircuitBased(object):
         the qubit indexes and the gate's size."""
         return self._gates
 
+    def flatten_gates(self, decomposition: bool = False) -> list:
+        """ Return the list of BasicGate/Operator. """
+        flatten_gates = []
+        for gate, qidxes, size in self._gates:
+            gate = gate.copy() & qidxes
+            if size > 1:
+                flatten_gates.extend(gate.flatten_gates(decomposition))
+            else:
+                if decomposition and hasattr(gate, "build_gate"):
+                    cgate = gate.build_gate()
+                    if cgate is not None:
+                        cgate & qidxes
+                        flatten_gates.extend(cgate.gates)
+                else:
+                    flatten_gates.append(gate.copy() & qidxes)
+
+        return flatten_gates
+
     def __init__(self, name: str):
         self._name = name
         self._gates = []
@@ -62,8 +80,8 @@ class CircuitBased(object):
         """
         return len(self._qubits)
 
-    def depth(self) -> int:
-        """ the depth of the circuit/CompositeGate.
+    def depth(self, depth_per_qubits: bool = False) -> int:
+        """ the depth of the circuit.
 
         Returns:
             int: the depth
@@ -77,7 +95,7 @@ class CircuitBased(object):
             else:
                 depth[targs] = np.max(depth[targs]) + 1
 
-        return np.max(depth)
+        return np.max(depth) if not depth_per_qubits else depth
 
     def count_2qubit_gate(self) -> int:
         """ the number of the two qubit gates in the circuit/CompositeGate

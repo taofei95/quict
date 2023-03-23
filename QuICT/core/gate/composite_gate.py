@@ -11,6 +11,7 @@ import numpy as np
 from QuICT.core.gate import BasicGate
 from QuICT.core.operator import CheckPointChild
 from QuICT.core.utils import (
+    GateType,
     CircuitBased,
     CircuitMatrix,
     CGATE_LIST,
@@ -28,7 +29,7 @@ class CompositeGate(CircuitBased):
     """
     @property
     def qubits(self) -> list:
-        return self._qubits
+        return sorted(self._qubits)
 
     @property
     def checkpoint(self):
@@ -43,7 +44,8 @@ class CompositeGate(CircuitBased):
         self._qubits = []
 
         if gates is not None:
-            self.extend(gates)
+            for gate in gates:
+                self.append(gate)
 
     def clean(self):
         self._gates = []
@@ -178,7 +180,7 @@ class CompositeGate(CircuitBased):
 
         return gate & qidxes
 
-    def extend(self, gates: CompositeGate, reverse: bool = False):
+    def extend(self, gates: CompositeGate):
         if self._pointer is not None:
             gate_args = gates.width()
             assert gate_args == len(self._pointer), GateQubitAssignedError(
@@ -189,11 +191,7 @@ class CompositeGate(CircuitBased):
         else:
             gate_qidxes = gates.qubits
 
-        if not reverse:
-            self._gates.append((gates, gate_qidxes, gates.size()))
-        else:
-            self._gates.insert(0, (gates, gate_qidxes, gates.size()))
-
+        self._gates.append((gates, gate_qidxes, gates.size()))
         self._update_qubit_limit(gate_qidxes)
         self._pointer = None
 
@@ -243,17 +241,21 @@ class CompositeGate(CircuitBased):
     ####################################################################
     ############            CompositeGate Utils             ############
     ####################################################################
-    def depth(self, depth_per_qubits: bool = False):
-        """ the depth of the circuit/CompositeGate.
+    def depth(self, depth_per_qubits: bool = False) -> int:
+        """ the depth of the CompositeGate.
 
         Returns:
             int: the depth
         """
         depth = np.zeros(self.width(), dtype=int)
         for gate, targs, gsize in self._gates:
-            targs = [self._qubits.index(targ) for targ in targs]
-            gdepth = 1 if gsize == 1 else gate.depth()
-            depth[targs] = np.max(depth[targs]) + gdepth
+            targs = [self.qubits.index(targ) for targ in targs]
+            if gsize > 1:
+                gdepth = gate.depth(True)
+                for i, targ in enumerate(targs):
+                    depth[targ] += gdepth[i]
+            else:
+                depth[targs] = np.max(depth[targs]) + 1
 
         return np.max(depth) if not depth_per_qubits else depth
 
@@ -292,8 +294,7 @@ class CompositeGate(CircuitBased):
         matrix_width = self.width() if local else max(self.qubits) + 1
 
         circuit_matrix = CircuitMatrix(device, self._precision)
-        self.gate_decomposition()
-        assigned_gates = self.gates if not local else self._get_local_gates()
+        assigned_gates = self.flatten_gates() if not local else self._get_local_gates()
 
         return circuit_matrix.get_unitary_matrix(assigned_gates, matrix_width)
 

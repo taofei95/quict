@@ -268,10 +268,6 @@ class ComplexGateBuilder:
             cgate = cls.build_ccz()
         elif gate_type == GateType.ccrz:
             cgate = cls.build_ccrz(parg)
-        elif gate_type == GateType.qft:
-            cgate = cls.build_qft()
-        elif gate_type == GateType.iqft:
-            cgate = cls.build_iqft()
         elif gate_type == GateType.cswap:
             cgate = cls.build_cswap()
         else:
@@ -284,27 +280,6 @@ class ComplexGateBuilder:
         from QuICT.qcda.synthesis import UnitaryDecomposition
 
         cgate, _ = UnitaryDecomposition().execute(gate_matrix)
-
-        return cgate
-
-    @staticmethod
-    def build_qft(targets):
-        cgate = []
-        for i in range(targets):
-            cgate.append((GateType.h, [i], None))
-            for j in range(i + 1, targets):
-                cgate.append((GateType.cu1, [j, i], [2 * np.pi / (1 << j - i + 1)]))
-
-        return cgate
-
-    @staticmethod
-    def build_iqft(targets):
-        cgate = []
-        for i in range(targets - 1, -1, -1):
-            for j in range(targets - 1, i, -1):
-                cgate.append((GateType.cu1, [j, i], [-2 * np.pi / (1 << j - i + 1)]))
-
-            cgate.append((GateType.h, [i], None))
 
         return cgate
 
@@ -453,10 +428,10 @@ class InverseGate:
     ]
 
     @classmethod
-    def get_inverse_gate(cls, gate_type, pargs=None):
-        if pargs is None:
+    def get_inverse_gate(cls, gate_type: GateType, pargs: list) -> tuple:
+        if len(pargs) == 0:
             if gate_type in cls.__GATE_INVERSE_MAP.keys():
-                return cls.__GATE_INVERSE_MAP[gate_type]
+                return cls.__GATE_INVERSE_MAP[gate_type], pargs
         else:
             inv_params = None
             if gate_type in cls.__INVERSE_GATE_WITH_NEGATIVE_PARAMS:
@@ -469,12 +444,7 @@ class InverseGate:
             if inv_params is not None:
                 return (gate_type, inv_params)
 
-        return None
-
-    @staticmethod
-    def inverse_unitary_gate(matrix):
-        inverse_matrix = np.asmatrix(matrix).H
-        return inverse_matrix
+        return None, pargs
 
     @staticmethod
     def inverse_perm_gate(targets: int, targs: list):

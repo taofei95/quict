@@ -483,6 +483,24 @@ class Circuit(CircuitBased):
 
         return _cgate
 
+    def inverse(self):
+        """ the inverse of CompositeGate
+
+        Returns:
+            CompositeGate: the inverse of the gateSet
+        """
+        _cir = Circuit(self.width())
+        inverse_gates = []
+        for gate, indexes, size in self._gates[::-1]:
+            if not isinstance(gate, Operator):
+                inverse_gates.append((gate.inverse(), indexes, size))
+            else:
+                inverse_gates.append((gate, indexes, size))
+
+        _cir._gates = inverse_gates
+
+        return _cir
+
     def matrix(self, device: str = "CPU") -> np.ndarray:
         """ Generate the circuit's unitary matrix which compose by all quantum gates' matrix in current circuit.
 
@@ -492,9 +510,8 @@ class Circuit(CircuitBased):
         """
         assert device in ["CPU", "GPU"]
         circuit_matrix = CircuitMatrix(device, self._precision)
-        self.gate_decomposition()
 
-        return circuit_matrix.get_unitary_matrix(self.gates, self.width())
+        return circuit_matrix.get_unitary_matrix(self.flatten_gates, self.width())
 
     def sub_circuit(
         self,
