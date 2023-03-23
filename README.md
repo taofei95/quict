@@ -14,7 +14,7 @@ QuICT (Quantum Computer of Institute of Computing Technology)是一个开源量�
 
 相关链接
 - 代码库：https://gitee.com/quictucas/quict
-- 文档：https://pypi.org/project/quict/
+- 文档：https://quict-docs.readthedocs.io/zh/latest/
 - Pypi：https://pypi.org/project/quict/
 - UI：http://49.235.108.172:8080/
 
