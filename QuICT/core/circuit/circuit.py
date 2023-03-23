@@ -511,7 +511,7 @@ class Circuit(CircuitBased):
         assert device in ["CPU", "GPU"]
         circuit_matrix = CircuitMatrix(device, self._precision)
 
-        return circuit_matrix.get_unitary_matrix(self.flatten_gates, self.width())
+        return circuit_matrix.get_unitary_matrix(self.flatten_gates(), self.width())
 
     def sub_circuit(
         self,
