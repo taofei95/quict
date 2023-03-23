@@ -1,3 +1,5 @@
+from functools import wraps
+
 import numpy as np
 
 from QuICT.core import Circuit
@@ -28,6 +30,8 @@ class OutputAligner(object):
         Returns:
             callable: func with whose output type aligned
         """
+
+        @wraps(func)
         def align_func(object, input):
             """
             For QCDA execute functions, their input would be restricted to be one argument representing

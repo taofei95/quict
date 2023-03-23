@@ -13,6 +13,7 @@ from QuICT.core.utils import (
     CGATE_LIST,
     unique_id_generator
 )
+from QuICT.tools.exception.core import ValueError, CompositeGateAppendError, TypeError, GateQubitAssignedError
 
 
 class CompositeGate(CircuitBased):
@@ -79,7 +80,7 @@ class CompositeGate(CircuitBased):
     def clean(self):
         self._gates = []
         self._min_qubit, self._max_qubit = np.inf, 0
-        self._pointer = -1
+        self._pointer = None
 
     def __and__(self, targets: Union[int, list, Qubit, Qureg]):
         """ assign qubits or indexes for given gates
@@ -94,7 +95,7 @@ class CompositeGate(CircuitBased):
             targets = Qureg(targets)
 
         if len(targets) != self._max_qubit:
-            raise ValueError("The number of assigned qubits or indexes must be equal to gate's width.")
+            raise ValueError("CompositeGate.&:len(targets)", f"less than {self._max_qubit}", len(targets))
 
         self._mapping(targets)
         if CGATE_LIST:
@@ -111,7 +112,6 @@ class CompositeGate(CircuitBased):
             if isinstance(targets, Qureg):
                 target_qureg = targets(args_index)
                 gate.assigned_qubits = target_qureg
-                gate.update_name(target_qureg[0].id)
             else:
                 gate.cargs = [targets[carg] for carg in gate.cargs]
                 gate.targs = [targets[targ] for targ in gate.targs]
@@ -142,12 +142,12 @@ class CompositeGate(CircuitBased):
                 1) Circuit
                 2) CompositeGate
         Raise:
-            TypeException: the type of other is wrong
+            TypeError: the type of other is wrong
         """
         try:
             targets.extend(self)
         except Exception as e:
-            raise TypeError(f"Only support circuit and composite gate. {e}")
+            raise CompositeGateAppendError(f"Failure to append current CompositeGate, due to {e}.")
 
     def __xor__(self, targets):
         """deal the operator '^'
@@ -162,12 +162,12 @@ class CompositeGate(CircuitBased):
             targets: the targets the gate acts on, it can have following form,
                 1) Circuit
         Raise:
-            TypeException: the type of other is wrong
+            TypeError: the type of other is wrong
         """
         try:
             targets.extend(self.inverse().gates)
         except Exception as e:
-            raise TypeError(f"Only support circuit for gateSet ^ circuit. {e}")
+            raise CompositeGateAppendError(f"Failure to append the inverse of current CompositeGate, due to {e}.")
 
     def __getitem__(self, item):
         """ get gates from this composite gate
@@ -202,7 +202,7 @@ class CompositeGate(CircuitBased):
         elif isinstance(gate, CheckPointChild):
             self._check_point = gate
         else:
-            assert isinstance(gate, Operator)
+            assert isinstance(gate, Operator), TypeError("CompositeGate.append", "BasicGate/Operator", type(gate))
             if insert_idx == -1:
                 self._gates.append(gate)
             else:
@@ -227,11 +227,11 @@ class CompositeGate(CircuitBased):
                 gate.cargs = qubit_index[:gate.controls]
                 gate.targs = qubit_index[gate.controls:]
             else:
-                raise KeyError(f"{gate.type} need {gate_args} indexes, but given {len(self._pointer)}")
+                raise GateQubitAssignedError(f"{gate.type} need {gate_args} indexes, but given {len(self._pointer)}")
         else:
             qubit_index = gate.cargs + gate.targs
             if not qubit_index:
-                raise KeyError(f"{gate.type} need qubit indexes to add into Composite Gate.")
+                raise GateQubitAssignedError(f"{gate.type} need qubit indexes to add into Composite Gate.")
 
             self._update_qubit_limit(qubit_index)
 

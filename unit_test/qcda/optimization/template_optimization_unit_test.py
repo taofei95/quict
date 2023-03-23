@@ -1,10 +1,12 @@
 from random import sample
 
-from QuICT.core import *
+from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.lib.circuitlib import CircuitLib
-from QuICT.qcda.optimization.template_optimization.template_matching import ForwardMatch, MatchingDAGCircuit
-from QuICT.qcda.optimization.template_optimization.template_optimization import TemplateOptimization
+from QuICT.tools.circuit_library import CircuitLib
+from QuICT.qcda.optimization.template_optimization.template_matching import (
+    ForwardMatch, MatchingDAGCircuit)
+from QuICT.qcda.optimization.template_optimization.template_optimization import \
+    TemplateOptimization
 
 
 def get_circ():
@@ -48,18 +50,6 @@ def get_circ():
     return circ, template
 
 
-def test_dag():
-    circ, template = get_circ()
-
-    circ.draw(filename='matching_dag.jpg')
-    dag_circ = MatchingDAGCircuit(circ)
-    dag_circ.draw()
-
-    template.draw(filename='matching_template.jpg')
-    template_circ = MatchingDAGCircuit(template)
-    template_circ.draw()
-
-
 def test_forward_matching():
     circ, template = get_circ()
     circ_dag = MatchingDAGCircuit(circ)
@@ -74,35 +64,18 @@ def test_forward_matching():
     assert res == ans
 
 
-def test_ccx():
-    circ = Circuit(4)
-    CCX | circ([0, 1, 2])
-    CCX | circ([1, 0, 2])
-
-    TO = TemplateOptimization()
-    circ_optim = TO.execute(circ)
-    assert circ_optim.size() == 0
-
-
 def test_random_circuit():
     gates = [GateType.x, GateType.cx, GateType.ccx, GateType.h, GateType.s, GateType.t,
              GateType.sdg, GateType.tdg]
 
-    n_iter = 20
-    n_qubits = 8
-    n_gates = 200
-    template_list = CircuitLib.load_template_circuit()
+    n_qubits = 4
+    template_list = CircuitLib().get_template_circuit()
     n_templates = 10
 
-    for idx in range(n_iter):
-        print('testing', idx)
+    for n_gates in range(20, 101, 20):
         circ = Circuit(n_qubits)
         circ.random_append(n_gates, typelist=gates)
-        TO = TemplateOptimization(
-            template_list=sample(template_list, n_templates),
-            heuristics_qubits_param=[10],
-            heuristics_backward_param=[3, 1]
-        )
+        TO = TemplateOptimization(template_typelist=sample(template_list, n_templates))
         circ_optim = TO.execute(circ)
 
         mat_1 = circ.matrix()

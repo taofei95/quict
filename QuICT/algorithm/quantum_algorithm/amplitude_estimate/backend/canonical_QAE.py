@@ -1,5 +1,4 @@
 import numpy as np
-from types import SimpleNamespace
 
 from QuICT.core import Circuit
 from QuICT.core.gate import CompositeGate, Swap, H, Measure, IQFT
@@ -42,8 +41,6 @@ def construct_circuit(
     for k in range(len(trickbits) // 2):
         Swap | cgate([trickbits[k], trickbits[len(trickbits) - 1 - k]])
     IQFT.build_gate(m) | cgate(trickbits)
-    for k in range(len(trickbits) // 2):
-        Swap | cgate([trickbits[k], trickbits[len(trickbits) - 1 - k]])
 
     return cgate, {"trickbits": trickbits, "m": m, "n": n, "n_ancilla": n_ancilla}
 
@@ -74,4 +71,4 @@ def amplitude_estimate(
         Measure | circ(idx)
     simulator.run(circ)
     y = int(circ[info["trickbits"]])
-    return np.sin(np.pi * y / (1 << info["m"])) ** 2
+    return 1 - np.sin(np.pi * y / (1 << info["m"])) ** 2

@@ -7,7 +7,6 @@ from typing import Union, List
 import numpy as np
 
 from QuICT.core.qubit import Qubit, Qureg
-from QuICT.core.exception import TypeException
 from QuICT.core.layout import Layout, SupremacyLayout
 from QuICT.core.gate import BasicGate, H, Measure, build_random_gate, build_gate
 from QuICT.core.utils import (
@@ -28,23 +27,18 @@ from QuICT.tools import Logger
 from QuICT.tools.exception.core import *
 
 
-logger = Logger("circuit")
-
-
 class Circuit(CircuitBased):
     """ Implement a quantum circuit
 
     Circuit is the core part of the framework.
 
     Attributes:
-        wires(Union[Qureg, int]): the number of qubits for the circuit
-        name(str): the name of the circuit
+        wires(Union[Qureg, int]): the number of qubits for the circuit.
+        name(str): the name of the circuit.
         topology(list<tuple<int, int>>):
             The topology of the circuit. When the topology list is empty, it will be seemed as fully connected.
         fidelity(float): the fidelity of the circuit
-
-    Private Attributes:
-        _idmap(dictionary): the map from qubit's id to its index in the circuit
+        ancillae_qubits(list<int>): The indexes of ancilla qubits for current circuit.
     """
     @property
     def qubits(self) -> Qureg:
@@ -58,9 +52,10 @@ class Circuit(CircuitBased):
     def ancillae_qubits(self, ancillae_qubits: List[int]):
         for idx in ancillae_qubits:
             if idx < 0 or idx >= self.width():
-                raise CircuitQubitsError(
-                    f"Illegal qubit's index {idx}, index must within [0, {self.width()}]"
+                raise IndexExceedError(
+                    "circuit.ancillae_qubits", [0, self.width()], idx
                 )
+
             self._ancillae_qubits.append(idx)
 
     @property
@@ -74,11 +69,13 @@ class Circuit(CircuitBased):
             return
 
         if not isinstance(topology, Layout):
-            raise CircuitTypeError("Only support Layout as circuit topology.")
+            raise TypeError(
+                "Circuit.topology", "Layout", type(topology)
+            )
 
         if topology.qubit_number != self.width():
-            raise CircuitQubitsError(
-                f"The qubit number {self.width()} is not matched with topology {topology.qubit_number}."
+            raise ValueError(
+                "Circuit.topology.qubit_number", self.width(), topology.qubit_number
             )
 
         self._topology = topology
@@ -93,8 +90,15 @@ class Circuit(CircuitBased):
             self._fidelity = None
             return
 
-        if not isinstance(fidelity, float) or fidelity < 0 or fidelity > 1.0:
-            raise CircuitFidelityError(f"fidelity should be in [0, 1], not {fidelity}.")
+        if not isinstance(fidelity, float):
+            raise TypeError(
+                "Circuit.fidelity", "float", type(fidelity)
+            )
+
+        if fidelity < 0 or fidelity > 1.0:
+            raise ValueError(
+                "Circuit.fidelity", "within [0, 1]", {fidelity}
+            )
 
         self._fidelity = fidelity
 
@@ -114,6 +118,7 @@ class Circuit(CircuitBased):
         self._topology = None
         self._fidelity = None
         self._checkpoints = []
+        self._logger = Logger("circuit")
 
         if isinstance(wires, Qureg):
             self._qubits = wires
@@ -123,14 +128,14 @@ class Circuit(CircuitBased):
         if ancillae_qubits is not None:
             self.ancillae_qubits = ancillae_qubits
 
-        logger.info(f"Initial Quantum Circuit {name} with {wires} qubits.")
+        self._logger.debug(f"Initial Quantum Circuit {name} with {len(self._qubits)} qubits.")
         if topology is not None:
             self.topology = topology
-            logger.debug(f"The Layout for Quantum Circuit is {self._topology}.")
+            self._logger.debug(f"The Layout for Quantum Circuit is {self._topology}.")
 
         if fidelity is not None:
             self.fidelity = fidelity
-            logger.debug(f"The Fidelity for Quantum Circuit is {self.fidelity}.")
+            self._logger.debug(f"The Fidelity for Quantum Circuit is {self.fidelity}.")
 
     def __del__(self):
         """ release the memory """
@@ -138,7 +143,6 @@ class Circuit(CircuitBased):
         self._qubits = None
         self.topology = None
         self.fidelity = None
-        logger.debug(f"Delete Quantum Circuit {self._name}.")
 
     def __or__(self, targets):
         """deal the operator '|'
@@ -156,7 +160,9 @@ class Circuit(CircuitBased):
             TypeError: the type of targets is wrong
         """
         if not isinstance(targets, Circuit):
-            raise CircuitTypeError("Only support circuit | circuit.")
+            raise TypeError(
+                "Circuit.or", "Circuit", type(targets)
+            )
 
         if not self.qubits == targets.qubits:
             diff_qubits = targets.qubits.diff(self.qubits)
@@ -188,7 +194,9 @@ class Circuit(CircuitBased):
             indexes = Qureg(indexes)
 
         if not isinstance(indexes, Qureg):
-            raise CircuitTypeError("only accept int/list[int]/Qubit/Qureg")
+            raise TypeError(
+                "Circuit.call", "int/list[int]/Qubit/Qureg", type(indexes)
+            )
 
         self._pointer = indexes
         return self
@@ -214,7 +222,7 @@ class Circuit(CircuitBased):
         """
         if isinstance(qubits, int):
             if qubits <= 0:
-                raise CircuitQubitsError("Failure to add non-positive number of qubits.")
+                raise IndexExceedError("Circuit.add_qubit", ">= 0", {qubits})
 
             qubits = Qureg(qubits)
 
@@ -222,12 +230,12 @@ class Circuit(CircuitBased):
         if is_ancillary_qubit:
             self._ancillae_qubits += list(range(self.width() - len(qubits), self.width()))
 
-        logger.debug(f"Quantum Circuit {self._name} add {len(qubits)} qubits.")
+        self._logger.debug(f"Quantum Circuit {self._name} add {len(qubits)} qubits.")
 
     def reset_qubits(self):
         """ Reset all qubits in current circuit. """
         self._qubits.reset_qubits()
-        logger.debug(f"Reset qubits' measured result in the Quantum Circuit {self._name}.")
+        self._logger.debug(f"Reset qubits' measured result in the Quantum Circuit {self._name}.")
 
     def remapping(self, qureg: Qureg, mapping: list, circuit_update: bool = False):
         """ Realignment the qubits by the given mapping.
@@ -238,12 +246,10 @@ class Circuit(CircuitBased):
             circuit_update (bool, optional): whether rearrange the qubits in circuit. Defaults to False.
         """
         if not isinstance(qureg, Qureg):
-            raise CircuitTypeError("Qureg Only.", qureg)
+            raise TypeError("Circuit.remapping", "Qureg", type(qureg))
 
         if len(qureg) != len(mapping):
-            raise CircuitQubitsError(
-                f"the length of mapping {len(mapping)} must equal to the qubits' number {len(qureg)}."
-            )
+            raise ValueError("Circuit.remapping.mapping", len(qureg), len(mapping))
 
         current_index = [self.qubits.index(qubit) for qubit in qureg]
         remapping_index = [current_index[m] for m in mapping]
@@ -251,7 +257,7 @@ class Circuit(CircuitBased):
 
         if circuit_update:
             self._qubits = remapping_qureg
-            logger.debug(f"The qureg is permutation by the order {mapping}.")
+            self._logger.debug(f"The qureg is permutation by the order {mapping}.")
 
         qureg[:] = remapping_qureg
 
@@ -265,23 +271,11 @@ class Circuit(CircuitBased):
         else:
             self.gates.insert(insert_idx, gate)
 
-        logger.debug(
-            f"Add quantum gate {gate.type} with qubit indexes {gate.cargs + gate.targs} " +
-            f"with index {insert_idx}."
-        )
-
         # Update gate type dict
         if gate.type in self._gate_type.keys():
             self._gate_type[gate.type] += 1
         else:
             self._gate_type[gate.type] = 1
-
-    def _update_gate_index(self):
-        for index, gate in enumerate(self.gates):
-            gate_type, gate_qb, gate_idx = gate.name.split('-')
-
-            if int(gate_idx) != index:
-                gate.name = '-'.join([gate_type, gate_qb, str(index)])
 
     def replace_gate(self, idx: int, gate: BasicGate):
         """ Replace the quantum gate in the target index, only accept BasicGate or NoiseGate.
@@ -290,17 +284,14 @@ class Circuit(CircuitBased):
             idx (int): The index of replaced quantum gate in circuit.
             gate (BasicGate): The new quantum gate
         """
-        assert idx >= 0 and idx < len(self._gates), "The index of replaced gate is wrong."
-        assert isinstance(gate, (BasicGate, NoiseGate)), "The replaced gate must be a quantum gate or noised gate."
-        if idx < 0 or idx < len(self._gates):
-            raise CircuitReplaceError(
-                f"The index of replaced gate {idx} is wrong, please within [0, {len(self._gates)})."
-            )
+        assert idx >= 0 and idx < len(self._gates), IndexExceedError(
+            "Circuit.replace_gate.idx", [0, len(self._gates)], idx
+        )
+        assert isinstance(gate, (BasicGate, NoiseGate)), TypeError(
+            "Circuit.replace_gate.gate", "[BasicGate, NoiseGate]", type(gate)
+        )
 
-        if not isinstance(gate, (BasicGate, NoiseGate)):
-            raise CircuitReplaceError("The replaced gate must be a quantum gate or noised gate.")
-
-        logger.debug(f"The origin gate {self._gates[idx]} is replaced by {gate}")
+        self._logger.debug(f"The origin gate {self._gates[idx]} is replaced by {gate}")
         self._gates[idx] = gate
 
     def find_position(self, cp_child: CheckPointChild):
@@ -378,13 +369,13 @@ class Circuit(CircuitBased):
             self._add_trigger(op, qureg)
         elif isinstance(op, CheckPoint):
             self._checkpoints.append(op)
-            logger.debug(f"Add an CheckPoint which point to index {op.position}.")
+            self._logger.debug(f"Add an CheckPoint which point to index {op.position}.")
         elif isinstance(op, Operator):
             self._gates.append(op)
-            logger.debug(f"Add an operator {type(op)}.")
+            self._logger.debug(f"Add an operator {type(op)}.")
         else:
-            raise CircuitAppendError(
-                f"Circuit can append a Trigger/BasicGate/NoiseGate, not {type(op)}."
+            raise TypeError(
+                "Circuit.append.gate", "Trigger/BasicGate/NoiseGate", {type(op)}
             )
 
     def _add_gate(self, gate: BasicGate, qureg: Qureg, insert_idx: int):
@@ -410,7 +401,7 @@ class Circuit(CircuitBased):
                 qureg = self.qubits[gate_ctargs] if gate_ctargs else gate.assigned_qubits
         else:
             if len(qureg) < args_num:
-                raise ValueError("Assigned qubits must larger or equal to gate size.")
+                raise CircuitAppendError("Assigned qubits must larger or equal to gate size.")
 
             if len(qureg) > args_num and gate_ctargs:
                 qureg = qureg[gate_ctargs]
@@ -419,7 +410,6 @@ class Circuit(CircuitBased):
         gate.cargs = [self.qubits.index(qureg[idx]) for idx in range(gate.controls)]
         gate.targs = [self.qubits.index(qureg[idx]) for idx in range(gate.controls, gate.controls + gate.targets)]
         gate.assigned_qubits = qureg
-        gate.update_name(qureg[0].id, len(self.gates))
 
         # Add gate into circuit
         self._add_quantumgate_into_circuit(gate, insert_idx)
@@ -429,7 +419,6 @@ class Circuit(CircuitBased):
             new_gate = gate.copy()
             new_gate.targs = [idx]
             new_gate.assigned_qubits = self.qubits(idx)
-            new_gate.update_name(self.qubits[idx].id, len(self.gates))
 
             self._add_quantumgate_into_circuit(new_gate)
 
@@ -448,7 +437,7 @@ class Circuit(CircuitBased):
                     raise CircuitAppendError("The trigger's target exceed the width of the circuit.")
 
         self.gates.append(op)
-        logger.debug(f"Add an operator Trigger with qubit indexes {op.targs}.")
+        self._logger.debug(f"Add an operator Trigger with qubit indexes {op.targs}.")
 
     def random_append(
         self,
@@ -482,16 +471,14 @@ class Circuit(CircuitBased):
 
         if probabilities is not None:
             if not np.isclose(sum(probabilities), 1, atol=1e-6):
-                raise CircuitSpecialAppendError(
-                    f"The probabilities for Random Append must sum to 1, not {sum(probabilities)}."
-                )
+                raise ValueError("Circuit.random_append.probabilities", "sum to 1", sum(probabilities))
 
             if len(probabilities) != len(typelist):
                 raise CircuitSpecialAppendError(
                     "The length of probabilities should equal to the length of Gate Typelist."
                 )
 
-        logger.debug(f"Random append {rand_size} quantum gates from {typelist} with probability {probabilities}.")
+        self._logger.debug(f"Random append {rand_size} quantum gates from {typelist} with probability {probabilities}.")
         gate_prob = probabilities
         gate_indexes = list(range(len(typelist)))
         n_qubit = self.width()
@@ -511,7 +498,9 @@ class Circuit(CircuitBased):
         qubits = len(self.qubits)
         supremacy_layout = SupremacyLayout(qubits)
         supremacy_typelist = [GateType.sx, GateType.sy, GateType.sw]
-        logger.debug(f"Append Supremacy Circuit with mapping pattern sequence {pattern} and repeat {repeat} times.")
+        self._logger.debug(
+            f"Append Supremacy Circuit with mapping pattern sequence {pattern} and repeat {repeat} times."
+        )
 
         self._add_gate_to_all_qubits(H)
 
@@ -522,9 +511,7 @@ class Circuit(CircuitBased):
 
             current_pattern = pattern[i % (len(pattern))]
             if current_pattern not in "ABCD":
-                raise CircuitSpecialAppendError(
-                    f"Supremacy Append do not supported pattern {pattern[i]}, please use one of 'A', 'B', 'C', 'D'."
-                )
+                raise ValueError("Circuit.append_supremacy.pattern", "[A, B, C, D]", current_pattern)
 
             edges = supremacy_layout.get_edges_by_pattern(current_pattern)
             for e in edges:
@@ -559,7 +546,7 @@ class Circuit(CircuitBased):
             Circuit: the sub circuit
         """
         max_size_for_logger = max_size if max_size == -1 else len(self.gates) - start
-        logger.info(
+        self._logger.debug(
             f"Get {max_size_for_logger} gates from gate index {start}" +
             f" with target qubits {qubit_limit} and gate limit {gate_limit}."
         )
@@ -572,7 +559,7 @@ class Circuit(CircuitBased):
 
             for target in target_qubits:
                 if target < 0 or target >= self.width():
-                    raise CircuitQubitsError(f'The qubit_limit\'s idx {target} exceed the range [0, {self.width()}).')
+                    raise IndexExceedError("Circuit.sub_circuit.qubit_limit", [0, self.width()], target)
 
             set_tqubits = set(target_qubits)
 
@@ -602,10 +589,6 @@ class Circuit(CircuitBased):
 
             if sub_circuit.size() >= max_size and max_size != -1:
                 break
-
-        if remove:
-            self._update_gate_index()
-            logger.warn(f"Remove sub-circuit's gates from quantum circuit {self._name}.")
 
         return sub_circuit
 
@@ -657,7 +640,9 @@ class Circuit(CircuitBased):
                 save_file = False
                 show_inline = False
             else:
-                raise CircuitDrawError(f"Unsupported matp method {method}.")
+                raise ValueError(
+                    "Circuit.draw.matp_method", "[matp_auto, matp_file, matp_inline, matp_silent]", method
+                )
 
             silent = (not show_inline) and (not save_file)
             photo_drawer.run(circuit=self, filename=filename, save_file=save_file)
@@ -678,6 +663,6 @@ class Circuit(CircuitBased):
 
             text_drawer.dump(filename)
         else:
-            raise CircuitDrawError(
-                f"Unsupported draw method {method}. Please use one of [matp_*, command]."
+            raise ValueError(
+                "Circuit.draw.method", "[matp_auto, matp_file, matp_inline, matp_silent, command]", method
             )

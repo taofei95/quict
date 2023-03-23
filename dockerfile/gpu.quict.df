@@ -1,0 +1,20 @@
+FROM nvidia/cuda:11.1.1-cudnn8-devel
+WORKDIR /home/quict
+
+RUN rm /etc/apt/sources.list.d/cuda.list
+RUN apt-key del 7fa2af80
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
+
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    python3-dev \
+    python3-pip \
+    python3-wheel \
+    python3-setuptools && \
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
+
+RUN pip3 install --no-cache-dir -U install setuptools pip
+RUN pip3 install --no-cache-dir "cupy-cuda111"
+RUN pip3 install --no-cache-dir quict
+
+CMD ["bash"]

@@ -1,5 +1,4 @@
 import random
-import logging
 from math import gcd
 import numpy as np
 from fractions import Fraction
@@ -7,10 +6,8 @@ from typing import List, Tuple
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.core.operator import Trigger
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from .utility import *
-
 
 from .BEA_zip import construct_circuit as BEA_zip_circuit
 from .BEA_zip import order_finding as BEA_zip_run
@@ -21,6 +18,11 @@ from .HRS_zip import construct_circuit as HRS_zip_circuit
 from .HRS_zip import order_finding as HRS_zip_run
 from .HRS import construct_circuit as HRS_circuit
 from .HRS import order_finding as HRS_run
+
+from QuICT.tools import Logger
+from QuICT.tools.exception.core import *
+
+logger = Logger("Shor")
 
 
 class ShorFactor:
@@ -40,7 +42,7 @@ class ShorFactor:
     }
 
     # add a, N here
-    def __init__(self, mode: str, eps: float = 1 / 10, max_rd: int = 2, simulator=CircuitSimulator()) -> None:
+    def __init__(self, mode: str, eps: float = 1 / 10, max_rd: int = 2, simulator=StateVectorSimulator()) -> None:
         if mode not in ShorFactor._ALLOWED_MODES:
             raise ValueError(
                 f"{mode} mode is not valid. Consider {ShorFactor._ALLOWED_MODES}"
@@ -94,11 +96,11 @@ class ShorFactor:
         simulator = self.simulator
         # check if input is prime (using MillerRabin in klog(N), k is the number of rounds to run MillerRabin)
         if miller_rabin(N):
-            logging.info("N does not pass miller rabin test, may be a prime number")
+            logger.info("N does not pass miller rabin test, may be a prime number")
             return 0
         # 1. If n is even, return the factor 2
         if N % 2 == 0:
-            logging.info("Shor succeed: N is even, found factor 2 classically")
+            logger.info("Shor succeed: N is even, found factor 2 classically")
             return 2
         # 2. Classically determine if N = p^q
         y, L = np.log2(N), int(np.ceil(np.log2(N)))
@@ -106,21 +108,21 @@ class ShorFactor:
             squeeze = np.power(2, y / b)
             u1, u2 = int(np.floor(squeeze)), int(np.ceil(squeeze))
             if pow(u1, b) == N:
-                logging.info(
+                logger.info(
                     f"Shor succeed: N is exponential, found the only factor {u1} classically"
                 )
                 return u1
             if pow(u2, b) == N:
-                logging.info(
+                logger.info(
                     f"Shor succeed: N is exponential, found the only factor {u2} classically"
                 )
                 return u2
         rd = 0
         while rd < self.max_rd:
-            logging.info(f"round = {rd}")
+            logger.info(f"round = {rd}")
             # 3. Choose a random number a (1<a<N)
             if forced_quantum_approach:
-                logging.info("forced quantum approach, looking for coprime number...")
+                logger.info("forced quantum approach, looking for coprime number...")
                 while True:
                     a = random.randint(2, N - 1)
                     gcd = np.gcd(a, N)
@@ -130,13 +132,13 @@ class ShorFactor:
                 a = random.randint(2, N - 1)
                 gcd = np.gcd(a, N)
                 if gcd > 1:
-                    logging.info(
+                    logger.info(
                         f"Shor succeed: randomly chosen a = {a}, who has common factor {gcd} with N classically"
                     )
                     return gcd
             rd += 1
             # 4. Use quantum order-finding algorithm to find the order of a
-            logging.info(
+            logger.info(
                 f"Quantumly determine the order of the randomly chosen a = {a}"
             )
             # check if any input circuit. if no, run according to `mode`; else run the input circuit
@@ -155,33 +157,33 @@ class ShorFactor:
                     ) / (1 << len(indices))
                 else:
                     raise ValueError("wrong indices")
-                logging.info(f"phi: {phi:4.3f}")
+                logger.info(f"phi: {phi:4.3f}")
                 r = Fraction(phi).limit_denominator(N - 1).denominator
 
             if r == 0:  # no order found
-                logging.info(
+                logger.info(
                     f"Shor failed: did not find the order of a = {a}"
                 )  # add mode info here
             elif r % 2 == 1:  # odd order
-                logging.info(f"Shor failed: found odd order r = {r} of a = {a}")
+                logger.info(f"Shor failed: found odd order r = {r} of a = {a}")
             else:  # N | h^2 - 1, h = a^(r/2)
                 h = pow(a, int(r / 2), N)
                 if h == N - 1:  # N | h + 1
-                    logging.info(
+                    logger.info(
                         f"Shor failed: found order r = {r} of a = {a} with negative square root"
                     )
                 else:  # N !| h + 1, therefore N | h - 1
                     f1, f2 = np.gcd(h - 1, N), np.gcd(h + 1, N)
                     if f1 > 1 and f1 < N:
-                        logging.info(
+                        logger.info(
                             f"Shor succeed: found factor {f1}, with the help of a = {a}, r = {r}"
                         )
                         return f1
                     elif f2 > 1 and f2 < N:
-                        logging.info(
+                        logger.info(
                             f"Shor succeed: found factor {f2}, with the help of a = {a}, r = {r}"
                         )
                         return f2
                     else:
-                        logging.info(f"Shor failed: can not find a factor with a = {a}")
+                        logger.info(f"Shor failed: can not find a factor with a = {a}")
         return 0
