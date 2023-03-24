@@ -4,6 +4,7 @@ from QuICT.algorithm.quantum_algorithm.hhl.trotter import Trotter
 from QuICT.qcda.synthesis.unitary_decomposition.controlled_unitary import ControlledUnitaryDecomposition
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.tools.exception import *
 
 
 logger = Logger('hhl')
@@ -21,7 +22,7 @@ class HHL:
 
     def reconstruct(self, matrix, vector):
         """ When matrix A is not Hermitian, construct a hermite matrix H, and A is in the upper right corner.
-            Simultaneously, vector b add 0 in the tail.
+            Simultaneously, vector b add 0.
         """
         row, column = matrix.shape
         if row != column:
@@ -91,12 +92,11 @@ class HHL:
     ):
         """
         Args:
-            matrix(ndarray/circuit): the matrix A above
-                [A must be invertible]
+            matrix(ndarray/circuit): the normalize matrix A above
             vector(array): the vector b above, need to be prepared previously
                 matrix and vector MUST have the same number of ROWS!
             e(int): number of qubits representing the Phase
-            method: method is Hamiltonian simulation, default "unitary"
+            method: Hamiltonian simulation method, default "unitary"
         Returns:
             Circuit: HHL circuit
         """
@@ -138,9 +138,9 @@ class HHL:
                     U, _ = ControlledUnitaryDecomposition().execute(
                         np.identity(1 << n, dtype=np.complex128), m
                     )
+                    U | CU(c)
                 except:
-                    pass
-                U | CU(c)
+                    raise QuICTException("UnitaryDecomposition failed.")
                 m = np.dot(m, m)
 
         for idx in phase:
@@ -186,12 +186,14 @@ class HHL:
                 matrix and vector MUST have the same number of ROWS!
             t(float): the coefficient makes matrix (t*A/2pi)'s eigenvalues are in (1/e, 1)
             e(int): number of qubits representing the Phase
-            method: method is Hamiltonian simulation, default "unitary"
+            method: Hamiltonian simulation method, default "unitary"
                 ('trotter', x(int)): use trotter-suzuki decomposition to simulate expm(iAt/x)^x
                 'unitary': use unitary decomposition to simulate expm(iAt)
 
         Returns:
-            Tuple[list, None]: the goal state vector if the algorithm success, or the algorithm failed
+            Tuple[list, None]: 
+                list: vector x_hat, which equal to kx: x is the solution vector of Ax = b, and k is an unknown coefficient
+                None: algorithm failed.
         """
         simulator = self.simulator
         size = len(vector)
@@ -203,8 +205,7 @@ class HHL:
             state_vector = simulator.run(circuit)
             if int(circuit[0]) == 0:
                 x = np.array(state_vector[len(v) - size: len(v)].get(), dtype=np.complex128)
-                slt = (x / t / np.cos(-theta / 2) * 2 ** (e - 1)).real
-                return slt
+                return x
             theta = -(idx + 1) * np.pi / 10
             circuit.replace_gate(0, Ry(theta) & 0)
         else:
