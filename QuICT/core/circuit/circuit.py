@@ -207,7 +207,7 @@ class Circuit(CircuitBased):
     ####################################################################
     ############          Circuit Gates Operators           ############
     ####################################################################
-    def replace_gate(self, idx: int, gate: BasicGate):
+    def replace_gate(self, gate: BasicGate, idx: int):
         """ Replace the quantum gate in the target index, only accept BasicGate or NoiseGate.
 
         Args:
@@ -310,7 +310,7 @@ class Circuit(CircuitBased):
         self._pointer = None
 
     def insert(self, gate, insert_idx: int):
-        """ Insert a Quantum Gate into current CompositeGate, only support BasicGate. """
+        """ Insert a Quantum Gate into current CompositeGate, only support BasicGate/CompositeGate. """
         assert isinstance(gate, (BasicGate, Operator, CompositeGate)), TypeError("CompositeGate.insert", "BasicGate", type(gate))
         gate_args = gate.qubits if isinstance(gate, CompositeGate) else gate.cargs + gate.targs
         gate_size = gate.size() if isinstance(gate, CompositeGate) else 1
@@ -518,10 +518,9 @@ class Circuit(CircuitBased):
         start: int = 0,
         max_size: int = -1,
         qubit_limit: Union[int, List[int], Qureg] = [],
-        gate_limit: List[GateType] = [],
-        remove: bool = False
+        gate_limit: List[GateType] = []
     ):
-        """ get a sub circuit
+        """ Get a sub circuit from current circuit with target gate and qubit limitation. Operators will be ignore.
 
         Args:
             start(int): the start gate's index, default 0
@@ -552,9 +551,14 @@ class Circuit(CircuitBased):
             set_tqubits = set(qubit_limit)
 
         sub_circuit = Circuit(self.width()) if not qubit_limit else Circuit(len(qubit_limit))
-        temp_gates, temp_size = self._gates[:], 0
-        for gate_index in range(start, len(self._gates)):
-            gate, qidxes, size = temp_gates[gate_index]
+        flatten_gates = self.flatten_gates()
+        temp_size = 0
+        for gate_index in range(start, len(flatten_gates)):
+            gate = flatten_gates[gate_index]
+            if isinstance(gate, Operator):
+                continue
+
+            qidxes = gate.cargs + gate.targs
             gate_args = set(qidxes)
             is_append_in_subc = True
             if (qubit_limit and gate_args & set(set_tqubits) != gate_args):
@@ -564,12 +568,9 @@ class Circuit(CircuitBased):
                 is_append_in_subc = False
 
             if is_append_in_subc:
-                new_qidxes = [qubit_limit.index(q) for q in qidxes] if qubit_limit else qubit_limit
+                new_qidxes = [qubit_limit.index(q) for q in qidxes] if qubit_limit else qidxes
                 gate | sub_circuit(new_qidxes)
-                temp_size += size
-
-                if remove:
-                    self._gates.remove(temp_gates[gate_index])
+                temp_size += 1
 
             if max_size != -1 and temp_size >= max_size:
                 break
