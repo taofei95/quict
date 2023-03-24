@@ -8,14 +8,14 @@ n = 2 ** 3
 A = RS(n, 1).matrix()
 b = np.ones(n, dtype=np.complex128)
 
-test = LinearSolver(A, b) 
+test = LinearSolver(A, b)
 slt = test.solution()
-hhl_u = test.hhl(measure=True, method='unitary')
-# slt /= np.linalg.norm(slt)
+hhl_u = test.hhl(method='unitary')
+slt /= np.linalg.norm(slt)
 if hhl_u is not None:
-      # hhl_u /= np.linalg.norm(hhl_u.real)
-      print(A.real)
+      hhl_u /= np.linalg.norm(hhl_u.real)
       print(f"solution     = {slt.real}\n" +
             f"hhl(unitary) = {hhl_u.real}")
 else:
       print("Failed.")
+

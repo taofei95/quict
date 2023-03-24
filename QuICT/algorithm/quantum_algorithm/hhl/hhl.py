@@ -16,7 +16,7 @@ class HHL:
         [1] Quantum Algorithm for Linear Systems of Equations: https://doi.org/10.1103/PhysRevLett.103.150502
         [2] Quantum circuit design for solving linear systems of equations: https://doi.org/10.1080/00268976.2012.668289
     """
-    def __init__(self, simulator) -> None:
+    def __init__(self, simulator=None) -> None:
         self.simulator = simulator
 
     def reconstruct(self, matrix, vector):
@@ -111,12 +111,14 @@ class HHL:
                 x = list(range(2 * e + 1, 2 * e + n + 1))
                 order = method[1]
                 method = method[0]
-        elif method == 'unitary':
+        else:
             circuit = Circuit(2 * e + n)
             ancilla = 0
             phase = list(range(1, e + 1))
             toffoli = list(range(e + 1, 2 * e))
             x = list(range(2 * e, 2 * e + n))
+
+        Ry(0) | circuit(ancilla)
 
         if len(x) > 1:
             QuantumStatePreparation().execute(vector) | circuit(x)
@@ -132,9 +134,12 @@ class HHL:
             for idx in reversed(phase):
                 c = [idx]
                 c.extend(x)
-                U, _ = ControlledUnitaryDecomposition().execute(
-                    np.identity(2 ** n, dtype=np.complex128), m
-                )
+                try:
+                    U, _ = ControlledUnitaryDecomposition().execute(
+                        np.identity(1 << n, dtype=np.complex128), m
+                    )
+                except:
+                    pass
                 U | CU(c)
                 m = np.dot(m, m)
 
@@ -144,7 +149,6 @@ class HHL:
         IQFT.build_gate(len(phase)) | circuit(list(reversed(phase)))
 
         CRY = self.c_rotation(phase, ancilla, toffoli)
-        Ry(-0.9 * np.pi) | circuit(ancilla)
         CRY | circuit
 
         QFT.build_gate(len(phase)) | circuit(list(reversed(phase)))
@@ -178,15 +182,16 @@ class HHL:
         Args:
             matrix(ndarray/matrix): the matrix A above
                 [A must be reversible]
-            vector(array): the vector b above, need to be prepared previously
+            vector(np.array): the vector b above, need to be prepared previously
                 matrix and vector MUST have the same number of ROWS!
             t(float): the coefficient makes matrix (t*A/2pi)'s eigenvalues are in (1/e, 1)
             e(int): number of qubits representing the Phase
             method: method is Hamiltonian simulation, default "unitary"
+                ('trotter', x(int)): use trotter-suzuki decomposition to simulate expm(iAt/x)^x
+                'unitary': use unitary decomposition to simulate expm(iAt)
 
         Returns:
-            array: the goal state vector if the algorithm success
-            None: algorithm failed
+            Tuple[list, None]: the goal state vector if the algorithm success, or the algorithm failed
         """
         simulator = self.simulator
         size = len(vector)
@@ -194,10 +199,13 @@ class HHL:
         norm_v = np.linalg.norm(v)
         circuit = self.circuit(m * t, v / norm_v, e, method)
 
-        state_vector = simulator.run(circuit)
-        x = np.array(state_vector[len(v) - size: len(v)].get(), dtype=np.complex128)
-
-        if int(circuit[0]) == 0:
-            return x / t * 2 ** 9
+        for idx in range(10):
+            state_vector = simulator.run(circuit)
+            if int(circuit[0]) == 0:
+                x = np.array(state_vector[len(v) - size: len(v)].get(), dtype=np.complex128)
+                slt = (x / t / np.cos(-theta / 2) * 2 ** (e - 1)).real
+                return slt
+            theta = -(idx + 1) * np.pi / 10
+            circuit.replace_gate(0, Ry(theta) & 0)
         else:
             return None

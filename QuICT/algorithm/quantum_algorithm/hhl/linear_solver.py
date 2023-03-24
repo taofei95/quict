@@ -26,7 +26,7 @@ class LinearSolver(object):
         """
         return np.linalg.solve(self.matrix, self.vector)
 
-    def hhl(self, t=None, e=None, method=None, measure=None, simulator=None):
+    def hhl(self, t=None, e=None, method=None, simulator=None):
         """ solving linear equation by HHL algorithm
 
         Args:
