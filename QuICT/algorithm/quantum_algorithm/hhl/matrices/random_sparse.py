@@ -11,7 +11,9 @@ class RandomSparse:
         size = self.size
         rvs = stats.norm().rvs
         while(1):
-            X = sparse.random(size, size, density=self.density, data_rvs=rvs, dtype=np.complex128)
+            X = sparse.random(
+                size, size, density=self.density, data_rvs=rvs,
+                dtype=np.complex128)
             A = X.todense()
             v = np.linalg.eigvals(A)
             A = np.round(A, 4)
