@@ -1,0 +1,1 @@
+::: QuICT.core.noise.QuantumNoiseError
