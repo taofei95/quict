@@ -191,8 +191,9 @@ class HHL:
                 'unitary': use unitary decomposition to simulate expm(iAt)
 
         Returns:
-            Tuple[list, None]: 
-                list: vector x_hat, which equal to kx: x is the solution vector of Ax = b, and k is an unknown coefficient
+            Tuple[list, None]:
+                list: vector x_hat, which equal to kx: 
+                    x is the solution vector of Ax = b, and k is an unknown coefficient
                 None: algorithm failed.
         """
         simulator = self.simulator
