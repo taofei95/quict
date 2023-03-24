@@ -11,9 +11,6 @@ class LinearSolver(object):
         Args:
             matrix(ndarray/matrix): matrix A
             vector(array): vector b
-
-        Raise:
-            Exception: The dimensions of A and b are inconsistent
         """
         self.matrix = matrix
         self.vector = vector
@@ -32,12 +29,13 @@ class LinearSolver(object):
         Args:
             t(float): the coefficient makes matrix (t*A/2pi)'s eigenvalues are in (1/2^e, 1)
             e(int): number of qubits representing the Phase
-            method: method is Hamiltonian simulation, default "trotter"
+            method: Hamiltonian simulation method, default "trotter"
             simulator: CPU or GPU simulator
 
         Return:
-            array: the solution of the linear equation
-            "Failedd.": the solution is none
+            Tuple[array, 'Failed']
+                array: the solution of the linear equation
+                "Failed.": the solution is none
         """
         if t is None or e is None:
             evalue = np.linalg.eigvals(self.matrix)
