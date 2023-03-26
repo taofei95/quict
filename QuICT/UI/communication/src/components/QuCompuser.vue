@@ -91,7 +91,7 @@
             <el-tab-pane label="Table">
               <table style="width: 100%;">
                 <tr style="height: 40px" v-for="result in OutputContent_density_matrix" :key="result">
-                  <td style="height: 40px" v-for="elem in result" :key="elem">{{elem}}</td>
+                  <td style="height: 40px" v-for="elem in result" :key="elem">{{ elem }}</td>
                 </tr>
               </table>
             </el-tab-pane>
@@ -549,10 +549,28 @@ export default {
     },
     SaveQCDA() {
       // 通知后端保存qasm
-      this.socket.emit("qasm_save", {
-        uuid: this.uuid,
-        content: this.ProgramText,
-      });
+      // this.socket.emit("qasm_save", {
+      //   uuid: this.uuid,
+      //   content: this.ProgramText,
+      // });
+      var text = this.ProgramText;
+
+      // Create a Blob object with the text content
+      var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+
+      // Create a link element for the download
+      var link = document.createElement("a");
+      link.download = "file.qasm";
+      link.href = URL.createObjectURL(blob);
+
+      // Append the link element to the document body
+      document.body.appendChild(link);
+
+      // Trigger the download by clicking the link
+      link.click();
+
+      // Remove the link element from the document body
+      document.body.removeChild(link);
     },
     RunQCDA(opSwitch, mapSwitch, setting) {
       // 通知后端运行qasm
@@ -848,7 +866,7 @@ export default {
         return;
       }
       let groupedGates = [];
-
+      let max_q = this.VisContent.q.length - 1;
       content["gates"].forEach((gate_org) => {
         let gate = {
           q: this.VisContent.q.length - 1,
@@ -864,10 +882,16 @@ export default {
           if (q < gate.q) {
             gate.q = q;
           }
+          if (q > max_q) {
+            max_q = q;
+          }
         });
         gate_org.targets.forEach((q) => {
           if (q < gate.q) {
             gate.q = q;
+          }
+          if (q > max_q) {
+            max_q = q;
           }
         });
         this.append2Group(
@@ -878,11 +902,15 @@ export default {
           gate
         );
       });
+      while (this.VisContent.q.length - 1 < max_q) {
+        this.Q_Add();
+      }
+
+      this.qbit = this.VisContent.q;
       this.VisContent.gates = this.ListGates(groupedGates);
 
       this.$refs.visVue.vis_change();
     });
-    // this.qbit = this.VisContent.q;
   },
   watch: {},
 };
