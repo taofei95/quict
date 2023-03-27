@@ -49,6 +49,14 @@ class CircuitPartitionOptimization(object):
         self.merge_iterations = 4
 
     def _add_default_optimizers(self, level, kp_ph):
+        """
+        Add default optimizers to self.optimize_methods.
+
+        Args:
+            level(str): optimizing level (heavy or light).
+            kp_ph(bool): whether to keep the global phase as a GPhase gate in the output.
+        """
+
         self.optimize_methods = {}
         if level == 'light':
             self.add_optimizer(CircuitMode.Clifford, SymbolicCliffordOptimization())
@@ -173,6 +181,8 @@ class CircuitPartitionOptimization(object):
     def _topo_sort_blocks(self, blocks):
         """
         Sort `blocks` in topological order.
+        Returns:
+            List[SubCircuit]: a list of blocks in topological order
         """
 
         deg = [0] * len(blocks)
@@ -194,6 +204,8 @@ class CircuitPartitionOptimization(object):
 
     def _is_reachable(self, src, dest, blocks):
         """
+        Check if `src` is reachable from `dest` in `blocks`.
+
         Returns:
             bool: if block `dest` is reachable from block `src`
         """
@@ -210,6 +222,9 @@ class CircuitPartitionOptimization(object):
         return False
 
     def _merge_blocks(self, blocks):
+        """
+        Merge blocks in `blocks` if possible.
+        """
         ret = blocks[0:1]
         for b in blocks[1:]:
             m = self._get_merged_mode(ret[-1], b)
@@ -299,6 +314,9 @@ class CircuitPartitionOptimization(object):
     def _dag_based_partition(self, circuit):
         """
         Partition circuit into blocks based on DAG.
+
+        Returns:
+            List[SubCircuit]: a list of blocks
         """
         dag = DAGCircuit(circuit)
         blocks = []
