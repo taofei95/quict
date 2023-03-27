@@ -2,7 +2,6 @@ from typing import *
 from collections import namedtuple
 import numpy as np
 
-from .gate_type import MatrixType
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 
 from QuICT.tools.exception.core import TypeError
@@ -54,8 +53,10 @@ class MatrixGroup:
 
 
 class CircuitMatrix:
-    def __init__(self, device: str = "CPU"):
+    def __init__(self, device: str = "CPU", precision: str = "double"):
         self._device = device
+        self._precision = precision
+
         if device == "CPU":
             self._computer = CPUCalculator
             self._array_helper = np
@@ -66,7 +67,10 @@ class CircuitMatrix:
             self._computer = GPUCalculator
             self._array_helper = cp
 
-    def get_unitary_matrix(self, gates: list, qubits_num: int, mini_arg: int = 0) -> np.ndarray:
+    def get_unitary_matrix(self, gates: list, qubits_num: int) -> np.ndarray:
+        if len(gates) == 0:
+            return self._array_helper.identity(1 << qubits_num, dtype=self._precision)
+
         # Order gates by depth
         gates_order_by_depth = get_gates_order_by_depth(gates)
 
@@ -79,7 +83,7 @@ class CircuitMatrix:
                         "CircuitMatrix.get_unitary_matrix.gates", "1 or 2-qubits gates", gate.controls + gate.targets
                     )
 
-                if gate.matrix_type == MatrixType.special:
+                if gate.is_special():
                     continue
 
                 args = gate.cargs + gate.targs
@@ -118,7 +122,7 @@ class CircuitMatrix:
         # Combined all matries from the combined MatrixGroup
         circuit_matrix, circuit_matrix_args = self._combined_gates(combined_matries)
         # Permutation the circuit matrix with currect qubits' order
-        args_baseline = list(range(mini_arg, qubits_num, 1))
+        args_baseline = list(range(qubits_num))
         if circuit_matrix_args != args_baseline:
             circuit_matrix = self._tensor_unitary(circuit_matrix, circuit_matrix_args, args_baseline)
 

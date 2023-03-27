@@ -3,7 +3,7 @@ from typing import *
 import numpy as np
 
 from QuICT.core import *
-from QuICT.core.gate import build_gate, BasicGate, CompositeGate, GateType
+from QuICT.core.gate import gate_builder, BasicGate, CompositeGate, GateType
 from QuICT.qcda.utility import OutputAligner
 from .utility import *
 from .graph import *
@@ -39,7 +39,7 @@ class CnotWithoutAncilla(object):
         parallel_elimination.reverse()
         for level in parallel_elimination:
             for c, t in level:
-                _cx = build_gate(GateType.cx, [c, t])
+                _cx = gate_builder(GateType.cx) & [c, t]
                 composite_gate.append(_cx)
         return composite_gate
 

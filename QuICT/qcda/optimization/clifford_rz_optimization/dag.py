@@ -9,7 +9,6 @@ except ImportError:
 
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.core.gate.gate_builder import GATE_TYPE_TO_CLASS
 
 from .symbolic_phase import SymbolicPhase, SymbolicPhaseVariable
 
@@ -75,7 +74,7 @@ class DAG(Iterable):
                 BasicGate: corresponding gate
             """
 
-            return GATE_TYPE_TO_CLASS[self.gate_type]()(*self.params) & self.qubit_loc \
+            return gate_builder(self.gate_type, params=self.params) & self.qubit_loc \
                 if self.gate_type is not None else None
 
         def add_forward_edge(self, qubit_, node):

@@ -81,7 +81,7 @@ class UnitaryDecomposition(object):
         _kak = CartanKAKDiagonalDecomposition() if keep_left_diagonal else CartanKAKDecomposition()
 
         if qubit_num == 1:
-            u = build_gate(GateType.unitary, [0], mat)
+            u = Unitary(mat) & 0
             _ret = CompositeGate(gates=[u])
             return _ret, 1.0 + 0.0j
         elif qubit_num == 2 and recursive_basis == 2:

@@ -300,7 +300,7 @@ class OPENQASMInterface(BasicInterface):
             else:
                 qubit_idxes = [id0[0], id1[idx]]
 
-            cx_gate = build_gate(GateType.cx, qubit_idxes)
+            cx_gate = gate_builder(GateType.cx) & qubit_idxes
             self.circuit_gates.append(cx_gate)
 
     def analyse_measure(self, node):
@@ -310,13 +310,13 @@ class OPENQASMInterface(BasicInterface):
             raise QASMError("the number of bits of registers unmatched:", node.line, node.file)
 
         for idx, _ in zip(id0, id1):
-            m_gate = build_gate(GateType.measure, [idx])
+            m_gate = gate_builder(GateType.measure) & idx
             self.circuit_gates.append(m_gate)
 
     def analyse_reset(self, node):
         id0 = self.get_analyse_id(node.children[0])
         for i, _ in enumerate(id0):
-            r_gate = build_gate(GateType.reset, [id0[i]])
+            r_gate = gate_builder(GateType.reset) & id0[i]
             self.circuit_gates.append(r_gate)
 
     def analyse_if(self, node):
@@ -331,7 +331,7 @@ class OPENQASMInterface(BasicInterface):
             pargs = [self.arg_stack[-1][s].sym(self.arg_stack[:-1]) for s in gargs]
             targs = [self.bit_stack[-1][s] for s in gbits]
             type = self.standard_extension[name]
-            gate = build_gate(type, targs, pargs)
+            gate = gate_builder(type, params=pargs) & targs
             self.circuit_gates.append(gate)
         else:
             body = self.gates[name]['body']

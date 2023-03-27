@@ -112,7 +112,7 @@ class QuantumWalk:
         action_gate.gate_decomposition()
         return action_gate
 
-    def _mct_generator(self, op: np.ndarray) -> UnitaryGate:
+    def _mct_generator(self, op: np.ndarray) -> Unitary:
         """ Build multi-control-'op' gate. """
         mct_unitary = np.identity(1 << self._total_qubits, dtype=np.complex128)
         op_shape = op.shape

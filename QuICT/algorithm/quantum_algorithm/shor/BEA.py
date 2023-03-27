@@ -46,7 +46,7 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
         )
     for k in range(len(trickbits) // 2):
         Swap | circuit([trickbits[k], trickbits[len(trickbits) - 1 - k]])
-    IQFT.build_gate(len(trickbits)) | circuit(trickbits)
+    IQFT(len(trickbits)) | circuit(trickbits)
     for k in range(len(trickbits) // 2):
         Swap | circuit([trickbits[k], trickbits[len(trickbits) - 1 - k]])
     for idx in b_reg + trickbits + qreg_low:

@@ -33,7 +33,7 @@ class BenchmarkCircuitBuilder:
             while cir.size() < size:
                 rand_type = np.random.choice(gate_indexes, p=prob)
                 gate_type = typelist[rand_type]
-                gate = GATE_TYPE_TO_CLASS[gate_type]()
+                gate = gate_builder(gate_type)
 
                 if gate.params:
                     gate.pargs = list(np.random.uniform(0, 2 * np.pi, gate.params))
@@ -154,7 +154,7 @@ class BenchmarkCircuitBuilder:
                     Rz & qubits_indexes.pop() | cgate
                 else:
                     gate_type = np.random.choice(typelist, p=prob)
-                    gate = GATE_TYPE_TO_CLASS[gate_type]()
+                    gate = gate_builder(gate_type)
                     gate_size = gate.controls + gate.targets
                     gate & qubits_indexes[:gate_size] | cgate
                     qubits_indexes = qubits_indexes[gate_size:]
