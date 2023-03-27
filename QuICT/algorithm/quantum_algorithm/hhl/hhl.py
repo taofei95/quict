@@ -25,23 +25,19 @@ class HHL:
             Simultaneously, vector b add 0.
         """
         row, column = matrix.shape
-        if row != column:
-            return Exception("A must be a square matrix")
-        if row != len(vector):
-            raise Exception("A and b must have same length!")
         n = int(2 ** np.ceil(np.log2(row)))
 
-        m = np.identity(n, dtype=np.complex128)
+        m = np.identity(n, dtype=np.complex128) / 4
         m[n - row:, n - row:] = matrix
         v = np.zeros(n, dtype=np.complex128)
-        v[n - len(vector):] = vector
+        v[n - row:] = vector
         if not (m == m.T.conj()).all():
             m0 = np.zeros((2 * n, 2 * n), dtype=np.complex128)
-            m0[:n, n:] = m
-            m0[n:, :n] = m.T.conj()
+            m0[:n, n:] = m.T.conj()
+            m0[n:, :n] = m
             m = m0
             v0 = np.zeros(2 * n, dtype=np.complex128)
-            v0[:n] = v
+            v0[n:] = v
             v = v0
         return m, v
 
@@ -158,6 +154,7 @@ class HHL:
             H | circuit(idx)
 
         Measure | circuit(ancilla)
+        # Measure | circuit(x[0])
 
         logger.info(
             f"circuit width    = {circuit.width():4}\n" +
@@ -198,16 +195,17 @@ class HHL:
         """
         simulator = self.simulator
         size = len(vector)
-        m, v = self.reconstruct(matrix, vector)
-        norm_v = np.linalg.norm(v)
-        circuit = self.circuit(m * t, v / norm_v, e, method)
+
+        norm_v = np.linalg.norm(vector)
+        m, v = self.reconstruct(matrix * t, vector / norm_v)
+        circuit = self.circuit(m, v, e, method)
 
         for idx in range(10):
             state_vector = simulator.run(circuit)
             if int(circuit[0]) == 0:
-                x = np.array(state_vector[len(v) - size: len(v)].get(), dtype=np.complex128)
+                x = np.array(state_vector[: size].get(), dtype=np.complex128)
                 return x
-            theta = -(idx + 1) * np.pi / 10
+            theta = (idx + 1) * np.pi / 10
             circuit.replace_gate(0, Ry(theta) & 0)
         else:
             return None

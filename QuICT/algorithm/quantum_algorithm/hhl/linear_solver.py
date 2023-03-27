@@ -15,6 +15,7 @@ class LinearSolver(object):
         self.matrix = matrix
         self.vector = vector
         assert len(matrix) == len(vector)
+        assert len(matrix) == len(matrix[0])
 
     def solution(self):
         """
