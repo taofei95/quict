@@ -4,9 +4,13 @@ from QuICT.core.utils import GateType
 
 
 class GateMatrixGenerator:
-    def get_matrix(self, gate, is_get_target: bool = False, special_array_generator=None):
+    def get_matrix(
+        self, gate, is_get_target: bool = False, special_array_generator=None
+    ):
         # Step 1: Assigned array generator
-        self._array_generator = special_array_generator if special_array_generator is not None else np
+        self._array_generator = (
+            special_array_generator if special_array_generator is not None else np
+        )
 
         # Step 2: Get based matrix's value
         gate_type = gate.type
@@ -22,7 +26,9 @@ class GateMatrixGenerator:
 
         # Step 3: Depending on controlled_by, generate final matrix
         if gate.controls > 0:
-            controlled_matrix = np.identity(1 << (gate.controls + gate.targets), dtype=gate_precision)
+            controlled_matrix = np.identity(
+                1 << (gate.controls + gate.targets), dtype=gate_precision
+            )
             target_border = 1 << gate.targets
             controlled_matrix[-target_border:, -target_border:] = based_matrix
 
@@ -32,213 +38,217 @@ class GateMatrixGenerator:
 
     def based_matrix(self, gate_type, precision):
         if gate_type in [GateType.h, GateType.ch]:
-            return self._array_generator.array([
-                [1 / np.sqrt(2), 1 / np.sqrt(2)],
-                [1 / np.sqrt(2), -1 / np.sqrt(2)]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[1 / np.sqrt(2), 1 / np.sqrt(2)], [1 / np.sqrt(2), -1 / np.sqrt(2)]],
+                dtype=precision,
+            )
         elif gate_type == GateType.hy:
-            return self._array_generator.array([
-                [1 / np.sqrt(2), -1j / np.sqrt(2)],
-                [1j / np.sqrt(2), -1 / np.sqrt(2)]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [
+                    [1 / np.sqrt(2), -1j / np.sqrt(2)],
+                    [1j / np.sqrt(2), -1 / np.sqrt(2)],
+                ],
+                dtype=precision,
+            )
         elif gate_type == GateType.s:
-            return self._array_generator.array([
-                [1, 0],
-                [0, 1j]
-            ], dtype=precision)
+            return self._array_generator.array([[1, 0], [0, 1j]], dtype=precision)
         elif gate_type == GateType.sdg:
-            return self._array_generator.array([
-                [1, 0],
-                [0, -1j]
-            ], dtype=precision)
+            return self._array_generator.array([[1, 0], [0, -1j]], dtype=precision)
         elif gate_type in [GateType.x, GateType.cx, GateType.ccx]:
-            return self._array_generator.array([
-                [0, 1],
-                [1, 0]
-            ], dtype=precision)
+            return self._array_generator.array([[0, 1], [1, 0]], dtype=precision)
         elif gate_type in [GateType.y, GateType.cy]:
-            return self._array_generator.array([
-                [0, -1j],
-                [1j, 0]
-            ], dtype=precision)
+            return self._array_generator.array([[0, -1j], [1j, 0]], dtype=precision)
         elif gate_type in [GateType.z, GateType.cz, GateType.ccz]:
-            return self._array_generator.array([
-                [1, 0],
-                [0, -1]
-            ], dtype=precision)
+            return self._array_generator.array([[1, 0], [0, -1]], dtype=precision)
         elif gate_type == GateType.sx:
-            return self._array_generator.array([
-                [0.5 + 0.5j, 0.5 - 0.5j],
-                [0.5 - 0.5j, 0.5 + 0.5j]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[0.5 + 0.5j, 0.5 - 0.5j], [0.5 - 0.5j, 0.5 + 0.5j]], dtype=precision
+            )
         elif gate_type == GateType.sy:
-            return self._array_generator.array([
-                [1 / np.sqrt(2), -1 / np.sqrt(2)],
-                [1 / np.sqrt(2), 1 / np.sqrt(2)]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[1 / np.sqrt(2), -1 / np.sqrt(2)], [1 / np.sqrt(2), 1 / np.sqrt(2)]],
+                dtype=precision,
+            )
         elif gate_type == GateType.sw:
-            return self._array_generator.array([
-                [1 / np.sqrt(2), -np.sqrt(1j / 2)],
-                [np.sqrt(-1j / 2), 1 / np.sqrt(2)]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [
+                    [1 / np.sqrt(2), -np.sqrt(1j / 2)],
+                    [np.sqrt(-1j / 2), 1 / np.sqrt(2)],
+                ],
+                dtype=precision,
+            )
         elif gate_type == GateType.id:
-            return self._array_generator.array([
-                [1, 0],
-                [0, 1]
-            ], dtype=precision)
+            return self._array_generator.array([[1, 0], [0, 1]], dtype=precision)
         elif gate_type == GateType.t:
-            return self._array_generator.array([
-                [1, 0],
-                [0, 1 / np.sqrt(2) + 1j * 1 / np.sqrt(2)]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[1, 0], [0, 1 / np.sqrt(2) + 1j * 1 / np.sqrt(2)]], dtype=precision
+            )
         elif gate_type == GateType.tdg:
-            return self._array_generator.array([
-                [1, 0],
-                [0, 1 / np.sqrt(2) + 1j * -1 / np.sqrt(2)]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[1, 0], [0, 1 / np.sqrt(2) + 1j * -1 / np.sqrt(2)]], dtype=precision
+            )
         elif gate_type in [GateType.swap, GateType.cswap]:
-            return self._array_generator.array([
-                [1, 0, 0, 0],
-                [0, 0, 1, 0],
-                [0, 1, 0, 0],
-                [0, 0, 0, 1]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]],
+                dtype=precision,
+            )
         elif gate_type == GateType.iswap:
-            return self._array_generator.array([
-                [1, 0, 0, 0],
-                [0, 0, 1j, 0],
-                [0, 1j, 0, 0],
-                [0, 0, 0, 1]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[1, 0, 0, 0], [0, 0, 1j, 0], [0, 1j, 0, 0], [0, 0, 0, 1]],
+                dtype=precision,
+            )
         elif gate_type == GateType.iswapdg:
-            return self._array_generator.array([
-                [1, 0, 0, 0],
-                [0, 0, -1j, 0],
-                [0, -1j, 0, 0],
-                [0, 0, 0, 1]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[1, 0, 0, 0], [0, 0, -1j, 0], [0, -1j, 0, 0], [0, 0, 0, 1]],
+                dtype=precision,
+            )
         elif gate_type == GateType.sqiswap:
-            return self._array_generator.array([
-                [1, 0, 0, 0],
-                [0, 0, (1 + 1j) / np.sqrt(2), 0],
-                [0, (1 + 1j) / np.sqrt(2), 0, 0],
-                [0, 0, 0, 1]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [
+                    [1, 0, 0, 0],
+                    [0, 0, (1 + 1j) / np.sqrt(2), 0],
+                    [0, (1 + 1j) / np.sqrt(2), 0, 0],
+                    [0, 0, 0, 1],
+                ],
+                dtype=precision,
+            )
         else:
             raise TypeError(gate_type)
 
     def matrix_with_param(self, gate_type, pargs, precision):
         if gate_type in [GateType.u1, GateType.cu1]:
-            return self._array_generator.array([
-                [1, 0],
-                [0, np.exp(1j * pargs[0])]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[1, 0], [0, np.exp(1j * pargs[0])]], dtype=precision
+            )
 
         elif gate_type == GateType.u2:
             sqrt2 = 1 / np.sqrt(2)
-            return self._array_generator.array([
-                [1 * sqrt2,
-                 -np.exp(1j * pargs[1]) * sqrt2],
-                [np.exp(1j * pargs[0]) * sqrt2,
-                 np.exp(1j * (pargs[0] + pargs[1])) * sqrt2]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [
+                    [1 * sqrt2, -np.exp(1j * pargs[1]) * sqrt2],
+                    [
+                        np.exp(1j * pargs[0]) * sqrt2,
+                        np.exp(1j * (pargs[0] + pargs[1])) * sqrt2,
+                    ],
+                ],
+                dtype=precision,
+            )
 
         elif gate_type in [GateType.u3, GateType.cu3]:
-            return self._array_generator.array([
-                [np.cos(pargs[0] / 2),
-                 -np.exp(1j * pargs[2]) * np.sin(pargs[0] / 2)],
-                [np.exp(1j * pargs[1]) * np.sin(pargs[0] / 2),
-                 np.exp(1j * (pargs[1] + pargs[2])) * np.cos(pargs[0] / 2)]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [
+                    [
+                        np.cos(pargs[0] / 2),
+                        -np.exp(1j * pargs[2]) * np.sin(pargs[0] / 2),
+                    ],
+                    [
+                        np.exp(1j * pargs[1]) * np.sin(pargs[0] / 2),
+                        np.exp(1j * (pargs[1] + pargs[2])) * np.cos(pargs[0] / 2),
+                    ],
+                ],
+                dtype=precision,
+            )
 
         elif gate_type == GateType.rx:
             cos_v = self._array_generator.cos(pargs[0] / 2)
             sin_v = -self._array_generator.sin(pargs[0] / 2)
-            return self._array_generator.array([
-                [cos_v, 1j * sin_v],
-                [1j * sin_v, cos_v]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[cos_v, 1j * sin_v], [1j * sin_v, cos_v]], dtype=precision
+            )
 
-        elif gate_type == GateType.ry:
+        elif gate_type in [GateType.ry, GateType.cry]:
             cos_v = self._array_generator.cos(pargs[0] / 2)
             sin_v = self._array_generator.sin(pargs[0] / 2)
-            return self._array_generator.array([
-                [cos_v, -sin_v],
-                [sin_v, cos_v]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[cos_v, -sin_v], [sin_v, cos_v]], dtype=precision
+            )
 
         elif gate_type in [GateType.rz, GateType.crz, GateType.ccrz]:
-            return self._array_generator.array([
-                [np.exp(-pargs[0] / 2 * 1j), 0],
-                [0, np.exp(pargs[0] / 2 * 1j)]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[np.exp(-pargs[0] / 2 * 1j), 0], [0, np.exp(pargs[0] / 2 * 1j)]],
+                dtype=precision,
+            )
 
         elif gate_type == GateType.phase:
-            return self._array_generator.array([
-                [1, 0],
-                [0, np.exp(pargs[0] * 1j)]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[1, 0], [0, np.exp(pargs[0] * 1j)]], dtype=precision
+            )
 
         elif gate_type == GateType.gphase:
-            return self._array_generator.array([
-                [np.exp(pargs[0] * 1j), 0],
-                [0, np.exp(pargs[0] * 1j)]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [[np.exp(pargs[0] * 1j), 0], [0, np.exp(pargs[0] * 1j)]],
+                dtype=precision,
+            )
 
         elif gate_type == GateType.fsim:
             costh = np.cos(pargs[0])
             sinth = np.sin(pargs[0])
             phi = pargs[1]
-            return self._array_generator.array([
-                [1, 0, 0, 0],
-                [0, costh, -1j * sinth, 0],
-                [0, -1j * sinth, costh, 0],
-                [0, 0, 0, np.exp(-1j * phi)]
-            ], dtype=precision)
+            return self._array_generator.array(
+                [
+                    [1, 0, 0, 0],
+                    [0, costh, -1j * sinth, 0],
+                    [0, -1j * sinth, costh, 0],
+                    [0, 0, 0, np.exp(-1j * phi)],
+                ],
+                dtype=precision,
+            )
 
         elif gate_type == GateType.rxx:
             costh = np.cos(pargs[0] / 2)
             sinth = np.sin(pargs[0] / 2)
 
-            return np.array([
-                [costh, 0, 0, -1j * sinth],
-                [0, costh, -1j * sinth, 0],
-                [0, -1j * sinth, costh, 0],
-                [-1j * sinth, 0, 0, costh]
-            ], dtype=precision)
+            return np.array(
+                [
+                    [costh, 0, 0, -1j * sinth],
+                    [0, costh, -1j * sinth, 0],
+                    [0, -1j * sinth, costh, 0],
+                    [-1j * sinth, 0, 0, costh],
+                ],
+                dtype=precision,
+            )
 
         elif gate_type == GateType.ryy:
             costh = np.cos(pargs[0] / 2)
             sinth = np.sin(pargs[0] / 2)
 
-            return np.array([
-                [costh, 0, 0, 1j * sinth],
-                [0, costh, -1j * sinth, 0],
-                [0, -1j * sinth, costh, 0],
-                [1j * sinth, 0, 0, costh]
-            ], dtype=precision)
+            return np.array(
+                [
+                    [costh, 0, 0, 1j * sinth],
+                    [0, costh, -1j * sinth, 0],
+                    [0, -1j * sinth, costh, 0],
+                    [1j * sinth, 0, 0, costh],
+                ],
+                dtype=precision,
+            )
 
         elif gate_type == GateType.rzz:
             expth = np.exp(0.5j * pargs[0])
             sexpth = np.exp(-0.5j * pargs[0])
 
-            return np.array([
-                [sexpth, 0, 0, 0],
-                [0, expth, 0, 0],
-                [0, 0, expth, 0],
-                [0, 0, 0, sexpth]
-            ], dtype=precision)
+            return np.array(
+                [
+                    [sexpth, 0, 0, 0],
+                    [0, expth, 0, 0],
+                    [0, 0, expth, 0],
+                    [0, 0, 0, sexpth],
+                ],
+                dtype=precision,
+            )
 
         elif gate_type == GateType.rzx:
             costh = np.cos(pargs[0] / 2)
             sinth = np.sin(pargs[0] / 2)
 
-            return np.array([
-                [costh, -1j * sinth, 0, 0],
-                [-1j * sinth, costh, 0, 0],
-                [0, 0, costh, 1j * sinth],
-                [0, 0, 1j * sinth, costh]
-            ], dtype=precision)
+            return np.array(
+                [
+                    [costh, -1j * sinth, 0, 0],
+                    [-1j * sinth, costh, 0, 0],
+                    [0, 0, costh, 1j * sinth],
+                    [0, 0, 1j * sinth, costh],
+                ],
+                dtype=precision,
+            )
 
         else:
             TypeError(gate_type)
@@ -285,10 +295,7 @@ class ComplexGateBuilder:
 
     @staticmethod
     def build_cu1(parg):
-        return [
-            (GateType.crz, [0, 1], [parg]),
-            (GateType.u1, [0], [parg / 2])
-        ]
+        return [(GateType.crz, [0, 1], [parg]), (GateType.u1, [0], [parg / 2])]
 
     @staticmethod
     def build_rxx(parg):
@@ -407,7 +414,7 @@ class ComplexGateBuilder:
             (GateType.t, [0], None),
             (GateType.t, [2], None),
             (GateType.h, [2], None),
-            (GateType.cx, [2, 1], None)
+            (GateType.cx, [2, 1], None),
         ]
 
 
@@ -419,12 +426,24 @@ class InverseGate:
         GateType.sy: (GateType.ry, [-np.pi / 2]),
         GateType.sw: (GateType.u2, [3 * np.pi / 4, 5 * np.pi / 4]),
         GateType.t: GateType.tdg,
-        GateType.tdg: GateType.t
+        GateType.tdg: GateType.t,
     }
     __INVERSE_GATE_WITH_NEGATIVE_PARAMS = [
-        GateType.u1, GateType.rx, GateType.ry, GateType.phase, GateType.gphase,
-        GateType.cu1, GateType.rxx, GateType.ryy, GateType.rzz, GateType.rzx,
-        GateType.rz, GateType.crz, GateType.ccrz, GateType.fsim
+        GateType.u1,
+        GateType.rx,
+        GateType.ry,
+        GateType.cry,
+        GateType.phase,
+        GateType.gphase,
+        GateType.cu1,
+        GateType.rxx,
+        GateType.ryy,
+        GateType.rzz,
+        GateType.rzx,
+        GateType.rz,
+        GateType.crz,
+        GateType.ccrz,
+        GateType.fsim,
     ]
 
     @classmethod
