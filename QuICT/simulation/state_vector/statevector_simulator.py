@@ -169,12 +169,17 @@ class StateVectorSimulator:
         Args:
             gate (Gate): the quantum gate in the circuit.
         """
-        # TODO: qidxes mapping, flatten
+        qidxes_mapping = {}
+        cgate_qlist = gate.qubits
+        for idx, cq in enumerate(cgate_qlist):
+            qidxes_mapping[cq] = qidxes[idx]
+
         for cgate, cg_idx, size in gate.fast_gates:
+            real_qidx = [qidxes_mapping[idx] for idx in cg_idx]
             if size > 1:
-                self._apply_compositegate(cgate, cg_idx)
+                self._apply_compositegate(cgate, real_qidx)
             else:
-                self._apply_gate(cgate, cg_idx)
+                self._apply_gate(cgate, real_qidx)
 
     def _apply_trigger(self, op: Trigger, qidxes: list, current_idx: int) -> CompositeGate:
         """ Deal with the Operator <Trigger>.
@@ -183,11 +188,11 @@ class StateVectorSimulator:
             op (Trigger): The operator Trigger
             current_idx (int): the index of Trigger in Circuit
         """
-        for targ in op.targs:
+        for targ in qidxes:
             index = self._qubits - 1 - targ
             self._apply_measure_gate(index)
 
-        mapping_cgate = op.mapping(int(self._circuit[op.targs]))
+        mapping_cgate = op.mapping(int(self._circuit[qidxes]))
         if isinstance(mapping_cgate, CompositeGate):
             # TODO: checkpoint update
             # Check for checkpoint

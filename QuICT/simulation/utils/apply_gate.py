@@ -119,7 +119,7 @@ class GateSimulator:
             self.apply_reverse_matrix(matrix, args_num, cargs, targs, state_vector, qubits)
         # [S, sdg, Z, U1, T, tdg] # 2-bits [CZ, CU1]
         elif matrix_type == MatrixType.control:
-            self.apply_control_matrix(matrix[-1, -1], args_num, cargs, targs, state_vector, qubits)
+            self.apply_control_matrix(matrix[-1, -1].get(), args_num, cargs, targs, state_vector, qubits)
         # [FSim]
         elif matrix_type == MatrixType.ctrl_normal:
             self._algorithm.ctrl_normal_targs(
