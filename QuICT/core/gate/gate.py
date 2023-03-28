@@ -12,7 +12,7 @@ from QuICT.tools.exception.core import (
     QASMError, GateMatrixError, GateParametersAssignedError
 )
 
-from .utils import GateMatrixGenerator, ComplexGateBuilder, InverseGate
+from .utils import Variable, GateMatrixGenerator, ComplexGateBuilder, InverseGate
 
 
 class BasicGate(object):
@@ -353,7 +353,13 @@ class BasicGate(object):
 
         qasm_string = self.qasm_name
         if self.params > 0:
-            params = [str(parg) for parg in self.pargs]
+            params = []
+            for parg in self.pargs:
+                if isinstance(parg, Variable):
+                    params.append(str(parg.pargs))
+                else:
+                    params.append(str(parg))
+            
             params_string = "(" + ", ".join(params) + ")"
 
             qasm_string += params_string
@@ -590,8 +596,11 @@ class BasicGate(object):
             element = [element]
 
         for el in element:
-            if not isinstance(el, (int, float, complex, np.complex64)):
-                raise TypeError("basicGate.targs", "int/float/complex", type(el))
+            if not isinstance(el, (int, float, complex, np.complex64, Variable)):
+                raise TypeError("basicGate.pargs", "int/float/complex/Variable", type(el))
+            if isinstance(el, Variable):
+                if not isinstance(el.pargs, (int, float, complex, np.complex64)):
+                    raise TypeError("basicGate.pargs", "int/float/complex/Variable", type(el.pargs))
 
 
 class Unitary(BasicGate):
@@ -728,7 +737,11 @@ class Perm(BasicGate):
     def _build_matrix(self):
         matrix_ = np.zeros((1 << self.targets, 1 << self.targets), dtype=self.precision)
         for idx, p in enumerate(self.pargs):
-            matrix_[idx, p] = 1
+            if isinstance(p, Variable):
+                matrix_[idx, p.pargs] = 1
+            else:
+                matrix_[idx, p] = 1
+
 
         return matrix_
 

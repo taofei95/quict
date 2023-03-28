@@ -4,7 +4,7 @@ import torch
 from typing import Union
 
 from QuICT.core.gate import *
-from QuICT.core.utils import SPECIAL_GATE_SET, GateType
+from QuICT.core.utils import GateType, MatrixType
 
 
 class BasicGateTensor(object):
@@ -294,10 +294,9 @@ class BasicGateTensor(object):
         class_name = str(self.__class__.__name__)
         gate = globals()[class_name]()
 
-        if gate.type in SPECIAL_GATE_SET:
-            gate.controls = self.controls
-            gate.targets = self.targets
-            gate.params = self.params
+        gate.controls = self.controls
+        gate.targets = self.targets
+        gate.params = self.params
 
         gate.pargs = self.pargs
         gate.targs = copy.deepcopy(self.targs)

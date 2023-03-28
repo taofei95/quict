@@ -1,5 +1,6 @@
 import numpy as np
 
+from .variable import Variable
 from QuICT.core.utils import GateType
 
 
@@ -116,6 +117,10 @@ class GateMatrixGenerator:
             raise TypeError(gate_type)
 
     def matrix_with_param(self, gate_type, pargs, precision):
+        for i in range(len(pargs)):
+            if isinstance(pargs[i], Variable):
+                pargs[i] = pargs[i].pargs
+        
         if gate_type in [GateType.u1, GateType.cu1]:
             return self._array_generator.array(
                 [[1, 0], [0, np.exp(1j * pargs[0])]], dtype=precision
