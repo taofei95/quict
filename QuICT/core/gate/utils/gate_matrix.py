@@ -22,7 +22,7 @@ class GateMatrixGenerator:
 
         # Step 3: Depending on controlled_by, generate final matrix
         if gate.controls > 0:
-            controlled_matrix = np.identity(1 << (gate.controls + gate.targets), dtype=gate_precision)
+            controlled_matrix = self._array_generator.identity(1 << (gate.controls + gate.targets), dtype=gate_precision)
             target_border = 1 << gate.targets
             controlled_matrix[-target_border:, -target_border:] = based_matrix
 
@@ -200,7 +200,7 @@ class GateMatrixGenerator:
             costh = np.cos(pargs[0] / 2)
             sinth = np.sin(pargs[0] / 2)
 
-            return np.array([
+            return self._array_generator.array([
                 [costh, 0, 0, -1j * sinth],
                 [0, costh, -1j * sinth, 0],
                 [0, -1j * sinth, costh, 0],
@@ -211,7 +211,7 @@ class GateMatrixGenerator:
             costh = np.cos(pargs[0] / 2)
             sinth = np.sin(pargs[0] / 2)
 
-            return np.array([
+            return self._array_generator.array([
                 [costh, 0, 0, 1j * sinth],
                 [0, costh, -1j * sinth, 0],
                 [0, -1j * sinth, costh, 0],
@@ -222,7 +222,7 @@ class GateMatrixGenerator:
             expth = np.exp(0.5j * pargs[0])
             sexpth = np.exp(-0.5j * pargs[0])
 
-            return np.array([
+            return self._array_generator.array([
                 [sexpth, 0, 0, 0],
                 [0, expth, 0, 0],
                 [0, 0, expth, 0],
@@ -233,7 +233,7 @@ class GateMatrixGenerator:
             costh = np.cos(pargs[0] / 2)
             sinth = np.sin(pargs[0] / 2)
 
-            return np.array([
+            return self._array_generator.array([
                 [costh, -1j * sinth, 0, 0],
                 [-1j * sinth, costh, 0, 0],
                 [0, 0, costh, 1j * sinth],
