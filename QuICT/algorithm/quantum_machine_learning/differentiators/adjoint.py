@@ -23,9 +23,6 @@ class Adjoint:
         n_qubits = int(np.log2(len(state_vector)))
         d_k=2*np.dot(ham.get_hamiton_matrix(n_qubits).T.conj() ,vec_k )
         grad = []
-        real_sim = sim._load_simulator()
-        real_sim.initial_circuit(self._cir)
-        real_sim._vector = state_vector
         for gate in reversed(self._cir.gates):
             targ=gate.targets
             if isinstance(targ,int):
@@ -37,25 +34,22 @@ class Adjoint:
 
             state_vector = sim.run(temp_cir,state_vector=vec_k)
             state_vector = state_vector['data']['state_vector']
-            
             d_U_k =np.dot(d_k,state_vector.conj())
-            d_k=np.dot(temp_cir.matrix,d_k)
-                # now we'll get the grad of paramter from d_U_k
+            d_k=np.dot(temp_cir.matrix(),d_k)
+                # now we should get the grad of paramter from d_U_k but follows estimate the grad rather than precisely
             if not gate.is_requires_grad():
                 continue
             if isinstance(gate.pargs,int):
                 param_list = [gate.pargs]
             else:
                 param_list = gate.pargs
+            if gate.cargs:
+                n_one_value = np.count_nonzero(np.where(temp_cir.matrix() == 1))>>1
+            else:
+                n_one_value = 1<<n_qubits
             for i in range(len(param_list)):
-                grad.append(np.sum(np.dot(d_U_k,gate.parti_deri_adj[i])))  
+                grad.append(np.sum(np.dot(d_U_k,gate.parti_deri_adj[i]))/n_one_value)  
                 # note : only Ry，Rz，U3，CU3 gate have method parti_deri_adj now
 
         return grad
-        
-    def get_param_shift(self,idx_gate:int,idx_param:int,shift_type:int):
-        """
-        Args:
-        shift_type(int): 0 for left shift and 1 for right shift
-        """
-        return
+ 
