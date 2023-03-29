@@ -3,7 +3,9 @@ import numpy as np
 from QuICT.core.gate import BasicGate, GateMatrixGenerator
 from QuICT.core.utils import GateType, MatrixType
 from QuICT.ops.utils import LinAlgLoader
-from QuICT.ops.linalg.cpu_calculator import matrix_dot_vector, diagonal_matrix, swap_matrix, reverse_matrix, measure_gate_apply, reset_gate_apply
+from QuICT.ops.linalg.cpu_calculator import (
+    matrix_dot_vector, diagonal_matrix, swap_matrix, reverse_matrix, measure_gate_apply, reset_gate_apply
+)
 from QuICT.tools.exception.core import GateQubitAssignedError
 from QuICT.tools.exception.simulation import GateTypeNotImplementError, GateAlgorithmNotImplementError
 
@@ -277,11 +279,12 @@ class GateSimulator:
             raise GateAlgorithmNotImplementError(f"Unsupportted 3-qubits+ control unitary gate.")
 
     def apply_measure_gate(self, index: int, state_vector: np.ndarray, qubits: int) -> int:
-        
         if self._device == "CPU":
             result = measure_gate_apply(index, state_vector)
         else:
-            prob = self.get_measured_prob(index, state_vector, qubits)
+            prob = self._algorithm.measured_prob_calculate(
+                index, state_vector, qubits, sync=self._sync
+            )
             result = int(self._algorithm.apply_measuregate(
                 index, state_vector, qubits, prob, self._sync
             ))
@@ -292,12 +295,17 @@ class GateSimulator:
         if self._device == "CPU":
             reset_gate_apply(index, state_vector)
         else:
-            prob = self.get_measured_prob(index, state_vector, qubits)
+            prob = self._algorithm.measured_prob_calculate(
+                index, state_vector, qubits, sync=self._sync
+            )
             self._algorithm.apply_resetgate(
                 index, state_vector, qubits, prob, self._sync
             )
 
     def get_measured_prob(self, index: int, state_vector: np.ndarray, qubits: int):
-        return self._algorithm.measured_prob_calculate(
-            index, state_vector, qubits, sync=self._sync
-        )
+        if self._device == "CPU":
+            return get_measured_probability(index, state_vector)
+        else:
+            return self._algorithm.measured_prob_calculate(
+                index, state_vector, qubits, sync=self._sync
+            )

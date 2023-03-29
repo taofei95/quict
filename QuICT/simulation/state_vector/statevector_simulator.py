@@ -201,7 +201,7 @@ class StateVectorSimulator:
             self._pipeline = self._pipeline[:position] + mapping_cgate.gates + \
                 self._pipeline[position:]
 
-    def _apply_measure_gate(self, qidx, prob):
+    def _apply_measure_gate(self, qidx):
         result = self._gate_calculator.apply_measure_gate(qidx, self._vector, self._qubits)
         self._circuit.qubits[self._qubits - 1 - qidx].measured = int(result)
 
@@ -231,32 +231,33 @@ class StateVectorSimulator:
         """ Set state vector to be zero. """
         self._vector = self._array_helper.zeros_like(self.vector)
 
-    # TODO: add measured index parameters
-    def sample(self, shots: int = 1) -> list:
-        """ Sample the measured result from current state vector, please initial Circuit first
+    def sample(self, shots: int = 1, target_qubits: list = None) -> list:
+        """ Sample the measured result from current state vector, please first run simulator.run().
+
+        **WARNING**: Please make sure the target qubits are not been measured before simulator.sample().
 
         Args:
-            shots (int): The sample times of current state vector.
+            shots (int): The sample times for current state vector.
+            target_qubits (List[int]): The indexes of qubits which want to be measured. If it is None, there
+            will measured all qubits in previous circuits.
 
         Returns:
-            List[int]: The measured result list with length equal to 2 ** self.qubits
+            List[int]: The measured result list with length equal to 2 ** len(target_qubits)
         """
         assert (self._circuit is not None), \
             SampleBeforeRunError("StateVectorSimulation sample without run any circuit.")
         original_sv = self._vector.copy()
-        state_list = [0] * (1 << self._qubits)
+        if target_qubits is None:
+            target_qubits = list(range(self._qubits))
 
-        # Calculate measured prob
-        mprobs = []
-        for i in range(self._qubits):
-            mprobs.append(self._gate_calculator.get_measured_prob(i, self._vector, self._qubits))
+        state_list = [0] * (1 << len(target_qubits))
 
         for _ in range(shots):
-            for m_id in range(self._qubits):
+            for m_id in target_qubits:
                 index = self._qubits - 1 - m_id
-                self._apply_measure_gate(index, mprobs[m_id])
+                self._apply_measure_gate(index)
 
-            state_list[int(self._circuit.qubits)] += 1
+            state_list[int(self._circuit.qubits[target_qubits])] += 1
             self._vector = original_sv.copy()
 
         return state_list
