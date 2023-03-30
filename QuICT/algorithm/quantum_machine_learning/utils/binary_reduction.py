@@ -32,6 +32,8 @@ def reduce_bin(binary1, binary2,half_length ): # binary1 : int
 
     reduced_int -= same_bit_bin
     reduced_int += 2 ** reduce_position
+    if isinstance(reduced_int,float):
+        raise ValueError
 
 
     return reduced_int
@@ -43,7 +45,10 @@ def check(color:set,half_length):
     """
     for bin1 in color:
         for bin2 in color:
+            if isinstance(bin2,float):
+                    raise ValueError
             if is_adjont(bin1, bin2,half_length):
+                
                 return True
     return False
 
@@ -71,13 +76,13 @@ def Binary_reduction(bins,half_length:int):
     #half_length = 13
     #bins = np.random.randint(0, 2**half_length, 2**13)
     #bins = np.array([0,8,16,24,32,40,48,56])
+    bins= np.array(bins)
     bins = bins*(2**half_length)
     color_set = set()
 
     for i in range(len(bins)):
         color_set.add(bins[i])
     color_set_new = color_set.copy()
-    print(len(color_set))
     reduced_set = set()
     start_time = time.time()
     while(1):
@@ -85,7 +90,6 @@ def Binary_reduction(bins,half_length:int):
         if not check(color_set_new,half_length):
             break                               
         reduced_set.clear()
-        count = 0
         for bin1 in color_set:
             for bin2 in color_set:
                 if bin1 in reduced_set:
@@ -96,10 +100,9 @@ def Binary_reduction(bins,half_length:int):
                     reduced_set.add(bin1)
                     reduced_set.add(bin2)
                     color_set_new.add(reduce_bin(bin1, bin2,half_length))
-                    reduced_str = reduce_bin(bin1, bin2,half_length)
+                    
                     color_set_new.remove(bin1)
-                    color_set_new.remove(bin2)
-                    count += 1                                                                 
+                    color_set_new.remove(bin2)                                                             
  
                                                                  
     #bins = np.random.randint(0, 2**half_length, 2**13)                                    
