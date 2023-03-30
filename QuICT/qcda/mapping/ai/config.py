@@ -10,7 +10,7 @@ from QuICT.qcda.mapping.ai.data_def import DataFactory
 class Config:
     def __init__(
         self,
-        topo: Union[str, Layout] = "grid_3x3",
+        topo: Union[str, Layout] = "grid_4x4",
         max_gate_num: int = 300,
         feat_dim: int = 192,
         gamma: float = 0.95,
@@ -30,7 +30,7 @@ class Config:
         reward_scale: float = 10.0,
         inference: bool = False,
         inference_model_dir: str = "./model",
-        tag: str = "wide-feat-no-norm",
+        tag: str = "wide-feat-final-resume",
     ) -> None:
         self.factory = DataFactory(topo=topo, max_gate_num=max_gate_num)
 

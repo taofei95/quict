@@ -25,11 +25,11 @@ class CircuitGnn(nn.Module):
                     in_channels=feat_dim,
                     out_channels=feat_dim,
                 )
-                for _ in range(6)
+                for _ in range(10)
             ]
         )
 
-        # self._norm = gnn.GraphNorm(in_channels=feat_dim)
+        self._norm = gnn.GraphNorm(in_channels=feat_dim)
 
         self._aggr = gnn.aggr.SoftmaxAggregation(learn=True)
 
@@ -45,7 +45,7 @@ class CircuitGnn(nn.Module):
             x = conv(x, edge_index)
             x = F.leaky_relu(x) + x
 
-        # x = self._norm(x, batch)
+        x = self._norm(x, batch)
 
         x = self._aggr(x, batch)  # [b, f]
         x = x.view(-1, f)  # [b, f]
