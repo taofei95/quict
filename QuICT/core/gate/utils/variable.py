@@ -13,6 +13,14 @@ class Variable:
     @property
     def shape(self):
         return self._shape
+    
+    @pargs.setter
+    def pargs(self, pargs):
+        self._pargs = pargs
+        
+    @grads.setter
+    def grads(self, grads):
+        self._grads = grads
 
     def __init__(self, pargs, grads=None):
         self._pargs = pargs

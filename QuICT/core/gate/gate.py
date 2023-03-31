@@ -83,6 +83,14 @@ class BasicGate(object):
             self._is_matrix_update = False
 
         return self._target_matrix
+    
+    @property
+    def grad_matrix(self):
+        if self._grad_matrix is None or self._is_matrix_update:
+            self._grad_matrix = GateMatrixGenerator().get_matrix(self, is_get_grad=True)
+            self._is_matrix_update = False
+
+        return self._grad_matrix
 
     ################    Quantum Gate's Target Qubits    ################
     @property
@@ -135,6 +143,10 @@ class BasicGate(object):
     @property
     def params(self) -> int:
         return self._params
+    
+    @property
+    def variables(self) -> int:
+        return self._variables
 
     @property
     def parg(self):
@@ -184,6 +196,7 @@ class BasicGate(object):
         self._controls = controls
         self._cargs = []    # list of int
 
+        self._variables = 0
         self._params = params
         self._pargs = []
         if self._params > 0:
@@ -203,6 +216,7 @@ class BasicGate(object):
         self._precision = precision
         self._matrix = None
         self._target_matrix = None
+        self._grad_matrix = None
         self._qasm_name = str(type_.name)
         self.assigned_qubits = []   # list of qubits' id
         self._is_matrix_update = False
@@ -599,6 +613,7 @@ class BasicGate(object):
             if not isinstance(el, (int, float, complex, np.complex64, Variable)):
                 raise TypeError("basicGate.pargs", "int/float/complex/Variable", type(el))
             if isinstance(el, Variable):
+                self._variables += 1
                 if not isinstance(el.pargs, (int, float, complex, np.complex64)):
                     raise TypeError("basicGate.pargs", "int/float/complex/Variable", type(el.pargs))
 

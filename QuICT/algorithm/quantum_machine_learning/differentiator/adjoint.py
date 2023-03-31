@@ -12,14 +12,16 @@ class Adjoint(Differentiator):
         self, circuit: Circuit, final_state_vector: np.ndarray, expectation_op=Z
     ):
         # construct circuit for the blue path (1) and the orange path (2)
-        bp_circuit1, bp_circuit2 = self._get_bp_circuit(circuit)
-        gates1 = bp_circuit1.gates
-        gates2 = bp_circuit2.gates
-        n_qubits = bp_circuit1.width()
-        
+        grad_circuit, uncompute_circuit = self._get_bp_circuits(circuit, expectation_op)
+        gates = circuit.gates[::-1]
+        gates1 = grad_circuit.gates
+        gates2 = uncompute_circuit.gates
+        n_qubits = grad_circuit.width()
+
         current_state_grad = final_state_vector
         current_state_vector = final_state_vector
-        for gate1, gate2 in zip(gates1, gates2):
+
+        for gate, gate1, gate2 in zip(gates, gates1, gates2):
             # d(L)/d(|psi_t>)
             current_state_grad = self._simulator.apply_gate(
                 gate1, gate1.cargs + gate1.targs, current_state_grad, n_qubits
@@ -28,33 +30,34 @@ class Adjoint(Differentiator):
             current_state_vector = self._simulator.apply_gate(
                 gate2, gate2.cargs + gate2.targs, current_state_vector, n_qubits
             )
-            if self._is_param_gate(gate2):
-                # d(L) / d(gate2)
-                L_gate2_grad = current_state_grad @ current_state_vector.T
+            if gate.variables > 0:
+                for i in range(gate.variables):
+                    parg_grad = self._simulator.apply_gate(
+                        gate,
+                        gate.cargs + gate.targs,
+                        current_state_vector,
+                        n_qubits,
+                        fp=False,
+                        parg_id=i,
+                    )
+                    grad = current_state_grad @ parg_grad.T
+                    gate.pargs[i].grad = grad
             else:
                 continue
 
-    def _is_param_gate(self, gate):
-        if gate.params == 0:
-            return False
-        for parg in gate.pargs:
-            if isinstance(parg, Variable):
-                return True
-        return False
-    
     def _get_bp_circuits(self, circuit, expectation_op=Z):
-        bp_circuit1 = Circuit(circuit.width())
-        bp_circuit2 = Circuit(circuit.width())
+        grad_circuit = Circuit(circuit.width())
+        uncompute_circuit = Circuit(circuit.width())
         gates = circuit.gates[::-1]
-        expectation_op | bp_circuit1
+        expectation_op | grad_circuit
 
         for i in range(len(gates)):
             inverse_gate = gates[i].inverse()
             if i < len(gates) - 1:
-                inverse_gate | bp_circuit1
-            inverse_gate | bp_circuit2
+                inverse_gate | grad_circuit
+            inverse_gate | uncompute_circuit
 
-        return bp_circuit1, bp_circuit2
+        return grad_circuit, uncompute_circuit
 
 
 if __name__ == "__main__":
