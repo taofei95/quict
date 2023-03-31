@@ -4,16 +4,19 @@ from QuICT.core.gate import BasicGate, GateMatrixGenerator
 from QuICT.core.utils import GateType, MatrixType
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.ops.linalg.cpu_calculator import (
-    matrix_dot_vector, diagonal_matrix, swap_matrix, reverse_matrix, measure_gate_apply, reset_gate_apply
+    matrix_dot_vector, diagonal_matrix, swap_matrix, reverse_matrix,
+    measure_gate_apply, reset_gate_apply, get_measured_probability
 )
 from QuICT.tools.exception.core import GateQubitAssignedError
 from QuICT.tools.exception.simulation import GateTypeNotImplementError, GateAlgorithmNotImplementError
 
 
 class GateSimulator:
-    def __init__(self, device, gpu_device_id: int = 0, sync: bool = True):
+    def __init__(self, device, precision: str = "double", gpu_device_id: int = 0, sync: bool = True):
         self._gate_matrix_generator = GateMatrixGenerator()
         self._device = device
+        self._precision = precision
+        self._dtype = np.complex128 if precision == "double" else np.complex64
         self._gpu_device_id = gpu_device_id
         self._sync = sync
         if self._device == "GPU":
@@ -21,12 +24,39 @@ class GateSimulator:
 
             self._array_helper = cp
             self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
+        else:
+            self._array_helper = np
 
+    ####################################################################
+    ############          State Vector Generator            ############
+    ####################################################################
+    def get_empty_state_vector(self, qubits: int):
+        return self._array_helper.zeros(1 << qubits, dtype=self._dtype)
+
+    def get_allzero_state_vector(self, qubits: int):
+        state_vector = self.get_empty_state_vector(qubits)
+        state_vector[0] = self._dtype(1)
+
+        return state_vector
+
+    def validate_state_vector(self, state_vector, qubits: int):
+        assert 1 << qubits == state_vector.size, "The state vector should has the same qubits with the circuit."
+        if not type(state_vector) is self._array_helper.ndarray:
+            state_vector = self._array_helper.array(state_vector, dtype=self._dtype)
+
+        if state_vector.dtype != self._dtype:
+            state_vector = state_vector.astype(self._dtype)
+
+        return state_vector
+
+    ####################################################################
+    ############           Gate Matrix Generator            ############
+    ####################################################################
     def _get_gate_matrix(self, gate: BasicGate):
         if self._device == "CPU":
-            return self._gate_matrix_generator.get_matrix(gate)
+            return self._gate_matrix_generator.get_matrix(gate, precision=self._precision)
         else:
-            return self._gate_matrix_generator.get_matrix(gate, special_array_generator=self._array_helper)
+            return self._gate_matrix_generator.get_matrix(gate, precision=self._precision, special_array_generator=self._array_helper)
 
     def apply_gate(
         self,
@@ -59,10 +89,11 @@ class GateSimulator:
     ):
         matrix_type = gate.matrix_type
         args_num = gate.controls + gate.targets
+        matrix = self._get_gate_matrix(gate)
         control_idx = np.array(cargs, dtype=np.int64)
         target_idx = np.array(targs, dtype=np.int64)
         default_params = (
-            state_vector, qubits, gate.matrix, args_num, control_idx, target_idx
+            state_vector, qubits, matrix, args_num, control_idx, target_idx
         )
 
         if matrix_type in [MatrixType.diag_diag, MatrixType.diagonal, MatrixType.control]:
@@ -78,7 +109,7 @@ class GateSimulator:
             matrix_dot_vector(
                 state_vector,
                 qubits,
-                gate.matrix,
+                matrix,
                 gate.controls + gate.targets,
                 np.append(target_idx, control_idx)
             )

@@ -173,7 +173,7 @@ GATEINFO_MAP = {
     GateType.ch: (1, 1, 0, GateType.ch, MatrixType.normal),
     GateType.crz: (1, 1, 1, GateType.crz, MatrixType.diagonal),
     GateType.cu1: (1, 1, 1, GateType.cu1, MatrixType.control),
-    GateType.cu3: (1, 1, 3, GateType.cu3, MatrixType.diagonal),
+    GateType.cu3: (1, 1, 3, GateType.cu3, MatrixType.normal),
     GateType.fsim: (0, 2, 2, GateType.fsim, MatrixType.ctrl_normal),
     GateType.rxx: (0, 2, 1, GateType.rxx, MatrixType.normal_normal),
     GateType.ryy: (0, 2, 1, GateType.ryy, MatrixType.normal_normal),

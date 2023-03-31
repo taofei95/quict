@@ -13,9 +13,7 @@ from QuICT.core.gate import BasicGate, CompositeGate
 from QuICT.core.utils import GateType
 from QuICT.simulation.utils import GateSimulator
 from QuICT.tools.exception.core import ValueError, TypeError
-from QuICT.tools.exception.simulation import (
-    SampleBeforeRunError, StateVectorUnmatchedError
-)
+from QuICT.tools.exception.simulation import SampleBeforeRunError
 
 
 class StateVectorSimulator:
@@ -46,15 +44,7 @@ class StateVectorSimulator:
 
     @vector.setter
     def vector(self, vec):
-        if self._device == "GPU":
-            with self._array_helper.cuda.Device(self._device_id):
-                if type(vec) is np.ndarray:
-                    self._vector = self._array_helper.array(vec)
-                else:
-                    self._vector = vec
-        else:
-            assert isinstance(vec, np.ndarray)
-            self._vector = vec
+        self._vector = self._gate_calculator.validate_state_vector(vec, self._qubits)
 
     @property
     def device(self):
@@ -74,38 +64,23 @@ class StateVectorSimulator:
             raise ValueError("StateVectorSimulation.precision", "[single, double]", precision)
 
         self._device = device
-        self._precision = np.complex128 if precision == "double" else np.complex64
+        self._precision = precision
         self._device_id = gpu_device_id
         self._sync = sync
-        self._gate_calculator = GateSimulator(self._device, self._device_id, self._sync)
-
-        if self._device == "GPU":
-            import cupy as cp
-
-            self._array_helper = cp
-        else:
-            self._array_helper = np
+        self._gate_calculator = GateSimulator(self._device, self._precision, self._device_id, self._sync)
 
     def initial_circuit(self, circuit: Circuit):
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
         self._circuit = circuit
         self._qubits = int(circuit.width())
-        self._pipeline = []
-
-        # TODO: think about precision
-        if self._precision != circuit._precision:
-            circuit.convert_precision()
-
         self._pipeline = circuit.fast_gates
 
     def initial_state_vector(self, all_zeros: bool = False):
         """ Initial qubits' vector states. """
-        vector_size = 1 << int(self._qubits)
-        self._vector = self._array_helper.zeros(vector_size, dtype=self._precision)
-        if self._device == "CPU" and not all_zeros:
-            self._vector[0] = self._precision(1)
-        elif self._device == "GPU" and not all_zeros:
-            self._vector.put(0, self._precision(1))
+        if not all_zeros:
+            self._vector = self._gate_calculator.get_allzero_state_vector(self._qubits)
+        else:
+            self._vector = self._gate_calculator.get_empty_state_vector(self._qubits)
 
     def run(
         self,
@@ -125,9 +100,7 @@ class StateVectorSimulator:
         """
         self.initial_circuit(circuit)
         if state_vector is not None:
-            assert 2 ** self._qubits == state_vector.size, \
-                StateVectorUnmatchedError("The state vector should has the same qubits with the circuit.")
-            self.vector = self._array_helper.array(state_vector, dtype=self._precision)
+            self._vector = self._gate_calculator.validate_state_vector(state_vector, self._qubits)
         elif not use_previous:
             self.initial_state_vector()
 
@@ -226,10 +199,9 @@ class StateVectorSimulator:
 
             complex_multiply(value, *default_parameters)
 
-    # TODO: multi-gpu kernel function
     def apply_zeros(self):
         """ Set state vector to be zero. """
-        self._vector = self._array_helper.zeros_like(self.vector)
+        self._vector = self._gate_calculator.get_empty_state_vector(self._qubits)
 
     def sample(self, shots: int = 1, target_qubits: list = None) -> list:
         """ Sample the measured result from current state vector, please first run simulator.run().

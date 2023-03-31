@@ -4,13 +4,14 @@ from QuICT.core.utils import GateType
 
 
 class GateMatrixGenerator:
-    def get_matrix(self, gate, is_get_target: bool = False, special_array_generator=None):
+    def get_matrix(self, gate, precision: str = "double", is_get_target: bool = False, special_array_generator=None):
         # Step 1: Assigned array generator
         self._array_generator = special_array_generator if special_array_generator is not None else np
 
         # Step 2: Get based matrix's value
         gate_type = gate.type
-        gate_precision = np.complex128 if gate.precision == "double" else np.complex64
+        _precision = gate.precision if precision is None else precision
+        gate_precision = np.complex128 if _precision == "double" else np.complex64
         gate_params = gate.params
         if gate_params == 0:
             based_matrix = self.based_matrix(gate_type, gate_precision)
@@ -431,7 +432,9 @@ class InverseGate:
     def get_inverse_gate(cls, gate_type: GateType, pargs: list) -> tuple:
         if len(pargs) == 0:
             if gate_type in cls.__GATE_INVERSE_MAP.keys():
-                return cls.__GATE_INVERSE_MAP[gate_type], pargs
+                inverse_args = cls.__GATE_INVERSE_MAP[gate_type]
+
+                return inverse_args if isinstance(inverse_args, tuple) else (inverse_args, pargs)
         else:
             inv_params = None
             if gate_type in cls.__INVERSE_GATE_WITH_NEGATIVE_PARAMS:
