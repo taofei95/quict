@@ -352,7 +352,7 @@ def load_file(content):
     except Exception as e:
         if source == 'QCDA':
             emit(
-                'QCDA_info', {'uuid': uid, 'info': f"Illegal Qasm file: {e}."}, namespace="/api/pty")
+                'qcda_info', {'uuid': uid, 'info': f"Illegal Qasm file: {e}."}, namespace="/api/pty")
         else:
             emit(
                 'info', {'uuid': uid, 'info': f"Illegal Qasm file: {e}."}, namespace="/api/pty")
@@ -550,7 +550,7 @@ def run_file(content):
         import traceback
         logger.warning(f"Run circuit error: {e}, {traceback.format_exc()}")
         emit(
-            'info', {'uuid': uid, 'info': f"Run circuit error: {e}"}, namespace="/api/pty")
+            'info', {'uuid': uid, 'info': f"Run circuit error"}, namespace="/api/pty")
 
 @socketio.on("o_qasm_run", namespace="/api/pty")
 @authenticated_only

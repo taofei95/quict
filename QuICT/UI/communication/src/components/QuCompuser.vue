@@ -3,7 +3,7 @@
     <el-header class="status-bar" style="padding: 0px; height: 50px">
       <ToolBar v-on:SaveQCDA="SaveQCDA" v-on:RunQCDA="RunQCDA" v-on:LoadQCDA="LoadQCDA" v-on:ChangeSet="ChangeSet"
         v-on:UpdateCustomerSet="UpdateCustomerSet" v-on:UpdataTopology="UpdataTopology" :all_sets="all_sets"
-        :customer_set="customer_set" :topology="topology" :q="qbit" :id_base="'QuCompuser'" :show_save_run_load="true">
+        :customer_set="customer_set" :topology="topology" :q="qbit" :id_base="'QuCompuser'" :show_save_run_load="true" :show_instruction="true">
       </ToolBar>
     </el-header>
     <el-container>
@@ -572,8 +572,30 @@ export default {
       // Remove the link element from the document body
       document.body.removeChild(link);
     },
+    ShowError(msg) {
+      this.$message({
+        showClose: true,
+        message: msg,
+        type: 'error'
+      });
+    },
+    ShowOK(msg) {
+      this.$message({
+        showClose: true,
+        message: msg,
+        type: 'success'
+      });
+    },
     RunQCDA(opSwitch, mapSwitch, setting) {
       // 通知后端运行qasm
+      if(mapSwitch)
+      {
+        if(this.topology.length == 0)
+        {
+          this.ShowError("Please choose topology.")
+          return;
+        }
+      }
       this.socket.emit("qasm_run", {
         uuid: this.uuid,
         content: this.ProgramText,

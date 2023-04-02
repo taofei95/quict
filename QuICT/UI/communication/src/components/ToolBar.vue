@@ -69,7 +69,7 @@
             <el-button type="primary" @click="
               dialogTpVisible = false;
             TpConfirm();
-                                                                    ">OK</el-button>
+                                                                                                ">OK</el-button>
           </div>
         </span>
       </template>
@@ -139,15 +139,15 @@
     </el-dialog>
 
     <el-col :span="12" style="
-                display: inline-flex;
-                justify-content: flex-end;
-                align-items: center;
-              ">
-      <el-button size="small" type="primary" @click="dialogCmdVisible = true" style="
-                  margin: 0px 10px;
-                  font-family: 'Segoe UI Symbol';
-                  background: transparent !important;
-                ">Instruction Set</el-button>
+                    display: inline-flex;
+                    justify-content: flex-end;
+                    align-items: center;
+                  ">
+      <el-button size="small" v-if="show_instruction" type="primary" @click="dialogCmdVisible = true" style="
+                      margin: 0px 10px;
+                      font-family: 'Segoe UI Symbol';
+                      background: transparent !important;
+                    ">Instruction Set</el-button>
       <el-button size="small" @click="showTopologyEdit"
         style="margin: 0px 20px 0px 10px; background: transparent !important" type="primary"><img
           src="/assets/topology.2x.png" style="height: 10px" />Topology</el-button>
@@ -158,15 +158,15 @@
       </el-space>
       <span style="color: #409eff; font-size: large; margin: 0px 0px 0px 10px">|</span>
       <el-button size="small" type="primary" @click="dialogBeVisible = true" style="
-                  margin: 0px 10px;
-                  font-family: 'Segoe UI Symbol';
-                  background: transparent !important;
-                ">Backend</el-button>
-      <el-button v-if="show_save_run_load" size="small" type="primary" @click="dialogSeVisible = true" style="
-                  margin: 0px 10px;
-                  font-family: 'Segoe UI Symbol';
-                  background: transparent !important;
-                "> Setting</el-button>
+                      margin: 0px 10px;
+                      font-family: 'Segoe UI Symbol';
+                      background: transparent !important;
+                    ">Backend</el-button>
+      <el-button size="small" type="primary" @click="dialogSeVisible = true" style="
+                      margin: 0px 10px;
+                      font-family: 'Segoe UI Symbol';
+                      background: transparent !important;
+                    "> Setting</el-button>
       <span v-if="show_save_run_load" style="color: #409eff; font-size: large">|</span>
       <el-upload v-if="show_save_run_load" class="upload-demo" :action="uploadBackend" :multiple="multipleUpload"
         :show-file-list="showFileList" :before-upload="loadQCDA" style="margin: 0px">
@@ -199,6 +199,7 @@ export default {
     q: Array,
     id_base: String,
     show_save_run_load: Boolean,
+    show_instruction: Boolean,
   },
   data: function () {
     return {
@@ -650,7 +651,7 @@ export default {
           for (let i = 0; i < edges.length; i++) {
             new_tp.push(`${edges[i].u}_${edges[i].v}`);
           }
-          this.dialogTpNodeCount = new_q;      
+          this.dialogTpNodeCount = new_q;
           this.tp = new_tp;
           this.updateTopology();
         }

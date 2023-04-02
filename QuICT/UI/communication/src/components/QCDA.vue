@@ -1,9 +1,9 @@
 <template>
   <el-container style="
-      height: calc(100vh - 50px);
-      font-size: var(--el-font-size-large);
-      width: 100%;
-    ">
+        height: calc(100vh - 50px);
+        font-size: var(--el-font-size-large);
+        width: 100%;
+      ">
     <el-header style="height: 50px">
       <el-steps :active="current_step" finish-status="success" simple>
         <el-step title="Home" />
@@ -15,11 +15,11 @@
     <el-main style="padding: 0px !important; height: calc(100vh - 160px)">
       <el-space direction="horizen" :size="1" style="line-height: 19px !important" id="step_0">
         <el-button size="large" type="primary" plain style="
-            font-family: 'Segoe UI Symbol';
-            width: 100px;
-            height: 100px;
-            margin: 100px 10px;
-          " @click="new_qcda"> New
+              font-family: 'Segoe UI Symbol';
+              width: 100px;
+              height: 100px;
+              margin: 100px 10px;
+            " @click="new_qcda"> New
         </el-button>
         <!-- <el-button
           size="large"
@@ -37,19 +37,19 @@
         <el-upload class="load_qcda" :action="uploadBackend" :multiple="multipleUpload" :show-file-list="showFileList"
           :before-upload="loadQCDA">
           <el-button size="large" type="primary" plain style="
-              margin: 100px 10px;
-              font-family: 'Segoe UI Symbol';
-              width: 100px;
-              height: 100px;
-            "> LOAD
+                margin: 100px 10px;
+                font-family: 'Segoe UI Symbol';
+                width: 100px;
+                height: 100px;
+              "> LOAD
           </el-button>
         </el-upload>
       </el-space>
       <div id="step_1_N" class="div_not_selected">
         <el-container>
           <el-main class="vis-block">
-            <ToolBar ref="n_toolBar" v-on:SaveQCDA="toolbar_func" v-on:RunQCDA="toolbar_func"
-              v-on:LoadQCDA="toolbar_func" v-on:ChangeSet="n_ChangeSet" v-on:UpdateCustomerSet="n_UpdateCustomerSet"
+            <ToolBar ref="n_toolBar" v-on:SaveQCDA="toolbar_func" v-on:RunQCDA="toolbar_func" v-on:LoadQCDA="toolbar_func"
+              v-on:ChangeSet="n_ChangeSet" v-on:UpdateCustomerSet="n_UpdateCustomerSet"
               v-on:UpdataTopology="n_UpdataTopology" :all_sets="n_all_sets" :customer_set="n_customer_set"
               :topology="n_topology" :q="n_qbit" :id_base="'QCDA_new'" :show_save_run_load="false">
             </ToolBar>
@@ -65,9 +65,9 @@
       </div>
       <div id="step_1_L" class="div_not_selected">
         <ToolBar ref="l_toolBar" v-on:SaveQCDA="toolbar_func" v-on:RunQCDA="toolbar_func" v-on:LoadQCDA="toolbar_func"
-          v-on:ChangeSet="l_ChangeSet" v-on:UpdateCustomerSet="l_UpdateCustomerSet"
-          v-on:UpdataTopology="l_UpdataTopology" :all_sets="l_all_sets" :customer_set="l_customer_set"
-          :topology="l_topology" :q="l_qbit" :id_base="'QCDA_load'" :show_save_run_load="false">
+          v-on:ChangeSet="l_ChangeSet" v-on:UpdateCustomerSet="l_UpdateCustomerSet" v-on:UpdataTopology="l_UpdataTopology"
+          :all_sets="l_all_sets" :customer_set="l_customer_set" :topology="l_topology" :q="l_qbit" :id_base="'QCDA_load'"
+          :show_save_run_load="false" :show_instruction="Route == 'N'">
         </ToolBar>
         <lVisualizeZone ref="l_visVue" :VisContentIn="l_VisContent">
           <!-- TODO: replace with a one way vue component -->
@@ -78,20 +78,20 @@
         <el-container>
           <el-main style="width: 50%;">
             <span style="font-size: large;
-    font-weight: bolder;
-    color: white;
-    display: flex;
-    margin-left: 20px">Original:</span>
+      font-weight: bolder;
+      color: white;
+      display: flex;
+      margin-left: 20px">Original:</span>
             <oVisualizeZone2 ref="o_visVue2" :VisContentIn="o_VisContent2">
               <!-- TODO: replace with a one way vue component -->
             </oVisualizeZone2>
           </el-main>
           <el-main style="width: 50%;">
             <span style="font-size: large;
-    font-weight: bolder;
-    color: white;
-    display: flex;
-    margin-left: 20px">Optimized:</span>
+      font-weight: bolder;
+      color: white;
+      display: flex;
+      margin-left: 20px">Optimized:</span>
             <oVisualizeZone ref="o_visVue" :VisContentIn="o_VisContent">
               <!-- TODO: replace with a one way vue component -->
             </oVisualizeZone>
@@ -104,8 +104,7 @@
           <el-radio :label="1">State Vector</el-radio>
           <el-radio :label="2">Density Matrix</el-radio>
         </el-radio-group>
-        <el-tabs type="border-card" style="background: transparent !important; border: 0px solid"
-          v-if="Output_type == 0">
+        <el-tabs type="border-card" style="background: transparent !important; border: 0px solid" v-if="Output_type == 0">
           <el-tab-pane label="Table">
             <el-row style="height: 40px" v-if="OutputContent && Object.keys(OutputContent).length > 0">
               <el-col :span="4"></el-col>
@@ -134,8 +133,7 @@
             <div id="o_histogram"></div>
           </el-tab-pane>
         </el-tabs>
-        <el-tabs type="border-card" style="background: transparent !important; border: 0px solid"
-          v-if="Output_type == 1">
+        <el-tabs type="border-card" style="background: transparent !important; border: 0px solid" v-if="Output_type == 1">
           <el-tab-pane label="Table">
             <el-row style="height: 40px" v-if="OutputContent_state_vector && OutputContent_state_vector.length > 0">
               <el-col :span="4"></el-col>
@@ -271,8 +269,8 @@ export default {
       l_current_set: 0,
       n_topology: [],
       l_topology: [],
-      n_qbit: [],
-      l_qbit: [],
+      n_qbit: [0, 1, 2, 3, 4],
+      l_qbit: [0, 1, 2, 3, 4],
     };
   },
   components: {
@@ -427,6 +425,13 @@ export default {
         mapping = this.$refs.l_toolBar.getMapSwitch();
         topology = this.l_topology;
         set = this.l_all_sets[this.l_current_set];
+      }
+      if(mapping){
+        if(topology.length == 0)
+        {
+          this.ShowError("Please choose topology.")
+          return;
+        }
       }
       this.socket.emit("o_qasm_run", {
         uuid: this.uuid,
@@ -1100,6 +1105,20 @@ export default {
           break;
       }
     },
+    ShowError(msg) {
+      this.$message({
+        showClose: true,
+        message: msg,
+        type: 'error'
+      });
+    },
+    ShowOK(msg) {
+      this.$message({
+        showClose: true,
+        message: msg,
+        type: 'success'
+      });
+    },
   },
   mounted: function () {
     // let this_ref = this;
@@ -1330,6 +1349,13 @@ export default {
       this.l_ProgramText = this.l_GenQASM();
       this.$refs.l_visVue.vis_change();
       this.load_qcda();
+    });
+    this.socket.on("qcda_info", (content) => {
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      this.ShowError(content.info);
     });
   },
   watch: {},

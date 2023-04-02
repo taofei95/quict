@@ -3,7 +3,7 @@
     <el-header style="height: 50px">
       <!-- <el-row>
       <el-col :span="12"> -->
-      <el-space style="height: 50px; font-size: var(--el-font-size-large); width: 80%" size="large"
+      <el-space style="height: 50px; font-size: var(--el-font-size-large); width: 90%" size="large"
         direction="horizontal">
         <div
           style="background-image: url('/assets/logo.png'); background-repeat: no-repeat; background-position: left; width: 160px;  height: 45px;">
@@ -17,14 +17,27 @@
           QCDA
         </span>
       </el-space>
-      <el-space style="height: 50px; font-size: var(--el-font-size-large); width: 20%" size="large"
+      <el-space style="height: 50px; font-size: var(--el-font-size-large); width: 10%" size="large"
         direction="horizontal">
-        <span class="span_not_selected" id="span_QCDA" @click="dialogUser = true">
+        <!-- <span class="span_not_selected" id="span_QCDA" @click="dialogUser = true">
           User
         </span>
         <span class="span_not_selected" id="span_QCDA" @click="Logout">
           Logout
-        </span>
+        </span> -->
+        <el-dropdown trigger="click">
+          <el-tooltip class="box-item" effect="dark" placement="right-start">
+            <template #content> User: {{ user }}<br />E-mail: {{ email }}</template>
+            <span style="
+              font-family: 'Segoe UI Symbol';"></span>
+          </el-tooltip>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="Logout">Logout</el-dropdown-item>
+              <el-dropdown-item @click="dialogPsw = true">Change Password</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </el-space>
       <!-- </el-col>
       </el-row> -->
@@ -38,9 +51,9 @@
         <label>PASSWORD<el-input v-model="psw" type="password" show-password></el-input></label>
         <template #footer>
           <span class="dialog-footer">
-            <el-button type="primary" @click="login()">OK</el-button>
             <el-button type="primary" @click="Go2Register()">Register</el-button>
             <el-button type="primary" @click="Go2Forget()">Forget</el-button>
+            <el-button type="primary" @click="login()">OK</el-button>
           </span>
         </template>
       </el-dialog>
