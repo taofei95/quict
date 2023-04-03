@@ -33,8 +33,6 @@ class HHL:
         Args:
             control(int/list[int]): control qubits in multicontrol toffoli gates, in HHL it is phase qubits part
             target(int): target qubit operate CRy gate, in HHL it is ancilla qubit part
-            ancilla(int/list[int]): ancilla qubits in multicontrol toffoli gates,
-                                    in HHL it needs additional auxiliary qubits
 
         Return:
             CompositeGate
