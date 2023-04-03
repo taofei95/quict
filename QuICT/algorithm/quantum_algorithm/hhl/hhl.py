@@ -72,7 +72,8 @@ class HHL:
         matrix,
         vector,
         dominant_eig=None,
-        phase_qubits: int = 9
+        phase_qubits: int = 9,
+        measure=True
     ):
         """
         Args:
@@ -82,6 +83,7 @@ class HHL:
             dominant_eig(float/None): estimation of dominant eigenvalue
                 If None, use 'np.linalg.eigvals' to obtain
             phase_qubits(int): number of qubits representing the Phase
+            measure(bool): measure ancilla qubit or not
         Returns:
             Circuit: HHL circuit
         """
@@ -138,7 +140,8 @@ class HHL:
         for idx in phase:
             H | circuit(idx)
 
-        Measure | circuit(ancilla)
+        if measure:
+            Measure | circuit(ancilla)
 
         logger.info(
             f"circuit width    = {circuit.width():4}\n" +
@@ -154,7 +157,8 @@ class HHL:
         matrix,
         vector,
         dominant_eig=None,
-        phase_qubits: int = 9
+        phase_qubits: int = 9,
+        measure=True
     ):
         """ hhl algorithm to solve linear equation such as Ax=b,
             where A is the given matrix and b is the given vector
@@ -165,6 +169,7 @@ class HHL:
             dominant_eig(float/None): estimation of dominant eigenvalue
                 If None, use 'np.linalg.eigvals' to obtain
             phase_qubits(int): number of qubits representing the Phase
+            measure(bool): measure ancilla qubit or not
         Returns:
             list: vector x_hat, which equal to kx:
                 x is the solution vector of Ax = b, and k is an unknown coefficient
@@ -175,5 +180,5 @@ class HHL:
         circuit = self.circuit(matrix, vector, dominant_eig, phase_qubits)
 
         state_vector = simulator.run(circuit)
-        if int(circuit[0]) == 0:
+        if measure and int(circuit[0]) == 0 or not measure:
             return np.array(state_vector[: size].get(), dtype=np.complex128)
