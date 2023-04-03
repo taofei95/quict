@@ -294,7 +294,7 @@ class CompositeGate(CircuitBased):
         matrix_width = self.width() if local else max(self.qubits) + 1
 
         circuit_matrix = CircuitMatrix(device, self._precision)
-        assigned_gates = self.flatten_gates() if not local else self._get_local_gates()
+        assigned_gates = self.flatten_gates(True) if not local else self._get_local_gates()
 
         return circuit_matrix.get_unitary_matrix(assigned_gates, matrix_width)
 
@@ -304,7 +304,8 @@ class CompositeGate(CircuitBased):
             local_qidx_mapping[qidx] = i
 
         local_gates = []
-        for gate, qidx, _ in self._gates:
+        flatten_gates = self.gate_decomposition(False)
+        for gate, qidx, _ in flatten_gates:
             related_qidx = [local_qidx_mapping[q] for q in qidx]
             lgate = gate & related_qidx
             local_gates.append(lgate)
