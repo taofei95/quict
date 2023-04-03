@@ -14,7 +14,7 @@ class Differentiator:
         gpu_device_id: int = 0,
         sync: bool = True,
     ):
-        self, _simulator = GateSimulator(device, gpu_device_id, sync)
+        self._simulator = GateSimulator(device, gpu_device_id, sync)
 
     def __call__(
         self, circuit: Circuit, state_vector: np.ndarray, params, expectation_op

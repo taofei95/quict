@@ -2,14 +2,15 @@ import numpy as np
 import math
 import torch
 from QuICT.core import Circuit
-from QuICT.core.gate import H, CX,Rz,Ry,UnitaryGate,CU3Gate,U3Gate,CompositeGate,BasicGate,RyGate
+from QuICT.core.gate import H, CX,Rz,Ry,CU3,U3,CompositeGate,BasicGate
 from QuICT.core.operator import Trigger
 from QuICT.algorithm.quantum_machine_learning.utils.ansatz import Ansatz
 from QuICT.algorithm.quantum_machine_learning.ansatz_library.QNN_layer import QNNLayer
 from QuICT.simulation.simulator import Simulator
 from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.encoding import NEQR,FRQI
-from QuICT.algorithm.quantum_machine_learning.differentiators.parameter_shift import  ParameterShift
+from QuICT.core.gate.utils.variable import Variable
+from QuICT.algorithm.quantum_machine_learning.differentiator.parameter_shift import  ParameterShift
 #from QuICT.algorithm.quantum_machine_learning.model.VQA import vqe_net
 class qconv2:
     """The qconv2 class, which is a quatnum convoluitional used in QCNN model"""
@@ -19,7 +20,7 @@ class qconv2:
             
         """
         
-    def __call__(self, _type: str, wires:list,param) -> CompositeGate:
+    def __call__(self, _type: str, wires:list,param:Variable) -> CompositeGate:
         """
         Args:
             param(list): the parm of gates,it is expected to be a 1*4 list if _type == "0"
@@ -27,15 +28,12 @@ class qconv2:
         self.param = param
         kernal_gate =CompositeGate()
         if _type == "0":
-            Ry(float(self.param[0]))|kernal_gate(wires[0])
-            Ry(float(self.param[1]),)|kernal_gate(wires[1])
+            Ry(self.param[0])|kernal_gate(wires[0])
+            Ry(self.param[1])|kernal_gate(wires[1])
             CX | kernal_gate([wires[1] ,wires[0]])
-            Ry(float(self.param[2]),)|kernal_gate(wires[0])
-            Ry(float(self.param[3]),)|kernal_gate(wires[1])
+            Ry(self.param[2])|kernal_gate(wires[0])
+            Ry(self.param[3])|kernal_gate(wires[1])
             CX | kernal_gate([wires[0],wires[1]])
-        for gate in kernal_gate.gates:
-            if isinstance(gate,RyGate):
-                gate._requires_grad =True   
         return kernal_gate
     def _construct_ansatz(self,param):
         self.param = param
@@ -48,7 +46,7 @@ class pool:
         Args:
         """
         
-    def __call__(self, _type: str,param:list,wires:list) -> Trigger:
+    def __call__(self, _type: str,param:Variable,wires:list) -> Trigger:
         """
         Args:
             parm(list): the parm of gates,it is expected to be a 1*6 list
@@ -58,16 +56,16 @@ class pool:
         self.param = param
         pool_gate = CompositeGate()  # mearsurement gate
         if _type == "0":
-            Rz(float(self.param[0]))|pool_gate(wires[0])
-            Ry(float(self.param[1]))|pool_gate(wires[0])
-            Rz(float(self.param[2]))|pool_gate(wires[0])
-            Rz(float(self.param[3]))|pool_gate(wires[1])
-            Ry(float(self.param[4]))|pool_gate(wires[1])
-            Rz(float(self.param[5]))|pool_gate(wires[1])
+            Rz(self.param[0])|pool_gate(wires[0])
+            Ry(self.param[1])|pool_gate(wires[0])
+            Rz(self.param[2])|pool_gate(wires[0])
+            Rz(self.param[3])|pool_gate(wires[1])
+            Ry(self.param[4])|pool_gate(wires[1])
+            Rz(self.param[5])|pool_gate(wires[1])
             CX|pool_gate([wires[0],wires[1]])
-            Rz(float(self.param[3])).inverse() |pool_gate(wires[1])
-            Ry(float(self.param[4])).inverse() |pool_gate(wires[1])
-            Rz(float(self.param[5])).inverse() |pool_gate(wires[1])
+            Rz(self.param[3]).inverse() |pool_gate(wires[1])
+            Ry(self.param[4]).inverse() |pool_gate(wires[1])
+            Rz(self.param[5]).inverse() |pool_gate(wires[1])
         for gate in pool_gate.gates:
             if gate.type ==CX().type:
                 continue
@@ -96,12 +94,12 @@ class FC:
         """
         fc_gate = CompositeGate()
         for i in range(len(wires)):
-            G_gate = U3Gate()
+            G_gate = U3
             G_gate = G_gate(G_param[i][0],G_param[i][1],G_param[i][2])
             G_gate & wires[i] | fc_gate
         l= len(wires)
         for i in range(l):
-            cu3_gate = CU3Gate()
+            cu3_gate = CU3
             cu3_gate = cu3_gate(G2_param[i][0],G2_param[i][1],G2_param[i][2])
             cu3_gate.cargs=[wires[(l-i)%l]]
             cu3_gate.targs=[wires[l-i-1]]

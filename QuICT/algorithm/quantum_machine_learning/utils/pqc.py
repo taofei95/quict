@@ -1,9 +1,10 @@
-from tensorflow.keras.layers import Layer
+#from tensorflow.keras.layers import Layer
 import tensorflow as tf
-from  QuICT.core.circuit import Circuit
+from QuICT.core.circuit import Circuit
 from QuICT.simulation.simulator import Simulator
 from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
 import numpy as np
+from QuICT.algorithm.quantum_machine_learning.differentiator.adjoint import Adjoint
 import sympy
 class PQC(tf.keras.layers.Layer):
     """
@@ -13,7 +14,7 @@ class PQC(tf.keras.layers.Layer):
     def __init__(
             self,
             model_circuit,
-            pargs,
+            model_pargs,
             sim:Simulator,
             operators:Hamiltonian,
             differentiator=None,
@@ -61,7 +62,18 @@ class PQC(tf.keras.layers.Layer):
 
     def call(self, inputs):
         """Keras call function.""" 
-        return self._sim.forward(self._model_circuit,ham=self._operators)
+        sv = self._sim.run(self._model_circuit)
+        sv= sv['data']['state_vector']
+        if  isinstance(self._executor ,Adjoint):
+            self._executor(self._model_circuit,sv)
+
+        grad_list_see = []
+        for gate in self._model_circuit.gates:
+            if gate.variables > 0:
+                for parg in gate.pargs:
+                    grad_list_see.append(parg.grad)
+        print(grad_list_see)
+        return 
     def backward(self,):
         return
             
@@ -71,12 +83,10 @@ from QuICT.core.gate import *
 if __name__ == '__main__':  
     wideth = 5
     cir = Circuit(wideth)
-    for i in range(wideth):
-        rx = Rx(0.1) 
-        rx.set_requires_grad(True)
-        rx | cir
+
     params = np.random.random(200)
-    sim = Simulator()
+    sim = Simulator(device='GPU')
     ham = Hamiltonian([[0.4, 'Y0', 'X1', 'Z2', 'I5'], [0.6]])
-    pqc = PQC(cir,params,sim,ham)
-    pqc.call(Circuit(wideth))
+    ad = Adjoint()
+    pqc = PQC(model_circuit=cir,differentiator=ad,model_pargs= params,sim=sim,operators = ham)
+    pqc.call(1)
