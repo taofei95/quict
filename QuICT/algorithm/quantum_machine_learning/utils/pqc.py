@@ -38,22 +38,6 @@ class PQC(tf.keras.layers.Layer):
         self._executor = differentiator
         # Set additional parameter controls.
         '''
-        self.initializer = tf.keras.initializers.get(initializer)
-        self.regularizer = tf.keras.regularizers.get(regularizer)
-        self.constraint = tf.keras.constraints.get(constraint)
-
-        # Weight creation is not placed in a Build function because the number
-        # of weights is independent of the input shape.
-        
-        self.parameters = self.add_weight('parameters',
-                                          shape=self._symbols.shape,
-                                          initializer=self.initializer,
-                                          regularizer=self.regularizer,
-                                          constraint=self.constraint,
-                                          dtype=tf.float32,
-                                          trainable=True)
-        '''
-        
         pargs_index = 0
         for g_id, gate in enumerate(self._model_circuit.gates):
             if gate.is_requires_grad:
@@ -65,6 +49,10 @@ class PQC(tf.keras.layers.Layer):
                     pargs_index += 1
                 gate.pargs = pargs_copy.copy()
                 self._model_circuit.replace_gate(g_id,gate)
+      
+        '''
+        
+        
 
 
     def build(self, input_shape):
