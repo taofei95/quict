@@ -16,7 +16,7 @@ class RandomSparse:
                 dtype=np.complex128)
             A = X.todense()
             v = np.linalg.eigvals(A)
-            A = np.round(A, 4)
+            A = np.round(A, 3)
             if np.linalg.det(A) != 0 and np.log2(max(abs(v)) / min(abs(v))) < 6:
                 return np.array(A)
 

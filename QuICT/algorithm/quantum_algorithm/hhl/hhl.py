@@ -1,10 +1,11 @@
-from QuICT.tools import Logger
-from QuICT.qcda.synthesis.quantum_state_preparation import QuantumStatePreparation
-from QuICT.algorithm.quantum_algorithm.hhl.trotter import Trotter
-from QuICT.qcda.synthesis.unitary_decomposition.controlled_unitary import ControlledUnitaryDecomposition
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.tools.exception import *
+from QuICT.qcda.synthesis.quantum_state_preparation import QuantumStatePreparation
+from QuICT.qcda.synthesis.unitary_decomposition.controlled_unitary import ControlledUnitaryDecomposition
+from QuICT.tools import Logger
+from QuICT.tools.exception import QuICTException
+
+from scipy.linalg import expm
 
 
 logger = Logger('hhl')
@@ -20,28 +21,13 @@ class HHL:
     def __init__(self, simulator=None) -> None:
         self.simulator = simulator
 
-    def reconstruct(self, matrix, vector):
-        """ When matrix A is not Hermitian, construct a hermite matrix H, and A is in the upper right corner.
-            Simultaneously, vector b add 0.
-        """
-        row, column = matrix.shape
-        n = int(2 ** np.ceil(np.log2(row)))
+    def _reconstruct(self, matrix):
+        matrix_conj = matrix.T.conj()
+        if not np.allclose(matrix, matrix_conj):
+            matrix_rec = np.kron([[0, 1], [0, 0]], matrix_conj) + np.kron([[0, 0], [1, 0]], matrix)
+        return matrix_rec
 
-        m = np.identity(n, dtype=np.complex128) / 4
-        m[n - row:, n - row:] = matrix
-        v = np.zeros(n, dtype=np.complex128)
-        v[n - row:] = vector
-        if not (m == m.T.conj()).all():
-            m0 = np.zeros((2 * n, 2 * n), dtype=np.complex128)
-            m0[:n, n:] = m.T.conj()
-            m0[n:, :n] = m
-            m = m0
-            v0 = np.zeros(2 * n, dtype=np.complex128)
-            v0[n:] = v
-            v = v0
-        return m, v
-
-    def c_rotation(self, control, target, ancilla):
+    def _c_rotation(self, control, target):
         """Controlled-Rotation part in HHL algorithm
 
         Args:
@@ -53,114 +39,114 @@ class HHL:
         Return:
             CompositeGate
         """
-        gates = CompositeGate()
         c = 1
-        for l in range(1, 2 ** len(control)):
-            for idx in range(len(control)):
+        n = len(control)
+        control_rotation_gates = CompositeGate()
+        multi_control = MultiControlToffoli()(n - 1)
+        for l in range(c, (1 << n) - c + 1):
+            for idx in range(n):
                 if ((l >> idx) & 1) == 0:
-                    X & [control[idx]] | gates
-            for idx in range(len(ancilla)):
-                if idx == 0:
-                    CCX & [control[0], control[1], ancilla[0]] | gates
-                else:
-                    CCX & [control[idx + 1], ancilla[idx - 1], ancilla[idx]] | gates
-            if l < 2 ** (len(control) - 1):
-                CU3(2 * np.arcsin(c / l), 0, 0) & [ancilla[-1], target] | gates
+                    X & [control[idx]] | control_rotation_gates
+
+            if l < (1 << (n - 1)):
+                CU3(np.arcsin(c / l), 0, 0) & [control[0], target] | control_rotation_gates
             else:
-                CU3(2 * np.arcsin(c / (l - 2 ** len(control))), 0, 0) & [ancilla[-1], target] | gates
-            for idx in reversed(range(len(ancilla))):
-                if idx == 0:
-                    CCX & [control[0], control[1], ancilla[0]] | gates
-                else:
-                    CCX & [control[idx + 1], ancilla[idx - 1], ancilla[idx]] | gates
-            for idx in range(len(control)):
+                CU3(np.arcsin(c / (l - (1 << n))), 0, 0) & [control[0], target] | control_rotation_gates
+
+            multi_control | control_rotation_gates(control[1:] + [target])
+
+            if l < (1 << (n - 1)):
+                CU3(-np.arcsin(c / l), 0, 0) & [control[0], target] | control_rotation_gates
+            else:
+                CU3(-np.arcsin(c / (l - (1 << n))), 0, 0) & [control[0], target] | control_rotation_gates
+
+            multi_control | control_rotation_gates(control[1:] + [target])
+
+            for idx in range(n):
                 if ((l >> idx) & 1) == 0:
-                    X & control[idx] | gates
-        X & target | gates
-        return gates
+                    X & control[idx] | control_rotation_gates
+
+        X & target | control_rotation_gates
+        return control_rotation_gates
 
     def circuit(
         self,
         matrix,
         vector,
-        e,
-        method='unitary'
+        dominant_eig=None,
+        phase_qubits: int = 9
     ):
         """
         Args:
-            matrix(ndarray/circuit): the normalize matrix A above
-            vector(array): the vector b above, need to be prepared previously
+            matrix(ndarray): the matrix A above, which shape must be 2^n * 2^n
+            vector(array): the vector b above, which shape must be 2^n
                 matrix and vector MUST have the same number of ROWS!
-            e(int): number of qubits representing the Phase
-            method: Hamiltonian simulation method, default "unitary"
+            dominant_eig(float/None): estimation of dominant eigenvalue
+                If None, use 'np.linalg.eigvals' to obtain
+            phase_qubits(int): number of qubits representing the Phase
         Returns:
             Circuit: HHL circuit
         """
         n = int(np.log2(len(matrix)))
-        if isinstance(method, tuple):
-            if method[0] == 'trotter':
-                circuit = Circuit(n + 2 * e + 1)
-                ancilla = 0
-                phase = list(range(1, e + 1))
-                toffoli = list(range(e + 1, 2 * e))
-                trotter = 2 * e
-                x = list(range(2 * e + 1, 2 * e + n + 1))
-                order = method[1]
-                method = method[0]
+        if (1 << n) != len(matrix) or (1 << n) != len(matrix[0]) or (1 << n) != len(vector):
+            raise QuICTException(
+                f"shape of matrix and vector should be 2^n, here are {len(matrix)}*{len(matrix[0])} and {len(vector)}")
+
+        vector /= np.linalg.norm(vector)
+        if matrix != (matrix := self._reconstruct(matrix)):
+            n += 1
+            vector_ancilla = True
         else:
-            circuit = Circuit(2 * e + n)
-            ancilla = 0
-            phase = list(range(1, e + 1))
-            toffoli = list(range(e + 1, 2 * e))
-            x = list(range(2 * e, 2 * e + n))
+            vector_ancilla = False
+        if not dominant_eig:
+            dominant_eig = np.max(np.abs(np.linalg.eigvalsh(matrix)))
 
-        Ry(0) | circuit(ancilla)
+        circuit = Circuit(1 + phase_qubits + n)
+        ancilla = 0
+        phase = list(range(1, 1 + phase_qubits))
+        register = list(range(1 + phase_qubits, 1 + phase_qubits + n))
 
-        if len(x) > 1:
-            QuantumStatePreparation().execute(vector) | circuit(x)
+        # State preparation
+        if vector_ancilla:
+            X | circuit(register[0])
+        if len(vector) > 2:
+            QuantumStatePreparation().execute(vector) | circuit(register[vector_ancilla:])
         else:
-            Ry(2 * np.arcsin(vector[1])) | circuit(x)
+            Ry(2 * np.arcsin(vector[1])) | circuit(register[-1])
 
-        if method == 'trotter':
-            CU = Trotter(matrix, order).excute(phase, x, trotter)
-        else:
-            from scipy.linalg import expm
-            CU = CompositeGate()
-            m = expm(matrix * 1j)
-            for idx in reversed(phase):
-                c = [idx]
-                c.extend(x)
-                try:
-                    U, _ = ControlledUnitaryDecomposition().execute(
-                        np.identity(1 << n, dtype=np.complex128), m
-                    )
-                    U | CU(c)
-                except:
-                    raise QuICTException("UnitaryDecomposition failed.")
-                m = np.dot(m, m)
+        # prepare Controlled-Unitary Gate
+        unitary_matrix_gates = CompositeGate()
+        m = expm(matrix / dominant_eig * 0.5j)
+        for idx in reversed(phase):
+            U, _ = ControlledUnitaryDecomposition().execute(
+                np.identity(1 << n, dtype=np.complex128), m
+            )
+            U | unitary_matrix_gates([idx] + register)
+            m = np.dot(m, m)
 
+        # QPE
         for idx in phase:
             H | circuit(idx)
-        CU | circuit
+        unitary_matrix_gates | circuit
         IQFT.build_gate(len(phase)) | circuit(list(reversed(phase)))
 
-        CRY = self.c_rotation(phase, ancilla, toffoli)
-        CRY | circuit
+        # Controlled-Rotation
+        control_rotation = self._c_rotation(phase, ancilla)
+        control_rotation | circuit
 
+        # Inversed-QPE
         QFT.build_gate(len(phase)) | circuit(list(reversed(phase)))
-        CU.inverse() | circuit
-
+        unitary_matrix_gates.inverse() | circuit
         for idx in phase:
             H | circuit(idx)
 
         Measure | circuit(ancilla)
-        # Measure | circuit(x[0])
 
         logger.info(
             f"circuit width    = {circuit.width():4}\n" +
             f"circuit size     = {circuit.size():4}\n" +
-            f"hamiltonian size = {CU.size():4}\n" +
-            f"CRy size         = {CRY.size():4}"
+            f"hamiltonian size = {unitary_matrix_gates.size():4}\n" +
+            f"CRy size         = {control_rotation.size():4}"
         )
 
         return circuit
@@ -169,43 +155,27 @@ class HHL:
         self,
         matrix,
         vector,
-        t,
-        e,
-        method
+        dominant_eig=None,
+        phase_qubits: int = 9
     ):
         """ hhl algorithm to solve linear equation such as Ax=b,
             where A is the given matrix and b is the given vector
-
         Args:
-            matrix(ndarray/matrix): the matrix A above
-                [A must be reversible]
-            vector(np.array): the vector b above, need to be prepared previously
+            matrix(ndarray): the matrix A above, which shape must be 2^n * 2^n
+            vector(array): the vector b above, which shape must be 2^n
                 matrix and vector MUST have the same number of ROWS!
-            t(float): the coefficient makes matrix (t*A/2pi)'s eigenvalues are in (1/e, 1)
-            e(int): number of qubits representing the Phase
-            method: Hamiltonian simulation method, default "unitary"
-                ('trotter', x(int)): use trotter-suzuki decomposition to simulate expm(iAt/x)^x
-                'unitary': use unitary decomposition to simulate expm(iAt)
-
+            dominant_eig(float/None): estimation of dominant eigenvalue
+                If None, use 'np.linalg.eigvals' to obtain
+            phase_qubits(int): number of qubits representing the Phase
         Returns:
-            Tuple[list, None]:
-                list: vector x_hat, which equal to kx: 
-                    x is the solution vector of Ax = b, and k is an unknown coefficient
-                None: algorithm failed.
+            list: vector x_hat, which equal to kx:
+                x is the solution vector of Ax = b, and k is an unknown coefficient
         """
         simulator = self.simulator
         size = len(vector)
 
-        norm_v = np.linalg.norm(vector)
-        m, v = self.reconstruct(matrix * t, vector / norm_v)
-        circuit = self.circuit(m, v, e, method)
+        circuit = self.circuit(matrix, vector, dominant_eig, phase_qubits)
 
-        for idx in range(10):
-            state_vector = simulator.run(circuit)
-            if int(circuit[0]) == 0:
-                x = np.array(state_vector[: size].get(), dtype=np.complex128)
-                return x
-            theta = (idx + 1) * np.pi / 10
-            circuit.replace_gate(0, Ry(theta) & 0)
-        else:
-            return None
+        state_vector = simulator.run(circuit)
+        if int(circuit[0]) == 0:
+            return np.array(state_vector[: size].get(), dtype=np.complex128)
