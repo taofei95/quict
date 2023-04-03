@@ -4,7 +4,6 @@
 # @Author  : Han Yu, Li Kaiqi
 # @File    : _circuit_computing.py
 from enum import Enum
-from typing import List
 import numpy as np
 
 from .gate_type import GateType
@@ -19,6 +18,10 @@ class CircuitBased(object):
     @name.setter
     def name(self, name: str):
         self._name = name
+
+    @property
+    def precision(self) -> str:
+        return self._precision
 
     @property
     def gates(self) -> list:
@@ -58,7 +61,7 @@ class CircuitBased(object):
         self._name = name
         self._gates = []
         self._pointer = None
-        self._precision = np.complex128
+        self._precision = "double"
 
     def size(self) -> int:
         """ the number of gates in the circuit/CompositeGate
@@ -199,31 +202,14 @@ class CircuitBased(object):
 
         return qasm_string
 
-    # TODO: refactoring, may remove
-    def get_lastcall_for_each_qubits(self) -> List[GateType]:
-        lastcall_per_qubits = [None] * self.width()
-        inside_qargs = []
-        for i in range(self.size() - 1, -1, -1):
-            gate_args = self._gates[i][1]
-            gate_type = self._gates[i][0].type
-            for garg in gate_args:
-                if lastcall_per_qubits[garg] is None:
-                    lastcall_per_qubits[garg] = gate_type
-                    inside_qargs.append(garg)
+    def set_precision(self, precision: str):
+        """ Set precision for Cicuit/CompositeGate
 
-            if len(inside_qargs) == self.width():
-                break
-
-        return lastcall_per_qubits
-
-    # TODO: refactoring
-    def convert_precision(self):
-        """ Convert all gates in Cicuit/CompositeGate into single precision. """
-        for gate in self.gates:
-            if hasattr(gate, "convert_precision"):
-                gate.convert_precision()
-
-        self._precision = np.complex64 if self._precision == np.complex128 else np.complex128
+        Args:
+            precision(str): The precision of Circuit/CompositeGate, should be one of [single, double]
+        """
+        assert precision in ["single", "double"], "Circuit's precision should be one of [double, single]"
+        self._precision = precision
 
     def gate_decomposition(self, self_flatten: bool = True) -> list:
         decomp_gates = []

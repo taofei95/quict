@@ -55,7 +55,7 @@ class MatrixGroup:
 class CircuitMatrix:
     def __init__(self, device: str = "CPU", precision: str = "double"):
         self._device = device
-        self._precision = precision
+        self._precision = np.complex128 if precision == "double" else np.complex64
 
         if device == "CPU":
             self._computer = CPUCalculator

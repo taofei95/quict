@@ -99,7 +99,7 @@ class TestGPULinalg(unittest.TestCase):
             vec,
             qubit_num,
             circuit.matrix(),
-            list(range(10)),
+            list(range(9, -1, -1)),
             sync=True
         )
 

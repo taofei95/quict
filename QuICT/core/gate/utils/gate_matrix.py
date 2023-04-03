@@ -8,6 +8,7 @@ class GateMatrixGenerator:
     def get_matrix(
         self,
         gate,
+        precision: str = "double",
         is_get_grad: bool = False,
         is_get_target: bool = False,
         special_array_generator=None,
@@ -19,7 +20,8 @@ class GateMatrixGenerator:
 
         # Step 2: Get based matrix's value
         gate_type = gate.type
-        gate_precision = np.complex128 if gate.precision == "double" else np.complex64
+        _precision = gate.precision if precision is None else precision
+        gate_precision = np.complex128 if _precision == "double" else np.complex64
         gate_params = gate.params
         if gate_params == 0:
             if is_get_grad:
@@ -40,7 +42,7 @@ class GateMatrixGenerator:
 
         # Step 3: Depending on controlled_by, generate final matrix
         if gate.controls > 0:
-            controlled_matrix = np.identity(
+            controlled_matrix = self._array_generator.identity(
                 1 << (gate.controls + gate.targets), dtype=gate_precision
             )
             target_border = 1 << gate.targets
@@ -223,7 +225,7 @@ class GateMatrixGenerator:
             costh = np.cos(pargs[0] / 2)
             sinth = np.sin(pargs[0] / 2)
 
-            return np.array(
+            return self._array_generator.array(
                 [
                     [costh, 0, 0, -1j * sinth],
                     [0, costh, -1j * sinth, 0],
@@ -237,7 +239,7 @@ class GateMatrixGenerator:
             costh = np.cos(pargs[0] / 2)
             sinth = np.sin(pargs[0] / 2)
 
-            return np.array(
+            return self._array_generator.array(
                 [
                     [costh, 0, 0, 1j * sinth],
                     [0, costh, -1j * sinth, 0],
@@ -251,7 +253,7 @@ class GateMatrixGenerator:
             expth = np.exp(0.5j * pargs[0])
             sexpth = np.exp(-0.5j * pargs[0])
 
-            return np.array(
+            return self._array_generator.array(
                 [
                     [sexpth, 0, 0, 0],
                     [0, expth, 0, 0],
@@ -265,7 +267,7 @@ class GateMatrixGenerator:
             costh = np.cos(pargs[0] / 2)
             sinth = np.sin(pargs[0] / 2)
 
-            return np.array(
+            return self._array_generator.array(
                 [
                     [costh, -1j * sinth, 0, 0],
                     [-1j * sinth, costh, 0, 0],
@@ -668,7 +670,9 @@ class InverseGate:
     def get_inverse_gate(cls, gate_type: GateType, pargs: list) -> tuple:
         if len(pargs) == 0:
             if gate_type in cls.__GATE_INVERSE_MAP.keys():
-                return cls.__GATE_INVERSE_MAP[gate_type], pargs
+                inverse_args = cls.__GATE_INVERSE_MAP[gate_type]
+
+                return inverse_args if isinstance(inverse_args, tuple) else (inverse_args, pargs)
         else:
             inv_params = None
             if gate_type in cls.__INVERSE_GATE_WITH_NEGATIVE_PARAMS:

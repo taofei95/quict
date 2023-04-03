@@ -103,7 +103,7 @@ class CompositeGate(CircuitBased):
             targets(list): the related qubits
         """
         qidx_mapping = {}
-        for i, q in enumerate(self._qubits):
+        for i, q in enumerate(self.qubits):
             qidx_mapping[q] = targets[i]
 
         new_gates = []
@@ -315,7 +315,7 @@ class CompositeGate(CircuitBased):
         qasm_string = ""
         if target_qubits is not None:
             qidx_mapping = {}
-            for i, q in enumerate(self._qubits):
+            for i, q in enumerate(self.qubits):
                 qidx_mapping[q] = target_qubits[i]
 
         for gate, targs, size in self._gates:
