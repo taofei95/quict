@@ -25,16 +25,14 @@ n = 2 ** 4
 A = random_matrix(n)
 b = random_vector(n)
 
-# slt = np.linalg.solve(A, b)
-# slt /= np.linalg.norm(slt)
-# hhl_u = HHL(StateVectorSimulator(device="GPU")).run(
-#         matrix=A,
-#         vector=b)
-# if hhl_u is not None:
-#         hhl_u /= np.linalg.norm(hhl_u)
-#         print(f"solution     = {slt.real}\n" +
-#             f"hhl(unitary) = {hhl_u.real}")
-# else: 
-#         print("Failed.")
-
-print(1 << 2 + 1)
+slt = np.linalg.solve(A, b)
+slt /= np.linalg.norm(slt)
+hhl_u = HHL(StateVectorSimulator(device="GPU")).run(
+        matrix=A,
+        vector=b)
+if hhl_u is not None:
+        hhl_u /= np.linalg.norm(hhl_u)
+        print(f"solution     = {slt.real}\n" +
+            f"hhl(unitary) = {hhl_u.real}")
+else: 
+        print("Failed.")
