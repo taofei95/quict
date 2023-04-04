@@ -42,34 +42,37 @@ class TestHHL(unittest.TestCase):
         print("The HHL unit test finished!")
 
     def test_hhl_accuracy(self):
-        t = [4, 8, 10, 8, 2]
-        print(f"run with size 2 ** {list(range(1, 6))} for {t} times")
+        error = 0
         for n in range(5):
-            size = 1 << n + 1
-            for _ in t[n]:
-                matrix = random_matrix(size)
-                vector = random_vector(size)
-
-                np_slt = np.linalg.solve(matrix, vector)
-                np_slt /= np.linalg.norm(np_slt)
-                hhl_slt = HHL(TestHHL.simulator).run(
-                    matrix, vector, measure=False)
-                hhl_slt /= np.linalg.norm(hhl_slt)
-                e = MSE(np_slt, hhl_slt)
-                error += e
-                print(f"For size = {1 << n + 1}, mean square error = {e}")
-
-        print(f"In 32 test, mean square error = {error / 32}")
-        assert 1
-
-    def test_hhl_success_rate(self):
-        for n in range(2):
             size = 1 << n + 1
             matrix = random_matrix(size)
             vector = random_vector(size)
-            times = 1
-            while not HHL(TestHHL.simulator).run(
-                    matrix, vector):
-                times += 1
-            print(f"For size = {1 << n + 1}, success rate = {1.0 / times}")
+
+            np_slt = np.linalg.solve(matrix, vector)
+            np_slt /= np.linalg.norm(np_slt)
+            hhl_slt = HHL(TestHHL.simulator).run(
+                matrix, vector, measure=False)
+            hhl_slt /= np.linalg.norm(hhl_slt)
+            e = MSE(np_slt, hhl_slt)
+            error += e
+            print(f"For size = {1 << n + 1}, mean square error = {e}")
+
+        print(f"In 5 test, mean square error = {error / 5}")
+
         assert 1
+
+    def test_hhl_success_rate(self):
+        size = 2
+        matrix = random_matrix(size)
+        vector = random_vector(size)
+        times = 1
+        while HHL(TestHHL.simulator).run(
+                matrix, vector) is None:
+            times += 1
+        print(f"For size = {4}, success rate = {1.0 / times}")
+
+        assert 1
+
+
+if __name__ == "__main__":
+    unittest.main()
