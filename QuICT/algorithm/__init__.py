@@ -21,3 +21,4 @@ except:
     print(
         "Please install pytorch, cupy and quict_ml first, you can use 'pip install quict-ml' to install quict_ml. "
     )
+

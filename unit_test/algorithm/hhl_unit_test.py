@@ -18,15 +18,18 @@ def random_matrix(size):
         A = np.round(A, 3)
         if np.linalg.det(A) != 0 and np.log2(max(abs(v)) / min(abs(v))) < 6:
             return np.array(A)
-        
+
+
 def random_vector(size):
-    return np.complex128(np.round(np.random.rand(size), 3) -  np.full(size, 0.5))
+    return np.complex128(np.round(np.random.rand(size), 3) - np.full(size, 0.5))
+
 
 def MSE(x, y):
     n = len(x)
     res0 = np.linalg.norm(x + y) / n
     res1 = np.linalg.norm(x - y) / n
     return min(res0, res1)
+
 
 class TestHHL(unittest.TestCase):
     @classmethod

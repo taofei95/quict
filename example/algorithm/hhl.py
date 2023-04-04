@@ -17,9 +17,11 @@ def random_matrix(size):
         A = np.round(A, 3)
         if np.linalg.det(A) != 0 and np.log2(max(abs(v)) / min(abs(v))) < 6:
             return np.array(A)
-        
+
+
 def random_vector(size):
-    return np.complex128(np.round(np.random.rand(size), 3) -  np.full(size, 0.5))
+    return np.complex128(np.round(np.random.rand(size), 3) - np.full(size, 0.5))
+
 
 n = 2 ** 4
 A = random_matrix(n)
@@ -28,11 +30,11 @@ b = random_vector(n)
 slt = np.linalg.solve(A, b)
 slt /= np.linalg.norm(slt)
 hhl_u = HHL(StateVectorSimulator(device="GPU")).run(
-        matrix=A,
-        vector=b)
+    matrix=A,
+    vector=b)
 if hhl_u is not None:
-        hhl_u /= np.linalg.norm(hhl_u)
-        print(f"solution     = {slt.real}\n" +
-            f"hhl(unitary) = {hhl_u.real}")
-else: 
-        print("Failed.")
+    hhl_u /= np.linalg.norm(hhl_u)
+    print(f"solution     = {slt.real}\n" +
+          f"hhl(unitary) = {hhl_u.real}")
+else:
+    print("Failed.")
