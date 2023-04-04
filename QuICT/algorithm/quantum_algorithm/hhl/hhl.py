@@ -23,8 +23,7 @@ class HHL:
 
     def _reconstruct(self, matrix):
         matrix_conj = matrix.T.conj()
-        if not np.allclose(matrix, matrix_conj):
-            matrix_rec = np.kron([[0, 1], [0, 0]], matrix_conj) + np.kron([[0, 0], [1, 0]], matrix)
+        matrix_rec = np.kron([[0, 1], [0, 0]], matrix_conj) + np.kron([[0, 0], [1, 0]], matrix)
         return matrix_rec
 
     def _c_rotation(self, control, target):
@@ -93,11 +92,13 @@ class HHL:
                 f"shape of matrix and vector should be 2^n, here are {len(matrix)}*{len(matrix[0])} and {len(vector)}")
 
         vector /= np.linalg.norm(vector)
-        if matrix != (matrix := self._reconstruct(matrix)):
+        if not np.allclose(matrix, matrix.T.conj()):
+            matrix = self._reconstruct(matrix)
             n += 1
             vector_ancilla = True
         else:
             vector_ancilla = False
+
         if not dominant_eig:
             dominant_eig = np.max(np.abs(np.linalg.eigvalsh(matrix)))
 
@@ -177,7 +178,7 @@ class HHL:
         simulator = self.simulator
         size = len(vector)
 
-        circuit = self.circuit(matrix, vector, dominant_eig, phase_qubits)
+        circuit = self.circuit(matrix, vector, dominant_eig, phase_qubits, measure)
 
         state_vector = simulator.run(circuit)
         if measure and int(circuit[0]) == 0 or not measure:
