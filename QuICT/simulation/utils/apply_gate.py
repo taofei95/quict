@@ -26,6 +26,7 @@ class GateSimulator:
             self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
         else:
             self._array_helper = np
+            self._algorithm = LinAlgLoader(device="CPU")
 
     ####################################################################
     ############          State Vector Generator            ############
@@ -39,7 +40,7 @@ class GateSimulator:
 
         return state_vector
 
-    def validate_state_vector(self, state_vector, qubits: int):
+    def normalized_state_vector(self, state_vector, qubits: int):
         assert 1 << qubits == state_vector.size, "The state vector should has the same qubits with the circuit."
         if not type(state_vector) is self._array_helper.ndarray:
             state_vector = self._array_helper.array(state_vector, dtype=self._dtype)
@@ -52,6 +53,28 @@ class GateSimulator:
     ####################################################################
     ############           Gate Matrix Generator            ############
     ####################################################################
+    def normalized_matrix(self, unitary_matrix, qubits: int):
+        row, col = unitary_matrix.shape
+        assert 1 << qubits == row and row == col, "The unitary matrix should be square."
+        if not type(unitary_matrix) is self._array_helper.ndarray:
+            unitary_matrix = self._array_helper.array(unitary_matrix, dtype=self._dtype)
+
+        if unitary_matrix.dtype != self._dtype:
+            unitary_matrix = unitary_matrix.astype(self._dtype)
+
+        return unitary_matrix
+
+    def is_identity(self, unitary_matrix):
+        row = unitary_matrix.shape[0]
+        identity_matrix = self._array_helper.identity(row, dtype=self._dtype)
+        return self._array_helper.allclose(unitary_matrix, identity_matrix)
+
+    def dot(self, unitary_matrix, state_vector):
+        if self.is_identity(unitary_matrix):
+            return state_vector
+        else:
+            return self._algorithm.dot(unitary_matrix, state_vector)
+
     def _get_gate_matrix(self, gate: BasicGate):
         if self._device == "CPU":
             return self._gate_matrix_generator.get_matrix(gate, precision=self._precision)
