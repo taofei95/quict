@@ -138,10 +138,15 @@ class GateMatrixGenerator:
         else:
             raise TypeError(gate_type)
 
-    def matrix_with_param(self, gate_type, pargs, precision):
-        for i in range(len(pargs)):
-            if isinstance(pargs[i], Variable):
-                pargs[i] = pargs[i].pargs
+    def matrix_with_param(self, gate_type, gate_pargs, precision):
+        n_pargs = len(gate_pargs)
+        pargs = [0.0] * n_pargs
+        for i in range(n_pargs):
+            pargs[i] = (
+                gate_pargs[i].pargs
+                if isinstance(gate_pargs[i], Variable)
+                else gate_pargs[i]
+            )
 
         if gate_type in [GateType.u1, GateType.cu1]:
             return self._array_generator.array(
@@ -280,15 +285,22 @@ class GateMatrixGenerator:
         else:
             TypeError(gate_type)
 
-    def grad_for_param(self, gate_type, pargs, precision):
-        for i in range(len(pargs)):
-            if isinstance(pargs[i], Variable):
-                pargs[i] = pargs[i].pargs
+    def grad_for_param(self, gate_type, gate_pargs, precision):
+        n_pargs = len(gate_pargs)
+        pargs = [0.0] * n_pargs
+        for i in range(n_pargs):
+            pargs[i] = (
+                gate_pargs[i].pargs
+                if isinstance(gate_pargs[i], Variable)
+                else gate_pargs[i]
+            )
 
         if gate_type in [GateType.u1, GateType.cu1]:
-            return [self._array_generator.array(
-                [[1, 0], [0, 1j * np.exp(1j * pargs[0])]], dtype=precision
-            )]
+            return [
+                self._array_generator.array(
+                    [[1, 0], [0, 1j * np.exp(1j * pargs[0])]], dtype=precision
+                )
+            ]
 
         elif gate_type == GateType.u2:
             sqrt2 = 1 / np.sqrt(2)
@@ -359,36 +371,46 @@ class GateMatrixGenerator:
         elif gate_type == GateType.rx:
             cos_v = self._array_generator.cos(pargs[0] / 2) / 2
             sin_v = -self._array_generator.sin(pargs[0] / 2) / 2
-            return [self._array_generator.array(
-                [[-sin_v, 1j * cos_v], [1j * cos_v, -sin_v]], dtype=precision
-            )]
+            return [
+                self._array_generator.array(
+                    [[-sin_v, 1j * cos_v], [1j * cos_v, -sin_v]], dtype=precision
+                )
+            ]
 
         elif gate_type in [GateType.ry, GateType.cry]:
             cos_v = self._array_generator.cos(pargs[0] / 2) / 2
             sin_v = self._array_generator.sin(pargs[0] / 2) / 2
-            return [self._array_generator.array(
-                [[-sin_v, -cos_v], [cos_v, -sin_v]], dtype=precision
-            )]
+            return [
+                self._array_generator.array(
+                    [[-sin_v, -cos_v], [cos_v, -sin_v]], dtype=precision
+                )
+            ]
 
         elif gate_type in [GateType.rz, GateType.crz, GateType.ccrz]:
-            return [self._array_generator.array(
-                [
-                    [-1j * np.exp(-pargs[0] / 2 * 1j) / 2, 0],
-                    [0, 1j * np.exp(pargs[0] / 2 * 1j) / 2],
-                ],
-                dtype=precision,
-            )]
+            return [
+                self._array_generator.array(
+                    [
+                        [-1j * np.exp(-pargs[0] / 2 * 1j) / 2, 0],
+                        [0, 1j * np.exp(pargs[0] / 2 * 1j) / 2],
+                    ],
+                    dtype=precision,
+                )
+            ]
 
         elif gate_type == GateType.phase:
-            return [self._array_generator.array(
-                [[1, 0], [0, 1j * np.exp(pargs[0] * 1j)]], dtype=precision
-            )]
+            return [
+                self._array_generator.array(
+                    [[1, 0], [0, 1j * np.exp(pargs[0] * 1j)]], dtype=precision
+                )
+            ]
 
         elif gate_type == GateType.gphase:
-            return [self._array_generator.array(
-                [[1j * np.exp(pargs[0] * 1j), 0], [0, 1j * np.exp(pargs[0] * 1j)]],
-                dtype=precision,
-            )]
+            return [
+                self._array_generator.array(
+                    [[1j * np.exp(pargs[0] * 1j), 0], [0, 1j * np.exp(pargs[0] * 1j)]],
+                    dtype=precision,
+                )
+            ]
 
         elif gate_type == GateType.fsim:
             costh = np.cos(pargs[0])
@@ -418,57 +440,65 @@ class GateMatrixGenerator:
             costh = np.cos(pargs[0] / 2) / 2
             sinth = np.sin(pargs[0] / 2) / 2
 
-            return [self._array_generator.array(
-                [
-                    [-sinth, 0, 0, -1j * costh],
-                    [0, -sinth, -1j * costh, 0],
-                    [0, -1j * costh, -sinth, 0],
-                    [-1j * costh, 0, 0, -sinth],
-                ],
-                dtype=precision,
-            )]
+            return [
+                self._array_generator.array(
+                    [
+                        [-sinth, 0, 0, -1j * costh],
+                        [0, -sinth, -1j * costh, 0],
+                        [0, -1j * costh, -sinth, 0],
+                        [-1j * costh, 0, 0, -sinth],
+                    ],
+                    dtype=precision,
+                )
+            ]
 
         elif gate_type == GateType.ryy:
             costh = np.cos(pargs[0] / 2) / 2
             sinth = np.sin(pargs[0] / 2) / 2
 
-            return [self._array_generator.array(
-                [
-                    [-sinth, 0, 0, 1j * costh],
-                    [0, -sinth, -1j * costh, 0],
-                    [0, -1j * costh, -sinth, 0],
-                    [1j * costh, 0, 0, -sinth],
-                ],
-                dtype=precision,
-            )]
+            return [
+                self._array_generator.array(
+                    [
+                        [-sinth, 0, 0, 1j * costh],
+                        [0, -sinth, -1j * costh, 0],
+                        [0, -1j * costh, -sinth, 0],
+                        [1j * costh, 0, 0, -sinth],
+                    ],
+                    dtype=precision,
+                )
+            ]
 
         elif gate_type == GateType.rzz:
             expth = 0.5j * np.exp(0.5j * pargs[0])
             sexpth = -0.5j * np.exp(-0.5j * pargs[0])
 
-            return [self._array_generator.array(
-                [
-                    [sexpth, 0, 0, 0],
-                    [0, expth, 0, 0],
-                    [0, 0, expth, 0],
-                    [0, 0, 0, sexpth],
-                ],
-                dtype=precision,
-            )]
+            return [
+                self._array_generator.array(
+                    [
+                        [sexpth, 0, 0, 0],
+                        [0, expth, 0, 0],
+                        [0, 0, expth, 0],
+                        [0, 0, 0, sexpth],
+                    ],
+                    dtype=precision,
+                )
+            ]
 
         elif gate_type == GateType.rzx:
             costh = np.cos(pargs[0] / 2) / 2
             sinth = np.sin(pargs[0] / 2) / 2
 
-            return [self._array_generator.array(
-                [
-                    [-sinth, -1j * costh, 0, 0],
-                    [-1j * costh, -sinth, 0, 0],
-                    [0, 0, -sinth, 1j * costh],
-                    [0, 0, 1j * costh, -sinth],
-                ],
-                dtype=precision,
-            )]
+            return [
+                self._array_generator.array(
+                    [
+                        [-sinth, -1j * costh, 0, 0],
+                        [-1j * costh, -sinth, 0, 0],
+                        [0, 0, -sinth, 1j * costh],
+                        [0, 0, 1j * costh, -sinth],
+                    ],
+                    dtype=precision,
+                )
+            ]
 
         else:
             TypeError(gate_type)
@@ -667,13 +697,26 @@ class InverseGate:
     ]
 
     @classmethod
-    def get_inverse_gate(cls, gate_type: GateType, pargs: list) -> tuple:
-        if len(pargs) == 0:
+    def get_inverse_gate(cls, gate_type: GateType, gate_pargs: list) -> tuple:
+        if len(gate_pargs) == 0:
             if gate_type in cls.__GATE_INVERSE_MAP.keys():
                 inverse_args = cls.__GATE_INVERSE_MAP[gate_type]
 
-                return inverse_args if isinstance(inverse_args, tuple) else (inverse_args, pargs)
+                return (
+                    inverse_args
+                    if isinstance(inverse_args, tuple)
+                    else (inverse_args, gate_pargs)
+                )
         else:
+            n_pargs = len(gate_pargs)
+            pargs = [0.0] * n_pargs
+            for i in range(n_pargs):
+                pargs[i] = (
+                    gate_pargs[i].pargs
+                    if isinstance(gate_pargs[i], Variable)
+                    else gate_pargs[i]
+                )
+
             inv_params = None
             if gate_type in cls.__INVERSE_GATE_WITH_NEGATIVE_PARAMS:
                 inv_params = [p * -1 for p in pargs]
@@ -685,7 +728,7 @@ class InverseGate:
             if inv_params is not None:
                 return (gate_type, inv_params)
 
-        return None, pargs
+        return None, gate_pargs
 
     @staticmethod
     def inverse_perm_gate(targets: int, targs: list):
