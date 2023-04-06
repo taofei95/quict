@@ -35,6 +35,7 @@ class TestCircuit(unittest.TestCase):
         CX | cir(qureg[1, 3])
         assert 1
 
+        # cir | cir
         cir1 = Circuit(5)
         H | cir1
         cir2 = Circuit(3)
@@ -76,7 +77,10 @@ class TestCircuit(unittest.TestCase):
         H | c_insert(0)
         cir2.insert(c_insert, 1)
         c_insert | cir2
-        assert cir2.size() == 5
+        
+        c_insert2 = CX & [1, 2]
+        cir2.insert(c_insert2, 2)
+        assert cir2.size() == 6
 
     def test_circuit_call(self):
         cir = Circuit(TestCircuit.qubits)
@@ -96,9 +100,12 @@ class TestCircuit(unittest.TestCase):
         
         # random append gates to circuit
         build_gate_typelist = [GateType.ccrz, GateType.cswap, GateType.ccz, GateType.ccx]
+        prob = [0.25, 0.25, 0.25, 0.25]
         cir1 = Circuit(TestCircuit.qubits)
-        cir1.random_append(30)
+        cir1.random_append(10)
         cir1.random_append(10, build_gate_typelist)
+        cir1.random_append(10, build_gate_typelist, random_params=True)
+        cir1.random_append(10, build_gate_typelist, random_params=True, probabilities=prob)
         
         # append composite gate
         qft_gate = QFT(3)
@@ -188,6 +195,8 @@ class TestCircuit(unittest.TestCase):
         CCZ | cir([3, 4, 5])
         CCRz(np.pi / 2) | cir([6, 7, 8])
         CSwap | cir([7, 8, 9])
+        
+        cir.set_precision("single")
 
         assert cir.width() == 10
         assert cir.size() == 42
@@ -195,9 +204,13 @@ class TestCircuit(unittest.TestCase):
         assert len(cir.qubits) == 10
         assert cir.count_1qubit_gate() == 24
         assert cir.count_2qubit_gate() == 14
+        assert cir.count_gate_by_gatetype(GateType.measure) == 1
         assert len(cir.gates) == cir.size()
         assert len(cir.fast_gates) == cir.size()
         assert len(cir.flatten_gates()) == cir.size()
+        assert cir.precision == "single"
+        for gate in cir.gates:
+            gate.precision == "single"
 
     def test_circuit_matrix_product(self):
         cir = Circuit(5)

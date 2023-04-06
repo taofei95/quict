@@ -21,19 +21,21 @@ class TestCompositeGate(unittest.TestCase):
 
     def _gate_attr_test(self, cgate):
         return (
-            cgate.size() == 5 and
-            cgate.count_1qubit_gate() == 2 and
-            cgate.count_2qubit_gate() == 2 and
-            cgate.depth() == 3
+            cgate.size() == 12 and
+            cgate.count_1qubit_gate() == 5 and
+            cgate.count_2qubit_gate() == 6 and
+            cgate.depth() == 9
         )
 
     def _build_compositegate(self):
         cgate = CompositeGate()
         H | cgate(1)
         U1(0) | cgate(2)
+        CH & [0, 1] | cgate
         CX | cgate([3, 4])
         CU3(1, 0, 0) | cgate([0, 4])
         CCRz(1) | cgate([0, 1, 2])
+        QFT(3) | cgate
 
         return cgate
 
@@ -59,22 +61,24 @@ class TestCompositeGate(unittest.TestCase):
 
         # composite gate ^ composite gate
         self._build_compositegate() ^ ncgate
-        assert ncgate.size() == 10
+        assert ncgate.size() == 24
 
         # composite gate | circuit
         cir = Circuit(5)
         ncgate | cir
-        assert cir.size() == 10
+        assert cir.size() == 24
 
     def test_QFT_gate(self):
         qft = QFT(TestCompositeGate.qubits)
+        qft.count_gate_by_gatetype(GateType.h) == 5
         assert qft.size() == 15
         assert qft.depth() == 9
         
         iqft = IQFT(TestCompositeGate.qubits)
+        qft.count_gate_by_gatetype(GateType.h) == 5
         assert iqft.size() == 15
         assert iqft.depth() == 9
-
+        
         assert qft.inverse() != qft
 
 if __name__ == "__main__":
