@@ -44,7 +44,7 @@ class StateVectorSimulator:
 
     @vector.setter
     def vector(self, vec):
-        self._vector = self._gate_calculator.validate_state_vector(vec, self._qubits)
+        self._vector = self._gate_calculator.normalized_state_vector(vec, self._qubits)
 
     @property
     def device(self):
@@ -100,7 +100,7 @@ class StateVectorSimulator:
         """
         self.initial_circuit(circuit)
         if state_vector is not None:
-            self._vector = self._gate_calculator.validate_state_vector(state_vector, self._qubits)
+            self._vector = self._gate_calculator.normalized_state_vector(state_vector, self._qubits)
         elif not use_previous:
             self.initial_state_vector()
 
