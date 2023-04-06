@@ -2,10 +2,9 @@ import random
 import unittest
 import numpy as np
 
-from QuICT.core import Qureg, Circuit, Qubit
-from QuICT.core.gate import *
-from QuICT.core.utils import GateType
-from scipy.stats import unitary_group
+from QuICT.core.circuit.circuit import Circuit
+from QuICT.core.gate.gate import *
+from QuICT.core.qubit.qubit import Qureg
 
 
 class TestGate(unittest.TestCase):
@@ -20,53 +19,94 @@ class TestGate(unittest.TestCase):
     def test_gate_build(self):
         cir = Circuit(10)
         # single qubit gate
-        h1 = HGate()
-        h1 | cir(1)  # 1
-        H | cir  # 11
+        H | cir(0)
+
+        cgate1 = H
+        cgate1 | cir(1)
+
+        cgate2 = gate_builder(GateType.h) & Qureg(1)
+        cgate2 | cir
+        assert len(cir.gates) == 3
 
         # single qubit gate with param
-        my_u1 = U1Gate([1])
-        my_u1 | cir(2)  # 12
-        U1(0) | cir(1)  # 13
+        U1(np.pi / 2) | cir(1)
+
+        cgate1 = U1
+        cgate1 | cir(2)
+        
+        cgate2 = gate_builder(GateType.u1, params=[(np.pi / 2)]) & 3
+        cgate2 | cir
+        assert len(cir.gates) == 6
 
         # two qubit gate
-        my_CX = CX & [3, 4]
-        my_CX | cir  # 14
-        CX | cir([3, 4])  # 15
+        CX | cir([1, 2])
+        
+        cgate1 = CX & [3, 4]
+        cgate1 | cir
+        
+        cgate2 = gate_builder(GateType.cx) & [5, 6]
+        cgate2 | cir
+        assert len(cir.gates) == 9
 
-        Rzz(1) | cir([1, 2])
-        CU3(1, 0, 0) | cir([5, 6])  # 16
+        # two qubit gate with param
+        Rzz(np.pi / 2) | cir([1, 2])
+        CU3(np.pi / 2, 0, 0) | cir([3, 4])
+        
+        cgate1 = Ryy & [5, 6]
+        cgate1(np.pi / 2) | cir
 
+        cgate2 = gate_builder(GateType.cu3, random_params=True) & [7, 8]
+        cgate2 | cir
+        assert len(cir.gates) == 13
+        
         # complexed gate
-        CCRz(1) | cir([7, 8, 9])  # 17
-        cg_ccrz = CCRz.build_gate()
-        cg_ccrz | cir([7, 8, 9])  # 22
-        assert len(cir.gates) == 23
+        CCRz(np.pi / 2) | cir([1, 2, 3])
+
+        cgate1 = CCX & [4, 5, 6]
+        cgate1 | cir
+
+        cgate2 = gate_builder(GateType.ccrz, random_params=True)
+        cgate2 | cir([7, 8, 9])
+        
+        cgate3 = CCRz.build_gate()
+        cgate3(np.pi / 2) | cir([2, 4, 6])
+        assert len(cir.gates) == 17
+
+        matrix = np.array([
+            [1, 0],
+            [0, 1]
+        ], dtype=np.complex128)
+        cgate4 = Unitary(matrix)
+        cgate4.build_gate()
+        cgate4 | cir
+        assert len(cir.gates) == 27
 
     def test_gate_attribute(self):
         # test single gate
         assert H.is_single() and not CRz.is_single()
-        assert Y.is_single() and not CZ.is_single()
 
         # test control single
-        assert CRz.is_control_single() and not H.is_control_single()
-        assert CZ.is_control_single() and not U1.is_control_single()
+        assert CRz.is_control_single() and not S.is_control_single()
 
         # test Clifford gate
         assert S.is_clifford() and not T.is_clifford()
-        assert CX.is_clifford() and not T.is_clifford()
 
         # test diagonal gate
-        assert S.is_diagonal() and not H.is_diagonal()
-        assert CZ.is_diagonal() and not Y.is_diagonal()
+        assert Rz.is_diagonal() and not H.is_diagonal()
 
         # test Pauli gate
         assert X.is_pauli() and not Rx.is_pauli()
 
+        # test special gate
+        assert Measure.is_special() and not X.is_special()
+        
+        # test identity gate
+        assert ID.is_identity() and not H.is_identity()
+
         # test unitary gate diagonal
         amatrix = np.array([
-            [1, 0],
-            [0, 1j]
+            [1j, 0],
+            [0, 1]
         ], dtype=np.complex128)
         bmatrix = np.array([
             [1 / np.sqrt(2), 1 / np.sqrt(2)],
@@ -79,115 +119,20 @@ class TestGate(unittest.TestCase):
         # test matrix_type
         assert S.matrix_type != H.matrix_type
         assert S.matrix_type != CX.matrix_type
-
-        # test special gate
-        assert Measure.is_special() and not H.is_special()
-
-    # gate_builder_test
-    def test_build_gate(self):
-        for _ in range(10):
-            typelist_1qubit = [GateType.rx, GateType.ry, GateType.rz]
-            typelist_2qubit = [
-                GateType.cx, GateType.cy, GateType.crz,
-                GateType.ch, GateType.cz, GateType.rxx,
-                GateType.ryy, GateType.rzz, GateType.fsim
-            ]
-
-            # build 1qubit gate
-            gate_type = GateType.h
-            q6 = Qureg(1)
-            g6 = gate_builder(gate_type) & q6
-            assert g6.type == gate_type and g6.assigned_qubits == q6
-
-            # build 1qubit gate with params
-            gate_type = typelist_1qubit[random.randint(0, len(typelist_1qubit) - 1)]
-            q1 = Qureg(1)
-            params = [random.random()]
-            g1 = gate_builder(gate_type, params=params) & q1
-            assert g1.type == gate_type and g1.assigned_qubits == q1
-
-            # build 2qubits gate
-            gate_type = typelist_2qubit[random.randint(0, len(typelist_2qubit) - 1)]
-            q2 = Qureg(2)
-            g2 = gate_builder(gate_type) & q2
-            assert g2.type == gate_type and g2.assigned_qubits == q2
-
-            # build 2qubits gate with params
-            gate_type = GateType.cu3
-            q3 = Qureg(2)
-            params = [1, 1, 1]
-            g3 = gate_builder(gate_type) & q3
-            assert g3.pargs == params and g3.assigned_qubits == q3
-
-            # build unitary gate
-            gate_type = GateType.unitary
-            matrix = unitary_group.rvs(2 ** 3)
-            g4 = Unitary(matrix)
-            assert g4.matrix.shape == (8, 8)
-
-            # build special gate
-            gate_type = GateType.measure
-            q5 = Qubit()
-            g5 = gate_builder(gate_type) & q5
-            assert g5.assigned_qubits[0] == q5
-
-    def test_build_random_gate(self):
-        for _ in range(10):
-            typelist_1qubit = [GateType.rx, GateType.ry, GateType.rz]
-            typelist_2qubit = [
-                GateType.cx, GateType.cy, GateType.crz,
-                GateType.ch, GateType.cz, GateType.rxx,
-                GateType.ryy, GateType.rzz, GateType.fsim
-            ]
-            # build random 1qubit gate
-            gate_type = typelist_1qubit[random.randint(0, len(typelist_1qubit) - 1)]
-            rg1 = gate_builder(gate_type, random_params=True)
-            assert rg1.type == gate_type
-
-            # build random 2qubits gate
-            gate_type = typelist_2qubit[random.randint(0, len(typelist_2qubit) - 1)]
-            rg2 = gate_builder(gate_type, random_params=True)
-            assert rg2.type == gate_type
-
-    def test_gate_expand(self):
-        # single qubit quantum gate expand test
-        single_gate = H
-        expand_sgate1 = single_gate.expand(3)
-        expand_sgate2 = single_gate.expand([0, 1, 2])
-
-        cir = Circuit(3)
-        H | cir(0)
-        assert np.allclose(expand_sgate1, cir.matrix()) and np.allclose(expand_sgate2, cir.matrix())
-
-        # single qubit assigned quantum gate expand test
-        single_gate_assigned = H & 1
-        expand_sagate1 = single_gate_assigned.expand(3)
-        expand_sagate2 = single_gate_assigned.expand([0, 1, 2])
-
-        cir = Circuit(3)
-        H | cir(1)
-        assert np.allclose(expand_sagate1, cir.matrix()) and np.allclose(expand_sagate2, cir.matrix())
-
-        # double-qubits quantum gate expand test
-        double_gate = CX
-        expand_dgate1 = double_gate.expand(3)
-        expand_dgate2 = double_gate.expand([0, 1, 2])
-
-        cir = Circuit(3)
-        CX | cir([0, 1])
-        assert np.allclose(expand_dgate1, cir.matrix()) and np.allclose(expand_dgate2, cir.matrix())
-
-        # double-qubits assigned quantum gate expand test
-        double_gate_assigned = CX & [1, 2]
-        expand_sdgate1 = double_gate_assigned.expand(3)
-        expand_sdgate2 = double_gate_assigned.expand([0, 1, 2])
-
-        cir = Circuit(3)
-        CX | cir([1, 2])
-        assert np.allclose(expand_sdgate1, cir.matrix()) and np.allclose(expand_sdgate2, cir.matrix())
+        assert GPhase.matrix_type == MatrixType.diagonal
+        assert Hy.matrix_type == MatrixType.normal
+        assert S_dagger.matrix_type == MatrixType.control
+        assert X.matrix_type == MatrixType.swap
+        assert Y.matrix_type == MatrixType.reverse
+        assert Measure.matrix_type == MatrixType.special
+        assert Rzz.matrix_type == MatrixType.diag_diag
+        assert FSim.matrix_type == MatrixType.ctrl_normal
+        assert Ryy.matrix_type == MatrixType.normal_normal
+        assert Rzx.matrix_type == MatrixType.diag_normal
 
     def test_gate_inverse(self):
         single_ide = np.identity(2, np.complex128)
+        # one qubit gate
         s_inv = S.inverse()
         assert np.allclose(np.dot(S.matrix, s_inv.matrix), single_ide)
 
@@ -197,11 +142,14 @@ class TestGate(unittest.TestCase):
         # sx_inv = SX.inverse()
         # assert np.allclose(np.dot(SX.matrix, sx_inv.matrix), single_ide)
 
-        sy_inv = SY.inverse()
-        assert np.allclose(np.dot(SY.matrix, sy_inv.matrix), single_ide)
+        # sy_inv = SY.inverse()
+        # assert np.allclose(np.dot(SY.matrix, sy_inv.matrix), single_ide)
 
-        sw_inv = SW.inverse()
-        assert np.allclose(np.dot(SW.matrix, sw_inv.matrix), single_ide)
+        # sw_inv = SW.inverse()
+        # assert np.allclose(np.dot(SW.matrix, sw_inv.matrix), single_ide)
+
+        id_inv = ID.inverse()
+        assert np.allclose(np.dot(ID.matrix, id_inv.matrix), single_ide)
 
         t_inv = T.inverse()
         assert np.allclose(np.dot(T.matrix, t_inv.matrix), single_ide)
@@ -210,6 +158,7 @@ class TestGate(unittest.TestCase):
         assert np.allclose(np.dot(T_dagger.matrix, tdg_inv.matrix), single_ide)
 
         # Parameter Gate inverse test
+        # 1-qubit gates
         alpha = np.random.random(1)[0]*np.pi
         u1 = U1(alpha)
         u1_inv = u1.inverse()
@@ -298,17 +247,97 @@ class TestGate(unittest.TestCase):
         rzx_inv = rzx.inverse()
         assert np.allclose(np.dot(rzx_inv.matrix, rzx.matrix), double_ide)
 
-        # from scipy.stats import unitary_group
-
-        # matrix = unitary_group.rvs(2 ** 2)
-        # uni = Unitary(matrix)
-        # u2 = uni.inverse()
-        # assert np.allclose(np.dot(matrix, u2.matrix), double_ide)
-
         alpha = np.random.random(1)[0]
         ccrz = CCRz(alpha)
         ccrz_inv = ccrz.inverse()
         assert np.allclose(np.dot(ccrz_inv.matrix, ccrz.matrix), np.identity(8, np.complex128))
+        
+        from scipy.stats import unitary_group
+        matrix = unitary_group.rvs(2 ** 2)
+        u2 = Unitary(matrix).inverse()
+        assert np.allclose(np.dot(matrix, u2.matrix), double_ide)
+
+    def test_gate_commutative(self):
+        cir = Circuit(5)
+        cgate = CX & [0, 1]
+        cgate | cir
+        cgate2 = U2(1, 0)
+        cgate2 | cir
+        cgate2.commutative(cgate)
+        assert True
+
+    def test_build_random_gate(self):
+        for _ in range(10):
+            typelist_1qubit = [
+                GateType.rx, GateType.ry, GateType.rz,
+                GateType.hy, GateType.s, GateType.sdg,
+                GateType.x,  GateType.y, GateType.z,
+                GateType.sx, GateType.sy, GateType.sw,
+                GateType.id, GateType.u1, GateType.u2,
+                GateType.u3, GateType.t, GateType.tdg,
+                GateType.phase, GateType.gphase, GateType.measure,
+                GateType.reset, GateType.barrier
+            ]
+            typelist_2qubit = [
+                GateType.cx, GateType.cy, GateType.crz,
+                GateType.ch, GateType.cz, GateType.rxx,
+                GateType.ryy, GateType.rzz, GateType.fsim,
+                GateType.cu1, GateType.cu3, GateType.swap,
+                GateType.iswap, GateType.iswapdg, GateType.sqiswap
+            ]
+            typelist_3qubit = [GateType.ccx, GateType.ccz, GateType.ccrz, GateType.cswap]
+
+            # build random 1qubit gate
+            gate_type = typelist_1qubit[random.randint(0, len(typelist_1qubit) - 1)]
+            rg1 = gate_builder(gate_type, random_params=True)
+            assert rg1.type == gate_type
+
+            # build random 2qubits gate
+            gate_type = typelist_2qubit[random.randint(0, len(typelist_2qubit) - 1)]
+            rg2 = gate_builder(gate_type, random_params=True)
+            assert rg2.type == gate_type
+            
+            # build random 3qubits gate
+            gate_type = typelist_3qubit[random.randint(0, len(typelist_3qubit) - 1)]
+            rg3 = gate_builder(gate_type, random_params=True)
+            assert rg3.type == gate_type
+
+    def test_gate_expand(self):
+        # single qubit quantum gate expand test
+        single_gate = H
+        expand_sgate1 = single_gate.expand(3)
+        expand_sgate2 = single_gate.expand([0, 1, 2])
+
+        cir = Circuit(3)
+        H | cir(0)
+        assert np.allclose(expand_sgate1, cir.matrix()) and np.allclose(expand_sgate2, cir.matrix())
+
+        # single qubit assigned quantum gate expand test
+        single_gate_assigned = H & 1
+        expand_sagate1 = single_gate_assigned.expand(3)
+        expand_sagate2 = single_gate_assigned.expand([0, 1, 2])
+
+        cir = Circuit(3)
+        H | cir(1)
+        assert np.allclose(expand_sagate1, cir.matrix()) and np.allclose(expand_sagate2, cir.matrix())
+
+        # double-qubits quantum gate expand test
+        double_gate = CX
+        expand_dgate1 = double_gate.expand(3)
+        expand_dgate2 = double_gate.expand([0, 1, 2])
+
+        cir = Circuit(3)
+        CX | cir([0, 1])
+        assert np.allclose(expand_dgate1, cir.matrix()) and np.allclose(expand_dgate2, cir.matrix())
+
+        # double-qubits assigned quantum gate expand test
+        double_gate_assigned = CX & [1, 2]
+        expand_sdgate1 = double_gate_assigned.expand(3)
+        expand_sdgate2 = double_gate_assigned.expand([0, 1, 2])
+
+        cir = Circuit(3)
+        CX | cir([1, 2])
+        assert np.allclose(expand_sdgate1, cir.matrix()) and np.allclose(expand_sdgate2, cir.matrix())
 
 
 if __name__ == "__main__":

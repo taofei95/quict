@@ -66,6 +66,16 @@ class TestCompositeGate(unittest.TestCase):
         ncgate | cir
         assert cir.size() == 10
 
+    def test_QFT_gate(self):
+        qft = QFT(TestCompositeGate.qubits)
+        assert qft.size() == 15
+        assert qft.depth() == 9
+        
+        iqft = IQFT(TestCompositeGate.qubits)
+        assert iqft.size() == 15
+        assert iqft.depth() == 9
+
+        assert qft.inverse() != qft
 
 if __name__ == "__main__":
     unittest.main()
