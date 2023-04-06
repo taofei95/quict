@@ -1,7 +1,6 @@
 from typing import *
 import numpy as np
 
-import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 from QuICT.core import Circuit
 from QuICT.simulation.utils import GateSimulator
 from QuICT.tools.exception.core import ValueError
@@ -88,7 +87,7 @@ class UnitarySimulator():
         counts = [0] * (1 << self._qubits_num)
         for _ in range(shots):
             measured_result = 0
-            for i in range(self._qubits_num):
+            for i in range(self._qubits_num - 1, -1, -1):
                 measured_result <<= 1
                 measured_result += self._gate_calculator.apply_measure_gate(i, self._vector, self._qubits_num)
 

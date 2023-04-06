@@ -506,7 +506,7 @@ class BasicGate(object):
         Returns:
             bool: True if gate's matrix is diagonal
         """
-        return self.matrix_type in [MatrixType.diagonal, MatrixType.control]  
+        return self.matrix_type in [MatrixType.diagonal, MatrixType.control]
 
     def is_pauli(self) -> bool:
         """ judge whether gate's matrix is a Pauli gate
@@ -528,7 +528,6 @@ class BasicGate(object):
     def is_identity(self) -> bool:
         return self.matrix_type == MatrixType.identity
 
-    # TODO: keep or remove? weird
     def expand(self, qubits: Union[int, list]) -> bool:
         """ expand self matrix into the circuit's unitary linear space. If input qubits is integer, please make sure
         the indexes of current gate is within [0, qubits).
@@ -627,7 +626,6 @@ class Unitary(BasicGate):
 
         if matrix_type is None:
             matrix_type, controls = self.validate_matrix_type(matrix)
-            print(matrix_type)
         else:
             matrix_type = MatrixType.normal
             controls = 0

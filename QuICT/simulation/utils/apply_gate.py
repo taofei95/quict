@@ -1,6 +1,6 @@
 import numpy as np
 
-from QuICT.core.gate import BasicGate, GateMatrixGenerator
+from QuICT.core.gate import BasicGate, GateMatrixGenerator, Unitary
 from QuICT.core.utils import GateType, MatrixType
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.ops.linalg.cpu_calculator import (
@@ -51,6 +51,36 @@ class GateSimulator:
         return state_vector
 
     ####################################################################
+    ############          State Vector Generator            ############
+    ####################################################################
+    def get_allzero_density_matrix(self, qubits: int):
+        density_matrix = self._array_helper.zeros((1 << qubits, 1 << qubits), dtype=self._dtype)
+        density_matrix[0, 0] = self._dtype(1)
+
+        return density_matrix
+
+    def get_empty_density_matrix(self, qubits: int):
+        return self._array_helper.zeros((1 << qubits, 1 << qubits), dtype=self._dtype)
+
+    def validate_density_matrix(self, matrix) -> bool:
+        """ Density Matrix Validation. """
+        if not isinstance(matrix, np.ndarray):
+            matrix = matrix.get()
+
+        if not np.allclose(matrix.T.conjugate(), matrix):
+            raise ValueError("The conjugate transpose of density matrix do not equal to itself.")
+
+        eigenvalues = np.linalg.eig(matrix)[0]
+        for ev in eigenvalues:
+            if ev < 0 and not np.isclose(ev, 0, rtol=1e-4):
+                raise ValueError("The eigenvalues of density matrix should be non-negative")
+
+        if not np.isclose(matrix.trace(), 1, rtol=1e-4):
+            raise ValueError("The sum of trace of density matrix should be 1.")
+
+        return True
+
+    ####################################################################
     ############           Gate Matrix Generator            ############
     ####################################################################
     def normalized_matrix(self, unitary_matrix, qubits: int):
@@ -79,7 +109,9 @@ class GateSimulator:
         if self._device == "CPU":
             return self._gate_matrix_generator.get_matrix(gate, precision=self._precision)
         else:
-            return self._gate_matrix_generator.get_matrix(gate, precision=self._precision, special_array_generator=self._array_helper)
+            return self._gate_matrix_generator.get_matrix(
+                gate, precision=self._precision, special_array_generator=self._array_helper
+            )
 
     def apply_gate(
         self,
@@ -332,6 +364,9 @@ class GateSimulator:
         else:
             raise GateAlgorithmNotImplementError(f"Unsupportted 3-qubits+ control unitary gate.")
 
+    ####################################################################
+    ############           Measure/Reset Function           ############
+    ####################################################################
     def apply_measure_gate(self, index: int, state_vector: np.ndarray, qubits: int) -> int:
         if self._device == "CPU":
             result = measure_gate_apply(index, state_vector)
@@ -363,3 +398,29 @@ class GateSimulator:
             return self._algorithm.measured_prob_calculate(
                 index, state_vector, qubits, sync=self._sync
             )
+
+    def apply_measure_gate_for_dm(self, index: int, density_matrix: np.ndarray, qubits: int):
+        P0 = self._array_helper.array([[1, 0], [0, 0]], dtype=self._dtype)
+        p0g = Unitary(P0) & index
+        mea_0 = p0g.expand(qubits)
+        prob_0 = self._array_helper.matmul(mea_0, density_matrix).trace()
+
+        _1 = np.random.random() > prob_0
+        if not _1:
+            U = self._array_helper.matmul(
+                mea_0,
+                self._array_helper.eye(1 << qubits, dtype=self._dtype) / self._array_helper.sqrt(prob_0)
+            )
+            density_matrix = self._algorithm.dot(self._algorithm.dot(U, density_matrix), U.conj().T)
+        else:
+            P1 = self._array_helper.array([[0, 0], [0, 1]], dtype=self._dtype)
+            p1g = Unitary(P1) & index
+            mea_1 = p1g.expand(qubits)
+
+            U = self._array_helper.matmul(
+                mea_1,
+                self._array_helper.eye(1 << qubits, dtype=self._dtype) / self._array_helper.sqrt(1 - prob_0)
+            )
+            density_matrix = self._algorithm.dot(self._algorithm.dot(U, density_matrix), U.conj().T)
+
+        return _1

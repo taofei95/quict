@@ -27,7 +27,7 @@ class CircuitBased(object):
     def gates(self) -> list:
         """ Return the list of BasicGate/CompositeGate/Operator in the current circuit. \n
         *Warning*: this is slowly due to the copy of gates, you can use self.fast_gates to
-        get list of tuple(gate, qidxes, size) for further using. 
+        get list of tuple(gate, qidxes, size) for further using.
         """
         combined_gates = [gate.copy() & targs for gate, targs, _ in self._gates]
 
@@ -35,7 +35,7 @@ class CircuitBased(object):
 
     @property
     def fast_gates(self) -> list:
-        """ Return the list of tuple(gates' info) in the current circuit. it contains the gate, 
+        """ Return the list of tuple(gates' info) in the current circuit. it contains the gate,
         the qubit indexes and the gate's size."""
         return self._gates
 

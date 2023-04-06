@@ -23,7 +23,9 @@ class GateMatrixGenerator:
 
         # Step 3: Depending on controlled_by, generate final matrix
         if gate.controls > 0:
-            controlled_matrix = self._array_generator.identity(1 << (gate.controls + gate.targets), dtype=gate_precision)
+            controlled_matrix = self._array_generator.identity(
+                1 << (gate.controls + gate.targets), dtype=gate_precision
+            )
             target_border = 1 << gate.targets
             controlled_matrix[-target_border:, -target_border:] = based_matrix
 

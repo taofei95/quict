@@ -311,14 +311,16 @@ class Circuit(CircuitBased):
 
     def insert(self, gate, insert_idx: int):
         """ Insert a Quantum Gate into current CompositeGate, only support BasicGate/CompositeGate. """
-        assert isinstance(gate, (BasicGate, Operator, CompositeGate)), TypeError("CompositeGate.insert", "BasicGate", type(gate))
+        assert isinstance(gate, (BasicGate, Operator, CompositeGate)), \
+            TypeError("CompositeGate.insert", "BasicGate", type(gate))
         gate_args = gate.qubits if isinstance(gate, CompositeGate) else gate.cargs + gate.targs
         gate_size = gate.size() if isinstance(gate, CompositeGate) else 1
         if len(gate_args) == 0:
             raise GateQubitAssignedError(f"{gate.type} need qubit indexes to insert into Composite Gate.")
 
         for garg in gate_args:
-            assert garg >= 0 and garg < self.width(), GateQubitAssignedError(f"Gate's assigned qubits should within [0, {self.width()}]")
+            assert garg >= 0 and garg < self.width(), \
+                GateQubitAssignedError(f"Gate's assigned qubits should within [0, {self.width()}]")
 
         self._gates.insert(insert_idx, (gate, gate_args, gate_size))
 
@@ -346,7 +348,8 @@ class Circuit(CircuitBased):
                 else:
                     raise GateQubitAssignedError(f"{gate.type} need qubit indexes to add into Composite Gate.")
             else:
-                qubit_index = gate_qargs if len(gate_qargs) > 0 else [self.qubits.index(aq) for aq in gate.assigned_qubits]
+                qubit_index = gate_qargs if len(gate_qargs) > 0 else \
+                    [self.qubits.index(aq) for aq in gate.assigned_qubits]
 
         self._gates.append((gate, qubit_index, 1))
 
@@ -525,7 +528,8 @@ class Circuit(CircuitBased):
         Args:
             start(int): the start gate's index, default 0
             max_size(int): max size of the sub circuit, default -1 without limit
-            qubit_limit(int/list<int>/Qubit/Qureg): the required qubits' indexes, if [], accept all qubits. default to be [].
+            qubit_limit(int/list<int>/Qubit/Qureg): the required qubits' indexes, if [], accept all qubits.
+                default to be [].
             gate_limit(List[GateType]): list of required gate's type, if [], accept all quantum gate. default to be [].
             remove(bool): whether deleting the slice gates from origin circuit, default False
         Return:
