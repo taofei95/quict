@@ -9,7 +9,7 @@ import numpy as np
 
 from QuICT.ops.utils import mapping_augment
 
-
+# njit(['float64[:,:](float64[:,:])', 'int64[:,:](int64[:,:])'], parallel=True)
 @njit(parallel=True, nogil=True)
 def MatrixTensorI(A, n, m):
     """ tensor I^n and A and I^m
@@ -324,6 +324,18 @@ def reverse_matrix(
         temp_value = vec[current_sidx[0]]
         vec[current_sidx[0]] = vec[current_sidx[1]] * reverse_value[0]
         vec[current_sidx[1]] = temp_value * reverse_value[1]
+
+
+@njit()
+def get_measured_probability(
+    index: int,
+    vec: np.array
+):
+    target_index = 1 << index
+    vec_idx_0 = [idx for idx in range(len(vec)) if not idx & target_index]
+    vec_idx_0 = np.array(vec_idx_0, dtype=np.int32)
+
+    return np.sum(np.square(np.abs(vec[vec_idx_0])))
 
 
 @njit()

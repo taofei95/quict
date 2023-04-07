@@ -526,7 +526,7 @@ class BasicGate(object):
         Returns:
             bool: True if gate's matrix is diagonal
         """
-        return self.matrix_type == MatrixType.diagonal
+        return self.matrix_type in [MatrixType.diagonal, MatrixType.control]  
 
     def is_pauli(self) -> bool:
         """ judge whether gate's matrix is a Pauli gate
@@ -634,7 +634,7 @@ class Unitary(BasicGate):
             matrix = np.array(matrix)
 
         # Validate precision
-        assert isinstance(matrix.dtype, (np.complex128, np.complex64)), \
+        assert np.issubdtype(matrix.dtype, np.complex128) or np.issubdtype(matrix.dtype, np.complex64), \
             TypeError("unitary.matrix.dtype", "complex64/128", matrix.dtype)
         precision = "double" if matrix.dtype == np.complex64 else "single"
 
@@ -651,6 +651,7 @@ class Unitary(BasicGate):
 
         if matrix_type is None:
             matrix_type, controls = self.validate_matrix_type(matrix)
+            print(matrix_type)
         else:
             matrix_type = MatrixType.normal
             controls = 0
