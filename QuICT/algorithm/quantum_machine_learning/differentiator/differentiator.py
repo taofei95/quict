@@ -40,9 +40,6 @@ class Differentiator:
         gpu_device_id: int = 0,
         sync: bool = True,
     ):
-<<<<<<< HEAD
-        self._simulator = GateSimulator(device, gpu_device_id, sync)
-=======
         if device not in self.__DEVICE:
             raise ValueError("Differentiator.device", "[CPU, GPU]", device)
 
@@ -56,7 +53,6 @@ class Differentiator:
         self._gate_calculator = GateSimulator(
             self._device, self._precision, self._device_id, self._sync
         )
->>>>>>> d4d33bd8ba2f1822e45c2cd01308f4247c826e70
 
     def __call__(
         self, circuit: Circuit, state_vector: np.ndarray, params, expectation_op

@@ -60,19 +60,20 @@ class PQC(tf.keras.layers.Layer):
         """Keras build function."""
         super().build(input_shape)
 
-    def call(self, inputs):
+    def call(self, ):
         """Keras call function.""" 
         sv = self._sim.run(self._model_circuit)
-        sv= sv['data']['state_vector']
+        #sv= sv['data']['state_vector']
         if  isinstance(self._executor ,Adjoint):
-            self._executor(self._model_circuit,sv)
+            X.targs = [0]
+            self._executor.run(self._model_circuit, sv, X)
 
         grad_list_see = []
         for gate in self._model_circuit.gates:
             if gate.variables > 0:
                 for parg in gate.pargs:
-                    grad_list_see.append(parg.grad)
-        print(grad_list_see)
+                    grad_list_see.append(parg.grads)
+        #print(grad_list_see)
         return 
     def backward(self,):
         return
@@ -80,13 +81,19 @@ class PQC(tf.keras.layers.Layer):
         
 
 from QuICT.core.gate import *
+from QuICT.simulation.state_vector import StateVectorSimulator
 if __name__ == '__main__':  
+
+    params = Variable( np.random.random(200))
+    sim = StateVectorSimulator(device="GPU")
     wideth = 5
     cir = Circuit(wideth)
+    H | cir
+    for i in range(wideth):
+        Rxx(params[i]) | cir([i, (i+1)%wideth])
 
-    params = np.random.random(200)
-    sim = Simulator(device='GPU')
+    differ = Adjoint(device="GPU")
+    #differ.run(circuit, sv, X)
     ham = Hamiltonian([[0.4, 'Y0', 'X1', 'Z2', 'I5'], [0.6]])
-    ad = Adjoint()
-    pqc = PQC(model_circuit=cir,differentiator=ad,model_pargs= params,sim=sim,operators = ham)
-    pqc.call(1)
+    pqc = PQC(model_circuit=cir,differentiator=differ,model_pargs= params,sim=sim,operators = ham)
+    pqc.call()
