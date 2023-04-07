@@ -1,12 +1,12 @@
-import cupy as cp
 import numpy as np
 from typing import Union
 
 from QuICT.core import Circuit
-from QuICT.core.operator import Trigger
 from QuICT.core.gate import BasicGate, CompositeGate
 from QuICT.core.utils import GateType
 from QuICT.simulation.utils import GateSimulator
+
+from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 
 
 class Differentiator:
