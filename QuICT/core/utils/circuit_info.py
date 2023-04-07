@@ -47,7 +47,7 @@ class CircuitBased(object):
             if size > 1:
                 flatten_gates.extend(gate.flatten_gates(decomposition))
             else:
-                if decomposition and (len(qidxes) >= 3 or gate.type != GateType.unitary):
+                if decomposition:
                     cgate = gate.build_gate()
                     if cgate is not None:
                         flatten_gates.extend(cgate.gates)

@@ -1,7 +1,7 @@
 import numpy as np
 
-from QuICT.core.gate import BasicGate, GateMatrixGenerator, Unitary
-from QuICT.core.utils import GateType, MatrixType
+from QuICT.core.gate import BasicGate, GateMatrixGenerator
+from QuICT.core.utils import GateType, MatrixType, matrix_product_to_circuit
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.ops.linalg.cpu_calculator import (
     matrix_dot_vector, diagonal_matrix, swap_matrix, reverse_matrix,
@@ -401,8 +401,7 @@ class GateSimulator:
 
     def apply_measure_gate_for_dm(self, index: int, density_matrix: np.ndarray, qubits: int):
         P0 = self._array_helper.array([[1, 0], [0, 0]], dtype=self._dtype)
-        p0g = Unitary(P0) & index
-        mea_0 = p0g.expand(qubits, self._device)
+        mea_0 = matrix_product_to_circuit(P0, index, qubits, self._device)
         prob_0 = self._array_helper.matmul(mea_0, density_matrix).trace()
 
         _1 = np.random.random() > prob_0
@@ -414,8 +413,7 @@ class GateSimulator:
             density_matrix = self._algorithm.dot(self._algorithm.dot(U, density_matrix), U.conj().T)
         else:
             P1 = self._array_helper.array([[0, 0], [0, 1]], dtype=self._dtype)
-            p1g = Unitary(P1) & index
-            mea_1 = p1g.expand(qubits, self._device)
+            mea_1 = matrix_product_to_circuit(P1, index, qubits, self._device)
 
             U = self._array_helper.matmul(
                 mea_1,

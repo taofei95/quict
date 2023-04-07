@@ -90,7 +90,7 @@ class CircuitMatrix:
                 matrix = gate.matrix if self._device == "CPU" else self._array_helper.array(gate.matrix)
                 if len(args) == 2 and args[0] > args[1]:
                     args.sort()
-                    matrix = self._computer.MatrixPermutation(matrix, self._array_helper.array([1, 0]))
+                    matrix = self._computer.MatrixPermutation(matrix, self._array_helper.array([1, 0]), False)
 
                 is_intersect, is_blocked_layer = self._find_related_MatrixGroup(matrix_groups, args)
                 if not is_intersect:
@@ -162,7 +162,8 @@ class CircuitMatrix:
             args_idx = [u1_args.index(u2_arg) for u2_arg in u2_args]
             u2 = self._computer.MatrixPermutation(
                 u2,
-                self._array_helper.array(args_idx)
+                self._array_helper.array(args_idx),
+                False
             )
 
         union_args = u1_args + [i for i in u2_args if i not in u1_args] if len(u1_args) >= len(u2_args) else \
@@ -182,7 +183,8 @@ class CircuitMatrix:
             if np.allclose(mono_diff, -1):
                 unitary = self._computer.MatrixPermutation(
                     unitary,
-                    self._array_helper.arange(len(unitary_args) - 1, -1, -1)
+                    self._array_helper.arange(len(unitary_args) - 1, -1, -1),
+                    False
                 )
 
             return self._computer.MatrixTensorI(
@@ -199,7 +201,7 @@ class CircuitMatrix:
         tmatrix_args = unitary_args + [earg for earg in extend_args if earg not in unitary_args]
         permutation_index = [extend_args.index(tm_arg) for tm_arg in tmatrix_args]
 
-        return self._computer.MatrixPermutation(tensor_matrix, self._array_helper.array(permutation_index))
+        return self._computer.MatrixPermutation(tensor_matrix, self._array_helper.array(permutation_index), False)
 
     def _combined_gates(self, gates):
         args_num = [len(args) for _, args in gates]
