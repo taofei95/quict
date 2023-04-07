@@ -1,11 +1,10 @@
 import numpy as np
-import random
 
 from QuICT.core.circuit.circuit import Circuit
-from QuICT.core.gate import BasicGate, Unitary
+from QuICT.core.gate import BasicGate
 from QuICT.core.noise import NoiseModel
 from QuICT.core.operator import NoiseGate
-from QuICT.core.utils import GateType
+from QuICT.core.utils import GateType, matrix_product_to_circuit
 from QuICT.simulation.utils import GateSimulator
 from QuICT.tools.exception.core import TypeError, ValueError
 from QuICT.tools.exception.simulation import SampleBeforeRunError
@@ -131,8 +130,7 @@ class DensityMatrixSimulator:
         gate_args = noise_gate.targs
         noised_matrix = self._gate_calculator.get_empty_density_matrix(self._qubits)
         for kraus_matrix in noise_gate.noise_matrix:
-            k_unitary = Unitary(kraus_matrix) & gate_args
-            umat = k_unitary.expand(self._qubits)
+            umat = matrix_product_to_circuit(kraus_matrix, gate_args, self._qubits, self._device)
 
             noised_matrix += self._gate_calculator.dot(
                 self._gate_calculator.dot(umat, self._density_matrix),

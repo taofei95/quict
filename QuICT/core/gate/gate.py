@@ -528,7 +528,7 @@ class BasicGate(object):
     def is_identity(self) -> bool:
         return self.matrix_type == MatrixType.identity
 
-    def expand(self, qubits: Union[int, list]) -> bool:
+    def expand(self, qubits: Union[int, list], device: str = "CPU") -> bool:
         """ expand self matrix into the circuit's unitary linear space. If input qubits is integer, please make sure
         the indexes of current gate is within [0, qubits).
 
@@ -550,7 +550,7 @@ class BasicGate(object):
             gate_args = [qubits[i] for i in range(self.controls + self.targets)]
 
         updated_args = [qubits.index(garg) for garg in gate_args]
-        return matrix_product_to_circuit(self.matrix, updated_args, qubits_num)
+        return matrix_product_to_circuit(self.matrix, updated_args, qubits_num, device)
 
     def copy(self):
         """ return a copy of this gate
@@ -604,7 +604,7 @@ class Unitary(BasicGate):
 
     def __init__(self, matrix: Union[list, np.ndarray], matrix_type: MatrixType = None):
         # Validate matrix type
-        assert isinstance(matrix, (list, np.ndarray)), TypeError("unitary.matrix", "list/ndarray", type(matrix))
+        # assert isinstance(matrix, (list, np.ndarray)), TypeError("unitary.matrix", "list/ndarray", type(matrix))
         if isinstance(matrix, list):
             matrix = np.array(matrix)
 
@@ -684,6 +684,16 @@ class Unitary(BasicGate):
 
         return Unitary(inverse_matrix)
 
+    def copy(self):
+        _gate = Unitary(self.matrix, self.matrix_type)
+
+        if len(self.targs) > 0:
+            _gate.targs = self.targs[:]
+
+        if self.assigned_qubits:
+            _gate.assigned_qubits = self.assigned_qubits[:]
+
+        return _gate
 
 class Perm(BasicGate):
     @property

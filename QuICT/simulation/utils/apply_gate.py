@@ -402,7 +402,7 @@ class GateSimulator:
     def apply_measure_gate_for_dm(self, index: int, density_matrix: np.ndarray, qubits: int):
         P0 = self._array_helper.array([[1, 0], [0, 0]], dtype=self._dtype)
         p0g = Unitary(P0) & index
-        mea_0 = p0g.expand(qubits)
+        mea_0 = p0g.expand(qubits, self._device)
         prob_0 = self._array_helper.matmul(mea_0, density_matrix).trace()
 
         _1 = np.random.random() > prob_0
@@ -415,7 +415,7 @@ class GateSimulator:
         else:
             P1 = self._array_helper.array([[0, 0], [0, 1]], dtype=self._dtype)
             p1g = Unitary(P1) & index
-            mea_1 = p1g.expand(qubits)
+            mea_1 = p1g.expand(qubits, self._device)
 
             U = self._array_helper.matmul(
                 mea_1,
