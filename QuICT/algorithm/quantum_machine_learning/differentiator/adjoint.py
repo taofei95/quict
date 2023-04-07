@@ -5,6 +5,7 @@ from QuICT.core.circuit import Circuit
 from QuICT.simulation.state_vector import StateVectorSimulator
 
 from QuICT.algorithm.quantum_machine_learning.differentiator import Differentiator
+from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 
 
 class Adjoint(Differentiator):
@@ -19,10 +20,7 @@ class Adjoint(Differentiator):
         )
 
     def run(
-        self,
-        circuit: Circuit,
-        state_vector: np.ndarray,
-        expectation_op: Union[list, BasicGate],  # Or Hamiltonian?
+        self, circuit: Circuit, state_vector: np.ndarray, expectation_op: Hamiltonian,
     ) -> np.ndarray:
         self.initial_circuit(circuit)
         assert state_vector is not None
@@ -59,28 +57,6 @@ class Adjoint(Differentiator):
                 else:
                     raise TypeError("Adjoint.run.circuit", "BasicGate".type(gate))
 
-            # # Calculate |psi_t-1>
-            # if size > 1:
-            #     self._apply_compositegate(gate, qidxes, self._vector)
-            # else:
-            #     if isinstance(gate, BasicGate):
-            #         self._apply_gate(gate, qidxes, self._vector)
-            #     else:
-            #         raise TypeError("Adjoint.run.circuit", "BasicGate".type(gate))
-
-            # # Calculate d(L)/d(theta)
-            # if gate.variables > 0:
-            #     self._calculate_grad(gate, qidxes, size)
-
-            # # Calculate d(L)/d(|psi_t-1>)
-            # if size > 1:
-            #     self._apply_compositegate(gate, qidxes, self._grad_vector)
-            # else:
-            #     if isinstance(gate, BasicGate):
-            #         self._apply_gate(gate, qidxes, self._grad_vector)
-            #     else:
-            #         raise TypeError("Adjoint.run.circuit", "BasicGate".type(gate))
-
     def initial_circuit(self, circuit: Circuit):
         self._qubits = int(circuit.width())
         self._circuit = circuit
@@ -95,31 +71,23 @@ class Adjoint(Differentiator):
         self._bp_pipeline = self._bp_circuit.fast_gates
         assert len(self._pipeline) == len(self._bp_pipeline)
 
-    def _validate_expectation_op(self, expectation_op: Union[list, BasicGate]):
-        if isinstance(expectation_op, BasicGate):
-            expectation_op = [expectation_op]
-        if not all(
-            [
-                (isinstance(op, BasicGate) and op.is_pauli() and len(op.targs) == 1)
-                for op in expectation_op
-            ]
-        ):
-            raise Exception  # error
-        return expectation_op
-
-    # optimize?
+    # optimize? simulator x
     def _initial_grad_vector(
-        self, state_vector, qubits: int, expectation_op: Union[list, BasicGate]
+        self, state_vector, qubits: int, expectation_op: Hamiltonian
     ):
         state_vector_copy = state_vector.copy()
-        expectation_op = self._validate_expectation_op(expectation_op)
-        circuit = Circuit(qubits)
-        for op in expectation_op:
-            op | circuit
         simulator = StateVectorSimulator(
             self._device, self._precision, self._device_id, self._sync
         )
-        grad_vector = simulator.run(circuit, state_vector_copy)
+
+        circuit_list = expectation_op.construct_hamiton_circuit(qubits)
+        coefficients = expectation_op.coefficients
+        grad_vector = np.zeros(1 << qubits, dtype=np.complex128)
+        grad_vector = self._gate_calculator.validate_state_vector(grad_vector, qubits)
+        for coeff, circuit in zip(coefficients, circuit_list):
+            grad_vec = simulator.run(circuit, state_vector_copy)
+            grad_vector += coeff * grad_vec
+
         return grad_vector
 
     def _apply_gate(
@@ -165,8 +133,8 @@ class Adjoint(Differentiator):
             self._apply_gate(gate, qidxes, vector, fp=False, parg_id=i)
             vector = vector * gate.pargs[i].grads
             # d(L)/d(|psi_t>) * d(|psi_t>) / d(theta_t^j)
-            grad = (self._grad_vector @ vector.T).real
-            origin_gate.pargs[i].grads = [grad]
+            grad = np.float64((self._grad_vector @ vector.T).real)
+            origin_gate.pargs[i].grads = grad
 
 
 if __name__ == "__main__":
@@ -184,8 +152,5 @@ if __name__ == "__main__":
     sv = simulator.run(circuit)
 
     differ = Adjoint(device="GPU")
-    X.targs = [1]
-    differ.run(circuit, sv, X)
-    # print(differ.vector)
-    # print(differ.grad_vector)
-
+    h = Hamiltonian([[1, "X1"]])
+    differ.run(circuit, sv, h)

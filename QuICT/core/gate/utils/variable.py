@@ -17,14 +17,23 @@ class Variable:
 
     @pargs.setter
     def pargs(self, pargs):
-        self._pargs = pargs
+        if isinstance(pargs, np.ndarray):
+            self._pargs = pargs.astype(np.float64)
+        else:
+            self._pargs = np.float64(pargs)
 
     @grads.setter
     def grads(self, grads):
-        self._grads = grads
+        if isinstance(grads, np.ndarray):
+            assert grads.shape == self._pargs.shape
+            self._grads = grads.astype(np.float64)
+        else:
+            self._grads = np.float64(grads)
 
     def __init__(
-        self, pargs: Union[float, np.ndarray], grads: Union[float, np.ndarray] = None
+        self,
+        pargs: Union[float, np.float64, np.ndarray],
+        grads: Union[float, np.float64, np.ndarray] = None,
     ):
         if isinstance(pargs, np.ndarray):
             self._pargs = pargs.astype(np.float64)
