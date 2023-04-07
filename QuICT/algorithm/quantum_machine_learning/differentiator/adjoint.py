@@ -1,4 +1,3 @@
-import cupy as cp
 import numpy as np
 
 from QuICT.core.gate import *
@@ -19,90 +18,68 @@ class Adjoint(Differentiator):
             vec, self._qubits
         )
 
-    # def __call__(
-    #     self, circuit: Circuit, final_state_vector: np.ndarray, expectation_op=Z
-    # ):
-    #     # construct circuit for the blue path (1) and the orange path (2)
-    #     grad_circuit, uncompute_circuit = self._get_bp_circuits(circuit, expectation_op)
-    #     gates = circuit._gates[::-1]
-    #     gates1 = grad_circuit._gates
-    #     gates2 = uncompute_circuit._gates
-    #     n_qubits = grad_circuit.width()
-
-    #     current_state_grad = final_state_vector
-    #     current_state_vector = final_state_vector
-
-    #     for gate, gate1, gate2 in zip(gates, gates1, gates2):
-    #         # d(L)/d(|psi_t>)
-    #         current_state_grad = self._simulator.apply_gate(
-    #             gate1, gate1.cargs + gate1.targs, current_state_grad, n_qubits
-    #         )
-    #         # |psi_t-1>
-    #         current_state_vector = self._simulator.apply_gate(
-    #             gate2, gate2.cargs + gate2.targs, current_state_vector, n_qubits
-    #         )
-    #         if gate.variables > 0:
-    #             for i in range(gate.variables):
-    #                 parg_grad = self._simulator.apply_gate(
-    #                     gate,
-    #                     gate.cargs + gate.targs,
-    #                     current_state_vector,
-    #                     n_qubits,
-    #                     fp=False,
-    #                     parg_id=i,
-    #                 )
-    #                 grad = current_state_grad @ parg_grad.T
-    #                 gate.pargs[i].grad = grad
-    #         else:
-    #             continue
-
-    # def _get_bp_circuits(self, circuit, expectation_op=Z):
-    #     grad_circuit = Circuit(circuit.width())
-    #     uncompute_circuit = Circuit(circuit.width())
-    #     gates = circuit.gates[::-1]
-    #     Z | grad_circuit(2)
-
-    #     for i in range(len(gates)):
-    #         inverse_gate = gates[i].inverse()
-    #         inverse_gate.targs = gates[i].targs
-    #         inverse_gate.cargs = gates[i].cargs
-
-    #         if i < len(gates) - 1:
-    #             inverse_gate | grad_circuit
-    #         inverse_gate | uncompute_circuit
-
-    #     return grad_circuit, uncompute_circuit
-
     def run(
         self,
         circuit: Circuit,
         state_vector: np.ndarray,
-        expectation_op: Union[list, BasicGate],
+        expectation_op: Union[list, BasicGate],  # Or Hamiltonian?
     ) -> np.ndarray:
         self.initial_circuit(circuit)
         assert state_vector is not None
         self._vector = self._gate_calculator.validate_state_vector(
             state_vector, self._qubits
         )
+        # Calculate d(L)/d(|psi_t>)
         self._grad_vector = self._initial_grad_vector(
             state_vector, self._qubits, expectation_op
         )
 
         for idx in range(len(self._bp_pipeline)):
+            origin_gate = self._pipeline[idx]
             gate, qidxes, size = self._bp_pipeline[idx]
+            if isinstance(gate, BasicGate):
+                # Calculate |psi_t-1>
+                self._apply_gate(gate, qidxes, self._vector)
 
-            if size > 1:
-                self._apply_compositegate(gate, qidxes)
+                # Calculate d(L)/d(theta) and write to circuit.gate.pargs.grads
+                self._calculate_grad(origin_gate, gate, qidxes)
+
+                # Calculate d(L)/d(|psi_t-1>)
+                self._apply_gate(gate, qidxes, self._grad_vector)
             else:
-                if isinstance(gate, BasicGate):
-                    # |psi_t-1>
-                    self._apply_gate(gate, qidxes, self._vector)
-                    # d(L)/d(|psi_t>)
-                    self._apply_gate(gate, qidxes, self._grad_vector)
+                if size > 1:
+                    raise TypeError("Adjoint.run.circuit", "BasicGate".type(gate))
+                    # Calculate |psi_t-1>
+                    self._apply_compositegate(gate, qidxes, self._vector)
+
+                    # Calculate d(L)/d(theta)
+
+                    # Calculate d(L)/d(|psi_t-1>)
+                    self._apply_compositegate(gate, qidxes, self._grad_vector)
                 else:
                     raise TypeError("Adjoint.run.circuit", "BasicGate".type(gate))
-            if gate.variables > 0:
-                self._calculate_grad(gate, qidxes, size)
+
+            # # Calculate |psi_t-1>
+            # if size > 1:
+            #     self._apply_compositegate(gate, qidxes, self._vector)
+            # else:
+            #     if isinstance(gate, BasicGate):
+            #         self._apply_gate(gate, qidxes, self._vector)
+            #     else:
+            #         raise TypeError("Adjoint.run.circuit", "BasicGate".type(gate))
+
+            # # Calculate d(L)/d(theta)
+            # if gate.variables > 0:
+            #     self._calculate_grad(gate, qidxes, size)
+
+            # # Calculate d(L)/d(|psi_t-1>)
+            # if size > 1:
+            #     self._apply_compositegate(gate, qidxes, self._grad_vector)
+            # else:
+            #     if isinstance(gate, BasicGate):
+            #         self._apply_gate(gate, qidxes, self._grad_vector)
+            #     else:
+            #         raise TypeError("Adjoint.run.circuit", "BasicGate".type(gate))
 
     def initial_circuit(self, circuit: Circuit):
         self._qubits = int(circuit.width())
@@ -114,7 +91,9 @@ class Adjoint(Differentiator):
             inverse_gate.targs = gates[i].targs
             inverse_gate.cargs = gates[i].cargs
             inverse_gate | self._bp_circuit
+        self._pipeline = gates
         self._bp_pipeline = self._bp_circuit.fast_gates
+        assert len(self._pipeline) == len(self._bp_pipeline)
 
     def _validate_expectation_op(self, expectation_op: Union[list, BasicGate]):
         if isinstance(expectation_op, BasicGate):
@@ -172,26 +151,22 @@ class Adjoint(Differentiator):
             if size > 1:
                 self._apply_compositegate(cgate, real_qidx, vector, fp, parg_id)
             else:
-                self._apply_gate(cgate, real_qidx, vector, fp, parg_id)
+                if isinstance(gate, BasicGate):
+                    self._apply_gate(cgate, real_qidx, vector, fp, parg_id)
+                else:
+                    raise TypeError(
+                        "Adjoint.apply_compositegate", "BasicGate".type(gate)
+                    )
 
-    def _calculate_grad(self, gate, qidxes: list, size):
+    def _calculate_grad(self, origin_gate, gate, qidxes: list):
         for i in range(gate.variables):
             vector = self._vector.copy()
-            if size > 1:
-                self._apply_compositegate(
-                    gate, qidxes, fp=False, parg_id=i,
-                )
-            else:
-                # d(|psi_t>) / d(theta_t^j)
-                self._apply_gate(gate, qidxes, vector, fp=False, parg_id=i)
-                vector = vector * gate.pargs[i].grads
-                
-                # ----------------------- Above Correct -------------------
-                
-                # d(L)/d(|psi_t>) * d(|psi_t>) / d(theta_t^j)
-                grad = self._grad_vector @ (vector.T)
-                print(grad.real)
-                # gate.pargs[i].grad = grad
+            # d(|psi_t>) / d(theta_t^j)
+            self._apply_gate(gate, qidxes, vector, fp=False, parg_id=i)
+            vector = vector * gate.pargs[i].grads
+            # d(L)/d(|psi_t>) * d(|psi_t>) / d(theta_t^j)
+            grad = (self._grad_vector @ vector.T).real
+            origin_gate.pargs[i].grads = [grad]
 
 
 if __name__ == "__main__":
