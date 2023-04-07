@@ -698,6 +698,7 @@ class InverseGate:
 
     @classmethod
     def get_inverse_gate(cls, gate_type: GateType, gate_pargs: list) -> tuple:
+        # Maybe need gradient graph here
         if len(gate_pargs) == 0:
             if gate_type in cls.__GATE_INVERSE_MAP.keys():
                 inverse_args = cls.__GATE_INVERSE_MAP[gate_type]
@@ -708,24 +709,42 @@ class InverseGate:
                     else (inverse_args, gate_pargs)
                 )
         else:
-            n_pargs = len(gate_pargs)
-            pargs = [0.0] * n_pargs
-            for i in range(n_pargs):
-                pargs[i] = (
-                    gate_pargs[i].pargs
-                    if isinstance(gate_pargs[i], Variable)
-                    else gate_pargs[i]
-                )
-
-            inv_params = None
+            inv_params = []
             if gate_type in cls.__INVERSE_GATE_WITH_NEGATIVE_PARAMS:
-                inv_params = [p * -1 for p in pargs]
+                for parg in gate_pargs:
+                    if isinstance(parg, Variable):
+                        inv_params.append(
+                            Variable(pargs=-parg.pargs, grads=-1.0)
+                        )
+                    else:
+                        inv_params.append(-parg)
             elif gate_type == GateType.u2:
-                inv_params = [np.pi - pargs[1], np.pi - pargs[0]]
+                for parg in gate_pargs[::-1]:
+                    if isinstance(parg, Variable):
+                        inv_params.append(
+                            Variable(pargs=np.pi - parg.pargs, grads=-1.0)
+                        )
+                    else:
+                        inv_params.append(np.pi - parg)
             elif gate_type in [GateType.u3, GateType.cu3]:
-                inv_params = [pargs[0], np.pi - pargs[2], np.pi - pargs[1]]
+                for i in [0, 2, 1]:
+                    if isinstance(gate_pargs[i], Variable):
+                        inv_params.append(
+                            Variable(
+                                pargs=np.pi - gate_pargs[i].pargs,
+                                grads=-1.0,
+                            )
+                            if i != 0
+                            else Variable(
+                                pargs=gate_pargs[i].pargs, grads=1.0
+                            )
+                        )
+                    else:
+                        inv_params.append(
+                            np.pi - gate_pargs[i] if i != 0 else gate_pargs[i]
+                        )
 
-            if inv_params is not None:
+            if len(inv_params) > 0:
                 return (gate_type, inv_params)
 
         return None, gate_pargs
