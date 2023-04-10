@@ -39,7 +39,7 @@ class Adjoint(Differentiator):
                 # Calculate |psi_t-1>
                 self._apply_gate(gate, qidxes, self._vector)
 
-                # Calculate d(L)/d(theta) and write to circuit.gate.pargs.grads
+                # Calculate d(L)/d(theta) and write to origin_gate.gate.pargs.grads
                 self._calculate_grad(origin_gate, gate, qidxes)
 
                 # Calculate d(L)/d(|psi_t-1>)
@@ -130,10 +130,9 @@ class Adjoint(Differentiator):
         for i in range(gate.variables):
             vector = self._vector.copy()
             # d(|psi_t>) / d(theta_t^j)
-            self._apply_gate(gate, qidxes, vector, fp=False, parg_id=i)
-            vector = vector * gate.pargs[i].grads
+            self._apply_gate(origin_gate, qidxes, vector, fp=False, parg_id=i)
             # d(L)/d(|psi_t>) * d(|psi_t>) / d(theta_t^j)
-            grad = np.float64((self._grad_vector @ vector.T).real)
+            grad = np.float64((self._grad_vector @ vector.conj()).real)
             origin_gate.pargs[i].grads = grad
 
 

@@ -34,14 +34,20 @@ def test_fp_bp(n_qubit, pargs):
     )
     ansatz = Ansatz(n_qubit)
     ansatz.add_gate(H_tensor)
+    ansatz.add_gate(Rx_tensor(0.2), 1)
     ansatz.add_gate(Rzx_tensor(params[0]), [0, 1])
-    ansatz.add_gate(Rzx_tensor(params[1]), [2, 1])
+    ansatz.add_gate(Rzz_tensor(params[1]), [0, 1])
+    ansatz.add_gate(Rzx_tensor(params[2]), [0, 1])
+    ansatz.add_gate(Rzx_tensor(3), [0, 1])
 
     variables = Variable(np.array(pargs))
     circuit = Circuit(n_qubit)
     H | circuit
+    Rx(0.2) | circuit(1)
     Rzx(variables[0]) | circuit([0, 1])
-    Rzx(variables[1]) | circuit([2, 1])
+    Rzz(variables[1]) | circuit([0, 1])
+    Rzx(variables[2]) | circuit([0, 1])
+    Rzx(3) | circuit([0, 1])
 
     print("--------------GPUSimulator-----------------")
 
@@ -49,23 +55,23 @@ def test_fp_bp(n_qubit, pargs):
     state = simulator.forward(ansatz, state=None)
     loss = loss_func(state, n_qubit, h)
     loss.backward()
-    print("FP + BP", time.time() - start)
+    # print("FP + BP", time.time() - start)
     print(params.grad)
 
     print("--------------Adjoint-----------------")
 
     simulator = StateVectorSimulator(device="GPU")
     differ = Adjoint(device="GPU")
-    
+
     start = time.time()
     sv = simulator.run(circuit)
     differ.run(circuit, sv, h)
-    print("FP + BP", time.time() - start)
+    # print("FP + BP", time.time() - start)
     for gate in circuit.gates:
         if isinstance(gate.parg, Variable):
-            print(gate.parg.grads)
+            print(gate.parg.pargs, gate.parg.grads)
 
 
 if __name__ == "__main__":
-    test_fp_bp(3, [1.8, -0.7])
+    test_fp_bp(3, [1.8, -0.7, 2.3])
 
