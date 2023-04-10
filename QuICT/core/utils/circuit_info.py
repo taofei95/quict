@@ -53,7 +53,7 @@ class CircuitBased(object):
                         flatten_gates.extend(cgate.gates)
                         continue
 
-                flatten_gates.append(gate.copy() & qidxes)
+                flatten_gates.append(gate)
 
         return flatten_gates
 

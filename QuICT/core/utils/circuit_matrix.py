@@ -55,7 +55,8 @@ class MatrixGroup:
 class CircuitMatrix:
     def __init__(self, device: str = "CPU", precision: str = "double"):
         self._device = device
-        self._precision = np.complex128 if precision == "double" else np.complex64
+        self._precision = precision
+        self._dtype = np.complex128 if precision == "double" else np.complex64
 
         if device == "CPU":
             self._computer = CPUCalculator
@@ -69,7 +70,7 @@ class CircuitMatrix:
 
     def get_unitary_matrix(self, gates: list, qubits_num: int) -> np.ndarray:
         if len(gates) == 0:
-            return self._array_helper.identity(1 << qubits_num, dtype=self._precision)
+            return self._array_helper.identity(1 << qubits_num, dtype=self._dtype)
 
         # Order gates by depth
         gates_order_by_depth = get_gates_order_by_depth(gates)
@@ -87,7 +88,7 @@ class CircuitMatrix:
                     continue
 
                 args = gate.cargs + gate.targs
-                matrix = gate.matrix if self._device == "CPU" else self._array_helper.array(gate.matrix)
+                matrix = gate.matrix(self._precision) if self._device == "CPU" else self._array_helper.array(gate.matrix(self._precision))
                 if len(args) == 2 and args[0] > args[1]:
                     args.sort()
                     matrix = self._computer.MatrixPermutation(matrix, self._array_helper.array([1, 0]), False)

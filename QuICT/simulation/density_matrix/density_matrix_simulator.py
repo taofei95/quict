@@ -84,6 +84,7 @@ class DensityMatrixSimulator:
     def _run(self, noised_circuit):
         # Start simulator
         circuit = Circuit(self._qubits)
+        circuit.set_precision(self._precision)
         for gate in noised_circuit.gates:
             # Store continuous BasicGates into cgate
             if isinstance(gate, BasicGate) and gate.type != GateType.measure:
@@ -145,7 +146,7 @@ class DensityMatrixSimulator:
         Args:
             index (int): The index of measured qubit.
         """
-        _1 = self._gate_calculator.apply_measure_gate_for_dm(index, self._density_matrix, self._qubits)
+        _1, self._density_matrix = self._gate_calculator.apply_measure_gate_for_dm(index, self._density_matrix, self._qubits)
         self._circuit.qubits[index].measured = int(_1)
 
     def sample(self, shots: int) -> list:

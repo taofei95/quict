@@ -33,71 +33,54 @@ class TestGPUSimulator(unittest.TestCase):
 
     def test_unitary(self):
         sim = UnitarySimulator("GPU")
-        U = sim.run(deepcopy(TestGPUSimulator.circuit))
+        U = sim.run(TestGPUSimulator.circuit).get()
         assert np.allclose(U, TestGPUSimulator.sv_data)
 
         sim = UnitarySimulator("GPU", precision="single")
-        U = sim.run(deepcopy(TestGPUSimulator.circuit))
+        U = sim.run(TestGPUSimulator.circuit).get()
         assert np.allclose(U, TestGPUSimulator.sv_data_single, atol=1e-6)
 
         u_sim = Simulator(device="GPU", backend="unitary")
-        u = u_sim.run(deepcopy(TestGPUSimulator.circuit))
+        u = u_sim.run(TestGPUSimulator.circuit)
         assert np.allclose(u["data"]["state_vector"], TestGPUSimulator.sv_data)
 
         u_sim = Simulator(device="GPU", precision="single", backend="unitary")
-        u = u_sim.run(deepcopy(TestGPUSimulator.circuit))
+        u = u_sim.run(TestGPUSimulator.circuit)
         assert np.allclose(u["data"]["state_vector"], TestGPUSimulator.sv_data_single, atol=1e-6)
 
     def test_state_vector(self):
         sim = StateVectorSimulator("GPU", "double")
-        SV = sim.run(deepcopy(TestGPUSimulator.circuit)).get()
+        SV = sim.run(TestGPUSimulator.circuit).get()
         assert np.allclose(SV, TestGPUSimulator.sv_data)
 
         sim = StateVectorSimulator("GPU", "single")
-        SV = sim.run(deepcopy(TestGPUSimulator.circuit)).get()
+        SV = sim.run(TestGPUSimulator.circuit).get()
         assert np.allclose(SV, TestGPUSimulator.sv_data_single, atol=1e-6)
 
         sv_sim = Simulator(device="GPU")
-        sv = sv_sim.run(deepcopy(TestGPUSimulator.circuit))
+        sv = sv_sim.run(TestGPUSimulator.circuit)
         assert np.allclose(sv["data"]["state_vector"], TestGPUSimulator.sv_data)
 
-        sv_sim = Simulator(device="GPU", precision="single", matrix_aggregation=False, gpu_device_id=2)
-        sv = sv_sim.run(deepcopy(TestGPUSimulator.circuit))
+        sv_sim = Simulator(device="GPU", precision="single", gpu_device_id=2)
+        sv = sv_sim.run(TestGPUSimulator.circuit)
         assert np.allclose(sv["data"]["state_vector"], TestGPUSimulator.sv_data_single, atol=1e-6)
 
     def test_density_matrix(self):
         sim = DensityMatrixSimulator("GPU")
-        DM = sim.run(deepcopy(TestGPUSimulator.circuit)).get()
+        DM = sim.run(TestGPUSimulator.circuit).get()
         assert np.allclose(DM, TestGPUSimulator.dm_data)
 
         sim = DensityMatrixSimulator("GPU", precision="single")
-        DM = sim.run(deepcopy(TestGPUSimulator.circuit)).get()
+        DM = sim.run(TestGPUSimulator.circuit).get()
         assert np.allclose(DM, TestGPUSimulator.dm_data_single, atol=1e-6)
 
         d_sim = Simulator(device="GPU", backend="density_matrix")
-        dm = d_sim.run(deepcopy(TestGPUSimulator.circuit))
+        dm = d_sim.run(TestGPUSimulator.circuit)
         assert np.allclose(dm["data"]["density_matrix"], TestGPUSimulator.dm_data)
 
         d_sim = Simulator(device="GPU", backend="density_matrix", precision="single")
-        dm = d_sim.run(deepcopy(TestGPUSimulator.circuit))
+        dm = d_sim.run(TestGPUSimulator.circuit)
         assert np.allclose(dm["data"]["density_matrix"], TestGPUSimulator.dm_data_single, atol=1e-6)
-
-    def test_matrix_aggregation(self):
-        t = StateVectorSimulator(device="GPU", matrix_aggregation=True)
-        T = t.run(deepcopy(TestGPUSimulator.circuit)).get()
-        assert np.allclose(T, TestGPUSimulator.sv_data)
-
-        t = StateVectorSimulator(device="GPU", matrix_aggregation=True, precision="single")
-        T = t.run(deepcopy(TestGPUSimulator.circuit)).get()
-        assert np.allclose(T, TestGPUSimulator.sv_data_single, atol=1e-6)
-
-        f = StateVectorSimulator(device="GPU", matrix_aggregation=False)
-        F = f.run(deepcopy(TestGPUSimulator.circuit)).get()
-        assert np.allclose(F, TestGPUSimulator.sv_data)
-
-        f = StateVectorSimulator(device="GPU", matrix_aggregation=False, precision="single")
-        F = f.run(deepcopy(TestGPUSimulator.circuit)).get()
-        assert np.allclose(F, TestGPUSimulator.sv_data_single, atol=1e-6)
 
 
 class TestCPUSimulator(unittest.TestCase):
@@ -118,11 +101,11 @@ class TestCPUSimulator(unittest.TestCase):
 
     def test_unitary(self):
         sim = UnitarySimulator()
-        U = sim.run(deepcopy(TestCPUSimulator.circuit))
+        U = sim.run(TestCPUSimulator.circuit)
         assert np.allclose(U, TestCPUSimulator.sv_data)
 
         u_sim = Simulator(device="CPU", backend="unitary")
-        u = u_sim.run(deepcopy(TestCPUSimulator.circuit))
+        u = u_sim.run(TestCPUSimulator.circuit)
         assert np.allclose(u["data"]["state_vector"], TestCPUSimulator.sv_data)
 
     def test_state_vector(self):
@@ -136,11 +119,11 @@ class TestCPUSimulator(unittest.TestCase):
 
     def test_densitymatrix(self):
         simulator = DensityMatrixSimulator()
-        DM = simulator.run(deepcopy(TestCPUSimulator.circuit))
+        DM = simulator.run(TestCPUSimulator.circuit)
         assert np.allclose(DM, TestCPUSimulator.dm_data)
 
         d_sim = Simulator(device="CPU", backend="density_matrix")
-        dm = d_sim.run(deepcopy(TestCPUSimulator.circuit))
+        dm = d_sim.run(TestCPUSimulator.circuit)
         assert np.allclose(dm["data"]["density_matrix"], TestCPUSimulator.dm_data)
 
 

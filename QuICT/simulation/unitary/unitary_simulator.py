@@ -51,6 +51,7 @@ class UnitarySimulator():
         # Step 1: Generate the unitary matrix of the given circuit
         if isinstance(circuit, Circuit):
             self._qubits_num = circuit.width()
+            circuit.set_precision(self._precision)
             self._unitary_matrix = circuit.matrix(self._device)
         else:
             row = circuit.shape[0]

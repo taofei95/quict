@@ -60,7 +60,7 @@ class BasicGate(object):
         assert precision in ["double", "single"], \
             ValueError("BasicGate.precision", "not within [double, single]", precision)
 
-        if self._matrix is not None and precision != self._precision:
+        if precision != self._precision:
             self._precision = precision
             self._is_matrix_update = True
 
@@ -75,6 +75,9 @@ class BasicGate(object):
             self._is_matrix_update = False
 
         return self._matrix
+
+    def matrix(self, precision) -> np.ndarray:
+        return GateMatrixGenerator().get_matrix(self, precision)
 
     @property
     def target_matrix(self) -> np.ndarray:

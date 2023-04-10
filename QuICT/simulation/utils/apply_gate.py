@@ -373,7 +373,7 @@ class GateSimulator:
         else:
             prob = self._algorithm.measured_prob_calculate(
                 index, state_vector, qubits, sync=self._sync
-            )
+            ).get()
             result = int(self._algorithm.apply_measuregate(
                 index, state_vector, qubits, prob, self._sync
             ))
@@ -421,4 +421,4 @@ class GateSimulator:
             )
             density_matrix = self._algorithm.dot(self._algorithm.dot(U, density_matrix), U.conj().T)
 
-        return _1
+        return _1, density_matrix
