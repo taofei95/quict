@@ -20,7 +20,11 @@ class Adjoint(Differentiator):
         )
 
     def run(
-        self, circuit: Circuit, state_vector: np.ndarray, expectation_op: Hamiltonian,
+        self,
+        circuit: Circuit,
+        variables: Variable,
+        state_vector: np.ndarray,
+        expectation_op: Hamiltonian,
     ) -> np.ndarray:
         self.initial_circuit(circuit)
         assert state_vector is not None
@@ -42,7 +46,7 @@ class Adjoint(Differentiator):
                 self._apply_gate(gate, qidxes, self._vector)
 
                 # Calculate d(L)/d(theta) and write to origin_gate.gate.pargs.grads
-                self._calculate_grad(origin_gate, gate, qidxes)
+                self._calculate_grad(variables, origin_gate, gate, qidxes)
 
                 # Calculate d(L)/d(|psi_t-1>)
                 self._apply_gate(gate, qidxes, self._grad_vector)
@@ -96,7 +100,7 @@ class Adjoint(Differentiator):
                 gate, qidxes, vector, self._qubits, fp, parg_id
             )
 
-    def _calculate_grad(self, origin_gate, gate, qidxes: list):
+    def _calculate_grad(self, variables: Variable, origin_gate, gate, qidxes: list):
         if gate.variables > 0:
             self._remain_training_gates -= 1
         for i in range(gate.variables):
@@ -106,7 +110,12 @@ class Adjoint(Differentiator):
 
             # d(L)/d(|psi_t>) * d(|psi_t>) / d(theta_t^j)
             grad = np.float64((self._grad_vector @ vector.conj()).real)
+
+            # write gradient
             origin_gate.pargs[i].grads = grad
+            index = origin_gate.pargs[i].identity[32:]
+            index = tuple(map(int, index.split(", ")))
+            variables.grads[index] += grad
 
 
 if __name__ == "__main__":
