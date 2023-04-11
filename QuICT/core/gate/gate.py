@@ -76,7 +76,7 @@ class BasicGate(object):
 
         return self._matrix
 
-    def matrix(self, precision) -> np.ndarray:
+    def get_matrix(self, precision) -> np.ndarray:
         return GateMatrixGenerator().get_matrix(self, precision)
 
     @property
@@ -278,8 +278,8 @@ class BasicGate(object):
 
         if CGATE_LIST:
             CGATE_LIST[-1].append(_gate)
-        else:
-            return _gate
+        
+        return _gate
 
     def __call__(self, *args):
         """ give parameters for the gate, and give parameters by "()", and parameters should be one of int/float/complex
@@ -607,7 +607,6 @@ class Unitary(BasicGate):
 
     def __init__(self, matrix: Union[list, np.ndarray], matrix_type: MatrixType = None):
         # Validate matrix type
-        # assert isinstance(matrix, (list, np.ndarray)), TypeError("unitary.matrix", "list/ndarray", type(matrix))
         if isinstance(matrix, list):
             matrix = np.array(matrix)
 

@@ -1,5 +1,4 @@
 from QuICT.algorithm.quantum_algorithm import Grover
-from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.core.gate.backend import MCTOneAux
