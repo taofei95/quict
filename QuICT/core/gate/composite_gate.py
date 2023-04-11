@@ -109,7 +109,7 @@ class CompositeGate(CircuitBased):
         new_gates = []
         for gate, qidxes, size in self._gates:
             new_q = [qidx_mapping[qidx] for qidx in qidxes]
-            if size > 1:
+            if isinstance(gate, CompositeGate):
                 gate & new_q
 
             new_gates.append((gate, new_q, size))
@@ -183,11 +183,13 @@ class CompositeGate(CircuitBased):
     def extend(self, gates: CompositeGate):
         if self._pointer is not None:
             gate_args = gates.width()
-            assert gate_args == len(self._pointer), GateQubitAssignedError(
-                f"{gates.name} need {gate_args} indexes, but given {len(self._pointer)}"
+            assert gate_args <= len(self._pointer), GateQubitAssignedError(
+                f"{gates.name} need at least {gate_args} indexes, but given {len(self._pointer)}"
             )
-
-            gate_qidxes = self._pointer[:]
+            if gate_args == len(self._pointer):
+                gate_qidxes = self._pointer[:]
+            else:
+                gate_qidxes = [self._pointer[qidx] for qidx in gates.qubits]
         else:
             gate_qidxes = gates.qubits
 
@@ -248,9 +250,9 @@ class CompositeGate(CircuitBased):
             int: the depth
         """
         depth = np.zeros(self.width(), dtype=int)
-        for gate, targs, gsize in self._gates:
+        for gate, targs, _ in self._gates:
             targs = [self.qubits.index(targ) for targ in targs]
-            if gsize > 1:
+            if isinstance(gate, CompositeGate):
                 gdepth = gate.depth(True)
                 for i, targ in enumerate(targs):
                     depth[targ] += gdepth[i]
@@ -319,11 +321,11 @@ class CompositeGate(CircuitBased):
             for i, q in enumerate(self.qubits):
                 qidx_mapping[q] = target_qubits[i]
 
-        for gate, targs, size in self._gates:
+        for gate, targs, _ in self._gates:
             if target_qubits is not None:
                 targs = [qidx_mapping[targ] for targ in targs]
 
-            if size > 1:
+            if isinstance(gate, CompositeGate):
                 qasm_string += gate.qasm_gates_only(creg, cbits, targs)
                 continue
 

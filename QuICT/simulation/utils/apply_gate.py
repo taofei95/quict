@@ -144,7 +144,7 @@ class GateSimulator:
     ):
         matrix_type = gate.matrix_type
         args_num = gate.controls + gate.targets
-        matrix = self._get_gate_matrix(gate)
+        matrix = self._get_gate_matrix(gate) if gate.type != GateType.unitary else gate.matrix
         control_idx = np.array(cargs, dtype=np.int64)
         target_idx = np.array(targs, dtype=np.int64)
         default_params = (

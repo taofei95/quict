@@ -88,7 +88,7 @@ class CircuitMatrix:
                     continue
 
                 args = gate.cargs + gate.targs
-                matrix = gate.matrix(self._precision) if self._device == "CPU" else self._array_helper.array(gate.matrix(self._precision))
+                matrix = gate.get_matrix(self._precision) if self._device == "CPU" else self._array_helper.array(gate.get_matrix(self._precision))
                 if len(args) == 2 and args[0] > args[1]:
                     args.sort()
                     matrix = self._computer.MatrixPermutation(matrix, self._array_helper.array([1, 0]), False)
