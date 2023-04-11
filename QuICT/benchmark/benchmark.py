@@ -23,7 +23,7 @@ class QuICTBenchmark:
         output_file_type: str = "txt"
     ):
         """
-        Initial circuit library
+        Initial benchmarking for QuICT
 
         Args:
             output_path (str, optional): The path of the Analysis of the results.
