@@ -713,34 +713,21 @@ class InverseGate:
             if gate_type in cls.__INVERSE_GATE_WITH_NEGATIVE_PARAMS:
                 for parg in gate_pargs:
                     if isinstance(parg, Variable):
-                        # inv_params.append(
-                        #     Variable(pargs=-parg.pargs, grads=-1.0)
-                        # )
-                        inv_params.append(parg * (-1.0))
+                        inv_params.append(-1.0 * parg)
                     else:
                         inv_params.append(-parg)
             elif gate_type == GateType.u2:
                 for parg in gate_pargs[::-1]:
                     if isinstance(parg, Variable):
-                        inv_params.append(
-                            Variable(pargs=np.pi - parg.pargs, grads=-1.0)
-                        )
+                        inv_params.append(np.pi - parg)
                     else:
                         inv_params.append(np.pi - parg)
             elif gate_type in [GateType.u3, GateType.cu3]:
                 for i in [0, 2, 1]:
                     if isinstance(gate_pargs[i], Variable):
-                        # inv_params.append(
-                        #     Variable(
-                        #         pargs=np.pi - gate_pargs[i].pargs,
-                        #         grads=-1.0,
-                        #     )
                         inv_params.append(
-                            gate_pargs[i] * (-1.0) + np.pi
+                            -1.0 * gate_pargs[i] + np.pi
                             if i != 0
-                            # else Variable(
-                            #     pargs=gate_pargs[i].pargs, grads=1.0
-                            # )
                             else gate_pargs[i] * 1.0
                         )
                     else:

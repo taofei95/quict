@@ -35,7 +35,7 @@ def test_fp_bp(n_qubit, pargs):
     ansatz = Ansatz(n_qubit)
     ansatz.add_gate(H_tensor)
     ansatz.add_gate(Rx_tensor(0.2), 1)
-    ansatz.add_gate(Rzx_tensor(params[1] * 3 + 0.6), [0, 1])
+    ansatz.add_gate(Rzx_tensor(-0.2 * params[1] ** 3 + 0.6), [0, 1])
     ansatz.add_gate(Rzz_tensor(params[1]), [0, 1])
     ansatz.add_gate(Rzx_tensor(params[2]), [0, 1])
     ansatz.add_gate(Rzx_tensor(3), [0, 1])
@@ -44,7 +44,7 @@ def test_fp_bp(n_qubit, pargs):
     circuit = Circuit(n_qubit)
     H | circuit
     Rx(0.2) | circuit(1)
-    Rzx(variables[1] * 3 + 0.6) | circuit([0, 1])
+    Rzx(-0.2 * variables[1] ** 3 + 0.6) | circuit([0, 1])
     Rzz(variables[1]) | circuit([0, 1])
     Rzx(variables[2]) | circuit([0, 1])
     Rzx(3) | circuit([0, 1])
