@@ -33,8 +33,10 @@ class Adjoint(Differentiator):
         )
 
         for idx in range(len(self._bp_pipeline)):
+            if self._remain_training_gates == 0:
+                return
             origin_gate = self._pipeline[idx]
-            gate, qidxes, size = self._bp_pipeline[idx]
+            gate, qidxes, _ = self._bp_pipeline[idx]
             if isinstance(gate, BasicGate):
                 # Calculate |psi_t-1>
                 self._apply_gate(gate, qidxes, self._vector)
@@ -45,19 +47,12 @@ class Adjoint(Differentiator):
                 # Calculate d(L)/d(|psi_t-1>)
                 self._apply_gate(gate, qidxes, self._grad_vector)
             else:
-                if size > 1:
-                    raise TypeError("Adjoint.run.circuit", "BasicGate".type(gate))
-                    # Calculate |psi_t-1>
-                    self._apply_compositegate(gate, qidxes, self._vector)
-
-                    # Calculate d(L)/d(theta)
-
-                    # Calculate d(L)/d(|psi_t-1>)
-                    self._apply_compositegate(gate, qidxes, self._grad_vector)
-                else:
-                    raise TypeError("Adjoint.run.circuit", "BasicGate".type(gate))
+                raise TypeError("Adjoint.run.circuit", "BasicGate".type(gate))
 
     def initial_circuit(self, circuit: Circuit):
+        circuit.gate_decomposition(decomposition=False)
+        self._training_gates = circuit.count_training_gates()
+        self._remain_training_gates = self._training_gates
         self._qubits = int(circuit.width())
         self._circuit = circuit
         self._bp_circuit = Circuit(circuit.width())
@@ -101,36 +96,14 @@ class Adjoint(Differentiator):
                 gate, qidxes, vector, self._qubits, fp, parg_id
             )
 
-    def _apply_compositegate(
-        self,
-        gate: CompositeGate,
-        qidxes: list,
-        vector,
-        fp: bool = True,
-        parg_id: int = 0,
-    ):
-        qidxes_mapping = {}
-        cgate_qlist = gate.qubits
-        for idx, cq in enumerate(cgate_qlist):
-            qidxes_mapping[cq] = qidxes[idx]
-
-        for cgate, cg_idx, size in gate.fast_gates:
-            real_qidx = [qidxes_mapping[idx] for idx in cg_idx]
-            if size > 1:
-                self._apply_compositegate(cgate, real_qidx, vector, fp, parg_id)
-            else:
-                if isinstance(gate, BasicGate):
-                    self._apply_gate(cgate, real_qidx, vector, fp, parg_id)
-                else:
-                    raise TypeError(
-                        "Adjoint.apply_compositegate", "BasicGate".type(gate)
-                    )
-
     def _calculate_grad(self, origin_gate, gate, qidxes: list):
+        if gate.variables > 0:
+            self._remain_training_gates -= 1
         for i in range(gate.variables):
             vector = self._vector.copy()
             # d(|psi_t>) / d(theta_t^j)
             self._apply_gate(origin_gate, qidxes, vector, fp=False, parg_id=i)
+
             # d(L)/d(|psi_t>) * d(|psi_t>) / d(theta_t^j)
             grad = np.float64((self._grad_vector @ vector.conj()).real)
             origin_gate.pargs[i].grads = grad

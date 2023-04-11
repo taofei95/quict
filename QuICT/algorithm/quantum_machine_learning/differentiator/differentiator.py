@@ -50,6 +50,8 @@ class Differentiator:
         self._precision = precision
         self._device_id = gpu_device_id
         self._sync = sync
+        self._training_gates = 0
+        self._remain_training_gates = 0
         self._gate_calculator = GateSimulator(
             self._device, self._precision, self._device_id, self._sync
         )
