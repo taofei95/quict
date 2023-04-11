@@ -3,7 +3,7 @@ from typing import Union
 import uuid
 
 
-class Variable:
+class Variable(object):
     @property
     def pargs(self):
         return self._pargs
@@ -84,13 +84,14 @@ class Variable:
                 )
         raise TypeError
 
+    def __radd__(self, other):
+        return self.__add__(other)
+
     def __sub__(self, other):
-        if isinstance(other, (int, float, np.float64)):
-            if isinstance(self.pargs, np.float64):
-                return Variable(
-                    pargs=self.pargs - other, grads=self.grads, identity=self.identity
-                )
-        raise TypeError
+        return self.__add__(-other)
+
+    def __rsub__(self, other):
+        return self.__mul__(-1.0).__add__(other)
 
     def __mul__(self, other):
         if isinstance(other, (int, float, np.float64)):
@@ -101,19 +102,30 @@ class Variable:
                 )
         raise TypeError
 
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __truediv__(self, other):
+        if other == 0:
+            raise ValueError
+        return self.__mul__(1.0 / other)
+
+    def __rtruediv__(self, other):
+        return self.__pow__(-1.0).__mul__(other)
+
+    def __pow__(self, other):
+        if isinstance(other, (int, float, np.float64)):
+            if isinstance(self.pargs, np.float64):
+                grad = other * self.pargs ** (other - 1.0)
+                grads = grad if abs(self.grads) < 1e-12 else self.grads * grad
+                return Variable(
+                    pargs=self.pargs ** other, grads=grads, identity=self.identity
+                )
+        raise TypeError
+
 
 if __name__ == "__main__":
     pargs = Variable(np.array([[0, 1, 2], [0.1, 0.2, 0.3]]))
-    print(pargs[0, 1].pargs)
-    print((pargs[0, 1] * 3 + 2).pargs)
-    print(pargs.pargs)
-    print(pargs.identity)
-    print(pargs[0, 1].identity)
-    # print((pargs[0, 1] * 3 + 2).identity)
-    
-    s = "1"
-    t = tuple(map(int, s.split(', ')))
-    print(t)
-    a = np.array([1,2,3])
-    print(a[t])
-
+    print(pargs[0, 2].pargs)
+    print((pargs[0, 2] ** 3 + 2.3).pargs, (pargs[0, 2] ** 3 + 2.3).grads)
+    print((3 / pargs[0, 2]).pargs, (3 / pargs[0, 2]).grads)
