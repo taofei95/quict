@@ -46,7 +46,7 @@ class Adjoint(Differentiator):
                 self._apply_gate(gate, qidxes, self._vector)
 
                 # Calculate d(L)/d(theta) and write to origin_gate.gate.pargs.grads
-                self._calculate_grad(variables, origin_gate, gate, qidxes)
+                self._calculate_grad(variables, origin_gate, qidxes)
 
                 # Calculate d(L)/d(|psi_t-1>)
                 self._apply_gate(gate, qidxes, self._grad_vector)
@@ -100,10 +100,10 @@ class Adjoint(Differentiator):
                 gate, qidxes, vector, self._qubits, fp, parg_id
             )
 
-    def _calculate_grad(self, variables: Variable, origin_gate, gate, qidxes: list):
-        if gate.variables > 0:
+    def _calculate_grad(self, variables: Variable, origin_gate, qidxes: list):
+        if origin_gate.variables > 0:
             self._remain_training_gates -= 1
-        for i in range(gate.variables):
+        for i in range(origin_gate.variables):
             vector = self._vector.copy()
             # d(|psi_t>) / d(theta_t^j)
             self._apply_gate(origin_gate, qidxes, vector, fp=False, parg_id=i)
@@ -112,10 +112,14 @@ class Adjoint(Differentiator):
             grad = np.float64((self._grad_vector @ vector.conj()).real)
 
             # write gradient
-            origin_gate.pargs[i].grads = grad
+            origin_gate.pargs[i].grads = (
+                grad
+                if abs(origin_gate.pargs[i].grads) < 1e-12
+                else grad * origin_gate.pargs[i].grads
+            )
             index = origin_gate.pargs[i].identity[32:]
             index = tuple(map(int, index.split(", ")))
-            variables.grads[index] += grad
+            variables.grads[index] += origin_gate.pargs[i].grads
 
 
 if __name__ == "__main__":
