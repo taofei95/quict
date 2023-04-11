@@ -1,5 +1,10 @@
+import numpy as np
+
 from QuICT.core import Circuit
-from QuICT.core.gate import *
+from QuICT.core.gate import (
+    H, X, Ry, CU3, Measure,
+    QFT, IQFT,
+    CompositeGate, MultiControlToffoli)
 from QuICT.qcda.synthesis.quantum_state_preparation import QuantumStatePreparation
 from QuICT.qcda.synthesis.unitary_decomposition.controlled_unitary import ControlledUnitaryDecomposition
 from QuICT.tools import Logger
@@ -181,5 +186,10 @@ class HHL:
         circuit = self.circuit(matrix, vector, dominant_eig, phase_qubits, measure)
 
         state_vector = simulator.run(circuit)
+        try:
+            state_vector = state_vector.get()
+        except:
+            pass
+
         if measure and int(circuit[0]) == 0 or not measure:
-            return np.array(state_vector[: size].get(), dtype=np.complex128)
+            return np.array(state_vector[: size], dtype=np.complex128)
