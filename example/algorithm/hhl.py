@@ -23,7 +23,7 @@ def random_vector(size):
     return np.complex128(np.round(np.random.rand(size), 3) - np.full(size, 0.5))
 
 
-n = 2 ** 4
+n = 2 ** 1
 A = random_matrix(n)
 b = random_vector(n)
 
