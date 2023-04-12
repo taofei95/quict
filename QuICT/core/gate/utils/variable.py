@@ -17,6 +17,11 @@ class Variable(object):
         return self._identity
 
     @property
+    def index(self):
+        index = self.identity[32:]
+        return tuple(map(int, index.split(", ")[:-1]))
+
+    @property
     def shape(self):
         return self._shape
 
