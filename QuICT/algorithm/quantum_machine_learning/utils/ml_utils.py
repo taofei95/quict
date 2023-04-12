@@ -1,11 +1,13 @@
 import os
+import time
 import torch
 import shutil
 import numpy as np
 import random
+import tensorflow as tf
 
+from QuICT.core.gate.utils import Variable
 from QuICT.tools.logger import *
-
 from QuICT.algorithm.quantum_machine_learning.tools.exception import *
 
 logger = Logger("ML_utils")
@@ -37,10 +39,7 @@ def save_checkpoint(net, optim, model_path, ep, it, latest=False):
     """
     os.makedirs(model_path, exist_ok=True)
     checkpoint = dict(
-        epoch=ep,
-        iter=it,
-        graph=net.state_dict(),
-        optimizer=optim.state_dict(),
+        epoch=ep, iter=it, graph=net.state_dict(), optimizer=optim.state_dict(),
     )
     torch.save(checkpoint, "{0}/model.ckpt".format(model_path))
     if not latest:
@@ -79,3 +78,27 @@ def restore_checkpoint(net, optim, model_path, device):
 
     logger.info(f"Successfully restored checkpoint at ep: {ep} it: {it}")
     return ep, it
+
+
+def apply_optimizer(optimizer: tf.keras.optimizers.Optimizer, variables: Variable):
+    tfvariable_list = convert_to_tfvariable(variables.pargs)
+    start = time.time()
+    optimizer.apply_gradients(zip(variables.grads, tfvariable_list))
+    print("tf apply optim", time.time() - start)
+    pargs = convert_to_numpy(tfvariable_list)
+    variables.pargs = pargs
+    return variables
+
+
+def convert_to_tfvariable(pargs: np.ndarray):
+    pargs_list = []
+    for parg in pargs:
+        pargs_list.append(tf.Variable(parg))
+    return pargs_list
+
+
+def convert_to_numpy(variable_list: list):
+    pargs_list = []
+    for variable in variable_list:
+        pargs_list.append(variable.numpy())
+    return np.array(pargs_list)

@@ -38,7 +38,7 @@ class Adjoint(Differentiator):
 
         for idx in range(len(self._bp_pipeline)):
             if self._remain_training_gates == 0:
-                return
+                return variables
             origin_gate = self._pipeline[idx]
             gate, qidxes, _ = self._bp_pipeline[idx]
             if isinstance(gate, BasicGate):
@@ -52,6 +52,7 @@ class Adjoint(Differentiator):
                 self._apply_gate(gate, qidxes, self._grad_vector)
             else:
                 raise TypeError("Adjoint.run.circuit", "BasicGate".type(gate))
+        return variables
 
     def initial_circuit(self, circuit: Circuit):
         circuit.gate_decomposition(decomposition=False)

@@ -1,5 +1,6 @@
 import torch
 import time
+import tensorflow as tf
 
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
@@ -11,6 +12,7 @@ from QuICT.core.circuit import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.utils import GateSimulator
 from QuICT.simulation.state_vector import StateVectorSimulator
+from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 
 
 def loss_func(state, n_qubits, hamiltonian, device=torch.device("cuda:0")):
@@ -66,18 +68,11 @@ def test_fp_bp(n_qubit, pargs):
 
     start = time.time()
     sv = simulator.run(circuit)
-    differ.run(circuit, variables, sv, h)
+    variables = differ.run(circuit, variables, sv, h)
     # print("FP + BP", time.time() - start)
-    print(variables.pargs)
-    print(variables.grads)
-    
-    variables.pargs = np.array([1, 1, 1])
-    print(variables.pargs)
-    circuit.update(variables)
-    
-    for gate in circuit.gates:
-        if isinstance(gate.parg, Variable):
-            print(gate.parg.pargs)
+    optim = tf.keras.optimizers.SGD(learning_rate=0.1)
+    variables = apply_optimizer(optim, variables)
+    variables.zero_grad()
 
     return variables
 
