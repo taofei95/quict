@@ -64,10 +64,13 @@ class Variable(object):
         )
 
     def __getitem__(self, index):
+        print(index)
         return Variable(
             pargs=self.pargs[index],
             grads=self.grads[index],
-            identity=self.identity + str(index).replace("(", "").replace(")", ""),
+            identity=self.identity
+            + str(index).replace("(", "").replace(")", "")
+            + ", ",
         )
 
     def __eq__(self, other):

@@ -118,7 +118,7 @@ class Adjoint(Differentiator):
                 else grad * origin_gate.pargs[i].grads
             )
             index = origin_gate.pargs[i].identity[32:]
-            index = tuple(map(int, index.split(", ")))
+            index = tuple(map(int, index.split(", ")[:-1]))
             variables.grads[index] += origin_gate.pargs[i].grads
 
 
