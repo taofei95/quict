@@ -14,6 +14,7 @@ from QuICT.simulation.density_matrix import DensityMatrixSimulator
 from QuICT.simulation.utils import Result
 from QuICT.tools.exception.core import ValueError
 from QuICT.tools.exception.simulation import SimulatorOptionsUnmatchedError
+from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
 
 
 class Simulator:
@@ -149,3 +150,53 @@ class Simulator:
         self._result_recorder.record_sample(sample_result)
 
         return self._result_recorder.__dict__()
+
+    def get_expectation(self,state_vector,Hamiltonian:Hamiltonian,n_qubits:int ):
+        """ a toy method that get the expectation acted on targetr qubit of a qcircuit with hermitian obersered operator 
+
+        Args:
+            state_vector(tensor): 
+            Hamiltonian(): a  hermitian obersered operator 
+            n_qubits(int):the number of the circuit Hamiltonian acting on 
+        Returns:
+            the expectation of the circuit
+        """
+        e_val = 0
+        if not self.isRun:
+            raise TypeError("StateVectorSimulation.get_expetation should be executed after StateVectorSimulation.run!")
+        bra=state_vector.copy().conj()
+        ket=state_vector.copy()
+        e_val = np.dot(bra,Hamiltonian.get_hamiton_matrix(n_qubits=n_qubits))
+        e_val = np.dot(e_val,ket).real
+
+        return e_val
+    def forward(self,cir:Circuit, ham:Hamiltonian=Hamiltonian([[0.5, 'Y0', 'X4', 'Z2', 'I6'], [0.0]])):
+        state_vector=self.run(cir)
+        state_vector= state_vector['data']['state_vector']
+        #ham = Hamiltonian([[0.5, 'Y0', 'X4', 'Z2', 'I6'], [0.0]])
+        e_val=self.get_expectation(state_vector,ham,len(cir._qubits))
+        return e_val,state_vector
+    def backward(self,cir:Circuit,idx_gate:int,idx_param:int,grad,lr:float):
+        gate =cir.gates[idx_gate]
+        param_list = gate.pargs.copy()
+        param_list[idx_param] +=lr*grad
+        gate.pargs=param_list.copy()
+        cir.replace_gate(idx_gate,gate)
+        return cir
+    def backward(self,cir:Circuit,grad:list,lr):
+        index = 0
+        for gate in cir.gates:
+            if not gate.is_requires_grad():
+                continue
+            params = [gate.pargs]
+            if len(params)!=1:
+                params= params[0]
+            new_params=gate.pargs.copy()
+            for i in range(len(new_params)):
+                new_params[i]+=lr*grad[index]
+                index+=1
+            idx= cir.gates.index(gate)
+            gate.pargs=new_params
+            cir.replace_gate(idx,gate)
+        return cir
+
