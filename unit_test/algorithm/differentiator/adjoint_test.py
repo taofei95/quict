@@ -70,8 +70,18 @@ def test_fp_bp(n_qubit, pargs):
     # print("FP + BP", time.time() - start)
     print(variables.pargs)
     print(variables.grads)
+    
+    variables.pargs = np.array([1, 1, 1])
+    print(variables.pargs)
+    circuit.update(variables)
+    
+    for gate in circuit.gates:
+        if isinstance(gate.parg, Variable):
+            print(gate.parg.pargs)
+
+    return variables
 
 
 if __name__ == "__main__":
-    test_fp_bp(3, [1.8, -0.7, 2.3])
-
+    variables = test_fp_bp(3, [1.8, -0.7, 2.3])
+    
