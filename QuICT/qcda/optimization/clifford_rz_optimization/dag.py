@@ -200,7 +200,7 @@ class DAG(Iterable):
         cur_nodes = self.start_nodes.copy()
 
         var_cnt = 0
-        for idx, gate_ in enumerate(gates.gates):
+        for idx, gate_ in enumerate(gates.flatten_gates()):
             # decouple ccx building with dag
             if build_toffoli and (gate_.type == GateType.ccx or gate_.type == GateType.ccz):
                 self.has_symbolic_rz = True

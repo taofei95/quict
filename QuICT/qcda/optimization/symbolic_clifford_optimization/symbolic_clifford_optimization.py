@@ -56,7 +56,7 @@ class SymbolicCliffordOptimization(object):
             gates = CompositeGate(gates=gates.gates)
         assert isinstance(gates, CompositeGate),\
             TypeError('Invalid input(Circuit/CompositeGate)')
-        for gate in gates:
+        for gate in gates.flatten_gates():
             # FIXME log output here
             if not gate.is_clifford():
                 return gates
@@ -86,21 +86,26 @@ class SymbolicCliffordOptimization(object):
         """
         For CompositeGate with CX, H, S only, reorder gates so that S appears as late as possible
         """
-        for gate in gates:
+        f_gate = gates.flatten_gates()
+        for gate in f_gate:
             assert gate.type in [GateType.cx, GateType.h, GateType.s],\
                 ValueError('Only CX, H, S gates are allowed in reorder')
         width = gates.width()
         gates_reorder = CompositeGate()
         S_stack = [[] for _ in range(width)]
-        for gate in gates:
+        for gate in f_gate:
             if gate.type == GateType.s:
                 S_stack[gate.targ].append(gate)
             else:
-                gates_reorder.extend(S_stack[gate.targ])
+                for stack_gate in S_stack[gate.targ]:
+                    gates_reorder.append(stack_gate)
+
                 gates_reorder.append(gate)
                 S_stack[gate.targ] = []
         for qubit in range(width):
-            gates_reorder.extend(S_stack[qubit])
+            for stack_gate in S_stack[qubit]:
+                gates_reorder.append(stack_gate)
+
         return gates_reorder
 
     def cx_reverse(self, gates: CompositeGate, control_set: list):
@@ -109,7 +114,7 @@ class SymbolicCliffordOptimization(object):
         is not, the control and target qubit will be reversed by adding H gates.
         """
         gates_reverse = CompositeGate()
-        for gate in gates:
+        for gate in gates.flatten_gates():
             if gate.type == GateType.cx and gate.carg not in control_set and gate.targ in control_set:
                 with gates_reverse:
                     H & gate.carg
@@ -146,14 +151,16 @@ class SymbolicCliffordOptimization(object):
         Returns:
             CompositeGate, PauliOperator: compute stage and Pauli stage
         """
-        for gate in gates:
-            assert gate.is_clifford(), ValueError('Only Clifford CompositeGate')
+        f_gates = gates.flatten_gates()
+        for gate in f_gates:
+            assert gate.is_clifford() or gate.is_identity(), ValueError(f'Only Clifford CompositeGate, {gate.type}')
         if width is None:
-            width = gates.width()
+            width = max(gates.qubits) + 1 if isinstance(gates, CompositeGate) else gates.width()
+
         pauli = PauliOperator([GateType.id for _ in range(width)])
 
         compute = CompositeGate()
-        for gate in gates:
+        for gate in f_gates:
             if gate.is_pauli():
                 pauli.combine_one_gate(gate.type, gate.targ)
                 continue
@@ -190,7 +197,8 @@ class SymbolicCliffordOptimization(object):
         Returns:
             CompositeGate: CompositeGate after optimization
         """
-        for gate in gates:
+        f_gates = gates.flatten_gates()
+        for gate in f_gates:
             assert gate.type in [GateType.cx, GateType.h, GateType.s],\
                 ValueError('Only CX, H, S gates are allowed in this optimization')
             if gate.type == GateType.cx:
@@ -200,7 +208,7 @@ class SymbolicCliffordOptimization(object):
         gates_opt = CompositeGate()
         current = CompositeGate()
         control = None
-        for gate in gates:
+        for gate in f_gates:
             if current.size() != 0:
                 if ((gate.type != GateType.cx and gate.targ != control) or
                    (gate.type == GateType.cx and (gate.carg == control or gate.carg not in control_set))):
@@ -225,11 +233,12 @@ class SymbolicCliffordOptimization(object):
         """
         Inner method for symbolic peephole optimization
         """
-        for gate in gates:
+        f_gates = gates.flatten_gates()
+        for gate in f_gates:
             assert gate.targ != control, ValueError('control qubit should not be targeted')
 
         symbolic_gates = CompositeGate()
-        for gate in gates:
+        for gate in f_gates:
             # symbolize coupling cx
             if gate.type == GateType.cx and gate.carg == control:
                 symbolic_gates.append(X & gate.targ)

@@ -625,6 +625,10 @@ class Unitary(BasicGate):
     def matrix(self):
         return self._matrix
 
+    def get_matrix(self, precision) -> np.ndarray:
+        _dtype = np.complex128 if precision == "double" else np.complex64
+        return self._matrix.astype(_dtype)
+
     @property
     def target_matrix(self):
         return self._matrix
@@ -653,7 +657,10 @@ class Unitary(BasicGate):
         if matrix_type is None:
             matrix_type, controls = self.validate_matrix_type(matrix)
         else:
-            matrix_type = MatrixType.normal
+            matrix_type = matrix_type
+            controls = 0
+
+        if controls == n:
             controls = 0
 
         super().__init__(
