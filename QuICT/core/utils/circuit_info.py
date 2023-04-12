@@ -242,8 +242,7 @@ class CircuitBased(object):
 
     def update(self, variables):
         remain_training_gates = self.count_training_gates()
-
-        for gate, qidxes, size in self._gates:
+        for gate, _, _ in self._gates:
             if remain_training_gates == 0:
                 return
             if gate.variables > 0:
