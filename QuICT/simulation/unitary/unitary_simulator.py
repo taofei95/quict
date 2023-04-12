@@ -2,11 +2,9 @@ from typing import *
 import numpy as np
 
 from QuICT.core import Circuit
-import QuICT.ops.linalg.cpu_calculator as CPUCalculator
+from QuICT.simulation.utils import GateSimulator
 from QuICT.tools.exception.core import ValueError
-from QuICT.tools.exception.simulation import (
-    UnitaryMatrixUnmatchedError, StateVectorUnmatchedError, SampleBeforeRunError
-)
+from QuICT.tools.exception.simulation import SampleBeforeRunError
 
 
 class UnitarySimulator():
@@ -20,41 +18,19 @@ class UnitarySimulator():
     def vector(self):
         return self._vector
 
-    @vector.setter
-    def vector(self, vec):
-        self._vector = self._array_helper.array(vec)
-
     def __init__(
         self,
         device: str = "CPU",
         precision: str = "double"
     ):
+        assert device in ["CPU", "GPU"], ValueError("UnitarySimulation.device", "[CPU, GPU]", device)
         self._device = device
-        self._precision = np.complex128 if precision == "double" else np.complex64
+        assert precision in ["single", "double"], \
+            ValueError("UnitarySimulation.precision", "[single, double]", precision)
+        self._precision = precision
+        self._gate_calculator = GateSimulator(self._device, self._precision)
         self._vector = None
         self._circuit = None
-
-        if device == "CPU":
-            self._computer = CPUCalculator
-            self._array_helper = np
-        elif device == "GPU":
-            import cupy as cp
-            import QuICT.ops.linalg.gpu_calculator as GPUCalculator
-
-            self._computer = GPUCalculator
-            self._array_helper = cp
-        else:
-            raise ValueError("UnitarySimulation.device", "[CPU, GPU]", device)
-
-    def initial_vector_state(self):
-        """ Initial the state vector for simulation through UnitarySimulator,
-        must after initial_circuit
-        """
-        self._vector = self._array_helper.zeros(1 << self._qubits_num, dtype=self._precision)
-        if self._device == "CPU":
-            self._vector[0] = self._precision(1)
-        else:
-            self._vector.put(0, self._precision(1))
 
     def run(
         self,
@@ -74,40 +50,27 @@ class UnitarySimulator():
         """
         # Step 1: Generate the unitary matrix of the given circuit
         if isinstance(circuit, Circuit):
-            if self._precision != circuit._precision:
-                circuit.convert_precision()
-
             self._qubits_num = circuit.width()
+            circuit.set_precision(self._precision)
             self._unitary_matrix = circuit.matrix(self._device)
-            assert 2 ** self._qubits_num == self._unitary_matrix.shape[0], \
-                UnitaryMatrixUnmatchedError("The unitary matrix should has the same qubits with the circuit.")
         else:
-            row, col = circuit.shape
+            row = circuit.shape[0]
             self._qubits_num = int(np.log2(row))
-            assert row == col and 2 ** self._qubits_num == col, \
-                UnitaryMatrixUnmatchedError("The unitary matrix should be square.")
-            self._unitary_matrix = self._array_helper.array(circuit, dtype=self._precision)
+            self._unitary_matrix = self._gate_calculator.normalized_matrix(circuit, self._qubits_num)
 
         # Step 2: Prepare the state vector
         if state_vector is not None:
-            assert 2 ** self._qubits_num == state_vector.size, \
-                StateVectorUnmatchedError("The state vector should has the same qubits with the circuit.")
-            self.vector = self._array_helper.array(state_vector, dtype=self._precision)
+            self._vector = self._gate_calculator.normalized_state_vector(state_vector, self._qubits_num)
         elif not use_previous or self._vector is None:
-            self.initial_vector_state()
+            self._vector = self._gate_calculator.get_allzero_state_vector(self._qubits_num)
 
         # Step 3: Simulation with the unitary matrix and qubit's state vector
-        if not self._is_identity():
-            self._vector = self._computer.dot(
-                self._unitary_matrix,
-                self._vector
-            )
+        self._vector = self._gate_calculator.dot(
+            self._unitary_matrix,
+            self._vector
+        )
 
         return self._vector
-
-    def _is_identity(self):
-        identity_matrix = self._array_helper.identity(1 << self._qubits_num, dtype=self._precision)
-        return self._array_helper.allclose(self._unitary_matrix, identity_matrix)
 
     def sample(self, shots: int):
         """_summary_
@@ -125,33 +88,11 @@ class UnitarySimulator():
         counts = [0] * (1 << self._qubits_num)
         for _ in range(shots):
             measured_result = 0
-            for i in range(self._qubits_num):
+            for i in range(self._qubits_num - 1, -1, -1):
                 measured_result <<= 1
-                measured_result += self._measure(i)
+                measured_result += self._gate_calculator.apply_measure_gate(i, self._vector, self._qubits_num)
 
             counts[measured_result] += 1
             self._vector = original_sv.copy()
 
         return counts
-
-    def _measure(self, index):
-        if self._device == "CPU":
-            result = self._computer.measure_gate_apply(
-                index,
-                self._vector
-            )
-        else:
-            from QuICT.ops.gate_kernel import apply_measuregate, measured_prob_calculate
-            prob = measured_prob_calculate(
-                index,
-                self._vector,
-                self._qubits_num
-            )
-            result = apply_measuregate(
-                index,
-                self._vector,
-                self._qubits_num,
-                prob=prob.get()
-            )
-
-        return int(result)

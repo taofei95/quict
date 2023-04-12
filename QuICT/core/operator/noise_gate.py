@@ -1,4 +1,4 @@
-import numpy as np
+from __future__ import annotations
 
 from ._operator import Operator
 
@@ -29,7 +29,10 @@ class NoiseGate(Operator):
         self._noise_matrix = noise_matrix
         self._precision = self._noise_matrix[0].dtype
 
-    def convert_precision(self):
-        self._precision = np.complex128 if self._precision == np.complex64 else np.complex64
-        for noise_matrix in self._noise_matrix:
-            noise_matrix = noise_matrix.astype(self._precision)
+    def copy(self):
+        _ngate = NoiseGate(self._noise_matrix, self._targets)
+
+        if len(self.targs) > 0:
+            _ngate.targs = self._targs
+
+        return _ngate

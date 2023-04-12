@@ -9,8 +9,7 @@ import numpy as np
 
 from QuICT.ops.utils import mapping_augment
 
-# njit(['float64[:,:](float64[:,:])', 'int64[:,:](int64[:,:])'], parallel=True)
-@njit(parallel=True, nogil=True)
+@njit(['complex64[:,:](complex64[:,:], int64, int64)', 'complex128[:,:](complex128[:,:], int64, int64)'], parallel=True, nogil=True)
 def MatrixTensorI(A, n, m):
     """ tensor I^n and A and I^m
 
@@ -37,7 +36,7 @@ def MatrixTensorI(A, n, m):
     return MatrixTensor
 
 
-@njit(parallel=True, nogil=True)
+@njit(['complex64[:,:](complex64[:,:], int64[:], bool_)', 'complex128[:,:](complex128[:,:], int64[:], bool_)'], parallel=True, nogil=True)
 def MatrixPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = False) -> np.ndarray:
     """ permute A with mapping, inplace
 
@@ -64,7 +63,7 @@ def MatrixPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = Fa
     return perm_mat
 
 
-@njit()
+@njit(['complex64[:](complex64[:], int64[:], bool_)', 'complex128[:](complex128[:], int64[:], bool_)'])
 def VectorPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = False):
     """ permutaion A with mapping, changeInput
 
@@ -86,7 +85,7 @@ def VectorPermutation(A: np.ndarray, mapping: np.ndarray, changeInput: bool = Fa
     return A[switched_idx]
 
 
-@njit(parallel=True, nogil=True)
+@njit(['complex64[:,:](complex64[:,:], complex64[:,:])', 'complex128[:,:](complex128[:,:], complex128[:,:])'], parallel=True, nogil=True)
 def tensor(A: np.ndarray, B: np.ndarray):
     """ tensor A and B
 
@@ -108,7 +107,12 @@ def tensor(A: np.ndarray, B: np.ndarray):
     return tensor_data
 
 
-@njit()
+@njit([
+    'complex64[:,:](complex64[:,:], complex64[:,:])',
+    'complex128[:,:](complex128[:,:], complex128[:,:])',
+    'complex64[:](complex64[:,:], complex64[:])',
+    'complex128[:](complex128[:,:], complex128[:])'
+])
 def dot(A: np.ndarray, B: np.ndarray):
     """ dot matrix A and matrix B
 
@@ -122,7 +126,12 @@ def dot(A: np.ndarray, B: np.ndarray):
     return np.dot(A, B)
 
 
-@njit()
+@njit([
+    'complex64[:,:](complex64[:,:], complex64[:,:])',
+    'complex128[:,:](complex128[:,:], complex128[:,:])',
+    'complex64[:](complex64[:], complex64[:])',
+    'complex128[:](complex128[:], complex128[:])'
+])
 def multiply(A: np.ndarray, B: np.ndarray):
     """ multiply matrix A and matrix B
 
@@ -136,7 +145,10 @@ def multiply(A: np.ndarray, B: np.ndarray):
     return np.multiply(A, B)
 
 
-@njit()
+@njit([
+    'void(complex64[:], int64, complex64[:,:], int64, int64[:])',
+    'void(complex128[:], int64, complex128[:,:], int64, int64[:])',
+])
 def matrix_dot_vector(
     vec: np.ndarray,
     vec_bit: int,
@@ -186,7 +198,10 @@ def matrix_dot_vector(
         vec[current_idx] = dot(mat, vec[current_idx])
 
 
-@njit()
+@njit([
+    'void(complex64[:], int64, complex64[:,:], int64, int64[:], int64[:], bool_)',
+    'void(complex128[:], int64, complex128[:,:], int64, int64[:], int64[:], bool_)',
+])
 def diagonal_matrix(
     vec: np.ndarray,
     vec_bit: int,
@@ -235,7 +250,10 @@ def diagonal_matrix(
         vec[current_idx] = multiply(vec[current_idx], valued_mat)
 
 
-@njit()
+@njit([
+    'void(complex64[:], int64, complex64[:,:], int64, int64[:], int64[:])',
+    'void(complex128[:], int64, complex128[:,:], int64, int64[:], int64[:])'
+])
 def swap_matrix(
     vec: np.ndarray,
     vec_bit: int,
@@ -280,7 +298,10 @@ def swap_matrix(
         vec[current_sidx[1]] = temp_value
 
 
-@njit()
+@njit([
+    'void(complex64[:], int64, complex64[:,:], int64, int64[:], int64[:])',
+    'void(complex128[:], int64, complex128[:,:], int64, int64[:], int64[:])'
+])
 def reverse_matrix(
     vec: np.ndarray,
     vec_bit: int,
@@ -326,7 +347,10 @@ def reverse_matrix(
         vec[current_sidx[1]] = temp_value * reverse_value[1]
 
 
-@njit()
+@njit([
+    'int64(int64, complex64[:])',
+    'int64(int64, complex128[:])'
+])
 def get_measured_probability(
     index: int,
     vec: np.array
@@ -338,7 +362,10 @@ def get_measured_probability(
     return np.sum(np.square(np.abs(vec[vec_idx_0])))
 
 
-@njit()
+@njit([
+    'bool_(int64, complex64[:])',
+    'bool_(int64, complex128[:])'
+])
 def measure_gate_apply(
     index: int,
     vec: np.array
@@ -375,7 +402,10 @@ def measure_gate_apply(
     return _1
 
 
-@njit()
+@njit([
+    'void(int64, complex64[:])',
+    'void(int64, complex128[:])'
+])
 def reset_gate_apply(
     index: int,
     vec: np.array

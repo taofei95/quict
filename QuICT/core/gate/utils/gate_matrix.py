@@ -509,7 +509,9 @@ class ComplexGateBuilder:
     def build_gate(cls, gate_type, parg, gate_matrix=None):
 
         if gate_type == GateType.cu3:
-            cgate = cls.build_unitary(gate_matrix)
+            # TODO: currently not correct for cu3 decomposition
+            # cgate = cls.build_unitary(gate_matrix)
+            return None
         elif gate_type == GateType.cu1:
             cgate = cls.build_cu1(parg)
         elif gate_type == GateType.rxx:
@@ -539,7 +541,7 @@ class ComplexGateBuilder:
     def build_unitary(gate_matrix):
         from QuICT.qcda.synthesis import UnitaryDecomposition
 
-        cgate, _ = UnitaryDecomposition().execute(gate_matrix)
+        cgate, _ = UnitaryDecomposition(include_phase_gate=True).execute(gate_matrix)
 
         return cgate
 

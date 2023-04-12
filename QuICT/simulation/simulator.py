@@ -27,7 +27,7 @@ class Simulator:
         circuit_record (bool): whether record circuit's qasm in output, default to False.
         amplitude_record (bool): whether record the amplitude of qubits, default to False.
         **options (dict): other optional parameters for the simulator.
-            state_vector: [gpu_device_id, matrix_aggregation] (only for gpu)
+            state_vector: [gpu_device_id] (only for gpu)
             density_matrix: [accumulated_mode]
             unitary: None
     """
@@ -36,7 +36,7 @@ class Simulator:
     __BACKEND = ["unitary", "state_vector", "density_matrix"]
     __PRECISION = ["single", "double"]
     __OPTIONS_DICT = {
-        "state_vector": ["gpu_device_id", "matrix_aggregation"],
+        "state_vector": ["gpu_device_id"],
         "density_matrix": ["accumulated_mode"]
     }
 
@@ -94,7 +94,7 @@ class Simulator:
         elif self._backend == "unitary":
             simulator = UnitarySimulator(device=self._device, precision=self._precision)
         else:
-            simulator = DensityMatrixSimulator(device=self._device, precision=self._precision)
+            simulator = DensityMatrixSimulator(device=self._device, precision=self._precision, **self._options)
 
         return simulator
 

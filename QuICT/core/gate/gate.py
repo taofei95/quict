@@ -60,7 +60,7 @@ class BasicGate(object):
         assert precision in ["double", "single"], \
             ValueError("BasicGate.precision", "not within [double, single]", precision)
 
-        if self._matrix is not None and precision != self._precision:
+        if precision != self._precision:
             self._precision = precision
             self._is_matrix_update = True
 
@@ -75,6 +75,9 @@ class BasicGate(object):
             self._is_matrix_update = False
 
         return self._matrix
+
+    def get_matrix(self, precision) -> np.ndarray:
+        return GateMatrixGenerator().get_matrix(self, precision)
 
     @property
     def target_matrix(self) -> np.ndarray:
@@ -289,8 +292,8 @@ class BasicGate(object):
 
         if CGATE_LIST:
             CGATE_LIST[-1].append(_gate)
-        else:
-            return _gate
+        
+        return _gate
 
     def __call__(self, *args):
         """ give parameters for the gate, and give parameters by "()", and parameters should be one of int/float/complex
@@ -526,7 +529,7 @@ class BasicGate(object):
         Returns:
             bool: True if gate's matrix is diagonal
         """
-        return self.matrix_type in [MatrixType.diagonal, MatrixType.control]  
+        return self.matrix_type in [MatrixType.diagonal, MatrixType.control]
 
     def is_pauli(self) -> bool:
         """ judge whether gate's matrix is a Pauli gate
@@ -548,8 +551,7 @@ class BasicGate(object):
     def is_identity(self) -> bool:
         return self.matrix_type == MatrixType.identity
 
-    # TODO: keep or remove? weird
-    def expand(self, qubits: Union[int, list]) -> bool:
+    def expand(self, qubits: Union[int, list], device: str = "CPU") -> bool:
         """ expand self matrix into the circuit's unitary linear space. If input qubits is integer, please make sure
         the indexes of current gate is within [0, qubits).
 
@@ -571,7 +573,7 @@ class BasicGate(object):
             gate_args = [qubits[i] for i in range(self.controls + self.targets)]
 
         updated_args = [qubits.index(garg) for garg in gate_args]
-        return matrix_product_to_circuit(self.matrix, updated_args, qubits_num)
+        return matrix_product_to_circuit(self.matrix, updated_args, qubits_num, device)
 
     def copy(self):
         """ return a copy of this gate
@@ -629,7 +631,6 @@ class Unitary(BasicGate):
 
     def __init__(self, matrix: Union[list, np.ndarray], matrix_type: MatrixType = None):
         # Validate matrix type
-        assert isinstance(matrix, (list, np.ndarray)), TypeError("unitary.matrix", "list/ndarray", type(matrix))
         if isinstance(matrix, list):
             matrix = np.array(matrix)
 
@@ -651,7 +652,6 @@ class Unitary(BasicGate):
 
         if matrix_type is None:
             matrix_type, controls = self.validate_matrix_type(matrix)
-            print(matrix_type)
         else:
             matrix_type = MatrixType.normal
             controls = 0
@@ -710,6 +710,16 @@ class Unitary(BasicGate):
 
         return Unitary(inverse_matrix)
 
+    def copy(self):
+        _gate = Unitary(self.matrix, self.matrix_type)
+
+        if len(self.targs) > 0:
+            _gate.targs = self.targs[:]
+
+        if self.assigned_qubits:
+            _gate.assigned_qubits = self.assigned_qubits[:]
+
+        return _gate
 
 class Perm(BasicGate):
     @property

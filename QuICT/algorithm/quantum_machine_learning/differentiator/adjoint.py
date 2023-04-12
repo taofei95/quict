@@ -15,7 +15,7 @@ class Adjoint(Differentiator):
 
     @grad_vector.setter
     def grad_vector(self, vec):
-        self._grad_vector = self._gate_calculator.validate_state_vector(
+        self._grad_vector = self._gate_calculator.normalized_state_vector(
             vec, self._qubits
         )
 
@@ -28,7 +28,7 @@ class Adjoint(Differentiator):
     ) -> np.ndarray:
         self.initial_circuit(circuit)
         assert state_vector is not None
-        self._vector = self._gate_calculator.validate_state_vector(
+        self._vector = self._gate_calculator.normalized_state_vector(
             state_vector, self._qubits
         )
         # Calculate d(L)/d(|psi_t>)
@@ -82,7 +82,7 @@ class Adjoint(Differentiator):
         circuit_list = expectation_op.construct_hamiton_circuit(qubits)
         coefficients = expectation_op.coefficients
         grad_vector = np.zeros(1 << qubits, dtype=np.complex128)
-        grad_vector = self._gate_calculator.validate_state_vector(grad_vector, qubits)
+        grad_vector = self._gate_calculator.normalized_state_vector(grad_vector, qubits)
         for coeff, circuit in zip(coefficients, circuit_list):
             grad_vec = simulator.run(circuit, state_vector_copy)
             grad_vector += coeff * grad_vec
