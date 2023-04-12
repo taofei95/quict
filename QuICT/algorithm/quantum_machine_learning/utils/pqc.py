@@ -77,19 +77,23 @@ class PQC(tf.keras.layers.Layer):
         for idx in range(len(vars)):  # tf.Variable to Variable
             self._model_pargs.pargs[idx] = vars[idx].numpy()
         self._model_circuit.update(self._model_pargs) # Variable update to circuit.gates.pargs
-
-        return self._model_circuit
         
-       
-            
+        return self._model_circuit
+     
 @tf.function
 def custom_accuracy(y_true, y_pred):
     y_true = tf.squeeze(y_true)
     y_pred = tf.map_fn(lambda x: 1.0 if x >= 0 else -1.0, y_pred)
     return tf.keras.backend.mean(tf.keras.backend.equal(y_true, y_pred))     
-def custom_print(params):
+def custom_print(params):  # tool method used to debug
     see = []
-    if isinstance(params,Variable):
+    if isinstance(params,Circuit):
+        for gate in params.gates:
+            if gate.variables == 0:
+                continue
+            for i in range(len(gate.pargs)):
+                see.append(gate.pargs[i].pargs)
+    elif isinstance(params,Variable):
         see.append(params.pargs)
     else:
         for i in range(3):
@@ -124,7 +128,10 @@ if __name__ == '__main__':
     #differ.run(circuit, sv, X)
     ham = Hamiltonian([[1, "Y1"]])
     pqc = PQC(model_circuit=cir,differentiator=differ,model_pargs= variables,sim=sim,operators = ham)
-    cir_trained= pqc.train()
+    for epoch in range(30):
+        cir_trained= pqc.train()
+        custom_print(cir_trained)
+    
     '''
     excitation_input = tf.keras.Input(shape=(), )
     quantum_model = pqc(excitation_input)
