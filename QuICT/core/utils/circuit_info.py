@@ -240,9 +240,24 @@ class CircuitBased(object):
                 training_gates += 1
         return training_gates
 
+    def update(self, variables):
+        remain_training_gates = self.count_training_gates()
+
+        for gate, qidxes, size in self._gates:
+            if remain_training_gates == 0:
+                return
+            if gate.variables > 0:
+                remain_training_gates -= 1
+            for i in range(gate.variables):
+                assert gate.pargs[i].identity[:32] == variables.identity
+                index = gate.pargs[i].index
+                gate.pargs[i].pargs = variables.pargs[index]
+
+        return
+
 
 class CircuitMode(Enum):
     Clifford = "Clifford"
     CliffordRz = "CliffordRz"
-    Arithmetic = 'Arithmetic'
+    Arithmetic = "Arithmetic"
     Misc = "Misc"
