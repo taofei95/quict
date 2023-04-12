@@ -42,46 +42,10 @@ class PQC(tf.keras.layers.Layer):
         self._differ = differentiator
         self._executor = Expectation(self._model_circuit,self._operators,differentiator)
         # Set additional parameter controls.
-        
-        '''
-        pargs_index = 0
-        for g_id, gate in enumerate(self._model_circuit.gates):
-            if gate.is_requires_grad:
-                pargs_copy = gate.pargs
-                if isinstance(pargs_copy,int):
-                    pargs_copy = [pargs_copy]
-                for i in range(len(pargs_copy)):
-                    pargs_copy[i] = pargs[pargs_index]
-                    pargs_index += 1
-                gate.pargs = pargs_copy.copy()
-                self._model_circuit.replace_gate(g_id,gate)
-      
-        '''
-        
-        
-
 
     def build(self, input_shape):
         """Keras build function."""
         super().build(input_shape)
-
-    def get_param_circuit(self,):
-        param_list = []
-        for gate in self._model_circuit.gates:
-            if gate.variables==0:
-                continue
-            for param in gate.pargs:
-                param_list.append(param)
-        return param_list
-    def paramm_to_circuit(self,params):
-        idx_params = 0
-        for gate in self._model_circuit.gates:
-            if gate.variables == 0:
-                continue
-            for index in range(len(gate.pargs)):
-                gate.pargs[index] = params[idx_params]
-                idx_params += 1
-                    
     def call(self, inputs):
         """Keras call function.""" 
         sv = self._sim.run(self._model_circuit)
@@ -112,12 +76,7 @@ class PQC(tf.keras.layers.Layer):
 
         for idx in range(len(vars)):  # tf.Variable to Variable
             self._model_pargs.pargs[idx] = vars[idx].numpy()
-
-        for gate in self._model_circuit.gates:  # Variable update to circuit.gates.pargs
-            if gate.variables == 0:
-                continue
-            id_variable = self.find_variable(gate.identity)
-            gate.pargs = self._model_pargs[id_variable]
+        self._model_circuit.update(self._model_pargs) # Variable update to circuit.gates.pargs
 
         return self._model_circuit
         
