@@ -1,5 +1,6 @@
 import torch
 import time
+import tensorflow as tf
 
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
@@ -11,6 +12,7 @@ from QuICT.core.circuit import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.utils import GateSimulator
 from QuICT.simulation.state_vector import StateVectorSimulator
+from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 
 
 def test_fp_bp(n_qubit, layers):
@@ -21,6 +23,7 @@ def test_fp_bp(n_qubit, layers):
     for l, gate in zip(range(len(layers)), layers):
         for i in range(n_qubit - 1):
             gate(variables[l, i]) | circuit([i, n_qubit - 1])
+    print(circuit.depth())
 
     print("--------------Adjoint-----------------")
 
@@ -30,15 +33,21 @@ def test_fp_bp(n_qubit, layers):
     print("FP", time.time() - start)
 
     differ = Adjoint(device="GPU")
+    optim = tf.keras.optimizers.SGD(learning_rate=0.1)
     h = Hamiltonian([[1, "Y1"]])
     start = time.time()
-    differ.run(circuit, variables, sv, h)
+    variables = differ.run(circuit, variables, sv, h)
     print("BP", time.time() - start)
+
+    start = time.time()
+    variables = apply_optimizer(optim, variables)
+    print("UPDATE", time.time() - start)
+    variables.zero_grad()
 
 
 if __name__ == "__main__":
     # 17qubits FP0.005s, BP0.034s
     # 20qubits FP0.014s, BP0.16s
     # 25qubits FP0.35s, BP4.5s
-    
-    test_fp_bp(25, [Rzx] * 2)
+    with tf.device('/GPU:0'):
+        test_fp_bp(17, [Rzx] * 2)
