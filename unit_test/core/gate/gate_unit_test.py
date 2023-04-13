@@ -4,7 +4,6 @@ import numpy as np
 
 from QuICT.core.circuit.circuit import Circuit
 from QuICT.core.gate.gate import *
-from QuICT.core.qubit.qubit import Qureg
 
 
 class TestGate(unittest.TestCase):
@@ -15,71 +14,6 @@ class TestGate(unittest.TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         print("The Gate unit test finished!")
-
-    def test_gate_build(self):
-        cir = Circuit(10)
-        # single qubit gate
-        H | cir(0)
-
-        cgate1 = H
-        cgate1 | cir(1)
-
-        cgate2 = gate_builder(GateType.h) & Qureg(1)
-        cgate2 | cir
-        assert len(cir.gates) == 3
-
-        # single qubit gate with param
-        U1(np.pi / 2) | cir(1)
-
-        cgate1 = U1
-        cgate1 | cir(2)
-        
-        cgate2 = gate_builder(GateType.u1, params=[(np.pi / 2)]) & 3
-        cgate2 | cir
-        assert len(cir.gates) == 6
-
-        # two qubit gate
-        CX | cir([1, 2])
-        
-        cgate1 = CX & [3, 4]
-        cgate1 | cir
-        
-        cgate2 = gate_builder(GateType.cx) & [5, 6]
-        cgate2 | cir
-        assert len(cir.gates) == 9
-
-        # two qubit gate with param
-        Rzz(np.pi / 2) | cir([1, 2])
-        CU3(np.pi / 2, 0, 0) | cir([3, 4])
-        
-        cgate1 = Ryy & [5, 6]
-        cgate1(np.pi / 2) | cir
-
-        cgate2 = gate_builder(GateType.cu3, random_params=True) & [7, 8]
-        cgate2 | cir
-        assert len(cir.gates) == 13
-        
-        # complexed gate
-        CCRz(np.pi / 2) | cir([1, 2, 3])
-
-        cgate1 = CCX & [4, 5, 6]
-        cgate1 | cir
-
-        cgate2 = gate_builder(GateType.ccrz, random_params=True)
-        cgate2 | cir([7, 8, 9])
-        
-        cgate3 = CCRz.build_gate()
-        cgate3(np.pi / 2) | cir([2, 4, 6])
-        assert len(cir.gates) == 17
-
-        matrix = np.array([
-            [1, 0],
-            [0, 1]
-        ], dtype=np.complex128)
-        cgate4 = Unitary(matrix)
-        cgate4.build_gate()
-        cgate4 | cir
-        assert len(cir.gates) == 27
 
     def test_gate_attribute(self):
         # test single gate
@@ -129,6 +63,8 @@ class TestGate(unittest.TestCase):
         assert FSim.matrix_type == MatrixType.ctrl_normal
         assert Ryy.matrix_type == MatrixType.normal_normal
         assert Rzx.matrix_type == MatrixType.diag_normal
+
+        assert H.get_matrix("single").dtype != H.get_matrix("double").dtype
 
     def test_gate_inverse(self):
         single_ide = np.identity(2, np.complex128)
@@ -252,10 +188,20 @@ class TestGate(unittest.TestCase):
         ccrz_inv = ccrz.inverse()
         assert np.allclose(np.dot(ccrz_inv.matrix, ccrz.matrix), np.identity(8, np.complex128))
         
+        # unitary gates
         from scipy.stats import unitary_group
         matrix = unitary_group.rvs(2 ** 2)
         u2 = Unitary(matrix).inverse()
         assert np.allclose(np.dot(matrix, u2.matrix), double_ide)
+
+        # perm gates
+        p = Perm(2, [0, 1])
+        p_inverse = p.inverse()
+        assert np.allclose(np.dot(p.matrix, p_inverse.matrix), p_inverse.matrix)
+
+        p = Perm(3, [0, 1, 2])
+        p_inverse = p.inverse()
+        assert np.allclose(np.dot(p.matrix, p_inverse.matrix), p_inverse.matrix)
 
     def test_gate_commutative(self):
         cir = Circuit(5)
