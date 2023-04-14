@@ -84,7 +84,6 @@ def apply_optimizer(optimizer: tf.keras.optimizers.Optimizer, variables: Variabl
     tfvariable_list = convert_to_tfvariable(variables.pargs)
     start = time.time()
     optimizer.apply_gradients(zip(variables.grads, tfvariable_list))
-    print("tf apply optim", time.time() - start)
     pargs = convert_to_numpy(tfvariable_list)
     variables.pargs = pargs
     return variables

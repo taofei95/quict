@@ -82,11 +82,7 @@ class Hamiltonian:
         for pauli_operator in self._pauli_str:
             assert isinstance(pauli_operator[0], int) or isinstance(
                 pauli_operator[0], float
-            ), TypeError(
-                "Hamiltonian.init",
-                "int or float",
-                pauli_operator[0].type,
-            )
+            ), TypeError("Hamiltonian.init", "int or float", pauli_operator[0].type,)
             for pauli_gate in pauli_operator[1:][::-1]:
                 if "I" in pauli_gate:
                     pauli_operator.remove(pauli_gate)

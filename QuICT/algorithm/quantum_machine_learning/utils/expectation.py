@@ -4,7 +4,7 @@ from QuICT.core.circuit import Circuit
 from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltonian
 import numpy as np
-from QuICT.algorithm.quantum_machine_learning.differentiator.adjoint import Adjoint
+from QuICT.algorithm.quantum_machine_learning.differentiator.adjoint import AdjointDifferentiator
 import sympy
 
 
