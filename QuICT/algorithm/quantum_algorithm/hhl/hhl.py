@@ -10,6 +10,7 @@ from QuICT.qcda.synthesis.unitary_decomposition.controlled_unitary import Contro
 from QuICT.tools import Logger
 from QuICT.tools.exception import QuICTException
 
+from copy import deepcopy
 from scipy.linalg import expm
 
 
@@ -25,6 +26,7 @@ class HHL:
     """
     def __init__(self, simulator=None) -> None:
         self.simulator = simulator
+        self._circuit_cache = None
 
     def _reconstruct(self, matrix):
         matrix_conj = matrix.T.conj()
@@ -91,6 +93,8 @@ class HHL:
         Returns:
             Circuit: HHL circuit
         """
+        if self._circuit_cache:
+            return self._circuit_cache
         n = int(np.log2(len(matrix)))
         if (1 << n) != len(matrix) or (1 << n) != len(matrix[0]) or (1 << n) != len(vector):
             raise QuICTException(
@@ -156,7 +160,9 @@ class HHL:
             f"CRy size         = {control_rotation.size():4}"
         )
 
-        return circuit
+        self._circuit_cache = circuit
+
+        return self._circuit_cache
 
     def run(
         self,
@@ -182,11 +188,11 @@ class HHL:
         """
         size = len(vector)
 
-        circuit = self.circuit(matrix, vector, dominant_eig, phase_qubits, measure)
+        circuit = deepcopy(self.circuit(matrix, vector, dominant_eig, phase_qubits, measure))
 
         state_vector = self.simulator.run(circuit)
 
-        if self.simulator._device is "GPU":
+        if self.simulator._device == "GPU":
             state_vector = state_vector.get()
 
         if measure and int(circuit[0]) == 0 or not measure:

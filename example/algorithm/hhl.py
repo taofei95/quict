@@ -1,40 +1,41 @@
 import numpy as np
-from scipy import stats, sparse
 
 from QuICT.algorithm.quantum_algorithm.hhl import HHL
-
 from QuICT.simulation.state_vector import StateVectorSimulator
 
 
-def random_matrix(size):
-    rvs = stats.norm().rvs
-    while(1):
-        X = sparse.random(
-            size, size, density=1, data_rvs=rvs,
-            dtype=np.complex128)
-        A = X.todense()
-        v = np.linalg.eigvals(A)
-        A = np.round(A, 3)
-        if np.linalg.det(A) != 0 and np.log2(max(abs(v)) / min(abs(v))) < 6:
-            return np.array(A)
+def MSE(x, y):
+    n = len(x)
+    res0 = np.linalg.norm(x + y) / n
+    res1 = np.linalg.norm(x - y) / n
+    return min(res0, res1)
 
 
-def random_vector(size):
-    return np.complex128(np.round(np.random.rand(size), 3) - np.full(size, 0.5))
-
-
-n = 2 ** 1
-A = random_matrix(n)
-b = random_vector(n)
+A = np.array([[1.0 + 0j, 2.0 + 0j],
+              [3.0 + 0j, 2.0 + 0j]])
+b = np.array([1.0 + 0j, -2.0 + 0j])
 
 slt = np.linalg.solve(A, b)
 slt /= np.linalg.norm(slt)
-hhl_u = HHL(StateVectorSimulator(device="GPU")).run(
-    matrix=A,
-    vector=b)
-if hhl_u is not None:
-    hhl_u /= np.linalg.norm(hhl_u)
-    print(f"solution     = {slt.real}\n" +
-          f"hhl(unitary) = {hhl_u.real}")
-else:
-    print("Failed.")
+
+hhl_a = HHL(StateVectorSimulator(device="GPU")).run(
+            A, b, phase_qubits=6, measure=False
+        )
+hhl_a /= np.linalg.norm(hhl_a)
+
+time = 0
+hhl = None
+HHL_m = HHL(StateVectorSimulator(device="GPU"))
+while(hhl is None):
+    hhl = HHL_m.run(
+            A, b, phase_qubits=6
+        )
+    time += 1
+
+print(f"classical solution  = {slt}\n"
+    + f"hhl without measure = {hhl_a}\n"
+    + f"                MSE = {MSE(slt, hhl_a)}\n"
+    + f"hhl with measure    = {hhl}\n"
+    + f"                MSE = {MSE(slt, hhl)}\n"
+    + f"       success rate = {1.0 / time}"
+    )
