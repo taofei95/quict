@@ -70,7 +70,7 @@ class PQC(tf.keras.layers.Layer):
         grads = []
         vars = []
         for item in self._model_pargs:  # Variable to tf.Variable
-            grads.append(tf.Variable(item.grads))
+            grads.append(item.grads)
             vars.append(tf.Variable(item.pargs))
         opti.apply_gradients(zip(grads, vars))
 
