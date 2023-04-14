@@ -20,6 +20,10 @@ class InstructionSet(object):
         two_qubit_gate(GateType): the type of the two_qubit_gate
         rule_map(dictionary): A two-dimensional map from source gate and target gate to transform rule
     """
+    @property
+    def size(self):
+        return len(self.one_qubit_gates) + 1
+
     # Two-qubit gate and two-qubit rules
     @property
     def two_qubit_gate(self):
