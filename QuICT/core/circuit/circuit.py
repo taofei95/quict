@@ -293,6 +293,8 @@ class Circuit(CircuitBased):
 
         if isinstance(gates, Circuit):
             gates = gates.to_compositegate()
+            if gates.width() != len(gate_qidxes):
+                gate_qidxes = [gate_qidxes[idx] for idx in gates.qubits]
 
         self._gates.append((gates, gate_qidxes, gates.size()))
         self._pointer = None
