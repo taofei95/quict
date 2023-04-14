@@ -346,19 +346,6 @@ class BasicGate(object):
 
         return gstr
 
-    def __dict__(self):
-        """ get gate information """
-        gate_info = {
-            "type": self.type,
-            "parameters": self.pargs,
-            "controls": self.controls,
-            "control_bit": self.cargs,
-            "targets": self.targets,
-            "target_bit": self.targs
-        }
-
-        return gate_info
-
     def qasm(self, targs: list = None):
         """ generator OpenQASM string for the gate
 
