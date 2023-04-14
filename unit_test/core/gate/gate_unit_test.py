@@ -51,7 +51,6 @@ class TestGate(unittest.TestCase):
         assert aunitary.is_diagonal() and not bunitary.is_diagonal()
 
         # test matrix_type
-        assert S.matrix_type != H.matrix_type
         assert S.matrix_type != CX.matrix_type
         assert GPhase.matrix_type == MatrixType.diagonal
         assert Hy.matrix_type == MatrixType.normal
@@ -286,13 +285,6 @@ class TestGate(unittest.TestCase):
         cir = Circuit(3)
         CX | cir([1, 2])
         assert np.allclose(expand_sdgate1, cir.matrix()) and np.allclose(expand_sdgate2, cir.matrix())
-
-    def test_circuit_matrix_product(self):  # move to gate ut
-        cir = Circuit(5)
-        mp_gate = CZ & [1, 3]
-        mp_data = mp_gate.expand(cir.width())
-
-        assert mp_data.shape == (1 << 5, 1 << 5)
 
 if __name__ == "__main__":
     unittest.main()

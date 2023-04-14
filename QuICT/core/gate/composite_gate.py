@@ -45,7 +45,10 @@ class CompositeGate(CircuitBased):
 
         if gates is not None:
             for gate in gates:
-                self.append(gate)
+                if isinstance(gate, CompositeGate):
+                    self.extend(gate)
+                else:
+                    self.append(gate)
 
     def clean(self):
         self._gates = []

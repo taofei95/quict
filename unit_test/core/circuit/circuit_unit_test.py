@@ -165,14 +165,31 @@ class TestCircuit(unittest.TestCase):
         assert cir.width() == 10
         
         # extend gate/circuit to circuit
-        cir2 = Circuit(1)
-        cgate = CompositeGate(GateType.h)
-        H | cgate(1)
-        cir2.extend(cgate)
-        assert cir2.size() == 1
+        cir2 = Circuit(3)
 
-        cir2.extend(cir2)
-        assert cir2.size() == 2
+        cir1.extend(cir2)  # extend a empty circuit
+        assert cir1.width() == 18 and cir1.size() == 10
+
+        cir2.extend(cir2) # extend same circuit
+        assert cir2.width() == 3 and cir2.size() == 0
+
+        # cir2.extend(cir1) # empty extend circuit
+        # assert cir2.width() == 18 and cir2.size() == 10
+
+        cir3 = Circuit(5)
+        cir3.random_append(10)
+        cir1.extend(cir3) # extend random circuit
+        assert cir1.width() == 23 and cir1.size() == 20
+
+        cgate = CompositeGate()
+        H | cgate(1)
+        CX | cgate([1, 2])
+        cir2.extend(cgate) # extend compositegate
+        assert cir2.width() == 3 and cir2.size() == 2
+
+        cgate2 = CompositeGate()
+        cir2.extend(cgate2) # extend empty compositegate
+        assert cir2.width() == 3 and cir2.size() == 2
 
         # append gate to circuit
         cir3 = Circuit(3)
@@ -195,7 +212,7 @@ class TestCircuit(unittest.TestCase):
 
     def test_circuit_info(self):
         # add all type of gates to circuit
-        cir = Circuit(10)
+        cir = Circuit(wires=10, name="cir", ancilla_qubits=[3, 4])
         Hy | cir(0)
         S | cir(1)
         S_dagger | cir(1)
@@ -233,6 +250,7 @@ class TestCircuit(unittest.TestCase):
         assert cir.count_2qubit_gate() == 8
         assert cir.count_gate_by_gatetype(GateType.measure) == 1
         assert len(cir.qasm().splitlines()) == cir.size() + 4
+        assert cir.name == "cir" and cir.ancilla_qubits == [3, 4]
 
     def test_circuit_decomposition(self):
         build_gate_typelist = [GateType.ccrz, GateType.cswap, GateType.ccz, GateType.ccx]
@@ -255,9 +273,14 @@ class TestCircuit(unittest.TestCase):
         state_vector_matrix = UnitarySimulator().run(cir_matrix)
         assert np.allclose(state_vector_cir, state_vector_matrix)
 
+        assert cir.matrix("GPU").dtype == np.complex128
         cir.set_precision("single")
         assert len(cir.flatten_gates()) == cir.size()
         assert cir.precision == "single"
+
+        mp_gate = CZ & [1, 3]
+        mp_data = mp_gate.expand(cir.width())
+        assert mp_data.shape == (1 << 10, 1 << 10)
 
 
 if __name__ == "__main__":
