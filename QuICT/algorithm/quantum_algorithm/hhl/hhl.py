@@ -180,16 +180,14 @@ class HHL:
             list: vector x_hat, which equal to kx:
                 x is the solution vector of Ax = b, and k is an unknown coefficient
         """
-        simulator = self.simulator
         size = len(vector)
 
         circuit = self.circuit(matrix, vector, dominant_eig, phase_qubits, measure)
 
-        state_vector = simulator.run(circuit)
-        try:
+        state_vector = self.simulator.run(circuit)
+
+        if self.simulator._device is "GPU":
             state_vector = state_vector.get()
-        except:
-            pass
 
         if measure and int(circuit[0]) == 0 or not measure:
             return np.array(state_vector[: size], dtype=np.complex128)
