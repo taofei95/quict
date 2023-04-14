@@ -3,6 +3,9 @@ from QuICT.core.gate import BasicGate,CSwap,H,Measure
 from QuICT.core.circuit import Circuit
 from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.simulation.state_vector.statevector_simulator import StateVectorSimulator
+from QuICT.simulation.simulator import Simulator
+from QuICT.algorithm.quantum_algorithm.hhl.hhl import HHL
+import math
 def measure_gate_apply(
     index: int,
     vec: np.array
@@ -41,8 +44,15 @@ class QSVM:
         self._data = train_data
         self.gama = gama
         self._X = self.norm_data(train_data[0])
+        self._size = math.ceil(np.log2(self._X.shape[0]))
+        self._size = int(2**self._size)
         self._K_hat = self.get_K_hat()
         self._F = self.get_F()
+    def solve(self,):
+        y_true = np.zeros((self._size))
+        y_true[1:self._X.shape[0]+1] = self._data[1]
+        hhl = HHL(simulator=Simulator())
+        return hhl.run(self._F,y_true)
     def norm_data(self,X:np.ndarray):  # X: M*N
         sum_col = np.sqrt(np.sum(X*X,axis= 1))
         for  i in range(len(sum_col)):
@@ -57,12 +67,13 @@ class QSVM:
         for i in range(1,n_qubit+1):
             CSwap & [0,i,i+n_qubit] | swap_test_cir
         H|swap_test_cir(0)
-        sim = StateVectorSimulator()
+        sim = Simulator()
+        #sim = StateVectorSimulator()
         sv = sim.run(swap_test_cir,state_vector=state_vec)
+        if isinstance(sim,Simulator):
+            sv = sv['data']['state_vector']
         prob = measure_gate_apply(0,sv)
         kernel_value = np.sqrt(abs(2*prob-1))
-        if kernel_value != kernel_value:
-            see = kernel_value
 
         return kernel_value
     def get_K_hat(self,):
@@ -87,11 +98,15 @@ class QSVM:
         return K_hat
     def get_F(self,):
         n = self._X.shape[0]
-        F = np.zeros((n+1,n+1))
-        F[0,:] = 1
-        F[:,0] = 1
-        F[1:,1:] =self._K_hat
+        size = self._size
+        F = np.zeros((size,size))
+        F[0,1:] = 1
+        F[1:,0] = 1
+        F[1:n+1,1:n+1] =self._K_hat
         return F
 if __name__ == '__main__':  
-    data = np.random.random((2,10,128))
-    qsvm = QSVM(data)
+    data_x = np.random.random((10,128))
+    data_y = np.random.random(10)
+    qsvm = QSVM([data_x,data_y])
+    ans = qsvm.solve()
+    print(ans)
