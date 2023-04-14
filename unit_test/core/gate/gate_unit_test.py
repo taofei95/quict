@@ -65,6 +65,11 @@ class TestGate(unittest.TestCase):
         assert Rzx.matrix_type == MatrixType.diag_normal
 
         assert H.get_matrix("single").dtype != H.get_matrix("double").dtype
+        
+        assert CX.controls == 1 and S.controls == 0 and CCRz.controls == 2
+        assert Rxx.targets == 2 and Measure.targets == 1
+        assert U1.qasm_name == "u1"
+        assert iSwap_dagger.type == GateType.iswapdg
 
     def test_gate_inverse(self):
         single_ide = np.identity(2, np.complex128)
@@ -75,14 +80,11 @@ class TestGate(unittest.TestCase):
         sdg_inv = S_dagger.inverse()
         assert np.allclose(np.dot(S_dagger.matrix, sdg_inv.matrix), single_ide)
 
-        # sx_inv = SX.inverse()
-        # assert np.allclose(np.dot(SX.matrix, sx_inv.matrix), single_ide)
+        sy_inv = SY.inverse()
+        assert np.allclose(np.dot(SY.matrix, sy_inv.matrix), single_ide)
 
-        # sy_inv = SY.inverse()
-        # assert np.allclose(np.dot(SY.matrix, sy_inv.matrix), single_ide)
-
-        # sw_inv = SW.inverse()
-        # assert np.allclose(np.dot(SW.matrix, sw_inv.matrix), single_ide)
+        sw_inv = SW.inverse()
+        assert np.allclose(np.dot(SW.matrix, sw_inv.matrix), single_ide)
 
         id_inv = ID.inverse()
         assert np.allclose(np.dot(ID.matrix, id_inv.matrix), single_ide)
@@ -285,6 +287,12 @@ class TestGate(unittest.TestCase):
         CX | cir([1, 2])
         assert np.allclose(expand_sdgate1, cir.matrix()) and np.allclose(expand_sdgate2, cir.matrix())
 
+    def test_circuit_matrix_product(self):  # move to gate ut
+        cir = Circuit(5)
+        mp_gate = CZ & [1, 3]
+        mp_data = mp_gate.expand(cir.width())
+
+        assert mp_data.shape == (1 << 5, 1 << 5)
 
 if __name__ == "__main__":
     unittest.main()
