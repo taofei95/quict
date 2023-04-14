@@ -197,7 +197,7 @@ class Circuit(CircuitBased):
         if is_ancillary_qubit:
             self._ancillae_qubits += list(range(self.width() - len(qubits), self.width()))
 
-        self._logger.debug(f"Quantum Circuit {self._name} add {len(qubits)} qubits.")
+        # self._logger.debug(f"Quantum Circuit {self._name} add {len(qubits)} qubits.")
 
     def reset_qubits(self):
         """ Reset all qubits in current circuit. """
