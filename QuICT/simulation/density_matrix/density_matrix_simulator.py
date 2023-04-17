@@ -146,7 +146,9 @@ class DensityMatrixSimulator:
         Args:
             index (int): The index of measured qubit.
         """
-        _1, self._density_matrix = self._gate_calculator.apply_measure_gate_for_dm(index, self._density_matrix, self._qubits)
+        _1, self._density_matrix = self._gate_calculator.apply_measure_gate_for_dm(
+            index, self._density_matrix, self._qubits
+        )
         self._circuit.qubits[index].measured = int(_1)
 
     def sample(self, shots: int) -> list:

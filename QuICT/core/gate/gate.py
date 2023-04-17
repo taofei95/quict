@@ -278,7 +278,7 @@ class BasicGate(object):
 
         if CGATE_LIST:
             CGATE_LIST[-1].append(_gate)
-        
+
         return _gate
 
     def __call__(self, *args):
@@ -690,6 +690,7 @@ class Unitary(BasicGate):
             _gate.assigned_qubits = self.assigned_qubits[:]
 
         return _gate
+
 
 class Perm(BasicGate):
     @property
