@@ -279,9 +279,10 @@ class CompositeGate(CircuitBased):
 
     def copy(self):
         _gates = CompositeGate()
+        _gates.name = self.name
+        _gates._qubits = self.qubits
         copy_gates = [(gate.copy(), indexes, size) for gate, indexes, size in self._gates]
         _gates._gates = copy_gates
-        _gates._qubits = self.qubits
 
         return _gates
 
