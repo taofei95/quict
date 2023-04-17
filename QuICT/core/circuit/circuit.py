@@ -182,15 +182,19 @@ class Circuit(CircuitBased):
         """
         return self.qubits[item]
 
-    def add_qubit(self, qubits: Union[Qureg, int], is_ancillary_qubit: bool = False):
+    def add_qubit(self, qubits: Union[Qureg, Qubit, int], is_ancillary_qubit: bool = False):
         """ add additional qubits in circuit.
 
         Args:
-            qubits Union[Qureg, int]: The new qubits.
+            qubits Union[Qureg, Qubit, int]: The new qubits, if it is int, means the number of new qubits.
             is_ancillae_qubit (bool, optional): whether the given qubits is ancillae, default to False.
         """
+        assert isinstance(qubits, (Qureg, Qubit, int)), \
+            TypeError("Circuit.add_qubit", "[Qureg, Qubit, int]", type(qubits))
         if isinstance(qubits, int):
             assert qubits > 0, IndexExceedError("Circuit.add_qubit", ">= 0", {qubits})
+            qubits = Qureg(qubits)
+        elif isinstance(qubits, Qubit):
             qubits = Qureg(qubits)
 
         self._qubits = self._qubits + qubits

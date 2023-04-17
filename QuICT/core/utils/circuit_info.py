@@ -12,7 +12,7 @@ from .gate_type import GateType
 class CircuitBased(object):
     """ Based Class for Circuit and Composite Gate. """
     @property
-    def name(self) -> int:
+    def name(self) -> str:
         return self._name
 
     @name.setter

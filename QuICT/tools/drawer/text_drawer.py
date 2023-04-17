@@ -36,7 +36,11 @@ class circuit_layer(object):
         self.gates = []
 
     def addGate(self, gate: BasicGate) -> bool:
-        Q_set = set(gate.cargs) | set(gate.targs)
+        if isinstance(gate, CompositeGate):
+            Q_set = set(gate._qubits)
+        else:
+            Q_set = set(gate.cargs) | set(gate.targs)
+
         for element in range(min(Q_set), max(Q_set) + 1):
             if element in self.pic:
                 return False
@@ -47,7 +51,11 @@ class circuit_layer(object):
         return True
 
     def checkGate(self, gate: BasicGate) -> bool:
-        Q_set = set(gate.cargs) | set(gate.targs)
+        if isinstance(gate, CompositeGate):
+            Q_set = set(gate._qubits)
+        else:
+            Q_set = set(gate.cargs) | set(gate.targs)
+
         for element in range(min(Q_set), max(Q_set) + 1):
             if element in self.pic:
                 return False
@@ -908,20 +916,6 @@ class TextDrawing:
         return ret
 
     @staticmethod
-    def special_label(instruction):
-        """Some instructions have special labels"""
-        labels = {IGate: 'I',
-                  Initialize: 'initialize',
-                  UnitaryGate: 'unitary',
-                  HamiltonianGate: 'Hamiltonian',
-                  SXGate: '√X',
-                  SXdgGate: '√XDG'}
-        instruction_type = type(instruction)
-        if instruction_type in {Gate, Instruction}:
-            return instruction.qasm_name
-        return labels.get(instruction_type, None)
-
-    @staticmethod
     def label_for_box(instruction, controlled=False):
         """ Creates the label for a box."""
         label = instruction.qasm_name
@@ -1086,10 +1080,18 @@ class TextDrawing:
                     current_cons.append((actual_index, g))
 
         ctrl_label = ""
-        box_label = gate.qasm_name
-        gate_type = gate.type
+        if isinstance(gate, CompositeGate):
+            box_label = "cg_" + gate.name[-4:]
+        else:
+            box_label = gate.qasm_name
+            gate_type = gate.type
 
-        if gate_type == GateType.measure:
+        if isinstance(gate, CompositeGate):
+            if len(gate._qubits) == 1:
+                layer.set_qubit(gate._qubits[0], BoxOnQuWire(box_label, conditional=conditional))
+            else:
+                layer.set_qu_multibox(gate._qubits, box_label, conditional=conditional)
+        elif gate_type == GateType.measure:
             mgate = MeasureFrom()
             layer.set_qubit(gate.targs[0], mgate)
         elif gate_type == GateType.barrier:

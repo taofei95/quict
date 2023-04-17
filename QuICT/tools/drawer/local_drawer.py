@@ -94,7 +94,11 @@ class circuit_layer(object):
         self.gates = []
 
     def addGate(self, gate: BasicGate) -> bool:
-        Q_set = set(gate.cargs) | set(gate.targs)
+        if isinstance(gate, CompositeGate):
+            Q_set = set(gate._qubits)
+        else:
+            Q_set = set(gate.cargs) | set(gate.targs)
+
         for element in range(min(Q_set), max(Q_set) + 1):
             if element in self.pic:
                 return False
@@ -105,7 +109,11 @@ class circuit_layer(object):
         return True
 
     def checkGate(self, gate: BasicGate) -> bool:
-        Q_set = set(gate.cargs) | set(gate.targs)
+        if isinstance(gate, CompositeGate):
+            Q_set = set(gate._qubits)
+        else:
+            Q_set = set(gate.cargs) | set(gate.targs)
+
         for element in range(min(Q_set), max(Q_set) + 1):
             if element in self.pic:
                 return False
@@ -650,7 +658,7 @@ class PhotoDrawer(object):
             layer_width = 1
 
             for gate in layer.gates:
-                if gate.type == GateType.perm or gate.type == GateType.unitary:
+                if isinstance(gate, CompositeGate) or gate.type == GateType.perm or gate.type == GateType.unitary:
                     continue
                 elif gate.params > 1:
                     param = self.get_parameter_str(gate.pargs)
@@ -669,23 +677,37 @@ class PhotoDrawer(object):
 
             for gate in layer.gates:
                 coord = []
-                for index in gate.cargs:
+                cargs = [] if isinstance(gate, CompositeGate) else gate.cargs
+                for index in cargs:
                     anchors[index].set_index(position, layer_width)
                     coord.append(anchors[index].coord(position, layer_width, offset_x))
-                for index in gate.targs:
+
+                targs = gate._qubits if isinstance(gate, CompositeGate) else gate.targs
+                for index in targs:
                     anchors[index].set_index(position, layer_width)
                     coord.append(anchors[index].coord(position, layer_width, offset_x))
 
                 bottom = min(coord, key=lambda c: c[1])
                 top = max(coord, key=lambda c: c[1])
 
-                position = anchors[gate.targ].anchor
+                position = anchors[targs[0]].anchor
 
                 param = None
-                if gate.params > 0:
+                if isinstance(gate, BasicGate) and gate.params > 0:
                     param = self.get_parameter_str(gate.pargs)
 
-                if gate.type == GateType.perm:
+                if isinstance(gate, CompositeGate):
+                    name = "cg_" + gate.name[-4:]
+                    if len(coord) == 1:
+                        self.draw_gate(coord[0], name, '')
+                    else:
+                        self.draw_multiqubit_gate(
+                            coord, fc=self.style.dispcol['multi'],
+                            ec=self.style.dispcol['multi'],
+                            gt=self.style.gt, sc=self.style.sc,
+                            text=name, subtext=""
+                        )
+                elif gate.type == GateType.perm:
                     name = gate.type.value
                     for coor in coord:
                         self.draw_gate(coor, name, '')
