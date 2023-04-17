@@ -906,7 +906,7 @@ class TextDrawing:
     def params_for_label(gate):
         """Get the params and format them to add them to a label. None if there
          are no params or if the params are numpy.ndarrays."""
-        if not isinstance(gate,BasicGate):
+        if not isinstance(gate, BasicGate):
             return []
         ret = []
         for param in gate.pargs:
@@ -920,10 +920,10 @@ class TextDrawing:
     @staticmethod
     def label_for_box(instruction, controlled=False):
         """ Creates the label for a box."""
-        if isinstance(instruction,BasicGate):
+        if isinstance(instruction, BasicGate):
             label = instruction.qasm_name
         else:
-            label='trigger'
+            label = 'trigger'
         params = TextDrawing.params_for_label(instruction)
         if params:
             label += "(%s)" % ','.join(params)
@@ -1088,7 +1088,7 @@ class TextDrawing:
         if isinstance(gate, CompositeGate):
             box_label = "cg_" + gate.name[-4:]
         elif not isinstance(gate, BasicGate):
-            box_label='trigger'
+            box_label = 'trigger'
         else:
             box_label = gate.qasm_name
             gate_type = gate.type
@@ -1117,20 +1117,18 @@ class TextDrawing:
             connection_label = "ZZ(%s)" % TextDrawing.params_for_label(gate)[0]
             gates = [Bullet(conditional=conditional), Bullet(conditional=conditional)]
             add_connected_gate(gate, gates, layer, current_cons)
-        elif not isinstance(gate,BasicGate):
+        elif not isinstance(gate, BasicGate):
             # trigger
             if gate.targets + len(gate.cargs) == 1:
-              layer.set_qubit(gate.targ,
-                            BoxOnQuWire(TextDrawing.label_for_box(gate)))
+                layer.set_qubit(gate.targ, BoxOnQuWire(TextDrawing.label_for_box(gate)))
             elif len(gate.cargs) >= 1:
-              label = box_label if box_label is not None \
-                else TextDrawing.label_for_box(gate, controlled=True)
-              params_array = TextDrawing.controlled_wires(gate, layer)
-              controlled_top, controlled_bot, controlled_edge, rest = params_array
-              gates = self._set_ctrl_state(gate, conditional, ctrl_label,
-                                         bool(controlled_bot))
-              gates.append(BoxOnQuWire(label, conditional=conditional))
-              add_connected_gate(gate, gates, layer, current_cons)
+                label = box_label if box_label is not None \
+                    else TextDrawing.label_for_box(gate, controlled=True)
+                params_array = TextDrawing.controlled_wires(gate, layer)
+                controlled_top, controlled_bot, controlled_edge, rest = params_array
+                gates = self._set_ctrl_state(gate, conditional, ctrl_label, bool(controlled_bot))
+                gates.append(BoxOnQuWire(label, conditional=conditional))
+                add_connected_gate(gate, gates, layer, current_cons)
             elif gate.targets >= 2:
                 label = TextDrawing.label_for_box(gate)
                 layer.set_qu_multibox(gate.targs, label, conditional=conditional)

@@ -708,76 +708,78 @@ class PhotoDrawer(object):
                             text=name, subtext=""
                         )
                 elif isinstance(gate, Operator):
-                   if len(coord) == 1:
-                       name='trigger'
-                       if param is not None:
-                           p_string = '({})'.format(param)
-                           self.draw_gate(coord[0], name, p_string)
-                       else:
-                           self.draw_gate(coord[0], name, '')
-                   elif len(coord) == 2:
-                       if len(gate.cargs) == 1:
-                           disp ='trigger'
-                           color = None
-                           if self.style.name != 'bw':
-                               color = self.style.dispcol['multi']
+                    if len(coord) == 1:
+                        name = 'trigger'
+                        if param is not None:
+                            p_string = '({})'.format(param)
+                            self.draw_gate(coord[0], name, p_string)
+                        else:
+                            self.draw_gate(coord[0], name, '')
+                    elif len(coord) == 2:
+                        if len(gate.cargs) == 1:
+                            disp = 'trigger'
+                            color = None
+                            if self.style.name != 'bw':
+                                color = self.style.dispcol['multi']
 
-                           self.draw_ctrl_qubit(coord[0], fc=color, ec=color)
-                           if param:
-                               self.draw_gate(coord[1],
-                                              text=disp,
-                                              fc=color,
-                                              p_string='{}'.format(param))
-                           else:
-                               self.draw_gate(coord[1], text=disp,
-                                              fc=color)
-                           # add qubit-qubit wiring
-                           self.draw_line(bottom, top, lc=color)
-                       else:
-                           if param:
-                               subtext = '{}'.format(param)
-                           else:
-                               subtext = ''
-                           self.draw_multiqubit_gate(coord, fc=self.style.dispcol['multi'],
-                                                     ec=self.style.dispcol['multi'],
-                                                     gt=self.style.gt, sc=self.style.sc,
-                                                     text='trigger', subtext=subtext)
-                   elif len(coord) == 3:
-                       if len(gate.cargs) > 0:
-                           for i in range(len(gate.cargs)):
-                               self.draw_ctrl_qubit(coord[i], fc=self.style.dispcol['multi'],
-                                                    ec=self.style.dispcol['multi'])
-                           if param:
-                               subtext = '{}'.format(param)
-                           else:
-                               subtext = ''
-                           if gate.targets >= 2:
-                               self.draw_multiqubit_gate(coord[gate.controls:], fc=self.style.dispcol['multi'],
-                                                         ec=self.style.dispcol['multi'],
-                                                         gt=self.style.gt, sc=self.style.sc,
-                                                         text='trigger', subtext=subtext)
-                           else:
-                               self.draw_gate(coord[-1],
-                                              text='trigger',
-                                              fc=self.style.dispcol['multi'],
-                                              p_string=subtext)
-                           self.draw_line(bottom, top, lc=self.style.dispcol['swap'])
-                       else:
-                           if param:
-                               subtext = '{}'.format(param)
-                           else:
-                               subtext = ''
-                           self.draw_multiqubit_gate(coord, fc=self.style.dispcol['multi'],
-                                                     ec=self.style.dispcol['multi'],
-                                                     gt=self.style.gt, sc=self.style.sc,
-                                                     text='trigger', subtext=subtext)
-                   elif len(coord) > 3:
-                       self.draw_multiqubit_gate(
-                           coord, fc=self.style.dispcol['multi'],
-                           ec=self.style.dispcol['multi'],
-                           gt=self.style.gt, sc=self.style.sc,
-                           text='trigger', subtext=""
-                       )
+                            self.draw_ctrl_qubit(coord[0], fc=color, ec=color)
+                            if param:
+                                self.draw_gate(coord[1], text=disp, fc=color, p_string='{}'.format(param))
+                            else:
+                                self.draw_gate(coord[1], text=disp, fc=color)
+                            # add qubit-qubit wiring
+                            self.draw_line(bottom, top, lc=color)
+                        else:
+                            if param:
+                                subtext = '{}'.format(param)
+                            else:
+                                subtext = ''
+                            self.draw_multiqubit_gate(
+                                coord, fc=self.style.dispcol['multi'],
+                                ec=self.style.dispcol['multi'],
+                                gt=self.style.gt, sc=self.style.sc,
+                                text='trigger', subtext=subtext
+                            )
+                    elif len(coord) == 3:
+                        if len(gate.cargs) > 0:
+                            for i in range(len(gate.cargs)):
+                                self.draw_ctrl_qubit(
+                                    coord[i], fc=self.style.dispcol['multi'], ec=self.style.dispcol['multi']
+                                )
+                            if param:
+                                subtext = '{}'.format(param)
+                            else:
+                                subtext = ''
+                            if gate.targets >= 2:
+                                self.draw_multiqubit_gate(
+                                    coord[gate.controls:], fc=self.style.dispcol['multi'],
+                                    ec=self.style.dispcol['multi'],
+                                    gt=self.style.gt, sc=self.style.sc,
+                                    text='trigger', subtext=subtext
+                                )
+                            else:
+                                self.draw_gate(
+                                    coord[-1], text='trigger', fc=self.style.dispcol['multi'], p_string=subtext
+                                )
+                            self.draw_line(bottom, top, lc=self.style.dispcol['swap'])
+                        else:
+                            if param:
+                                subtext = '{}'.format(param)
+                            else:
+                                subtext = ''
+                            self.draw_multiqubit_gate(
+                                coord, fc=self.style.dispcol['multi'],
+                                ec=self.style.dispcol['multi'],
+                                gt=self.style.gt, sc=self.style.sc,
+                                text='trigger', subtext=subtext
+                            )
+                    elif len(coord) > 3:
+                        self.draw_multiqubit_gate(
+                            coord, fc=self.style.dispcol['multi'],
+                            ec=self.style.dispcol['multi'],
+                            gt=self.style.gt, sc=self.style.sc,
+                            text='trigger', subtext=""
+                        )
                 elif gate.type == GateType.perm:
                     name = gate.type.value
                     for coor in coord:
