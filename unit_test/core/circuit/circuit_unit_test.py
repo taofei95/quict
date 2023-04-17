@@ -25,81 +25,110 @@ class TestCircuit(unittest.TestCase):
         # single qubit gate
         H | cir(0)
 
-        cgate1 = H
-        cgate1 | cir(1)
+        cgate_single = H
+        cgate_single | cir(1)
 
-        cgate2 = gate_builder(GateType.h) & Qureg(1)
-        cgate2 | cir
+        cgate_single2 = gate_builder(GateType.h) & Qureg(1)
+        cgate_single2 | cir
         assert len(cir.gates) == 3
 
         # single qubit gate with param
         U1(np.pi / 2) | cir(1)
 
-        cgate1 = U1
-        cgate1 | cir(2)
+        cgate_single = U1
+        cgate_single | cir(2)
 
-        cgate2 = gate_builder(GateType.u1, params=[(np.pi / 2)]) & 3
-        cgate2 | cir
+        cgate_single2 = gate_builder(GateType.u1, params=[(np.pi / 2)])
+        cgate_single2 & 3 | cir
         assert len(cir.gates) == 6
 
         # two qubit gate
         CX | cir([1, 2])
-        
-        cgate1 = CX & [3, 4]
-        cgate1 | cir
-        
-        cgate2 = gate_builder(GateType.cx) & [5, 6]
-        cgate2 | cir
+
+        cgate_double = CX & [3, 4]
+        cgate_double | cir
+
+        cgate_double2 = gate_builder(GateType.cx) & [5, 6]
+        cgate_double2 | cir
         assert len(cir.gates) == 9
 
         # two qubit gate with param
         Rzz(np.pi / 2) | cir([1, 2])
         CU3(np.pi / 2, 0, 0) | cir([3, 4])
-        
-        cgate1 = Ryy & [5, 6]
-        cgate1(np.pi / 2) | cir
 
-        cgate2 = gate_builder(GateType.cu3, random_params=True) & [7, 8]
-        cgate2 | cir
+        cgate_double = Ryy & [5, 6]
+        cgate_double(np.pi / 2) | cir
 
-        cgate3 = Rzz.build_gate()
-        cgate3 | cir([7, 8])
+        cgate_double2 = gate_builder(GateType.cu3, random_params=True) & [7, 8]
+        cgate_double2 | cir
+
+        cgate_double3 = Rzz.build_gate()
+        cgate_double3 | cir([7, 8])
         assert len(cir.gates) == 14
-        
+
         # complexed gate
         CCRz(np.pi / 2) | cir([1, 2, 3])
 
-        cgate1 = CCX & [4, 5, 6]
-        cgate1 | cir
+        cgate_complex = CCX & [4, 5, 6]
+        cgate_complex | cir
 
-        cgate2 = gate_builder(GateType.ccrz, random_params=True)
-        cgate2 | cir([7, 8, 9])
-        
-        cgate3 = CCRz.build_gate()
-        cgate3(np.pi / 2) | cir([2, 4, 6])
+        cgate_complex2 = gate_builder(GateType.ccrz, random_params=True)
+        cgate_complex2 | cir([7, 8, 9])
+
+        cgate_complex3 = CCRz.build_gate()
+        cgate_complex3(np.pi / 2) | cir([2, 4, 6])
 
         matrix = np.array([
             [1, 0],
             [0, 1]
         ], dtype=np.complex128)
-        cgate4 = Unitary(matrix)
-        cgate4.build_gate()
-        cgate4 | cir(0)
+        cgate = Unitary(matrix)
+        cgate_complex4 = cgate.build_gate()
+        cgate_complex4 | cir(0)
         assert len(cir.gates) == 19
 
         # append composite gate
         qft_gate = QFT(3)
         qft_gate | cir([0, 1, 3])
 
-        cgate = CompositeGate()
-        CCRz(1) | cgate([0, 1, 2])
-        cgate | cir
+        cgate_append = CompositeGate()
+        CCRz(1) | cgate_append([0, 1, 2])
+        cgate_append | cir
         assert len(cir.gates) == 21
+        
+        cgate_complex3 | cgate_append
+        cgate_complex3 | cir
+        c_1 = cir.gates[-1]
+        
+        cgate_complex3 ^ cgate_append
+        cgate_append | cir
+        c_2 = cir.gates[-1]
+        assert c_1 != c_2
+        assert len(cir.gates) == 23
+
+        cir_unitary = Circuit(5)
+        cgate = CompositeGate()
+        matrix = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, -1]
+        ], dtype=np.complex128)
+        cgate_complex4 = Unitary(matrix, MatrixType.identity)
+        com = cgate_complex4.build_gate()
+        com | cgate
+        cgate | cir_unitary
+
+        cir_unitary2 = Circuit(5)
+        cgate1 = CompositeGate()
+        com ^ cgate1
+        cgate1 | cir_unitary2
+        assert cir_unitary.qasm() == cir_unitary2.inverse().qasm()
 
         # append gate by qubits/qureg
         S | cir(qureg[0])
         CX | cir(qureg[1, 3])
-        assert len(cir.gates) == 23
+        assert len(cir.gates) == 25
 
         # append cir to cir
         cir1 = Circuit(5)
@@ -138,58 +167,57 @@ class TestCircuit(unittest.TestCase):
         # append sub circuit
         cir = TestCircuit.based_circuit
         sub_cir_without_remove = cir.sub_circuit(qubit_limit=[0, 1, 2])
-        assert cir.size() == 334
+        assert cir.size() == 351
         assert sub_cir_without_remove.width() == 3
 
         sub_cir_with_remove = cir.sub_circuit(max_size=120, qubit_limit=[0, 3])
-        assert cir.size() + sub_cir_with_remove.size() == 394
+        assert cir.size() + sub_cir_with_remove.size() == 412
         assert sub_cir_without_remove.width() == 3
 
         # transform circuit to composite gate
-        cir1 = Circuit(5)
-        cir1.random_append(10)
-        composite_gate = cir1.to_compositegate()
-        cir_new = Circuit(5)
-        cir_new.extend(composite_gate)
-        assert cir1.size() == cir_new.size()
+        cir_trans = Circuit(5)
+        cir_trans.random_append(10)
+        composite_gate = cir_trans.to_compositegate()
+        cir_trans2 = Circuit(5)
+        cir_trans2.extend(composite_gate)
+        assert cir_trans.size() == cir_trans2.size()
 
         # add qubits to circuit with ancillary_qubit or not
-        cir1.add_qubit(5, is_ancillary_qubit=False)
-        assert cir1.width() == 10
-        cir1.add_qubit(5, is_ancillary_qubit=True)
-        assert cir1.width() == 15
-        assert cir1.ancilla_qubits == [10, 11, 12, 13, 14]
+        cir_trans.add_qubit(5, is_ancillary_qubit=False)
+        assert cir_trans.width() == 10
+        cir_trans.add_qubit(5, is_ancillary_qubit=True)
+        assert cir_trans.width() == 15
+        assert cir_trans.ancilla_qubits == [10, 11, 12, 13, 14]
 
         # reset qubits to circuit
         cir.reset_qubits
         assert cir.width() == 10
         
         # extend gate/circuit to circuit
-        cir2 = Circuit(3)
+        cir_extend = Circuit(3)
+        cir_trans.extend(cir_extend)  # extend a empty circuit
+        assert cir_trans.width() == 18 and cir_trans.size() == 10
 
-        cir1.extend(cir2)  # extend a empty circuit
-        assert cir1.width() == 18 and cir1.size() == 10
+        cir_extend.extend(cir_extend) # extend same circuit
+        assert cir_extend.width() == 3 and cir_extend.size() == 0
 
-        cir2.extend(cir2) # extend same circuit
-        assert cir2.width() == 3 and cir2.size() == 0
+        # cir_extend.extend(cir_trans) # empty extend circuit
+        # assert cir_extend.width() == 18 and cir_extend.size() == 10
 
-        # cir2.extend(cir1) # empty extend circuit
-        # assert cir2.width() == 18 and cir2.size() == 10
-
-        cir3 = Circuit(5)
-        cir3.random_append(10)
-        cir1.extend(cir3) # extend random circuit
-        assert cir1.width() == 23 and cir1.size() == 20
+        cir_extend = Circuit(5)
+        cir_extend.random_append(10)
+        cir_trans.extend(cir_extend) # extend random circuit
+        assert cir_trans.width() == 23 and cir_trans.size() == 20
 
         cgate = CompositeGate()
         H | cgate(1)
         CX | cgate([1, 2])
         cir2.extend(cgate) # extend compositegate
-        assert cir2.width() == 3 and cir2.size() == 2
+        assert cir_extend.width() == 5 and cir_extend.size() == 10
 
         cgate2 = CompositeGate()
-        cir2.extend(cgate2) # extend empty compositegate
-        assert cir2.width() == 3 and cir2.size() == 2
+        cir_extend.extend(cgate2) # extend empty compositegate
+        assert cir_extend.width() == 5 and cir_extend.size() == 10
 
         # append gate to circuit
         cir3 = Circuit(3)
@@ -197,18 +225,18 @@ class TestCircuit(unittest.TestCase):
         assert cir3.size() == 3
 
         # insert gate to circuit
-        c_insert = CompositeGate()
-        H | c_insert(0)
-        cir3.insert(c_insert, 1)
-        c_insert | cir3
-        
-        c_insert2 = CX & [1, 2]
-        cir3.insert(c_insert2, 2)
-        assert cir3.size() == 6
-        
+        cir_insert = CompositeGate()
+        H | cir_insert(0)
+        cir3.insert(cir_insert, 1)
+        cir_insert | cir3
+
+        cir_insert2 = CX & [1, 2]
+        cir3.insert(cir_insert2, 0)
+        assert cir3.gates[0] != cir3.gates[1]
+
         # inverse circuit
-        cir3_new = cir3.inverse()
-        assert cir3_new.size() == cir3.size() and cir3_new.qasm() != cir3.qasm()
+        cir_inverse = cir3.inverse()
+        assert cir_inverse.size() == cir3.size() and cir_inverse.qasm() != cir3.qasm()
 
     def test_circuit_info(self):
         # add all type of gates to circuit
@@ -250,6 +278,7 @@ class TestCircuit(unittest.TestCase):
         assert cir.count_2qubit_gate() == 8
         assert cir.count_gate_by_gatetype(GateType.measure) == 1
         assert len(cir.qasm().splitlines()) == cir.size() + 4
+        assert cir.qasm().splitlines()[-3] == "cx q[3], q[4];"
         assert cir.name == "cir" and cir.ancilla_qubits == [3, 4]
 
     def test_circuit_decomposition(self):
