@@ -3,6 +3,7 @@
 # @TIME    : 2022/1/17 8:44
 # @Author  : Han Yu, Li Kaiqi
 # @File    : qubit.py
+from __future__ import annotations
 from typing import Union, List
 
 from QuICT.core.utils import unique_id_generator
@@ -141,7 +142,11 @@ class Qureg(list):
     Attributes:
         qubits([Qubits]): the list of qubits.
     """
-    def __init__(self, qubits=None):
+    @property
+    def coupling_strength(self) -> list:
+        return self._coupling_strength
+
+    def __init__(self, qubits: Union[int, Qubit, Qureg] = None, coupling_strength: list = None):
         """ initial a qureg with qubit(s)
 
         Args:
@@ -169,6 +174,10 @@ class Qureg(list):
                     raise TypeError("Qureg.qubits", "int/Qubit/list<Qubit/Qureg>", type(qubit))
         else:
             raise TypeError("Qureg.qubits", "int/Qubit/list<Qubit/Qureg>", type(qubit))
+
+        self._coupling_strength = None
+        if coupling_strength is not None:
+            self.set_coupling_strength(coupling_strength)
 
     def __call__(self, indexes: object):
         """ get a smaller qureg from this qureg
@@ -352,8 +361,14 @@ class Qureg(list):
         for idx, qubit in enumerate(self):
             qubit.T2 = t2_time[idx]
 
-    def set_coupling_strength(self, coupling_strength: dict):
-        pass
+    def set_coupling_strength(self, coupling_strength: list):
+        assert len(self) == len(coupling_strength)
+        for cs in coupling_strength:
+            assert len(self) == cs
+            for item in cs:
+                assert isinstance(item, (int, float)) and item >= 0 and item <= 1
+
+        self._coupling_strength = coupling_strength
 
     def reset_qubits(self):
         """ Reset all qubits' status. """
