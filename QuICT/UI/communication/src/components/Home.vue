@@ -1,46 +1,30 @@
 <template>
   <el-container style="background-color: #13141c; padding: 0px">
-    <el-header style="height: 50px">
-      <!-- <el-row>
-      <el-col :span="12"> -->
-      <el-space style="height: 50px; font-size: var(--el-font-size-large); width: 90%" size="large"
-        direction="horizontal">
-        <div
-          style="background-image: url('/assets/logo.png'); background-repeat: no-repeat; background-position: left; width: 160px;  height: 45px;">
-        </div>
-
-        <span class="span_selected" id="span_QuCompuser" @click="SelectPageQuCompuser">
-          QuCompuser
-        </span>
-
-        <span class="span_not_selected" id="span_QCDA" @click="SelectPageQCDA">
-          QCDA
-        </span>
-      </el-space>
-      <el-space style="height: 50px; font-size: var(--el-font-size-large); width: 10%" size="large"
-        direction="horizontal">
-        <!-- <span class="span_not_selected" id="span_QCDA" @click="dialogUser = true">
-          User
-        </span>
-        <span class="span_not_selected" id="span_QCDA" @click="Logout">
-          Logout
-        </span> -->
+    <el-header
+      style="line-height: 50px !important;--el-header-padding: 0px;--el-color-text-primary: #409eff;--el-menu-background-color: #00000000;--el-menu-border-color: #00000000">
+      <el-menu :default-active="'0'" class="el-menu-demo" mode="horizontal" :ellipsis="false" @select="handleSelect">
+        <el-menu-item>
+          <div
+            style="background-image: url('/assets/logo.png'); background-repeat: no-repeat; background-position: left; width: 160px;  height: 45px;">
+          </div>
+        </el-menu-item>
+        <el-menu-item index="0">QuCompuser</el-menu-item>
+        <el-menu-item index="1">QCDA</el-menu-item>
+      </el-menu>
+      <div style="position: absolute;right: 20px;top: 10px;">
         <el-dropdown trigger="click">
-          <el-tooltip class="box-item" effect="dark" placement="right-start">
+          <el-tooltip class="box-item" effect="dark" placement="bottom-end">
             <template #content> User: {{ user }}<br />E-mail: {{ email }}</template>
-            <span style="
-              font-family: 'Segoe UI Symbol';"></span>
+            <span style="font-family: 'Segoe UI Symbol';"></span>
           </el-tooltip>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item @click="Logout">Logout</el-dropdown-item>
-              <el-dropdown-item @click="dialogPsw = true">Change Password</el-dropdown-item>
+              <el-dropdown-item @click="dialogPsw = true; ch_old_psw = psw;">Change Password</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-      </el-space>
-      <!-- </el-col>
-      </el-row> -->
+      </div>
     </el-header>
     <el-main class="page_zone">
       <QuCompuser class="page_selected" id="page_QuCompuser"></QuCompuser>
@@ -137,6 +121,10 @@
 .page_zone {
   padding: 0px !important;
 }
+
+.flex-grow {
+  flex-grow: 1;
+}
 </style>
 
 <script>
@@ -174,25 +162,24 @@ export default {
     QCDA,
   },
   methods: {
-    SelectPageQuCompuser() {
-      if (this.CurrentPage != "QuCompuser") {
-        this.CurrentPage = "QuCompuser";
-        d3.select("#span_QuCompuser").attr("class", "span_selected");
-        d3.select("#span_QCDA").attr("class", "span_not_selected");
-        d3.select("#page_QuCompuser").attr("class", "page_selected");
-        d3.select("#page_QCDA").attr("class", "page_not_selected");
+    handleSelect(key, keyPath) {
+      console.log(key, keyPath)
+      if (key == "0") {
+        if (this.CurrentPage != "QuCompuser") {
+          this.CurrentPage = "QuCompuser";
+          d3.select("#page_QuCompuser").attr("class", "page_selected");
+          d3.select("#page_QCDA").attr("class", "page_not_selected");
+        }
       }
-    },
-    SelectPageQCDA() {
-      if (this.CurrentPage != "QCDA") {
-        this.CurrentPage = "QCDA";
-        d3.select("#span_QuCompuser").attr("class", "span_not_selected");
-        d3.select("#span_QCDA").attr("class", "span_selected");
-        d3.select("#page_QuCompuser").attr("class", "page_not_selected");
-        d3.select("#page_QCDA").attr("class", "page_selected");
+      else {
+        if (this.CurrentPage != "QCDA") {
+          this.CurrentPage = "QCDA";
+          d3.select("#page_QuCompuser").attr("class", "page_not_selected");
+          d3.select("#page_QCDA").attr("class", "page_selected");
+        }
       }
-    },
 
+    },
     login() {
       if (this.user.length == 0 || this.psw.length == 0) {
         this.ShowError("User or Password cannot be Null.");

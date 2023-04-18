@@ -257,7 +257,7 @@ def forget_password(content):
     usr = content['user']
     email = content['email']
     """ Send email for user for activate new password. """
-    if not SQLManger().validate_user(usr) :
+    if SQLManger().validate_user(usr) :
         user_info = SQLManger().get_user_info(usr)
         user_email = user_info[1]
         if user_email != email:
