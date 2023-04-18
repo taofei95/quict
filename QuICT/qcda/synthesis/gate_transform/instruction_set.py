@@ -24,6 +24,11 @@ class InstructionSet(object):
     def size(self):
         return len(self.one_qubit_gates) + 1
 
+    @property
+    def gates(self) -> list:
+        """ Return the list of GateType in current Instruction Set. """
+        return self.one_qubit_gates + [self.two_qubit_gate]
+
     # Two-qubit gate and two-qubit rules
     @property
     def two_qubit_gate(self):
