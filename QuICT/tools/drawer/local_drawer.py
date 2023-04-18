@@ -632,7 +632,7 @@ class PhotoDrawer(object):
 
     def run(self, circuit, filename=None, show_depth=False, save_file=False):
         global cir_len
-        cir_len = circuit.width()
+        cir_len = max(circuit._qubits) + 1 if isinstance(circuit, CompositeGate) else circuit.width()
         name_dict = collections.OrderedDict()
         now = {
             'max_x': 0,
