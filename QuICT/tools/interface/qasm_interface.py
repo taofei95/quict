@@ -137,7 +137,8 @@ class OPENQASMInterface(BasicInterface):
         self.analyse_node(node)
         if self.valid_circuit:
             self.circuit = Circuit(self.qbits)
-            self.circuit.extend(self.circuit_gates)
+            for gate in self.circuit_gates:
+                gate | self.circuit
 
     def analyse_code_from_circuit(self):
         self.valid_qasm = True

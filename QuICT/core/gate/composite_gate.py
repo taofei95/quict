@@ -45,7 +45,10 @@ class CompositeGate(CircuitBased):
 
         if gates is not None:
             for gate in gates:
-                self.append(gate)
+                if isinstance(gate, CompositeGate):
+                    self.extend(gate)
+                else:
+                    self.append(gate)
 
     def clean(self):
         self._gates = []
@@ -109,7 +112,7 @@ class CompositeGate(CircuitBased):
         new_gates = []
         for gate, qidxes, size in self._gates:
             new_q = [qidx_mapping[qidx] for qidx in qidxes]
-            if size > 1:
+            if isinstance(gate, CompositeGate):
                 gate & new_q
 
             new_gates.append((gate, new_q, size))
@@ -183,11 +186,13 @@ class CompositeGate(CircuitBased):
     def extend(self, gates: CompositeGate):
         if self._pointer is not None:
             gate_args = gates.width()
-            assert gate_args == len(self._pointer), GateQubitAssignedError(
-                f"{gates.name} need {gate_args} indexes, but given {len(self._pointer)}"
+            assert gate_args <= len(self._pointer), GateQubitAssignedError(
+                f"{gates.name} need at least {gate_args} indexes, but given {len(self._pointer)}"
             )
-
-            gate_qidxes = self._pointer[:]
+            if gate_args == len(self._pointer):
+                gate_qidxes = self._pointer[:]
+            else:
+                gate_qidxes = [self._pointer[qidx] for qidx in gates.qubits]
         else:
             gate_qidxes = gates.qubits
 
@@ -248,9 +253,9 @@ class CompositeGate(CircuitBased):
             int: the depth
         """
         depth = np.zeros(self.width(), dtype=int)
-        for gate, targs, gsize in self._gates:
+        for gate, targs, _ in self._gates:
             targs = [self.qubits.index(targ) for targ in targs]
-            if gsize > 1:
+            if isinstance(gate, CompositeGate):
                 gdepth = gate.depth(True)
                 for i, targ in enumerate(targs):
                     depth[targ] += gdepth[i]
@@ -274,9 +279,10 @@ class CompositeGate(CircuitBased):
 
     def copy(self):
         _gates = CompositeGate()
+        _gates.name = self.name
+        _gates._qubits = self.qubits
         copy_gates = [(gate.copy(), indexes, size) for gate, indexes, size in self._gates]
         _gates._gates = copy_gates
-        _gates._qubits = self.qubits
 
         return _gates
 
@@ -294,7 +300,7 @@ class CompositeGate(CircuitBased):
         matrix_width = self.width() if local else max(self.qubits) + 1
 
         circuit_matrix = CircuitMatrix(device, self._precision)
-        assigned_gates = self.flatten_gates() if not local else self._get_local_gates()
+        assigned_gates = self.flatten_gates(True) if not local else self._get_local_gates()
 
         return circuit_matrix.get_unitary_matrix(assigned_gates, matrix_width)
 
@@ -304,7 +310,8 @@ class CompositeGate(CircuitBased):
             local_qidx_mapping[qidx] = i
 
         local_gates = []
-        for gate, qidx, _ in self._gates:
+        flatten_gates = self.gate_decomposition(False)
+        for gate, qidx, _ in flatten_gates:
             related_qidx = [local_qidx_mapping[q] for q in qidx]
             lgate = gate & related_qidx
             local_gates.append(lgate)
@@ -318,11 +325,11 @@ class CompositeGate(CircuitBased):
             for i, q in enumerate(self.qubits):
                 qidx_mapping[q] = target_qubits[i]
 
-        for gate, targs, size in self._gates:
+        for gate, targs, _ in self._gates:
             if target_qubits is not None:
                 targs = [qidx_mapping[targ] for targ in targs]
 
-            if size > 1:
+            if isinstance(gate, CompositeGate):
                 qasm_string += gate.qasm_gates_only(creg, cbits, targs)
                 continue
 

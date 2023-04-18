@@ -36,7 +36,11 @@ class circuit_layer(object):
         self.gates = []
 
     def addGate(self, gate: BasicGate) -> bool:
-        Q_set = set(gate.cargs) | set(gate.targs)
+        if isinstance(gate, CompositeGate):
+            Q_set = set(gate._qubits)
+        else:
+            Q_set = set(gate.cargs) | set(gate.targs)
+
         for element in range(min(Q_set), max(Q_set) + 1):
             if element in self.pic:
                 return False
@@ -47,7 +51,11 @@ class circuit_layer(object):
         return True
 
     def checkGate(self, gate: BasicGate) -> bool:
-        Q_set = set(gate.cargs) | set(gate.targs)
+        if isinstance(gate, CompositeGate):
+            Q_set = set(gate._qubits)
+        else:
+            Q_set = set(gate.cargs) | set(gate.targs)
+
         for element in range(min(Q_set), max(Q_set) + 1):
             if element in self.pic:
                 return False
@@ -898,6 +906,8 @@ class TextDrawing:
     def params_for_label(gate):
         """Get the params and format them to add them to a label. None if there
          are no params or if the params are numpy.ndarrays."""
+        if not isinstance(gate, BasicGate):
+            return []
         ret = []
         for param in gate.pargs:
             try:
@@ -908,23 +918,12 @@ class TextDrawing:
         return ret
 
     @staticmethod
-    def special_label(instruction):
-        """Some instructions have special labels"""
-        labels = {IGate: 'I',
-                  Initialize: 'initialize',
-                  UnitaryGate: 'unitary',
-                  HamiltonianGate: 'Hamiltonian',
-                  SXGate: '√X',
-                  SXdgGate: '√XDG'}
-        instruction_type = type(instruction)
-        if instruction_type in {Gate, Instruction}:
-            return instruction.qasm_name
-        return labels.get(instruction_type, None)
-
-    @staticmethod
     def label_for_box(instruction, controlled=False):
         """ Creates the label for a box."""
-        label = instruction.qasm_name
+        if isinstance(instruction, BasicGate):
+            label = instruction.qasm_name
+        else:
+            label = 'trigger'
         params = TextDrawing.params_for_label(instruction)
         if params:
             label += "(%s)" % ','.join(params)
@@ -1086,10 +1085,20 @@ class TextDrawing:
                     current_cons.append((actual_index, g))
 
         ctrl_label = ""
-        box_label = gate.qasm_name
-        gate_type = gate.type
+        if isinstance(gate, CompositeGate):
+            box_label = "cg_" + gate.name[-4:]
+        elif not isinstance(gate, BasicGate):
+            box_label = 'trigger'
+        else:
+            box_label = gate.qasm_name
+            gate_type = gate.type
 
-        if gate_type == GateType.measure:
+        if isinstance(gate, CompositeGate):
+            if len(gate._qubits) == 1:
+                layer.set_qubit(gate._qubits[0], BoxOnQuWire(box_label, conditional=conditional))
+            else:
+                layer.set_qu_multibox(gate._qubits, box_label, conditional=conditional)
+        elif gate_type == GateType.measure:
             mgate = MeasureFrom()
             layer.set_qubit(gate.targs[0], mgate)
         elif gate_type == GateType.barrier:
@@ -1108,7 +1117,26 @@ class TextDrawing:
             connection_label = "ZZ(%s)" % TextDrawing.params_for_label(gate)[0]
             gates = [Bullet(conditional=conditional), Bullet(conditional=conditional)]
             add_connected_gate(gate, gates, layer, current_cons)
+        elif not isinstance(gate, BasicGate):
+            # trigger
+            if gate.targets + len(gate.cargs) == 1:
+                layer.set_qubit(gate.targ, BoxOnQuWire(TextDrawing.label_for_box(gate)))
+            elif len(gate.cargs) >= 1:
+                label = box_label if box_label is not None \
+                    else TextDrawing.label_for_box(gate, controlled=True)
+                params_array = TextDrawing.controlled_wires(gate, layer)
+                controlled_top, controlled_bot, controlled_edge, rest = params_array
+                gates = self._set_ctrl_state(gate, conditional, ctrl_label, bool(controlled_bot))
+                gates.append(BoxOnQuWire(label, conditional=conditional))
+                add_connected_gate(gate, gates, layer, current_cons)
+            elif gate.targets >= 2:
+                label = TextDrawing.label_for_box(gate)
+                layer.set_qu_multibox(gate.targs, label, conditional=conditional)
 
+            elif gate.targs:
+                label = TextDrawing.label_for_box(gate)
+                layer._set_multibox(label, qubits=gate.targs,
+                                    conditional=conditional)
         elif gate.targets + gate.controls == 1:
             # unitary gate
             layer.set_qubit(gate.targ,

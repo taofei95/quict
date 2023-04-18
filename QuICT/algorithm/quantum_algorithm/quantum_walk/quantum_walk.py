@@ -86,7 +86,7 @@ class QuantumWalk:
             coin_oracle = np.kron(
                 np.eye(self._graph.position), self._coin_unmarked
             ) + np.kron(search_array, self._coin_marked - self._coin_unmarked)
-            return Unitary(coin_oracle)
+            return Unitary(np.complex128(coin_oracle))
 
         action_qubits = [self._position_qubits + i for i in range(self._action_qubits)]
         if not (self._operator_by_position or self._operator_by_time):

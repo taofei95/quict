@@ -171,7 +171,7 @@ class UnitaryDecomposition(object):
         v2_dagger = v_dagger[1]
 
         if recursive_basis == 2:
-            forwarded_d_gate: BasicGate = u_gates.gates.pop(0)
+            forwarded_d_gate: BasicGate = u_gates.flatten_gates().pop(0)
             forwarded_mat = forwarded_d_gate.matrix
             for i in range(0, mat_size // 2, 4):
                 for k in range(4):

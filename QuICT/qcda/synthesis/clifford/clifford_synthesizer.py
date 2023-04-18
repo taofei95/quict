@@ -99,7 +99,7 @@ class CliffordUnidirectionalSynthesizer(object):
         pauli_z.operator[target] = GateType.z
 
         # Compute C X_j C^-1 and C Z_j C^-1
-        for gate in gates.inverse():
+        for gate in gates.inverse().flatten_gates():
             pauli_x.conjugate_act(gate)
             pauli_z.conjugate_act(gate)
 

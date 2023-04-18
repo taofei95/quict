@@ -182,15 +182,19 @@ class Circuit(CircuitBased):
         """
         return self.qubits[item]
 
-    def add_qubit(self, qubits: Union[Qureg, int], is_ancillary_qubit: bool = False):
+    def add_qubit(self, qubits: Union[Qureg, Qubit, int], is_ancillary_qubit: bool = False):
         """ add additional qubits in circuit.
 
         Args:
-            qubits Union[Qureg, int]: The new qubits.
+            qubits Union[Qureg, Qubit, int]: The new qubits, if it is int, means the number of new qubits.
             is_ancillae_qubit (bool, optional): whether the given qubits is ancillae, default to False.
         """
+        assert isinstance(qubits, (Qureg, Qubit, int)), \
+            TypeError("Circuit.add_qubit", "[Qureg, Qubit, int]", type(qubits))
         if isinstance(qubits, int):
             assert qubits > 0, IndexExceedError("Circuit.add_qubit", ">= 0", {qubits})
+            qubits = Qureg(qubits)
+        elif isinstance(qubits, Qubit):
             qubits = Qureg(qubits)
 
         self._qubits = self._qubits + qubits
@@ -293,6 +297,8 @@ class Circuit(CircuitBased):
 
         if isinstance(gates, Circuit):
             gates = gates.to_compositegate()
+            if gates.width() != len(gate_qidxes):
+                gate_qidxes = [gate_qidxes[idx] for idx in gates.qubits]
 
         self._gates.append((gates, gate_qidxes, gates.size()))
         self._pointer = None
@@ -311,14 +317,16 @@ class Circuit(CircuitBased):
 
     def insert(self, gate, insert_idx: int):
         """ Insert a Quantum Gate into current CompositeGate, only support BasicGate/CompositeGate. """
-        assert isinstance(gate, (BasicGate, Operator, CompositeGate)), TypeError("CompositeGate.insert", "BasicGate", type(gate))
+        assert isinstance(gate, (BasicGate, Operator, CompositeGate)), \
+            TypeError("CompositeGate.insert", "BasicGate", type(gate))
         gate_args = gate.qubits if isinstance(gate, CompositeGate) else gate.cargs + gate.targs
         gate_size = gate.size() if isinstance(gate, CompositeGate) else 1
         if len(gate_args) == 0:
             raise GateQubitAssignedError(f"{gate.type} need qubit indexes to insert into Composite Gate.")
 
         for garg in gate_args:
-            assert garg >= 0 and garg < self.width(), GateQubitAssignedError(f"Gate's assigned qubits should within [0, {self.width()}]")
+            assert garg >= 0 and garg < self.width(), \
+                GateQubitAssignedError(f"Gate's assigned qubits should within [0, {self.width()}]")
 
         self._gates.insert(insert_idx, (gate, gate_args, gate_size))
 
@@ -346,7 +354,8 @@ class Circuit(CircuitBased):
                 else:
                     raise GateQubitAssignedError(f"{gate.type} need qubit indexes to add into Composite Gate.")
             else:
-                qubit_index = gate_qargs if len(gate_qargs) > 0 else [self.qubits.index(aq) for aq in gate.assigned_qubits]
+                qubit_index = gate_qargs if len(gate_qargs) > 0 else \
+                    [self.qubits.index(aq) for aq in gate.assigned_qubits]
 
         self._gates.append((gate, qubit_index, 1))
 
@@ -511,7 +520,7 @@ class Circuit(CircuitBased):
         assert device in ["CPU", "GPU"]
         circuit_matrix = CircuitMatrix(device, self._precision)
 
-        return circuit_matrix.get_unitary_matrix(self.flatten_gates(), self.width())
+        return circuit_matrix.get_unitary_matrix(self.flatten_gates(True), self.width())
 
     def sub_circuit(
         self,
@@ -525,7 +534,8 @@ class Circuit(CircuitBased):
         Args:
             start(int): the start gate's index, default 0
             max_size(int): max size of the sub circuit, default -1 without limit
-            qubit_limit(int/list<int>/Qubit/Qureg): the required qubits' indexes, if [], accept all qubits. default to be [].
+            qubit_limit(int/list<int>/Qubit/Qureg): the required qubits' indexes, if [], accept all qubits.
+                default to be [].
             gate_limit(List[GateType]): list of required gate's type, if [], accept all quantum gate. default to be [].
             remove(bool): whether deleting the slice gates from origin circuit, default False
         Return:
@@ -576,78 +586,3 @@ class Circuit(CircuitBased):
                 break
 
         return sub_circuit
-
-    def draw(self, method: str = 'matp_auto', filename: str = None):
-        """Draw the figure of circuit.
-
-        Args:
-            method(str): the method to draw the circuit
-                matp_inline: Show the figure interactively but do not save it to file.
-                matp_file: Save the figure to file but do not show it interactively.
-                matp_auto: Automatically select inline or file mode according to matplotlib backend.
-                matp_silent: Return the drawn figure without saving or showing.
-                command : command
-            filename(str): the output filename without file extensions, default to None.
-                If filename is None, it will using matlibplot.show() except matlibplot.backend
-                is agg, it will output jpg file named circuit's name.
-            get_figure(bool): Whether to return the figure object of matplotlib.
-
-        Returns:
-            If method is 'matp_silent', a matplotlib Figure is returned. Note that that figure is created in matplotlib
-            Object Oriented interface, which means it must be display with IPython.display.
-
-        Examples:
-            >>> from IPython.display import display
-            >>> circ = Circuit(5)
-            >>> circ.random_append()
-            >>> silent_fig = circ.draw(method="matp_silent")
-            >>> display(silent_fig)
-        """
-        from QuICT.tools.drawer import PhotoDrawer, TextDrawing
-        import matplotlib
-
-        if method.startswith('matp'):
-            if filename is not None:
-                if '.' not in filename:
-                    filename += '.jpg'
-
-            photo_drawer = PhotoDrawer()
-            if method == 'matp_auto':
-                save_file = matplotlib.get_backend() == 'agg'
-                show_inline = matplotlib.get_backend() != 'agg'
-            elif method == 'matp_file':
-                save_file = True
-                show_inline = False
-            elif method == 'matp_inline':
-                save_file = False
-                show_inline = True
-            elif method == 'matp_silent':
-                save_file = False
-                show_inline = False
-            else:
-                raise ValueError(
-                    "Circuit.draw.matp_method", "[matp_auto, matp_file, matp_inline, matp_silent]", method
-                )
-
-            silent = (not show_inline) and (not save_file)
-            photo_drawer.run(circuit=self, filename=filename, save_file=save_file)
-
-            if show_inline:
-                from IPython.display import display
-                display(photo_drawer.figure)
-            elif silent:
-                return photo_drawer.figure
-
-        elif method == 'command':
-            text_drawer = TextDrawing([i for i in range(len(self.qubits))], self.gates)
-            if filename is None:
-                print(text_drawer.single_string())
-                return
-            elif '.' not in filename:
-                filename += '.txt'
-
-            text_drawer.dump(filename)
-        else:
-            raise ValueError(
-                "Circuit.draw.method", "[matp_auto, matp_file, matp_inline, matp_silent, command]", method
-            )
