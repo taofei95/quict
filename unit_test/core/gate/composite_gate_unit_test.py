@@ -43,7 +43,7 @@ class TestCompositeGate(unittest.TestCase):
         assert self._gate_attr_test(self._build_compositegate())
 
     def test_compositegate_matrix(self):
-        test_gate = CompositeGate(3)
+        test_gate = CompositeGate()
         H | test_gate(0)
         H | test_gate(1)
         H | test_gate(2)
@@ -55,7 +55,7 @@ class TestCompositeGate(unittest.TestCase):
 
     def test_compositegate_operation(self):
         # composite gate | composite gate
-        ncgate = CompositeGate(TestCompositeGate.qubits)
+        ncgate = CompositeGate()
         self._build_compositegate() | ncgate
         assert self._gate_attr_test(ncgate)
 
