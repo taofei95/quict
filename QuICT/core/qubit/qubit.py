@@ -11,22 +11,9 @@ from QuICT.tools.exception.core import TypeError, ValueError, IndexExceedError, 
 
 
 class Qubit(object):
-    """ Implement a quantum bit
+    """ Implement a Quantum bit
 
-    Qubit is the basic unit of quantum circuits, it will appear with some certain circuit.
-
-    Attributes:
-        id(int): the unique identity code of a qubit, which is generated globally.
-        measured(int):
-            the measure result of the qubit.
-            After apply measure gate on the qubit, the measured will be 0 or 1,
-            otherwise raise an exception
-        fidelity(float):
-            the probability of measure result to be 1, which range in [0, 1].
-            After apply measure gate on the qubit, this attribute can be read,
-            otherwise raise an exception
-        historical_measured(list):
-            Record all measured result of current qubits.
+    Qubit is the basic unit of Quantum Compute.
     """
 
     @property
@@ -135,12 +122,9 @@ class Qubit(object):
 
 
 class Qureg(list):
-    """ Implement a quantum register
+    """ Implement a Quantum Register
 
     Qureg is a list of Qubits, which is a subClass of list.
-
-    Attributes:
-        qubits([Qubits]): the list of qubits.
     """
     @property
     def coupling_strength(self) -> list:
@@ -154,6 +138,8 @@ class Qureg(list):
                 1) int
                 2) qubit
                 3) [qubits/quregs]
+            coupling_strength List[List[float, int]]: The strength of the interaction between two qubits in a
+                quantum computing system. It should be a 2D array with size (n * n) where n is the number of qubits.
         """
         super().__init__()
         if qubits is None:
@@ -303,25 +289,15 @@ class Qureg(list):
 
         return True
 
-    def diff(self, other):
-        """ return different qubits between two quregs
+    def index(self, qubit: Union[List[Qubit], Qubit]) -> Union[int, list]:
+        """ Return the index of given qubits.
 
         Args:
-            other (Qureg): The compare qureg
+            qubit (Union[List[Qubit], Qubit]): The given qubits
 
         Returns:
-            Qureg: The qureg with different qubits
+            Union[int, list]: The index of given qubits in current qureg.
         """
-        qubit_ids = [qubit.id for qubit in self]
-        diff_qubit = []
-
-        for qubit in other:
-            if qubit.id not in qubit_ids:
-                diff_qubit.append(qubit)
-
-        return Qureg(diff_qubit)
-
-    def index(self, qubit: Union[List[Qubit], Qubit]) -> Union[int, list]:
         if isinstance(qubit, Qubit):
             return super().index(qubit)
 
@@ -335,6 +311,11 @@ class Qureg(list):
         raise ValueError("Qureg.index.qubit", "within current Qureg", "qubit is not")
 
     def set_fidelity(self, fidelity: list):
+        """ Set the fidelity for each qubits
+
+        Args:
+            fidelity (list): The list of fidelity for each qubits, should equal to len(qureg).
+        """
         assert isinstance(fidelity, list), \
             TypeError("Qureg.fidelity", "List", f"{type(fidelity)}")
         assert len(fidelity) == len(self), \
@@ -344,6 +325,11 @@ class Qureg(list):
             qubit.fidelity = fidelity[idx]
 
     def set_t1_time(self, t1_time: list):
+        """ Set the T1 coherence time for each qubit
+
+        Args:
+            t1_time (list): The T1 time for each qubit
+        """
         assert isinstance(t1_time, list), \
             TypeError("Qureg.t1_time", "List", f"{type(t1_time)}")
         assert len(t1_time) == len(self), \
@@ -353,6 +339,11 @@ class Qureg(list):
             qubit.T1 = t1_time[idx]
 
     def set_t2_time(self, t2_time: list):
+        """ Set the T2 coherence time for each qubit
+
+        Args:
+            t2_time (list): The T2 time for each qubit
+        """
         assert isinstance(t2_time, list), \
             TypeError("Qureg.t2_time", "List", f"{type(t2_time)}")
         assert len(t2_time) == len(self), \
@@ -362,6 +353,11 @@ class Qureg(list):
             qubit.T2 = t2_time[idx]
 
     def set_coupling_strength(self, coupling_strength: list):
+        """ Set the coupling strength between qubits
+
+        Args:
+            coupling_strength (list): The coupling strength, should be a 2D array with shape(len(qureg) * len(qureg))
+        """
         assert len(self) == len(coupling_strength)
         for cs in coupling_strength:
             assert len(self) == cs
