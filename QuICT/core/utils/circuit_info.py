@@ -304,7 +304,7 @@ class CircuitBased(object):
                 return photo_drawer.figure
 
         elif method == 'command':
-            text_drawer = TextDrawing([i for i in range(self.width())], self.gates)
+            text_drawer = TextDrawing(self._qubits, self.gates)
             if filename is None:
                 print(text_drawer.single_string())
                 return

@@ -685,7 +685,11 @@ class TextDrawing:
     def __init__(self, qregs, gates,
                  line_length=None, vertical_compression='high', initial_state=True,
                  encoding=None):
-        self.qregs = qregs
+        if len(qregs) > 0 and isinstance(qregs[0], int):
+            self.qregs = [i for i in range(max(qregs) + 1)]
+        else:
+            self.qregs = [i for i in range(len(qregs))]
+
         self.layers = self.resolution_layers(gates)
         self.layout = None
         self.initial_state = initial_state
