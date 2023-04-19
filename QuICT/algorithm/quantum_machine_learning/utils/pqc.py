@@ -8,6 +8,7 @@ from QuICT.algorithm.quantum_machine_learning.differentiator.adjoint import Adjo
 import sympy
 from QuICT.algorithm.quantum_machine_learning.utils.expectation import Expectation
 from QuICT.core.gate import *
+import time
 class PQC(tf.keras.layers.Layer):
     """
     Parametrized Quantum Circuit (PQC) Layer.
@@ -27,6 +28,7 @@ class PQC(tf.keras.layers.Layer):
             initializer=tf.keras.initializers.RandomUniform(0, 2 * np.pi),
             regularizer=None,
             constraint=None,
+            opti = tf.keras.optimizers.Adam(),
             **kwargs,
     ):
         
@@ -41,6 +43,7 @@ class PQC(tf.keras.layers.Layer):
         # Set backend and differentiator.
         self._differ = differentiator
         self._executor = Expectation(self._model_circuit,self._operators,differentiator)
+        self._opti = opti
         # Set additional parameter controls.
 
     def build(self, input_shape):
@@ -66,13 +69,20 @@ class PQC(tf.keras.layers.Layer):
                          state_vector =sv,
                          expectation_op = self._operators)
         # gradient update
-        opti = tf.keras.optimizers.Adam(learning_rate=0.1)
+        
         grads = []
         vars = []
+
+        start_time = time.time()
         for item in self._model_pargs:  # Variable to tf.Variable
             grads.append(item.grads)
             vars.append(tf.Variable(item.pargs))
-        opti.apply_gradients(zip(grads, vars))
+        middle_time = time.time() - start_time 
+        print(str(middle_time))
+        middle_time = time.time()
+        self._opti.apply_gradients(zip(grads, vars))
+        update_time = time.time() - middle_time
+        print(update_time)
 
         for idx in range(len(vars)):  # tf.Variable to Variable
             self._model_pargs.pargs[idx] = vars[idx].numpy()
@@ -104,6 +114,7 @@ def custom_print(params):  # tool method used to debug
     return
 from QuICT.simulation.state_vector import StateVectorSimulator
 if __name__ == '__main__':  
+    opti = tf.keras.optimizers.Adam()
 
     params = Variable( np.random.random(200))
     sim = StateVectorSimulator(device="GPU")
@@ -127,7 +138,7 @@ if __name__ == '__main__':
 
     #differ.run(circuit, sv, X)
     ham = Hamiltonian([[1, "Y1"]])
-    pqc = PQC(model_circuit=cir,differentiator=differ,model_pargs= variables,sim=sim,operators = ham)
+    pqc = PQC(model_circuit=cir,differentiator=differ,model_pargs= variables,sim=sim,operators = ham,opti=opti)
     for epoch in range(30):
         cir_trained= pqc.train()
         custom_print(cir_trained)
