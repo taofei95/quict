@@ -6,10 +6,6 @@ from ._operator import Operator
 class NoiseGate(Operator):
     """
     The quantum gate with noise error.
-
-    Args:
-        gate (BasicGate): The quantum gate.
-        error (QuantumNoiseError): The noise error.
     """
     @property
     def noise_matrix(self) -> list:
@@ -22,9 +18,22 @@ class NoiseGate(Operator):
 
     @property
     def type(self) -> str:
-        return "noise"
+        return self._gate.type
+
+    @property
+    def targets(self) -> int:
+        return self._gate.targets
+
+    @property
+    def controls(self) -> int:
+        return self._gate.controls
 
     def __init__(self, gate, noise):
+        """
+        Args:
+            gate (BasicGate): The quantum gate.
+            error (QuantumNoiseError): The noise error.
+        """
         self._gate = gate
         self._noise = noise
         args_num = gate.controls + gate.targets
