@@ -56,15 +56,8 @@ class GateSimulator:
 
         return state_vector
 
-<<<<<<< HEAD
-    def validate_state_vector(self, state_vector, qubits: int):
-        assert (
-            1 << qubits == state_vector.size
-        ), "The state vector should has the same qubits with the circuit."
-=======
     def normalized_state_vector(self, state_vector, qubits: int):
         assert 1 << qubits == state_vector.size, "The state vector should has the same qubits with the circuit."
->>>>>>> e10889d68bbc51d0160b2d6d81d89bb3d067b214
         if not type(state_vector) is self._array_helper.ndarray:
             state_vector = self._array_helper.array(state_vector, dtype=self._dtype)
 
@@ -106,33 +99,7 @@ class GateSimulator:
     ####################################################################
     ############           Gate Matrix Generator            ############
     ####################################################################
-<<<<<<< HEAD
     def _get_gate_matrix(self, gate: BasicGate, fp: bool = True, parg_id: int = 0):
-=======
-    def normalized_matrix(self, unitary_matrix, qubits: int):
-        row, col = unitary_matrix.shape
-        assert 1 << qubits == row and row == col, "The unitary matrix should be square."
-        if not type(unitary_matrix) is self._array_helper.ndarray:
-            unitary_matrix = self._array_helper.array(unitary_matrix, dtype=self._dtype)
-
-        if unitary_matrix.dtype != self._dtype:
-            unitary_matrix = unitary_matrix.astype(self._dtype)
-
-        return unitary_matrix
-
-    def is_identity(self, unitary_matrix):
-        row = unitary_matrix.shape[0]
-        identity_matrix = self._array_helper.identity(row, dtype=self._dtype)
-        return self._array_helper.allclose(unitary_matrix, identity_matrix)
-
-    def dot(self, unitary_matrix, state_vector):
-        if self.is_identity(unitary_matrix):
-            return state_vector
-        else:
-            return self._algorithm.dot(unitary_matrix, state_vector)
-
-    def _get_gate_matrix(self, gate: BasicGate):
->>>>>>> e10889d68bbc51d0160b2d6d81d89bb3d067b214
         if self._device == "CPU":
             if fp:
                 return self._gate_matrix_generator.get_matrix(
@@ -143,25 +110,9 @@ class GateSimulator:
                     gate, precision=self._precision, is_get_grad=True
                 )[parg_id]
         else:
-<<<<<<< HEAD
-            if fp:
-                return self._gate_matrix_generator.get_matrix(
-                    gate,
-                    precision=self._precision,
-                    special_array_generator=self._array_helper,
-                )
-            else:
-                return self._gate_matrix_generator.get_matrix(
-                    gate,
-                    precision=self._precision,
-                    is_get_grad=True,
-                    special_array_generator=self._array_helper,
-                )[parg_id]
-=======
             return self._gate_matrix_generator.get_matrix(
                 gate, precision=self._precision, special_array_generator=self._array_helper
             )
->>>>>>> e10889d68bbc51d0160b2d6d81d89bb3d067b214
 
     def apply_gate(
         self,
@@ -202,11 +153,7 @@ class GateSimulator:
     ):
         matrix_type = gate.matrix_type
         args_num = gate.controls + gate.targets
-<<<<<<< HEAD
-        matrix = self._get_gate_matrix(gate, fp, parg_id)
-=======
         matrix = self._get_gate_matrix(gate) if gate.type != GateType.unitary else gate.matrix
->>>>>>> e10889d68bbc51d0160b2d6d81d89bb3d067b214
         control_idx = np.array(cargs, dtype=np.int64)
         target_idx = np.array(targs, dtype=np.int64)
         default_params = (
@@ -416,34 +363,19 @@ class GateSimulator:
                 f"Unsupportted 3-qubits+ control unitary gate."
             )
 
-<<<<<<< HEAD
-    def apply_measure_gate(
-        self, index: int, state_vector: np.ndarray, qubits: int
-    ) -> int:
-=======
     ####################################################################
     ############           Measure/Reset Function           ############
     ####################################################################
     def apply_measure_gate(self, index: int, state_vector: np.ndarray, qubits: int) -> int:
->>>>>>> e10889d68bbc51d0160b2d6d81d89bb3d067b214
         if self._device == "CPU":
             result = measure_gate_apply(index, state_vector)
         else:
             prob = self._algorithm.measured_prob_calculate(
                 index, state_vector, qubits, sync=self._sync
-<<<<<<< HEAD
-            )
-            result = int(
-                self._algorithm.apply_measuregate(
-                    index, state_vector, qubits, prob, self._sync
-                )
-            )
-=======
             ).get()
             result = int(self._algorithm.apply_measuregate(
                 index, state_vector, qubits, prob, self._sync
             ))
->>>>>>> e10889d68bbc51d0160b2d6d81d89bb3d067b214
 
         return result
 

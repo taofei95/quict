@@ -5,7 +5,6 @@ from QuICT.core.utils import GateType
 
 
 class GateMatrixGenerator:
-<<<<<<< HEAD
     def get_matrix(
         self,
         gate,
@@ -14,9 +13,6 @@ class GateMatrixGenerator:
         is_get_target: bool = False,
         special_array_generator=None,
     ):
-=======
-    def get_matrix(self, gate, precision: str = None, is_get_target: bool = False, special_array_generator=None):
->>>>>>> e10889d68bbc51d0160b2d6d81d89bb3d067b214
         # Step 1: Assigned array generator
         self._array_generator = (
             special_array_generator if special_array_generator is not None else np

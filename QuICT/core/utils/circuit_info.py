@@ -216,16 +216,6 @@ class CircuitBased(object):
         for gate, qidxes, size in self._gates:
             if size > 1 or hasattr(gate, "gate_decomposition"):
                 decomp_gates += gate.gate_decomposition()
-<<<<<<< HEAD
-            else:
-                if decomposition and hasattr(gate, "build_gate"):
-                    cgate = gate.build_gate()
-                    if cgate is not None:
-                        cgate & qidxes
-                        decomp_gates += cgate._gates
-                else:
-                    decomp_gates.append((gate, qidxes, size))
-=======
                 continue
 
             cgate = gate.build_gate()
@@ -235,7 +225,6 @@ class CircuitBased(object):
                 continue
 
             decomp_gates.append((gate, qidxes, size))
->>>>>>> e10889d68bbc51d0160b2d6d81d89bb3d067b214
 
         if not self_flatten:
             return decomp_gates
@@ -243,31 +232,6 @@ class CircuitBased(object):
             self._gates = decomp_gates
             return self._gates
 
-<<<<<<< HEAD
-    def count_training_gates(self):
-        training_gates = 0
-        for gate, _, size in self._gates:
-            if size > 1:
-                training_gates += gate.count_training_gates()
-            if gate.variables > 0:
-                training_gates += 1
-        return training_gates
-
-    def update(self, variables):
-        remain_training_gates = self.count_training_gates()
-
-        for gate, qidxes, size in self._gates:
-            if remain_training_gates == 0:
-                return
-            if gate.variables > 0:
-                remain_training_gates -= 1
-            for i in range(gate.variables):
-                assert gate.pargs[i].identity[:32] == variables.identity
-                index = gate.pargs[i].index
-                gate.pargs[i].pargs = variables.pargs[index]
-
-        return
-=======
     def draw(self, method: str = 'matp_auto', filename: str = None):
         """Draw the figure of circuit.
 
@@ -352,7 +316,6 @@ class CircuitBased(object):
             raise ValueError(
                 "Circuit.draw.method", "[matp_auto, matp_file, matp_inline, matp_silent, command]", method
             )
->>>>>>> e10889d68bbc51d0160b2d6d81d89bb3d067b214
 
 
 class CircuitMode(Enum):

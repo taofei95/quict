@@ -67,8 +67,8 @@ class QSVM:
         for i in range(1,n_qubit+1):
             CSwap & [0,i,i+n_qubit] | swap_test_cir
         H|swap_test_cir(0)
-        sim = Simulator()
-        #sim = StateVectorSimulator()
+        #sim = Simulator()
+        sim = StateVectorSimulator()
         sv = sim.run(swap_test_cir,state_vector=state_vec)
         if isinstance(sim,Simulator):
             sv = sv['data']['state_vector']
