@@ -44,7 +44,7 @@ class StateVectorSimulator:
 
     @vector.setter
     def vector(self, vec):
-        self._vector = self._gate_calculator.validate_state_vector(vec, self._qubits)
+        self._vector = self._gate_calculator.normalized_state_vector(vec, self._qubits)
 
     @property
     def device(self):
@@ -100,20 +100,18 @@ class StateVectorSimulator:
         """
         self.initial_circuit(circuit)
         if state_vector is not None:
-            self._vector = self._gate_calculator.validate_state_vector(state_vector, self._qubits)
+            self._vector = self._gate_calculator.normalized_state_vector(state_vector, self._qubits)
         elif not use_previous:
             self.initial_state_vector()
 
         idx = 0
         while idx < len(self._pipeline):
-            gate, qidxes, size = self._pipeline[idx]
+            gate, qidxes, _ = self._pipeline[idx]
             idx += 1
 
-            if size > 1:
+            if isinstance(gate, CompositeGate):
                 self._apply_compositegate(gate, qidxes)
-                continue
-
-            if isinstance(gate, BasicGate):
+            elif isinstance(gate, BasicGate):
                 self._apply_gate(gate, qidxes)
             elif isinstance(gate, Trigger):
                 self._apply_trigger(gate, qidxes, idx)
@@ -130,9 +128,9 @@ class StateVectorSimulator:
         """
         gate_type = gate.type
         if gate_type == GateType.measure:
-            self._apply_measure_gate(qidxes[0])
+            self._apply_measure_gate(self._qubits - 1 - qidxes[0])
         elif gate_type == GateType.reset:
-            self._apply_reset_gate(qidxes[0])
+            self._apply_reset_gate(self._qubits - 1 - qidxes[0])
         else:
             self._gate_calculator.apply_gate(gate, qidxes, self._vector, self._qubits)
 
@@ -147,9 +145,9 @@ class StateVectorSimulator:
         for idx, cq in enumerate(cgate_qlist):
             qidxes_mapping[cq] = qidxes[idx]
 
-        for cgate, cg_idx, size in gate.fast_gates:
+        for cgate, cg_idx, _ in gate.fast_gates:
             real_qidx = [qidxes_mapping[idx] for idx in cg_idx]
-            if size > 1:
+            if isinstance(cgate, CompositeGate):
                 self._apply_compositegate(cgate, real_qidx)
             else:
                 self._apply_gate(cgate, real_qidx)

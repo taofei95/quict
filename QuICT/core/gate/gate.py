@@ -23,22 +23,24 @@ class BasicGate(object):
     which defined in this class
 
     Attributes:
-        controls(int): the number of the control bits of the gate
-        cargs(list<int>): the list of the index of control bits in the circuit
-        carg(int, read only): the first object of cargs
+        type(GateType, read only): gate's type described by GateType
+        matrix_type(MatrixType, read only): gate matrix's type described by MatrixType
+        precision(str): The gate's precision, one of [double, single]
+        qasm_name(str, read only): gate's name in the OpenQASM 2.0
+        matrix(np.array): the unitary matrix of the quantum gate act on qubits
+        target_matrix(np.array): the unitary matrix of the quantum gate act on targets
 
         targets(int): the number of the target bits of the gate
         targs(list<int>): the list of the index of target bits in the circuit
         targ(int, read only): the first object of targs
 
+        controls(int): the number of the control bits of the gate
+        cargs(list<int>): the list of the index of control bits in the circuit
+        carg(int, read only): the first object of cargs
+
         params(list): the number of the parameter of the gate
         pargs(list): the list of the parameter
         parg(read only): the first object of pargs
-
-        qasm_name(str, read only): gate's name in the OpenQASM 2.0
-        type(GateType, read only): gate's type described by GateType
-
-        matrix(np.array): the unitary matrix of the quantum gate act on targets
     """
     ####################################################################
     ############          Quantum Gate's property           ############
@@ -60,7 +62,7 @@ class BasicGate(object):
         assert precision in ["double", "single"], \
             ValueError("BasicGate.precision", "not within [double, single]", precision)
 
-        if self._matrix is not None and precision != self._precision:
+        if precision != self._precision:
             self._precision = precision
             self._is_matrix_update = True
 
@@ -75,6 +77,9 @@ class BasicGate(object):
             self._is_matrix_update = False
 
         return self._matrix
+
+    def get_matrix(self, precision) -> np.ndarray:
+        return GateMatrixGenerator().get_matrix(self, precision)
 
     @property
     def target_matrix(self) -> np.ndarray:
@@ -187,6 +192,17 @@ class BasicGate(object):
         precision: str = "double",
         is_original_gate: bool = False
     ):
+        """
+        Args:
+            controls (int): The number of control qubits
+            targets (int): The number of target qubits
+            params (int): The number of gate's parameters
+            type_ (GateType): The gate's type
+            matrix_type (MatrixType, optional): The gate matrix's type. Defaults to MatrixType.normal.
+            pargs (list, optional): The gate's parameters. Defaults to [].
+            precision (str, optional): The gate's precison, one of [double, single]. Defaults to "double".
+            is_original_gate (bool, optional): Whether is the initial quantum gate, such as H. Defaults to False.
+        """
         assert isinstance(controls, int), TypeError("BasicGate.controls", "int", type(controls))
         assert isinstance(targets, int), TypeError("BasicGate.targets", "int", type(targets))
         assert isinstance(params, int), TypeError("BasicGate.params", "int", type(params))
@@ -289,8 +305,8 @@ class BasicGate(object):
 
         if CGATE_LIST:
             CGATE_LIST[-1].append(_gate)
-        else:
-            return _gate
+
+        return _gate
 
     def __call__(self, *args):
         """ give parameters for the gate, and give parameters by "()", and parameters should be one of int/float/complex
@@ -343,19 +359,6 @@ class BasicGate(object):
 
         return gstr
 
-    def __dict__(self):
-        """ get gate information """
-        gate_info = {
-            "type": self.type,
-            "parameters": self.pargs,
-            "controls": self.controls,
-            "control_bit": self.cargs,
-            "targets": self.targets,
-            "target_bit": self.targs
-        }
-
-        return gate_info
-
     def qasm(self, targs: list = None):
         """ generator OpenQASM string for the gate
 
@@ -400,6 +403,7 @@ class BasicGate(object):
         return gate_builder(inverse_gargs, params=inverse_pargs)
 
     def build_gate(self):
+        """ Gate Decomposition, which divided the current gate with a set of small gates. """
         if self.type == GateType.cu3:
             return ComplexGateBuilder.build_gate(self.type, self.parg, self.matrix)
 
@@ -424,7 +428,7 @@ class BasicGate(object):
 
         return cgate
 
-    def commutative(self, goal, eps=1e-7):
+    def commutative(self, goal: BasicGate, eps=1e-7):
         """ decide whether gate is commutative with another gate
 
         note when the gate is special gates like Unitary, Permutation, Measure and so on, return False.
@@ -526,7 +530,7 @@ class BasicGate(object):
         Returns:
             bool: True if gate's matrix is diagonal
         """
-        return self.matrix_type in [MatrixType.diagonal, MatrixType.control]  
+        return self.matrix_type in [MatrixType.diagonal, MatrixType.control]
 
     def is_pauli(self) -> bool:
         """ judge whether gate's matrix is a Pauli gate
@@ -546,10 +550,14 @@ class BasicGate(object):
         return self.matrix_type == MatrixType.special
 
     def is_identity(self) -> bool:
-        return self.matrix_type == MatrixType.identity
+        """ judge whether gate's matrix is identity matrix
 
-    # TODO: keep or remove? weird
-    def expand(self, qubits: Union[int, list]) -> bool:
+        Returns:
+            bool: True if gate's matrix is identity
+        """
+        return self.type == GateType.id or self.matrix_type == MatrixType.identity
+
+    def expand(self, qubits: Union[int, list], device: str = "CPU") -> bool:
         """ expand self matrix into the circuit's unitary linear space. If input qubits is integer, please make sure
         the indexes of current gate is within [0, qubits).
 
@@ -571,7 +579,7 @@ class BasicGate(object):
             gate_args = [qubits[i] for i in range(self.controls + self.targets)]
 
         updated_args = [qubits.index(garg) for garg in gate_args]
-        return matrix_product_to_circuit(self.matrix, updated_args, qubits_num)
+        return matrix_product_to_circuit(self.matrix, updated_args, qubits_num, device)
 
     def copy(self):
         """ return a copy of this gate
@@ -619,17 +627,26 @@ class BasicGate(object):
 
 
 class Unitary(BasicGate):
+    """ The class about the Unitary Quantum Gate """
     @property
     def matrix(self):
         return self._matrix
+
+    def get_matrix(self, precision) -> np.ndarray:
+        _dtype = np.complex128 if precision == "double" else np.complex64
+        return self._matrix.astype(_dtype)
 
     @property
     def target_matrix(self):
         return self._matrix
 
     def __init__(self, matrix: Union[list, np.ndarray], matrix_type: MatrixType = None):
+        """
+        Args:
+            matrix (Union[list, np.ndarray]): The unitary matrix.
+            matrix_type (MatrixType, optional): The matrix's type. Defaults to None.
+        """
         # Validate matrix type
-        assert isinstance(matrix, (list, np.ndarray)), TypeError("unitary.matrix", "list/ndarray", type(matrix))
         if isinstance(matrix, list):
             matrix = np.array(matrix)
 
@@ -651,9 +668,11 @@ class Unitary(BasicGate):
 
         if matrix_type is None:
             matrix_type, controls = self.validate_matrix_type(matrix)
-            print(matrix_type)
         else:
-            matrix_type = MatrixType.normal
+            matrix_type = matrix_type
+            controls = 0
+
+        if controls == n:
             controls = 0
 
         super().__init__(
@@ -663,7 +682,15 @@ class Unitary(BasicGate):
         self._matrix = matrix
 
     @staticmethod
-    def validate_matrix_type(matrix) -> MatrixType:
+    def validate_matrix_type(matrix: np.ndarray) -> MatrixType:
+        """ Check the matrix's type about given unitary matrix
+
+        Args:
+            matrix (np.ndarry): The given unitary matrix
+
+        Returns:
+            MatrixType: The matrix type
+        """
         length = matrix.shape[0]
         matrix_type = matrix.dtype
 
@@ -709,6 +736,17 @@ class Unitary(BasicGate):
         inverse_matrix = np.asmatrix(self.matrix).H
 
         return Unitary(inverse_matrix)
+
+    def copy(self):
+        _gate = Unitary(self.matrix, self.matrix_type)
+
+        if len(self.targs) > 0:
+            _gate.targs = self.targs[:]
+
+        if self.assigned_qubits:
+            _gate.assigned_qubits = self.assigned_qubits[:]
+
+        return _gate
 
 
 class Perm(BasicGate):
@@ -796,7 +834,18 @@ class PermFx(Perm):
         super().__init__(0, targets, parameters, GateType.perm_fx, MatrixType.normal, pargs)
 
 
-def gate_builder(gate_type, precision: str = "double", params: list = [], random_params: bool = False):
+def gate_builder(gate_type, precision: str = "double", params: list = [], random_params: bool = False) -> BasicGate:
+    """ Build the target Quantum Gate.
+
+    Args:
+        gate_type (_type_): The gate's type
+        precision (str, optional): The gate's precision. Defaults to "double".
+        params (list, optional): The gate's parameters. Defaults to [].
+        random_params (bool, optional): Whether using random parameters. Defaults to False.
+
+    Returns:
+        BasicGate: The class of target quantum gate
+    """
     if gate_type not in GATEINFO_MAP.keys():
         raise TypeError("gate_builder.gate_type", "only support for fixed qubits gate", gate_type)
 

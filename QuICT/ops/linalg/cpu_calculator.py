@@ -9,7 +9,7 @@ import numpy as np
 
 from QuICT.ops.utils import mapping_augment
 
-# njit(['float64[:,:](float64[:,:])', 'int64[:,:](int64[:,:])'], parallel=True)
+
 @njit(parallel=True, nogil=True)
 def MatrixTensorI(A, n, m):
     """ tensor I^n and A and I^m
