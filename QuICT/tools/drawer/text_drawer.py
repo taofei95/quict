@@ -927,7 +927,7 @@ class TextDrawing:
         if isinstance(instruction, BasicGate):
             label = instruction.qasm_name
         else:
-            label = 'trigger'
+            label = instruction.name
         params = TextDrawing.params_for_label(instruction)
         if params:
             label += "(%s)" % ','.join(params)
@@ -1092,7 +1092,7 @@ class TextDrawing:
         if isinstance(gate, CompositeGate):
             box_label = "cg_" + gate.name[-4:]
         elif not isinstance(gate, BasicGate):
-            box_label = 'trigger'
+            box_label = gate.name
         else:
             box_label = gate.qasm_name
             gate_type = gate.type
@@ -1102,25 +1102,6 @@ class TextDrawing:
                 layer.set_qubit(gate._qubits[0], BoxOnQuWire(box_label, conditional=conditional))
             else:
                 layer.set_qu_multibox(gate._qubits, box_label, conditional=conditional)
-        elif gate_type == GateType.measure:
-            mgate = MeasureFrom()
-            layer.set_qubit(gate.targs[0], mgate)
-        elif gate_type == GateType.barrier:
-            layer.set_qubit(gate.targ, Barrier())
-        elif gate_type == GateType.swap:
-            # swap
-            gates = [Ex(conditional=conditional) for _ in range(len(gate.cargs + gate.targs))]
-            add_connected_gate(gate, gates, layer, current_cons)
-
-        elif gate_type == GateType.reset:
-            # reset
-            layer.set_qubit(gate.targs[0], Reset(conditional=conditional))
-
-        elif gate_type == GateType.rzz:
-            # rzz
-            connection_label = "ZZ(%s)" % TextDrawing.params_for_label(gate)[0]
-            gates = [Bullet(conditional=conditional), Bullet(conditional=conditional)]
-            add_connected_gate(gate, gates, layer, current_cons)
         elif not isinstance(gate, BasicGate):
             # trigger
             if gate.targets + len(gate.cargs) == 1:
@@ -1141,12 +1122,28 @@ class TextDrawing:
                 label = TextDrawing.label_for_box(gate)
                 layer._set_multibox(label, qubits=gate.targs,
                                     conditional=conditional)
+        elif gate_type == GateType.measure:
+            mgate = MeasureFrom()
+            layer.set_qubit(gate.targs[0], mgate)
+        elif gate_type == GateType.barrier:
+            layer.set_qubit(gate.targ, Barrier())
+        elif gate_type == GateType.swap:
+            # swap
+            gates = [Ex(conditional=conditional) for _ in range(len(gate.cargs + gate.targs))]
+            add_connected_gate(gate, gates, layer, current_cons)
+        elif gate_type == GateType.reset:
+            # reset
+            layer.set_qubit(gate.targs[0], Reset(conditional=conditional))
+        elif gate_type == GateType.rzz:
+            # rzz
+            connection_label = "ZZ(%s)" % TextDrawing.params_for_label(gate)[0]
+            gates = [Bullet(conditional=conditional), Bullet(conditional=conditional)]
+            add_connected_gate(gate, gates, layer, current_cons)
         elif gate.targets + gate.controls == 1:
             # unitary gate
             layer.set_qubit(gate.targ,
                             BoxOnQuWire(TextDrawing.label_for_box(gate),
                                         conditional=conditional))
-
         elif gate.controls >= 1:
             label = box_label if box_label is not None \
                 else TextDrawing.label_for_box(gate, controlled=True)
@@ -1156,12 +1153,10 @@ class TextDrawing:
                                          bool(controlled_bot))
             gates.append(BoxOnQuWire(label, conditional=conditional))
             add_connected_gate(gate, gates, layer, current_cons)
-
         elif gate.targets >= 2:
             # multiple qubit gate
             label = TextDrawing.label_for_box(gate)
             layer.set_qu_multibox(gate.targs, label, conditional=conditional)
-
         elif gate.targs:
             # multiple gate, involving both qargs AND cargs
             label = TextDrawing.label_for_box(gate)

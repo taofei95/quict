@@ -4,40 +4,55 @@ from typing import Union, List
 class Operator:
     """ The SuperClass of all the operator. """
     @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name: str):
+        assert isinstance(name, str)
+        self._name = name
+
+    @property
     def targets(self):
         return self._targets
-
-    @property
-    def targs(self):
-        return self._targs
-
-    @property
-    def cargs(self):
-        return []
-
-    @targs.setter
-    def targs(self, targets: Union[List, int]):
-        assert isinstance(targets, (int, list))
-        if isinstance(targets, int):
-            self._targs = [targets]
-        else:
-            self._targs = targets
 
     @property
     def targ(self):
         return self._targs[0]
 
+    @property
+    def targs(self):
+        return self._targs
+
+    @targs.setter
+    def targs(self, targets: Union[List, int]):
+        if isinstance(targets, int):
+            targets = [targets]
+
+        assert isinstance(targets, list), TypeError(
+            f"qubits must be one of [List[int], int], not {type(targets)}"
+        )
+        assert len(targets) == self.targets, f"The length of targets should be equal {self.targets}."
+        for idx in targets:
+            assert idx >= 0, f"targets must be a positive integer, not {idx}"
+
+        self._targs = targets
+
     def __init__(
         self,
-        targets: int
+        targets: int,
+        name: str = None
     ):
         """
         Args:
             targets (int): the number of the target bits of the gate
+            name (str): The name of current trigger, Default to None.
         """
         assert targets >= 0 and isinstance(targets, int), f"targets must be a positive integer, not {type(targets)}"
         self._targets = targets
         self._targs = []
+        self.cargs = []
+        self._name = name
 
     def __and__(self, targets: Union[List[int], int],):
         """ Assigned the trigger's target qubits.

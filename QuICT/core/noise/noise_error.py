@@ -129,7 +129,7 @@ class QuantumNoiseError:
 
         return QuantumNoiseError(composed_ops)
 
-    def apply_to_gate(self, matrix: np.ndarray):
+    def apply_to_gate(self, matrix: np.ndarray) -> list:
         """ generate kraus operator with given gate's matrix. """
         assert matrix.shape == (2 ** self._qubits, 2 ** self._qubits), NoiseApplyError(
             f"The shape of given gate's matrix should equal to current noise's qubit number {self._qubits}."

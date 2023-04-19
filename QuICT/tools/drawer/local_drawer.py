@@ -658,7 +658,7 @@ class PhotoDrawer(object):
             layer_width = 1
 
             for gate in layer.gates:
-                if isinstance(gate, CompositeGate) or gate.type == GateType.perm or gate.type == GateType.unitary:
+                if isinstance(gate, (CompositeGate, Operator)) or gate.type == GateType.perm or gate.type == GateType.unitary:
                     continue
                 elif gate.params > 1:
                     param = self.get_parameter_str(gate.pargs)
@@ -708,8 +708,8 @@ class PhotoDrawer(object):
                             text=name, subtext=""
                         )
                 elif isinstance(gate, Operator):
+                    name = gate.name
                     if len(coord) == 1:
-                        name = 'trigger'
                         if param is not None:
                             p_string = '({})'.format(param)
                             self.draw_gate(coord[0], name, p_string)
@@ -717,16 +717,15 @@ class PhotoDrawer(object):
                             self.draw_gate(coord[0], name, '')
                     elif len(coord) == 2:
                         if len(gate.cargs) == 1:
-                            disp = 'trigger'
                             color = None
                             if self.style.name != 'bw':
                                 color = self.style.dispcol['multi']
 
                             self.draw_ctrl_qubit(coord[0], fc=color, ec=color)
                             if param:
-                                self.draw_gate(coord[1], text=disp, fc=color, p_string='{}'.format(param))
+                                self.draw_gate(coord[1], text=name, fc=color, p_string='{}'.format(param))
                             else:
-                                self.draw_gate(coord[1], text=disp, fc=color)
+                                self.draw_gate(coord[1], text=name, fc=color)
                             # add qubit-qubit wiring
                             self.draw_line(bottom, top, lc=color)
                         else:
@@ -738,7 +737,7 @@ class PhotoDrawer(object):
                                 coord, fc=self.style.dispcol['multi'],
                                 ec=self.style.dispcol['multi'],
                                 gt=self.style.gt, sc=self.style.sc,
-                                text='trigger', subtext=subtext
+                                text=name, subtext=subtext
                             )
                     elif len(coord) == 3:
                         if len(gate.cargs) > 0:
@@ -755,11 +754,11 @@ class PhotoDrawer(object):
                                     coord[gate.controls:], fc=self.style.dispcol['multi'],
                                     ec=self.style.dispcol['multi'],
                                     gt=self.style.gt, sc=self.style.sc,
-                                    text='trigger', subtext=subtext
+                                    text=name, subtext=subtext
                                 )
                             else:
                                 self.draw_gate(
-                                    coord[-1], text='trigger', fc=self.style.dispcol['multi'], p_string=subtext
+                                    coord[-1], text=name, fc=self.style.dispcol['multi'], p_string=subtext
                                 )
                             self.draw_line(bottom, top, lc=self.style.dispcol['swap'])
                         else:
@@ -771,14 +770,14 @@ class PhotoDrawer(object):
                                 coord, fc=self.style.dispcol['multi'],
                                 ec=self.style.dispcol['multi'],
                                 gt=self.style.gt, sc=self.style.sc,
-                                text='trigger', subtext=subtext
+                                text=name, subtext=subtext
                             )
                     elif len(coord) > 3:
                         self.draw_multiqubit_gate(
                             coord, fc=self.style.dispcol['multi'],
                             ec=self.style.dispcol['multi'],
                             gt=self.style.gt, sc=self.style.sc,
-                            text='trigger', subtext=""
+                            text=name, subtext=""
                         )
                 elif gate.type == GateType.perm:
                     name = gate.type.value

@@ -10,10 +10,12 @@ class VirtualQuantumMachine:
     """ The Class store the information about Quantum Machine. """
     @property
     def qubit_number(self) -> int:
+        """ Return the number of qubits. """
         return len(self._qubits)
 
     @property
     def qubits(self) -> Qureg:
+        """ Return the Qureg of current Machine. """
         return self._qubits
 
     @qubits.setter
@@ -23,6 +25,7 @@ class VirtualQuantumMachine:
 
     @property
     def instruction_set(self) -> InstructionSet:
+        """ Return the instruction set of current Machine. """
         return self._instruction_set
 
     @instruction_set.setter
@@ -33,6 +36,7 @@ class VirtualQuantumMachine:
 
     @property
     def layout(self) -> Layout:
+        """ Return the layout of current Machine. """
         return self._layout
 
     @layout.setter
@@ -43,6 +47,7 @@ class VirtualQuantumMachine:
 
     @property
     def qubit_fidelity(self) -> list:
+        """ Return the fidelity of each qubits. """
         return self._qubit_fidelity
 
     @qubit_fidelity.setter
@@ -52,6 +57,7 @@ class VirtualQuantumMachine:
 
     @property
     def t1_time(self) -> list:
+        """ Return the t1 coherence strength of each qubits. """
         return self._t1_times
 
     @t1_time.setter
