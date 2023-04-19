@@ -108,6 +108,9 @@ class CircuitBased(object):
         """
         count = 0
         for gate, _, size in self._gates:
+            if size == 0:
+                continue
+
             if size > 1 or hasattr(gate, "count_2qubit_gate"):
                 count += gate.count_2qubit_gate()
                 continue
@@ -125,6 +128,9 @@ class CircuitBased(object):
         """
         count = 0
         for gate, _, size in self._gates:
+            if size == 0:
+                continue
+
             if size > 1 or hasattr(gate, "count_1qubit_gate"):
                 count += gate.count_1qubit_gate()
                 continue
@@ -145,9 +151,14 @@ class CircuitBased(object):
         """
         count = 0
         for gate, _, size in self._gates:
+            if size == 0:
+                continue
+
             if size > 1 or hasattr(gate, "count_gate_by_gatetype"):
                 count += gate.count_gate_by_gatetype(gate_type)
-            elif gate.type == gate_type:
+                continue
+
+            if gate.type == gate_type:
                 count += 1
 
         return count

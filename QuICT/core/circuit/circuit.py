@@ -19,8 +19,8 @@ from QuICT.core.utils import (
     unique_id_generator
 )
 from QuICT.core.operator import (
-    Trigger,
     CheckPoint,
+    NoiseGate,
     Operator,
     CheckPointChild
 )
@@ -368,7 +368,8 @@ class Circuit(CircuitBased):
 
             op_qidxes = op.targs
 
-        self._gates.append((op, op_qidxes, 1))
+        size = 1 if isinstance(op, NoiseGate) else 0
+        self._gates.append((op, op_qidxes, size))
         self._logger.debug(f"Add an Operator {type(op)} with qubit indexes {op_qidxes}.")
 
     def _get_extend_circuit_qidxes(self, circuit: Circuit):
