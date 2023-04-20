@@ -91,6 +91,10 @@ class CompositeGate(CircuitBased):
             raise ValueError("CompositeGate.&", f"not equal {self.width}", len(targets))
 
         self._mapping(targets)
+
+        if CGATE_LIST:
+            CGATE_LIST[-1].extend(self)
+
         return self
 
     def _mapping(self, targets: list):

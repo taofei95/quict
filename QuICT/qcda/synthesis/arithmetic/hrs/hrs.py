@@ -4,7 +4,6 @@
 # @Author  : Li Haomin
 # @File    : hrs.py
 
-from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.algorithm.quantum_algorithm.shor.utility import int2bitwise, mod_reverse
 
