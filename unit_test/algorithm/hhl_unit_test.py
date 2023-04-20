@@ -13,8 +13,8 @@ vector = np.ones(2, dtype=np.complex128)
 
 def MSE(x, y):
     n = len(x)
-    res0 = np.linalg.norm(x + y) / n
-    res1 = np.linalg.norm(x - y) / n
+    res0 = np.dot(x + y, x + y) / n
+    res1 = np.dot(x - y, x - y) / n
     return min(res0, res1)
 
 
@@ -37,7 +37,7 @@ class TestHHL(unittest.TestCase):
         hhl_slt /= np.linalg.norm(hhl_slt)
         mse = MSE(np_slt, hhl_slt)
 
-        assert abs(mse) < 0.1
+        assert abs(mse) < 0.01
 
     def test_hhl_measure(self):
         str = HHL(TestHHL.simulator).run(
