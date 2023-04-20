@@ -2,7 +2,7 @@ import sys
 import tqdm
 
 # from QuICT.algorithm.quantum_algorithm.quantum_walk import numpy_ml_copy
-from QuICT.algorithm.quantum_algorithm.quantum_walk.numpy_ml_copy.optimizers.init import *
+from QuICT.algorithm.quantum_machine_learning.numpy_ml_copy.optimizers.init import *
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 from QuICT.algorithm.tools.drawer.graph_drawer import *
