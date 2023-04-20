@@ -36,8 +36,8 @@ class QAOA:
             self._circuit, self._params, state, -1 * self._hamiltonian
         )
         # optimize
-        self._params.pargs = optimizer.update(
-            self._params.pargs, self._params.grads, "params"
+        optimizer.update(
+            param = self._params, param_name = "params"
         )
         self._params.zero_grad()
         # update

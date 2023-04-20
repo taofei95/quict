@@ -230,6 +230,30 @@ class CircuitBased(object):
         else:
             self._gates = decomp_gates
             return self._gates
+        
+    
+    def count_training_gates(self):
+        training_gates = 0
+        for gate, _, size in self._gates:
+            if size > 1:
+                training_gates += gate.count_training_gates()
+            if gate.variables > 0:
+                training_gates += 1
+        return training_gates
+
+    def update(self, variables):
+        remain_training_gates = self.count_training_gates()
+        for gate, _, _ in self._gates:
+            if remain_training_gates == 0:
+                return
+            if gate.variables > 0:
+                remain_training_gates -= 1
+            for i in range(gate.variables):
+                assert gate.pargs[i].identity[:32] == variables.identity
+                index = gate.pargs[i].index
+                gate.pargs[i].pargs = variables.pargs[index]
+
+        return
 
     def draw(self, method: str = 'matp_auto', filename: str = None):
         """Draw the figure of circuit.

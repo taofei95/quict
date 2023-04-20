@@ -1,6 +1,6 @@
 from copy import deepcopy
 from abc import ABC, abstractmethod
-
+from QuICT.core.gate.utils.variable import Variable
 import numpy as np
 from numpy.linalg import norm
 from .optimizer_base import OptimizerBase
@@ -64,7 +64,7 @@ class RMSProp(OptimizerBase):
             lr, eps, dc, cn, sc
         )
 
-    def update(self, param, param_grad, param_name, cur_loss=None):
+    def update(self, param:Variable ,param_name, cur_loss=None):
         """
         Compute the RMSProp update for a given parameter.
 
@@ -87,6 +87,7 @@ class RMSProp(OptimizerBase):
         updated_params : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
             The value of `param` after applying the RMSProp update.
         """
+        param_grad = param.grads
         C = self.cache
         H = self.hyperparameters
         eps, decay, clip_norm = H["eps"], H["decay"], H["clip_norm"]
@@ -103,5 +104,5 @@ class RMSProp(OptimizerBase):
         C[param_name] = decay * C[param_name] + (1 - decay) * param_grad ** 2
         update = lr * param_grad / (np.sqrt(C[param_name]) + eps)
         self.cache = C
-        return param - update
+        param.pargs -= update
 

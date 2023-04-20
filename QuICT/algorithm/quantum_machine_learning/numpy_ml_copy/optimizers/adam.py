@@ -1,6 +1,6 @@
 from copy import deepcopy
 from abc import ABC, abstractmethod
-
+from QuICT.core.gate.utils.variable import Variable
 import numpy as np
 from numpy.linalg import norm
 from .optimizer_base import OptimizerBase
@@ -67,7 +67,7 @@ class Adam(OptimizerBase):
             lr, d1, d2, eps, cn, sc
         )
 
-    def update(self, param, param_grad, param_name, cur_loss=None):
+    def update(self, param:Variable, param_name, cur_loss=None):
         """
         Compute the Adam update for a given parameter.
 
@@ -99,14 +99,14 @@ class Adam(OptimizerBase):
         if param_name not in C:
             C[param_name] = {
                 "t": 0,
-                "mean": np.zeros_like(param_grad),
-                "var": np.zeros_like(param_grad),
+                "mean": np.zeros_like(param.grads),
+                "var": np.zeros_like(param.grads),
             }
 
         # scale gradient to avoid explosion
         t = np.inf if clip_norm is None else clip_norm
-        if norm(param_grad) > t:
-            param_grad = param_grad * t / norm(param_grad)
+        if norm(param.grads) > t:
+            param.grads = param.grads * t / norm(param.grads)
 
         t = C[param_name]["t"] + 1
         var = C[param_name]["var"]
@@ -114,12 +114,13 @@ class Adam(OptimizerBase):
 
         # update cache
         C[param_name]["t"] = t
-        C[param_name]["var"] = d2 * var + (1 - d2) * param_grad ** 2
-        C[param_name]["mean"] = d1 * mean + (1 - d1) * param_grad
+        C[param_name]["var"] = d2 * var + (1 - d2) * param.grads** 2
+        C[param_name]["mean"] = d1 * mean + (1 - d1) * param.grads
         self.cache = C
 
         # calc unbiased moment estimates and Adam update
         v_hat = C[param_name]["var"] / (1 - d2 ** t)
         m_hat = C[param_name]["mean"] / (1 - d1 ** t)
         update = lr * m_hat / (np.sqrt(v_hat) + eps)
-        return param - update
+        #param.pargs = param.pargs - update
+        param.pargs -= update

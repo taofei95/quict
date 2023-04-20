@@ -1,6 +1,6 @@
 from copy import deepcopy
 from abc import ABC, abstractmethod
-
+from QuICT.core.gate.utils.variable import Variable
 import numpy as np
 from numpy.linalg import norm
 from .optimizer_base import OptimizerBase
@@ -56,7 +56,7 @@ class SGD(OptimizerBase):
             lr, mm, cn, sc
         )
 
-    def update(self, param, param_grad, param_name, cur_loss=None):
+    def update(self, param:Variable, param_name, cur_loss=None):
         """
         Compute the SGD update for a given parameter
 
@@ -79,6 +79,7 @@ class SGD(OptimizerBase):
         updated_params : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
             The value of `param` after applying the momentum update.
         """
+        param_grad = param.grads
         C = self.cache
         H = self.hyperparameters
         momentum, clip_norm = H["momentum"], H["clip_norm"]
@@ -94,4 +95,4 @@ class SGD(OptimizerBase):
 
         update = momentum * C[param_name] + lr * param_grad
         self.cache[param_name] = update
-        return param - update
+        param.pargs -= update
