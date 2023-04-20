@@ -7,7 +7,7 @@
 from typing import *
 import numpy as np
 
-from QuICT.core.gate import GateType, build_gate, CompositeGate, CX
+from QuICT.core.gate import GateType, gate_builder, CompositeGate, CX
 
 
 class UniformlyRotation(object):
@@ -71,7 +71,7 @@ class UniformlyRotation(object):
         is_left_cnot: bool = False
     ) -> CompositeGate:
         if low + 1 == high:
-            rot = build_gate(gate_type, low, [angles[0].real])
+            rot = gate_builder(gate_type, params=[angles[0].real]) & low
             gates = CompositeGate()
             gates.append(rot)
             return gates

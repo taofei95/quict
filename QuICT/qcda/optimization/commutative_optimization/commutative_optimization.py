@@ -236,7 +236,7 @@ class CommutativeOptimization(object):
         Returns:
             CompositeGate: The CompositeGate after optimization
         """
-        gates = CompositeGate(gates=gates.gates)
+        gates = CompositeGate(gates=gates.flatten_gates())
         nodes: list[Node] = []
         phase_angle = 0
 

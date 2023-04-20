@@ -447,10 +447,6 @@ def matrix_dot_vector(
     thread_per_block = min(256, task_number)
     block_num = task_number // thread_per_block
 
-    # matrix args and sorted args
-    for i in range(mat_bit):
-        mat_args[i] = vec_bit - 1 - mat_args[i]
-
     sorted_mat_args = mat_args.copy()
     sorted_mat_args.sort()
     mat_args = cp.array(mat_args, dtype=np.int32)

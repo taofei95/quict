@@ -1,8 +1,6 @@
 import os
-import numpy as np
 
-from QuICT.core import Circuit
-from QuICT.algorithm.quantum_algorithm import CNFSATOracle, Grover
+from QuICT.algorithm.quantum_algorithm import CNFSATOracle
 from QuICT.simulation.state_vector import StateVectorSimulator
 
 

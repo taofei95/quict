@@ -246,7 +246,8 @@ class TemplateSubstitution:
                 node: MatchingDAGNode = circuit.get_node(node_id)
                 new_circ.append(node.gate.copy())
 
-            new_circ.extend(sub.get_substitution().gates)
+            for temp_gate in sub.get_substitution().gates:
+                new_circ.append(temp_gate)
 
             visited_nodes.update(sub.pred)
             visited_nodes.update(sub.match.circuit_nodes)

@@ -4,7 +4,7 @@ from typing import Union, List
 from .noise_error import QuantumNoiseError, NoiseChannel
 from .readout_error import ReadoutError
 from QuICT.core import Circuit
-from QuICT.core.gate import BasicGate, GateType, GATE_TYPE_TO_CLASS, Unitary
+from QuICT.core.gate import BasicGate, GateType, gate_builder, Unitary
 from QuICT.core.operator import NoiseGate
 from QuICT.tools.exception.core import TypeError, ValueError, NoiseApplyError
 
@@ -78,7 +78,7 @@ class NoiseModel:
             if g not in self._basic_gates:
                 raise ValueError("NoiseModel.add.gates", self._basic_gates, g)
 
-            gate = GATE_TYPE_TO_CLASS[GateType.__members__[g]]()
+            gate = gate_builder(GateType.__members__[g])
             if gate.controls + gate.targets != noise.qubits:
                 raise NoiseApplyError(
                     f"Un-matched qubits number between gate {gate.controls + gate.targets}" +
@@ -169,8 +169,7 @@ class NoiseModel:
                 for noise, qubits in noise_list:
                     if qubits == -1 or (set(qubits) & set(gate_args)) == set(gate_args):    # noise's qubit matched
                         if accumulated_mode or noise.type == NoiseChannel.damping:
-                            noise_matrixs = noise.apply_to_gate(gate.matrix)
-                            NoiseGate(noise_matrixs, len(gate_args)) & gate_args | noised_circuit
+                            NoiseGate(gate, noise) & gate_args | noised_circuit
                             append_origin_gate = False
                         else:
                             prob = random()

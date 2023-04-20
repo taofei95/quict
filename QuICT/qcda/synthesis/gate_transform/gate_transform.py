@@ -40,7 +40,7 @@ class GateTransform(object):
         if isinstance(circuit, CompositeGate):
             gates.extend(circuit)
         elif isinstance(circuit, Circuit):
-            gates.extend(circuit.gates)
+            gates.extend(circuit.to_compositegate())
         else:
             raise TypeError("Invalid input for GateTransform")
 
