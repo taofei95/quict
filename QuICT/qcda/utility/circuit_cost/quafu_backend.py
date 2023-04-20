@@ -1,5 +1,11 @@
+import json
 import re
 from curses.ascii import isalpha
+from urllib import parse
+
+import requests
+from quafu.exceptions import CircuitError, CompileError, ServerError
+from quafu.users.exceptions import UserError
 
 from QuICT.core import Circuit
 from QuICT.core.utils import GateType
@@ -7,7 +13,7 @@ from QuICT.tools.interface import OPENQASMInterface
 
 from .backend import Backend
 
-from quafu import User, Task, QuantumCircuit
+from quafu import User, Task, QuantumCircuit, ExecResult
 from quafu.backends.backends import ScQ_P10, Backend as Bkd
 
 
@@ -23,13 +29,61 @@ class ScQ_P136(Bkd):
         self.valid_gates = ['cz', 'rx', 'ry', 'rz', 'h']
 
 
+class ModifiedTask(Task):
+    def __init__(self):
+        super().__init__()
+
+    def send(self,
+             qc: QuantumCircuit,
+             name: str="",
+             group: str="",
+            wait: bool=True):
+        from quafu import get_version
+        version = get_version()
+        self.check_valid_gates(qc)
+        qc.to_openqasm()
+        backends = {"ScQ-P10": 0, "ScQ-P20": 1, "ScQ-P50": 2, "ScQ-S41": 3, "ScQ-P136": 2, "ScQ-P18": 1}
+        data = {"qtasm": qc.openqasm, "shots": self.shots, "qubits": qc.num, "scan": 0,
+                "tomo": int(self.tomo), "selected_server": backends[self._backend.name],
+                "compile": int(self.compile), "priority": self.priority, "task_name": name, "pyquafu_version": version}
+
+        if wait:
+            url = self._url + "qbackend/scq_kit/"
+        else:
+            url = self._url + "qbackend/scq_kit_asyc/"
+
+        headers = {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', 'api_token': self.token}
+        data = parse.urlencode(data)
+        data = data.replace("%27", "'")
+        res = requests.post(url, headers=headers, data=data)
+        res_dict = json.loads(res.text)
+
+        if res.json()["status"] in [201, 205]:
+            raise UserError(res_dict["message"])
+        elif res.json()["status"] == 5001:
+            raise CircuitError(res_dict["message"])
+        elif res.json()["status"] == 5003:
+            raise ServerError(res_dict["message"])
+        elif res.json()["status"] == 5004:
+            raise CompileError(res_dict["message"])
+        else:
+            task_id = res_dict["task_id"]
+
+            if not (group in self.submit_history):
+                self.submit_history[group] = [task_id]
+            else:
+                self.submit_history[group].append(task_id)
+
+            return ExecResult(res_dict, qc.measures)
+
+
 class QuafuBackend(Backend):
     def __init__(self, api_token, system='ScQ-P10'):
         user = User()
         user.save_apitoken(api_token)
         self.system = system
 
-        task = Task()
+        task = ModifiedTask()
         task.load_account()
         task.config(backend=system, compile=False)
         if system == 'ScQ-P10':
