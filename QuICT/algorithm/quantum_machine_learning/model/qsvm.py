@@ -35,29 +35,48 @@ def measure_gate_apply(
 def modulus(x):
     return np.sqrt(np.sum(x*x))
 class QSVM:
+    '''
+    reference:
+    Quantum support vector machine for big data classification
+    arXiv:1307.0471v3 [quant-ph] 10 Jul 2014
+    '''
     def __init__(
         self,
         train_data,
-        gama = 1
+        gama = 1,
+        HHL_t = 9
         
     ):
         self._data = train_data
         self.gama = gama
-        self._X = self.norm_data(train_data[0])
-        self._size = math.ceil(np.log2(self._X.shape[0]))
-        self._size = int(2**self._size)
-        self._K_hat = self.get_K_hat()
+        self._t = HHL_t
+        self._X = train_data[0]
+        self._quantum_X ,self._size= self.quantum_norm_data()
+        self._K_hat = self.enact_K_hat()
         self._F = self.get_F()
+
+    def initial_circuit(self,)
     def solve(self,):
         y_true = np.zeros((self._size))
         y_true[1:self._X.shape[0]+1] = self._data[1]
         hhl = HHL(simulator=Simulator())
         return hhl.run(self._F,y_true)
-    def norm_data(self,X:np.ndarray):  # X: M*N
+    def quantum_norm_data(self,):  
+        X = self._X
         sum_col = np.sqrt(np.sum(X*X,axis= 1))
+        len_sv = int(2**math.ceil(np.log2(X.shape[1])))
+        quantum_X = np.zeros((X.shape[0],len_sv))
         for  i in range(len(sum_col)):
-            X[i] = X[i] / sum_col[i]
-        return X
+            quantum_X[i][:X.shape[1]] = X[i] / sum_col[i]
+        return quantum_X,len_sv
+    def enact_K_hat(self,): # it shouldn't be using numerical calculate here!
+        X = self._X
+        N_= np.sum(np.sum(X*X,axis= 1))
+        K_hat = np.zeros((X.shape[0],X.shape[0]))
+        for i in range(X.shape[0]):
+            for j in range(X.shape[0]):
+                K_hat[i,j] = np.dot(self._quantum_X[i],self._quantum_X[j])*modulus(X[i])*modulus(X[j])
+        K_hat = K_hat /N_
     def kernel(self,x1,x2):
         n_qubit = int(np.log2(len(x1)))
         state_vec = np.kron(np.array([1,0]),x1)
@@ -76,26 +95,7 @@ class QSVM:
         kernel_value = np.sqrt(abs(2*prob-1))
 
         return kernel_value
-    def get_K_hat(self,):
-        n = self._X.shape[0]  # number of sample
-        K_hat = np.zeros((n,n))
-        for i in range(n):
-            for j in range(i,n):
-                xi= self._X[i]
-                xj = self._X[j]
-                #K_hat[i,j]= self.kernel(xi,xj)*modulus(xi)*modulus(xj)
-                K_hat[i,j]= self.kernel(xi,xj)
-                
-                K_hat[j,i] = K_hat[i,j]
-        '''
-        sum =0
-        for i in range(n):
-            sum += modulus(self._X[i])^2
-        K_hat= K_hat / sum
-        '''
-        penalty = 1/self.gama *np.eye(n,n)
-        K_hat += penalty
-        return K_hat
+   
     def get_F(self,):
         n = self._X.shape[0]
         size = self._size
@@ -104,6 +104,9 @@ class QSVM:
         F[1:,0] = 1
         F[1:n+1,1:n+1] =self._K_hat
         return F
+    
+    
+
 if __name__ == '__main__':  
     data_x = np.random.random((10,128))
     data_y = np.random.random(10)

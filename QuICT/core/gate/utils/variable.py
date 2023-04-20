@@ -130,6 +130,9 @@ class Variable(object):
                 )
         raise TypeError
 
+    def zero_grad(self):
+        self._grads = np.zeros(self._shape, dtype=np.float64)
+
 
 if __name__ == "__main__":
     pargs = Variable(np.array([[0, 1, 2], [0.1, 0.2, 0.3]]))

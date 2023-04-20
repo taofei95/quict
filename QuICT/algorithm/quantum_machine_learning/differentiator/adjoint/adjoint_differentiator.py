@@ -2,21 +2,69 @@ import numpy as np
 
 from QuICT.core.gate import *
 from QuICT.core.circuit import Circuit
+from QuICT.simulation.utils import GateSimulator
 from QuICT.simulation.state_vector import StateVectorSimulator
 
-from QuICT.algorithm.quantum_machine_learning.differentiator import Differentiator
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 
 
-class Adjoint(Differentiator):
+class AdjointDifferentiator:
+    __DEVICE = ["CPU", "GPU"]
+    __PRECISION = ["single", "double"]
+
+    @property
+    def circuit(self):
+        return self._circuit
+
+    @circuit.setter
+    def circuit(self, circuit):
+        self._circuit = circuit
+
+    @property
+    def vector(self):
+        return self._vector
+
+    @vector.setter
+    def vector(self, vec):
+        self._vector = self._gate_calculator.validate_state_vector(vec, self._qubits)
+
+    @property
+    def device(self):
+        return self._device_id
+
     @property
     def grad_vector(self):
         return self._grad_vector
 
     @grad_vector.setter
     def grad_vector(self, vec):
-        self._grad_vector = self._gate_calculator.validate_state_vector(
+        self._grad_vector = self._gate_calculator.normalized_state_vector(
             vec, self._qubits
+        )
+
+    def __init__(
+        self,
+        device: str = "GPU",
+        precision: str = "double",
+        gpu_device_id: int = 0,
+        sync: bool = True,
+    ):
+        if device not in self.__DEVICE:
+            raise ValueError("AdjointDifferentiator.device", "[CPU, GPU]", device)
+
+        if precision not in self.__PRECISION:
+            raise ValueError(
+                "AdjointDifferentiator.precision", "[single, double]", precision
+            )
+
+        self._device = device
+        self._precision = precision
+        self._device_id = gpu_device_id
+        self._sync = sync
+        self._training_gates = 0
+        self._remain_training_gates = 0
+        self._gate_calculator = GateSimulator(
+            self._device, self._precision, self._device_id, self._sync
         )
 
     def run(
@@ -25,10 +73,10 @@ class Adjoint(Differentiator):
         variables: Variable,
         state_vector: np.ndarray,
         expectation_op: Hamiltonian,
-    ) -> np.ndarray:
+    ):
         self.initial_circuit(circuit)
         assert state_vector is not None
-        self._vector = self._gate_calculator.validate_state_vector(
+        self._vector = self._gate_calculator.normalized_state_vector(
             state_vector, self._qubits
         )
         # Calculate d(L)/d(|psi_t>)
@@ -38,7 +86,7 @@ class Adjoint(Differentiator):
 
         for idx in range(len(self._bp_pipeline)):
             if self._remain_training_gates == 0:
-                return
+                return variables
             origin_gate = self._pipeline[idx]
             gate, qidxes, _ = self._bp_pipeline[idx]
             if isinstance(gate, BasicGate):
@@ -51,7 +99,10 @@ class Adjoint(Differentiator):
                 # Calculate d(L)/d(|psi_t-1>)
                 self._apply_gate(gate, qidxes, self._grad_vector)
             else:
-                raise TypeError("Adjoint.run.circuit", "BasicGate".type(gate))
+                raise TypeError(
+                    "AdjointDifferentiator.run.circuit", "BasicGate".type(gate)
+                )
+        return variables
 
     def initial_circuit(self, circuit: Circuit):
         circuit.gate_decomposition(decomposition=False)
@@ -82,7 +133,7 @@ class Adjoint(Differentiator):
         circuit_list = expectation_op.construct_hamiton_circuit(qubits)
         coefficients = expectation_op.coefficients
         grad_vector = np.zeros(1 << qubits, dtype=np.complex128)
-        grad_vector = self._gate_calculator.validate_state_vector(grad_vector, qubits)
+        grad_vector = self._gate_calculator.normalized_state_vector(grad_vector, qubits)
         for coeff, circuit in zip(coefficients, circuit_list):
             grad_vec = simulator.run(circuit, state_vector_copy)
             grad_vector += coeff * grad_vec
@@ -122,8 +173,6 @@ class Adjoint(Differentiator):
 
 
 if __name__ == "__main__":
-    from QuICT.core.gate.utils import Variable
-    from QuICT.simulation.utils import GateSimulator
     from QuICT.simulation.state_vector import StateVectorSimulator
 
     param = Variable(np.array([-3.2]))
@@ -135,6 +184,7 @@ if __name__ == "__main__":
     simulator = StateVectorSimulator()
     sv = simulator.run(circuit)
 
-    differ = Adjoint(device="GPU")
+    differ = AdjointDifferentiator(device="GPU")
     h = Hamiltonian([[1, "X1"]])
-    differ.run(circuit, sv, h)
+    differ.run(circuit, param, sv, h)
+    print(param.grads)

@@ -88,7 +88,7 @@ class CompositeGate(CircuitBased):
             targets = [targets]
 
         if len(targets) != self.width():
-            raise ValueError("CompositeGate.&", f"not equal {self.width}", len(targets))
+            raise ValueError("CompositeGate.&", f"not equal {self.width()}", len(targets))
 
         self._mapping(targets)
         return self
