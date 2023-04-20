@@ -116,8 +116,8 @@ from QuICT.simulation.state_vector import StateVectorSimulator
 
 def MSE(x, y):
     n = len(x)
-    res0 = np.linalg.norm(x + y) / n
-    res1 = np.linalg.norm(x - y) / n
+    res0 = np.dot(x + y, x + y) / n
+    res1 = np.dot(x - y, x - y) / n
     return min(res0, res1)
 
 A = np.array([[1.0 + 0j, 2.0 + 0j],
@@ -153,19 +153,19 @@ print(f"classical solution  = {slt}\n"
 由于不含measure门的算法最终包括辅助比特为$\ket 0$时的叠加，所以解向量需要归一化。
 
 ~~~
-2023-04-14 16:27:10 | hhl | INFO | circuit width    =    9
-circuit size     = 8313
+2023-04-20 16:42:40 | hhl | INFO | circuit width    =    9
+circuit size     = 6805
 hamiltonian size =  162
-CRy size         = 7933
-2023-04-14 16:27:11 | hhl | INFO | circuit width    =    9
-circuit size     = 8314
+CRy size         = 6425
+2023-04-20 16:42:41 | hhl | INFO | circuit width    =    9
+circuit size     = 6806
 hamiltonian size =  162
-CRy size         = 7933
+CRy size         = 6425
 classical solution  = [-0.76822128+0.j  0.6401844 +0.j]
-hhl without measure = [-0.76264871-5.97493286e-16j  0.64681291+6.52594754e-16j]
-                MSE = 0.0043298592982582585
-hhl with measure    = [-0.7248485 -2.83261947e-16j  0.61475403+3.96875718e-16j]
-                MSE = 0.02513912222107524
+hhl without measure = [-0.77458168-1.51832380e-15j  0.63247389+2.81419513e-15j]
+                MSE = (4.9953351893710664e-05-1.2041735273018457e-17j)
+hhl with measure    = [-0.74368985-1.33080148e-15j  0.6072496 +2.39775629e-15j]
+                MSE = (0.0008432460337470111-1.1161608811727714e-16j)
        success rate = 1.0
 ~~~
 
@@ -173,8 +173,8 @@ hhl with measure    = [-0.7248485 -2.83261947e-16j  0.61475403+3.96875718e-16j]
 
 ## 参考文献
 
-[^1]:Harrow, A. W., & Hassidim, A., & Lloyd, S. (2009). *Quantum algorithm for linear systems of equations*. Physical review letters, 15 103, 150502.[arXiv:quant-ph/0811.3171](https://arxiv.org/abs/0811.3171)
-[^2]:Nielsen, M. A., & Chuang, I. L. (2019). *Quantum computation and quantum information*. Cambridge Cambridge University Press. 217-225.[doi:10.1017/CBO9780511976667](https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE#overview)
+[^1]: Harrow, A. W., & Hassidim, A., & Lloyd, S. (2009). *Quantum algorithm for linear systems of equations*. Physical review letters, 15 103, 150502.[arXiv:quant-ph/0811.3171](https://arxiv.org/abs/0811.3171)
+[^2]: Nielsen, M. A., & Chuang, I. L. (2019). *Quantum computation and quantum information*. Cambridge Cambridge University Press. 217-225.[doi:10.1017/CBO9780511976667](https://www.cambridge.org/highereducation/books/quantum-computation-and-quantum-information/01E10196D0A682A6AEFFEA52D53BE9AE#overview)
 
  
 
