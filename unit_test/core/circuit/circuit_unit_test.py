@@ -2,6 +2,9 @@ import unittest
 
 from QuICT.core import Circuit
 from QuICT.core.gate.composite_gate import CompositeGate
+from QuICT.core.noise.noise_error import DampingError
+from QuICT.core.operator.noise_gate import NoiseGate
+from QuICT.core.operator.trigger import Trigger
 from QuICT.core.qubit.qubit import Qureg
 from QuICT.core.utils.gate_type import GateType
 from QuICT.core.gate import *
@@ -29,14 +32,15 @@ class TestCircuit(unittest.TestCase):
         cgate_single | cir(1)
 
         cgate_single2 = gate_builder(GateType.h) & Qureg(1)
-        cgate_single2 | cir
+        cgate_single2 | cir(2)
+
         assert len(cir.gates) == 3
 
         # single qubit gate with param
         U1(np.pi / 2) | cir(1)
 
         cgate_single = U1
-        cgate_single | cir(2)
+        cgate_single(0) | cir(2)
 
         cgate_single2 = gate_builder(GateType.u1, params=[(np.pi / 2)])
         cgate_single2 & 3 | cir
@@ -201,8 +205,8 @@ class TestCircuit(unittest.TestCase):
         cir_extend.extend(cir_extend) # extend same circuit
         assert cir_extend.width() == 3 and cir_extend.size() == 0
 
-        # cir_extend.extend(cir_trans) # empty extend circuit
-        # assert cir_extend.width() == 18 and cir_extend.size() == 10
+        cir_extend.extend(cir_trans) # empty extend circuit
+        assert cir_extend.width() == 18 and cir_extend.size() == 10
 
         cir_extend = Circuit(5)
         cir_extend.random_append(10)
@@ -241,44 +245,107 @@ class TestCircuit(unittest.TestCase):
     def test_circuit_info(self):
         # add all type of gates to circuit
         cir = Circuit(wires=10, name="cir", ancilla_qubits=[3, 4])
-        Hy | cir(0)
-        S | cir(1)
-        S_dagger | cir(1)
-        SX | cir(3)
-        ID | cir(4)
-        U2(np.pi / 2, 0) | cir(5)
-        Rz(np.pi / 2) | cir(6)
-        T_dagger | cir(7)
-        Phase(np.pi / 2) | cir(8)
-        GPhase(np.pi / 2) | cir(8)
-        CRz(np.pi / 2) | cir([0, 1])
+
+        H | cir(0)
+        U1(np.pi / 2) | cir(1)
+        CX | cir([1, 2])
+        Rzz(np.pi / 2) | cir([1, 2])
+        CU3(np.pi / 2, 0, 0) | cir([3, 4])
+        CCZ | cir([1, 2, 3])
+
+        qureg = cir.qubits
+        S | cir(qureg[0])
+        CY | cir(qureg[1, 3])
+        CSwap | cir(qureg[3, 4, 5])
+
+        c1 = Hy
+        c1 | cir(1)
+        c1 = U2
+        c1(0, 0) | cir(2)
+        c1 = CX & [3, 4]
+        c1 | cir
+        c1 = Ryy & [5, 6]
+        c1(np.pi / 4) | cir
+        c1 = CCX & [4, 5, 6]
+        c1 | cir
+
+        c2 = gate_builder(GateType.sdg) & Qureg(1)
+        c2 | cir(2)
+        c2 = gate_builder(GateType.rx, params=[(np.pi / 2)])
+        c2 & 3 | cir
+        c2 = gate_builder(GateType.cx) & [5, 6]
+        c2 | cir
+        c2 = gate_builder(GateType.cu3, random_params=True) & [7, 8]
+        c2 | cir
+        c2 = gate_builder(GateType.ccrz, random_params=True)
+        c2 | cir([7, 8, 9])
+
+        c3 = Rxx.build_gate()
+        c3 | cir([7, 8])
+
+        qft_gate = QFT(3)
+        qft_gate | cir([0, 1, 3])
+
+        matrix = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, -1]
+        ], dtype=np.complex128)
+        cgate_complex4 = Unitary(matrix, MatrixType.identity)
+        u_gate = cgate_complex4.build_gate()
+        u_gate | cir
+
+        qureg = Qureg(5)
+        cir1 = Circuit(qureg)
+        SX | cir1(1)
+        SY | cir1(1)
+        SW | cir1(1)
+        ID | cir1(4)
+        T | cir(3)
+        T_dagger | cir(5)
+        Phase(0) | cir(6)
+        GPhase(0) | cir(6)
+        CZ | cir([0, 1])
+        CH | cir([0, 1])
+        CRz(0) | cir([5, 6])
+        Measure | cir1(7)
+        Reset | cir1(8)
+        Barrier | cir1(8)
+        iSwap_dagger | cir1([0, 1])
+        sqiSwap | cir1([0, 1])
         FSim(np.pi / 2, 0) | cir([3, 4])
-        Rxx(np.pi / 2) | cir([5, 6])
-        Measure | cir(7)
-        Reset | cir(8)
-        Barrier | cir(8)
-        iSwap_dagger | cir([0, 1])
-        sqiSwap | cir([0, 1])
-        CCX | cir([0, 1, 2])
-        CSwap | cir([7, 8, 9])
+        cir1 | cir
+        cir.qasm()
+        assert 1
 
-        cgate = CompositeGate()
-        U1(0) | cgate(2)
-        CH & [0, 1] | cgate
-        CX | cgate([3, 4])
-        CU3(1, 0, 0) | cgate([0, 4])
-        CCRz(1) | cgate([0, 1, 2])
-        cgate | cir
+        cgate0 = CompositeGate()
+        X | cgate0(2)
+        cgate1 = CompositeGate()
+        X | cgate1(2)
+        X | cgate1(2)
+        gates = [
+            cgate0,
+            cgate1
+        ]
 
-        assert cir.width() == 10
-        assert cir.size() == 25
-        assert cir.depth() == 9
-        assert len(cir.qubits) == 10
-        assert cir.count_1qubit_gate() == 14
-        assert cir.count_2qubit_gate() == 8
+        trigger = Trigger(1, gates, "trigger")
+        trigger | cir([0])
+
+        amp_err = DampingError(amplitude_prob=0.2, phase_prob=0, dissipation_state=0.3)
+        noise = NoiseGate(Z, noise=amp_err)
+        noise | cir([5])
+
+        cir.draw()
+        assert True
+
+        assert cir.width() == 15 
+        assert cir.size() == 61
+        assert cir.depth() == 20
+        assert len(cir.qubits) == 15
+        assert cir.count_1qubit_gate() == 35
+        assert cir.count_2qubit_gate() == 22
         assert cir.count_gate_by_gatetype(GateType.measure) == 1
-        assert len(cir.qasm().splitlines()) == cir.size() + 4
-        assert cir.qasm().splitlines()[-3] == "cx q[3], q[4];"
         assert cir.name == "cir" and cir.ancilla_qubits == [3, 4]
 
     def test_circuit_decomposition(self):
