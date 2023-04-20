@@ -4,7 +4,7 @@ import networkx as nx
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import BasicGate
+from QuICT.core.gate import BasicGate, CompositeGate
 from QuICT.core.utils import GateType
 
 
@@ -67,10 +67,11 @@ class Backend:
 
     def _get_circuit_pst(self, circ: Circuit):
         new_circ = Circuit(circ.width())
-        new_circ.extend(circ.gates)
+        for g in circ.gates:
+            new_circ.append(g)
         for g in reversed(circ.gates):
             g: BasicGate
-            new_circ.append(g.inverse())
+            g.inverse() | new_circ(g.cargs + g.targs)
 
         prob_dist = self.execute_circuit(new_circ, 2000)
         if not prob_dist:
@@ -78,6 +79,9 @@ class Backend:
 
         new_dist = {int(key, 2): val for key, val in prob_dist.items()}
         return new_dist[0] if 0 in new_dist else 0
+
+    def _get_circost_tv(self, circ: Circuit):
+        pass
 
     def generate_benchmark(self, n: int, max_qubit: int, max_gate: int):
         """
@@ -134,7 +138,7 @@ class Backend:
             # g_cost = (-np.log(gate_f) + 1) / avg_time
             # g_cost = (-np.log(gate_f) * 100 + 1) / avg_time
 
-            g_cost = (-np.log(gate_f ** 20) + 1) / avg_time
-            print(g_cost)
+            g_cost = (-np.log(gate_f) + 1) / avg_time
+            # print(g_cost)
             cost += g_cost
         return cost

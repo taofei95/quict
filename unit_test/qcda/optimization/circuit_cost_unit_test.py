@@ -23,10 +23,10 @@ def run_quafu():
 
 def get_benchmark():
     """
-    Get 20 random circuit with #qubit <= 10, #gate <= 10
+    Get 10 random circuit with #qubit <= 10, #gate <= 10
     """
     bkd = QuafuBackend(api_token=my_token, system='ScQ-P10')
-    bmks = bkd.generate_benchmark(10, 10, 20)
+    bmks = bkd.generate_benchmark(10, 10, 10)
     pickle.dump(bmks, open('bmks_10_10_20.pkl', 'wb'))
 
 
@@ -46,8 +46,10 @@ def analyze_data(filename):
     data.sort()
     data = np.array(data)
 
-    # for i in range(data.shape[0]):
-    #     bmks[int(data[i, 2])][0].draw(filename=f'c{i}.jpg')
+    """
+    for i in range(data.shape[0]):
+        bmks[int(data[i, 2])][0].draw(filename=f'c{i}.jpg')
+    """
 
     plt.show()
     plt.plot(range(data.shape[0]), -np.log(data[:, 0]), label='pst-cost')
@@ -88,3 +90,5 @@ def run_case():
 
 if __name__ == '__main__':
     run_quafu()
+    # get_benchmark()
+    # analyze_data('bmks_10_10_20.pkl')
