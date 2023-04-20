@@ -33,17 +33,18 @@ class HHL:
         matrix_rec = np.kron([[0, 1], [0, 0]], matrix_conj) + np.kron([[0, 0], [1, 0]], matrix)
         return matrix_rec
 
-    def _c_rotation(self, control, target):
+    def _c_rotation(self, control, target, c=1):
         """Controlled-Rotation part in HHL algorithm
 
         Args:
             control(int/list[int]): control qubits in multicontrol toffoli gates, in HHL it is phase qubits part
             target(int): target qubit operate CRy gate, in HHL it is ancilla qubit part
+            c(int): param in |lambda|/c
 
         Return:
             CompositeGate
         """
-        c = 1
+        c = max(1, c)
         n = len(control)
         control_rotation_gates = CompositeGate()
         multi_control = MultiControlToffoli()(n - 1)
@@ -78,6 +79,7 @@ class HHL:
         matrix,
         vector,
         dominant_eig=None,
+        min_abs_eig=None,
         phase_qubits: int = 9,
         measure=True
     ):
@@ -87,6 +89,8 @@ class HHL:
             vector(array): the vector b above, which shape must be 2^n
                 matrix and vector MUST have the same number of ROWS!
             dominant_eig(float/None): estimation of dominant eigenvalue
+                If None, use 'np.linalg.eigvals' to obtain
+            min_abs_eig(float/None): estimation of minimum absolute eigenvalue
                 If None, use 'np.linalg.eigvals' to obtain
             phase_qubits(int): number of qubits representing the Phase
             measure(bool): measure ancilla qubit or not
@@ -108,8 +112,12 @@ class HHL:
         else:
             vector_ancilla = False
 
-        if not dominant_eig:
-            dominant_eig = np.max(np.abs(np.linalg.eigvalsh(matrix)))
+        if not dominant_eig or not min_abs_eig:
+            ev = np.abs(np.linalg.eigvalsh(matrix))
+            if not dominant_eig:
+                dominant_eig = np.max(ev)
+            if not min_abs_eig:
+                min_abs_eig = np.min(ev)
 
         circuit = Circuit(1 + phase_qubits + n)
         ancilla = 0
@@ -126,7 +134,8 @@ class HHL:
 
         # prepare Controlled-Unitary Gate
         unitary_matrix_gates = CompositeGate()
-        m = expm(matrix / dominant_eig * 0.5j)
+        scale = 1 - 1 / (1 << phase_qubits - 1)
+        m = expm(matrix / dominant_eig * np.pi * 1j * scale)
         for idx in reversed(phase):
             U, _ = ControlledUnitaryDecomposition().execute(
                 np.identity(1 << n, dtype=np.complex128), m
@@ -141,7 +150,8 @@ class HHL:
         IQFT.build_gate(len(phase)) | circuit(list(reversed(phase)))
 
         # Controlled-Rotation
-        control_rotation = self._c_rotation(phase, ancilla)
+        param_c = ((1 << phase_qubits - 1) - 1) * min_abs_eig / dominant_eig
+        control_rotation = self._c_rotation(phase, ancilla, int(param_c))
         control_rotation | circuit
 
         # Inversed-QPE
@@ -169,6 +179,7 @@ class HHL:
         matrix,
         vector,
         dominant_eig=None,
+        min_abs_eig=None,
         phase_qubits: int = 9,
         measure=True
     ):
@@ -188,7 +199,7 @@ class HHL:
         """
         size = len(vector)
 
-        circuit = deepcopy(self.circuit(matrix, vector, dominant_eig, phase_qubits, measure))
+        circuit = deepcopy(self.circuit(matrix, vector, dominant_eig, min_abs_eig, phase_qubits, measure))
 
         state_vector = self.simulator.run(circuit)
 
