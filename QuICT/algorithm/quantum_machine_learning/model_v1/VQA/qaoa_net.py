@@ -6,7 +6,7 @@ from QuICT.core.gate import *
 
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz, Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.model.VQA import VQENet
+from QuICT.algorithm.quantum_machine_learning.model_v1.VQA import VQENet
 
 
 class QAOANet(VQENet):
@@ -37,8 +37,19 @@ class QAOANet(VQENet):
 
     def define_network(self):
         """Define the network parameters to be trained."""
+        # self.params = torch.nn.Parameter(
+        #     torch.rand(2, self.p, device=self.device), requires_grad=True
+        # )
+
         self.params = torch.nn.Parameter(
-            torch.rand(2, self.p, device=self.device), requires_grad=True
+            torch.tensor(
+                [
+                    [0.27626589, -1.85462808, 0.62390111, 1.14531129],
+                    [1.03719047, 1.88663893, -0.11169829, -0.36210134],
+                ],
+                device=self.device,
+                requires_grad=True,
+            )
         )
 
     def forward(self, state=None):
@@ -98,12 +109,12 @@ class QAOANet(VQENet):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                ansatz.add_gate(CX_tensor, tar_idx[i: i + 2])
+                ansatz.add_gate(CX_tensor, tar_idx[i : i + 2])
             # Add RZ gate
             ansatz.add_gate(Rz_tensor(gamma), tar_idx[-1])
             # Add CNOT gates
             for i in range(len(tar_idx) - 2, -1, -1):
-                ansatz.add_gate(CX_tensor, tar_idx[i: i + 2])
+                ansatz.add_gate(CX_tensor, tar_idx[i : i + 2])
         return ansatz
 
     def construct_ansatz(self):
@@ -168,12 +179,12 @@ class QAOANet(VQENet):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                CX | circuit(tar_idx[i: i + 2])
+                CX | circuit(tar_idx[i : i + 2])
             # Add RZ gate
             Rz(gamma) | circuit(tar_idx[-1])
             # Add CNOT gates
             for i in range(len(tar_idx) - 2, -1, -1):
-                CX | circuit(tar_idx[i: i + 2])
+                CX | circuit(tar_idx[i : i + 2])
         return circuit
 
     def construct_circuit(self):

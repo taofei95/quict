@@ -82,8 +82,7 @@ def restore_checkpoint(net, optim, model_path, device):
 
 def apply_optimizer(optimizer: tf.keras.optimizers.Optimizer, variables: Variable):
     tfvariable_list = convert_to_tfvariable(variables.pargs)
-    start = time.time()
-    optimizer.apply_gradients(zip(variables.grads, tfvariable_list))
+    optimizer.apply_gradients(zip(variables.grads, tfvariable_list), experimental_aggregate_gradients=True)
     pargs = convert_to_numpy(tfvariable_list)
     variables.pargs = pargs
     return variables

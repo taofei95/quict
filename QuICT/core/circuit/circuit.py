@@ -357,7 +357,10 @@ class Circuit(CircuitBased):
 
     def _add_gate_to_all_qubits(self, gate):
         for idx in range(self.width()):
-            self._gates.append((gate, [idx], 1))
+            if gate.variables > 0:
+                self._gates.append((gate.copy(), [idx], 1))
+            else:
+                self._gates.append((gate, [idx], 1))
 
     def _add_operator(self, op: Operator):
         if self._pointer is not None:

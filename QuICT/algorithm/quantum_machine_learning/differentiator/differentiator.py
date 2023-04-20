@@ -47,9 +47,6 @@ class Differentiator:
         self._differentiator = self._load_differentiator()
 
     def _options_validation(self, options: dict) -> bool:
-        if self._backend == "adjoint" and self._device == "CPU":
-            return False
-
         default_option_list = Differentiator.__OPTIONS_DICT[self._backend]
         option_keys = list(options.keys())
 

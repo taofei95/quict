@@ -210,7 +210,7 @@ class PhotoDrawer(object):
         strings = []
         
         for p in params:
-            if isinstance(p,Variable):
+            if isinstance(p, Variable):
                 p = p.pargs
             strings.append(pi_check(p))
         return ', '.join(strings)
