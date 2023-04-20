@@ -1,7 +1,8 @@
 import sys
 import tqdm
-import numpy_ml
 
+# from QuICT.algorithm.quantum_algorithm.quantum_walk import numpy_ml_copy
+from QuICT.algorithm.quantum_algorithm.quantum_walk.numpy_ml_copy.optimizers.init import *
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 from QuICT.algorithm.tools.drawer.graph_drawer import *
@@ -34,7 +35,7 @@ SHOTS = 1000
 set_seed(SEED)  # 设置全局随机种子
 
 qaoa_net = QAOA(n_qubits=n, p=p, hamiltonian=H)
-optim = numpy_ml.neural_nets.optimizers.Adam(lr=LR)
+optim = Adam(lr=LR)
 
 # 开始训练
 loader = tqdm.trange(MAX_ITERS, desc="Training", leave=True)
