@@ -369,11 +369,11 @@ class GateMatrixGenerator:
             return [grad1, grad2, grad3]
 
         elif gate_type == GateType.rx:
-            cos_v = self._array_generator.cos(pargs[0] / 2) / 2
+            cos_v = -self._array_generator.cos(pargs[0] / 2) / 2
             sin_v = -self._array_generator.sin(pargs[0] / 2) / 2
             return [
                 self._array_generator.array(
-                    [[-sin_v, 1j * cos_v], [1j * cos_v, -sin_v]], dtype=precision
+                    [[sin_v, 1j * cos_v], [1j * cos_v, sin_v]], dtype=precision
                 )
             ]
 

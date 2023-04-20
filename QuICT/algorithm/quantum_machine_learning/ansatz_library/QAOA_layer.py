@@ -16,28 +16,25 @@ class QAOALayer:
         return self._circuit
 
     def __init__(
-        self,
-        n_qubits: int,
-        p: int,
-        hamiltonian: Hamiltonian,
-        params: Union[Variable, np.ndarray] = None,
+        self, n_qubits: int, p: int, hamiltonian: Hamiltonian,
     ):
         self._n_qubits = n_qubits
         self._p = p
-        params = Variable(np.random.randn(2, p)) if params is None else params
-        if params.shape == (2, p):
-            self._params = params
-        else:
-            raise ValueError
         self._hamiltonian = hamiltonian
-        self._circuit = self.init_circuit()
+        self._params = None
 
-    def init_circuit(self):
+    def init_circuit(self, params: Union[Variable, np.ndarray] = None):
         """Build QAOA circuit with optimizable parameters.
 
         Returns:
             Circuit: The QAOA circuit.
         """
+        params = Variable(np.random.randn(2, self._p)) if params is None else params
+        if params.shape == (2, self._p):
+            self._params = params
+        else:
+            raise ValueError
+
         circuit = Circuit(self._n_qubits)
         # initialize state vector
         H | circuit

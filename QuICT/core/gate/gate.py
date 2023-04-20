@@ -587,9 +587,13 @@ class BasicGate(object):
         Returns:
             gate(BasicGate): a copy of this gate
         """
+        if self.variables == 0:
+            pargs = self.pargs
+        else:
+            pargs = [parg.copy() for parg in self.pargs]
         gate = BasicGate(
             self.controls, self.targets, self.params, self.type,
-            self.matrix_type, self.pargs, self.precision
+            self.matrix_type, pargs, self.precision
         )
 
         if len(self.targs) > 0:

@@ -76,6 +76,9 @@ class Hamiltonian:
             pauli_operator[0] *= other
         return Hamiltonian(new_pauli_str)
 
+    def __rmul__(self, other: float):
+        return self.__mul__(other)
+
     def _remove_I(self):
         new_pauli_str = []
         for pauli_operator in self._pauli_str:
@@ -135,11 +138,7 @@ class Hamiltonian:
         """Validate the Pauli operator."""
         assert isinstance(pauli_operator[0], int) or isinstance(
             pauli_operator[0], float
-        ), TypeError(
-            "Hamiltonian.init",
-            "int or float",
-            pauli_operator[0].type,
-        )
+        ), TypeError("Hamiltonian.init", "int or float", pauli_operator[0].type,)
 
         indexes = []
         pauli_gates = ""

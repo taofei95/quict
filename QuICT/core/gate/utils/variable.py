@@ -130,6 +130,9 @@ class Variable(object):
                 )
         raise TypeError
 
+    def copy(self):
+        return Variable(pargs=self.pargs, grads=self.grads, identity=self.identity)
+
     def zero_grad(self):
         self._grads = np.zeros(self._shape, dtype=np.float64)
 
