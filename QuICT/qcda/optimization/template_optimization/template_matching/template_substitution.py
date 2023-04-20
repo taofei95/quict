@@ -8,7 +8,7 @@ except ImportError:
     from collections import Iterable
 
 from QuICT.core import Circuit
-from QuICT.qcda.utility.circuit_cost_measure import CircuitCostMeasure
+from QuICT.qcda.utility.circuit_cost import StaticCircuitCost as CircuitCost
 
 from .matching_dag_circuit import Match, MatchingDAGCircuit, MatchingDAGNode
 
@@ -21,13 +21,13 @@ class Substitution:
                  circuit: MatchingDAGCircuit,
                  template: MatchingDAGCircuit,
                  match: Match,
-                 measure: CircuitCostMeasure):
+                 measure: CircuitCost):
         """
         Args:
             circuit(MatchingDAGCircuit): the circuit to match
             template(MatchingDAGCircuit): the template to be matched
             match(Match): the matching for this substitution
-            measure(CircuitCostMeasure): cost measure
+            measure(CircuitCost): cost measure
         """
         self.circuit = circuit
         self.template = template
@@ -122,7 +122,7 @@ class TemplateSubstitution:
                        circuit: MatchingDAGCircuit,
                        template: MatchingDAGCircuit,
                        match_list: List[Match],
-                       measure: CircuitCostMeasure):
+                       measure: CircuitCost):
         """
         Greedily calculate a maximal and compatible sub list for found matches.
         """
@@ -160,7 +160,7 @@ class TemplateSubstitution:
                 circuit: MatchingDAGCircuit,
                 template: MatchingDAGCircuit,
                 match_list: List[Match],
-                measure: CircuitCostMeasure):
+                measure: CircuitCost):
 
         sub_list = cls._calc_sub_list(circuit, template, match_list, measure)
 
