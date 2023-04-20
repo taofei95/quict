@@ -77,14 +77,14 @@ class AdjointDifferentiator:
         self.initial_circuit(circuit)
         assert state_vector is not None
         self._vector = self._gate_calculator.normalized_state_vector(
-            state_vector, self._qubits
+            state_vector.copy(), self._qubits
         )
         # Calculate d(L)/d(|psi_t>)
         self._grad_vector = self._initial_grad_vector(
-            state_vector, self._qubits, expectation_op
+            state_vector.copy(), self._qubits, expectation_op
         )
         # loss
-        loss = (state_vector.conj() @ self._grad_vector.get()).real
+        loss = (state_vector.conj() @ self._grad_vector).real
 
         for idx in range(len(self._bp_pipeline)):
             if self._remain_training_gates == 0:
@@ -127,7 +127,6 @@ class AdjointDifferentiator:
     def _initial_grad_vector(
         self, state_vector, qubits: int, expectation_op: Hamiltonian
     ):
-        state_vector_copy = state_vector.copy()
         simulator = StateVectorSimulator(
             self._device, self._precision, self._device_id, self._sync
         )
@@ -137,7 +136,7 @@ class AdjointDifferentiator:
         grad_vector = np.zeros(1 << qubits, dtype=np.complex128)
         grad_vector = self._gate_calculator.normalized_state_vector(grad_vector, qubits)
         for coeff, circuit in zip(coefficients, circuit_list):
-            grad_vec = simulator.run(circuit, state_vector_copy)
+            grad_vec = simulator.run(circuit, state_vector)
             grad_vector += coeff * grad_vec
 
         return grad_vector

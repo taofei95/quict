@@ -12,10 +12,8 @@ class QAOA:
         n_qubits: int,
         p: int,
         hamiltonian: Hamiltonian,
-        shots: int = 1000,
         device: str = "GPU",
         gpu_device_id: int = 0,
-        simulator: str = "state_vector",
         differentiator: str = "adjoint",
     ):
         self._qaoa_builder = QAOALayer(n_qubits, p, hamiltonian)
@@ -23,35 +21,30 @@ class QAOA:
         self._params = self._qaoa_builder.params
         self._circuit.gate_decomposition(decomposition=False)
         self._hamiltonian = hamiltonian
-        self._shots = shots
-        self._simulator = Simulator(
-            device=device, backend=simulator, gpu_device_id=gpu_device_id
+        self._simulator = StateVectorSimulator(
+            device=device, gpu_device_id=gpu_device_id
         )
         self._differentiator = Differentiator(
             device=device, backend=differentiator, gpu_device_id=gpu_device_id
         )
 
     def run_step(self, optimizer):
-        result = self._simulator.run(self._circuit, self._shots)
-        state = result["data"]["state_vector"]
-        sample = result["data"]["counts"]
-        self._differentiator.run(
+        # FP
+        state = self._simulator.run(self._circuit)
+        # BP
+        _, loss = self._differentiator.run(
             self._circuit, self._params, state, -1 * self._hamiltonian
         )
-        self._params = apply_optimizer(optimizer, self._params)
-        self._params.zero_grad()
-        self._circuit = self._qaoa_builder.init_circuit(self._params)
-        return state, sample
-
-    def sample(self, state):
-        theor_prob = (state * state.conj()).real
-        theor_prob = theor_prob / np.sum(theor_prob)
-        sample = np.random.choice(
-            a=range(len(theor_prob)), size=self._shots, replace=True, p=theor_prob
+        # optimize
+        self._params.pargs = optimizer.update(
+            self._params.pargs, self._params.grads, "params"
         )
-        idx, counts = np.unique(sample, return_counts=True)
-        prob = np.zeros(len(theor_prob))
-        for i, count in zip(idx, counts):
-            prob[i] = count
+        self._params.zero_grad()
+        # update
+        self._circuit = self._qaoa_builder.init_circuit(self._params)
+        return state, loss
 
-        return prob.tolist()
+    def sample(self, shots):
+        sample = self._simulator.sample(shots)
+
+        return sample
