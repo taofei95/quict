@@ -2,16 +2,24 @@ from typing import *
 import numpy as np
 
 from QuICT.core.gate import *
+<<<<<<< HEAD
 from QuICT.tools.exception.core import TypeError, ValueError
+=======
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
 
 
 class MultiControlRotation(object):
     def __init__(self, target_gate: GateType, param: float):
+<<<<<<< HEAD
         assert target_gate in [GateType.ry, GateType.rz], TypeError(
             "MultiControlRotation.target_gate",
             [GateType.ry, GateType.rz],
             target_gate,
         )
+=======
+        assert target_gate in [GateType.ry, GateType.rz]
+
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
         self.gate_type = target_gate
         self.param = param
         self.gate_dict = {

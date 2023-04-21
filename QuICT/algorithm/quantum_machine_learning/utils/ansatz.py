@@ -4,14 +4,22 @@ import numpy as np
 import torch
 import warnings
 
-from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.utils import apply_gate
 from QuICT.core.gate import *
 from QuICT.ops.utils import LinAlgLoader
+<<<<<<< HEAD
 from QuICT.tools.exception.algorithm import *
 from QuICT.tools.exception.core import *
 from QuICT.tools.logger import *
 
+=======
+from QuICT.tools.exception.core import *
+from QuICT.tools.logger import *
+
+from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
+from QuICT.algorithm.quantum_machine_learning.utils import apply_gate
+from QuICT.algorithm.quantum_machine_learning.tools.exception import *
+
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
 logger = Logger("ansatz")
 
 

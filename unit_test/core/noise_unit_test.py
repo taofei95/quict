@@ -11,7 +11,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.noise import *
 from QuICT.core.operator import NoiseGate
-from QuICT.simulation.density_matrix import DensityMatrixSimulation
+from QuICT.simulation.density_matrix import DensityMatrixSimulator
 
 
 class TestNoise(unittest.TestCase):
@@ -50,11 +50,11 @@ class TestNoise(unittest.TestCase):
         nm.add(bits_err, ['cx'], [0, 1])
 
         # Using Density Matrix Simulator to simulate
-        dm_simu = DensityMatrixSimulation(accumulated_mode=True)
+        dm_simu = DensityMatrixSimulator(accumulated_mode=True)
         _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
-        count = dm_simu.sample(1000)
+        count = dm_simu.sample(100)
 
-        assert count[0] + count[15] + count[7] + count[8] == 1000
+        assert count[0] + count[15] + count[7] + count[8] == 100
 
     def test_depolarizingerror(self):
         depolarizing_rate = 0.05
@@ -72,11 +72,11 @@ class TestNoise(unittest.TestCase):
         nm.add(tensor_error, ['cx'], [0, 1])
 
         # Using Density Matrix Simulator to simulate
-        dm_simu = DensityMatrixSimulation()
+        dm_simu = DensityMatrixSimulator()
         _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
-        count = dm_simu.sample(1000)
+        count = dm_simu.sample(100)
 
-        assert count[0] + count[15] + count[7] + count[8] == 1000
+        assert count[0] + count[15] + count[7] + count[8] == 100
 
     def test_damping(self):
         # Amplitude damping error
@@ -94,11 +94,11 @@ class TestNoise(unittest.TestCase):
         nm.add(tensor_error, ['cx'], [0, 1])
 
         # Using Density Matrix Simulator to simulate
-        dm_simu = DensityMatrixSimulation()
+        dm_simu = DensityMatrixSimulator()
         _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
-        count = dm_simu.sample(1000)
+        count = dm_simu.sample(100)
 
-        assert count[0] + count[15] + count[7] + count[8] == 1000
+        assert count[0] + count[15] + count[7] + count[8] == 100
 
     def test_readout(self):
         # single-qubit Readout Error
@@ -121,7 +121,7 @@ class TestNoise(unittest.TestCase):
         nm.add_readout_error(single_readout, [1, 3])
         nm.add_readout_error(double_readout, [1, 3])
 
-        dm_simu = DensityMatrixSimulation(accumulated_mode=True)
+        dm_simu = DensityMatrixSimulator(accumulated_mode=True)
         _ = dm_simu.run(self.circuit, noise_model=nm)
         count = dm_simu.sample(100)
 

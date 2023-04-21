@@ -33,7 +33,7 @@ function Print-Magenta {
 }
 
 $PrjBuildDir = "$PSScriptRoot\build"
-$PrjEggDir = "$PSScriptRoot\QuICT.egg-info"
+$PrjEggDir = "$PSScriptRoot\quict.egg-info"
 $PrjDistDir = "$PSScriptRoot\dist"
 
 foreach ($dir in @($PrjBuildDir, $PrjEggDir, $PrjDistDir)) {

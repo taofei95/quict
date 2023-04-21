@@ -79,7 +79,9 @@ class ControlledUnitaryDecomposition(object):
             recursive_basis=recursive_basis,
             keep_left_diagonal=keep_left_diagonal,
         )
-        for gate in gates:
+        for gate in gates.flatten_gates():
+            if isinstance(gate,CompositeGate):
+                debug = 1
             for idx, _ in enumerate(gate.cargs):
                 gate.cargs[idx] += 1
             for idx, _ in enumerate(gate.targs):

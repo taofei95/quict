@@ -1,11 +1,14 @@
 from collections import deque
-from collections.abc import Iterable
 from itertools import chain
 from typing import Dict, List, Set, Tuple
 
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
+
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.core.gate.gate_builder import GATE_TYPE_TO_CLASS
 
 from .symbolic_phase import SymbolicPhase, SymbolicPhaseVariable
 
@@ -71,7 +74,7 @@ class DAG(Iterable):
                 BasicGate: corresponding gate
             """
 
-            return GATE_TYPE_TO_CLASS[self.gate_type]()(*self.params) & self.qubit_loc \
+            return gate_builder(self.gate_type, params=self.params) & self.qubit_loc \
                 if self.gate_type is not None else None
 
         def add_forward_edge(self, qubit_, node):
@@ -197,7 +200,7 @@ class DAG(Iterable):
         cur_nodes = self.start_nodes.copy()
 
         var_cnt = 0
-        for idx, gate_ in enumerate(gates.gates):
+        for idx, gate_ in enumerate(gates.flatten_gates()):
             # decouple ccx building with dag
             if build_toffoli and (gate_.type == GateType.ccx or gate_.type == GateType.ccz):
                 self.has_symbolic_rz = True
@@ -238,9 +241,12 @@ class DAG(Iterable):
 
         return node_cnt
 
-    def get_circuit(self):
+    def get_circuit(self, keep_phase=True):
         """
         Generate circuit net list from this DAG.
+
+        Args:
+            keep_phase(bool): whether to keep the global phase as a GPhase gate in the output
 
         Returns:
             Circuit: Circuit equivalent to this DAG
@@ -255,7 +261,7 @@ class DAG(Iterable):
 
             node.get_gate() | circ([mapping[(id(node), qubit_)] for qubit_ in range(node.size)])
 
-        if not np.isclose(float(self.global_phase), 0):
+        if keep_phase and not np.isclose(float(self.global_phase), 0):
             GPhase(self.global_phase) | circ(0)
         return circ
 

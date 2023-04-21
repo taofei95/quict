@@ -1,5 +1,9 @@
 import numpy as np
+<<<<<<< HEAD
 
+=======
+import torch
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.core import Circuit
@@ -95,7 +99,37 @@ class FRQI:
         self._circuit = None
         self._ansatz = None
 
+<<<<<<< HEAD
     
+=======
+    def multi_X_gate(self,act_qubit_list):
+        composite_xgate = CompositeGate()
+        for i in act_qubit_list:
+            X & i |composite_xgate
+        return composite_xgate
+
+    def get_ctrl_list(self,bins,n_pos_qubits):
+        bin_str_suffix = bin(bins)[-n_pos_qubits:]
+        bin_str_prefixes = bin(bins).zfill(n_pos_qubits*2+2)[2: -n_pos_qubits]
+        zero_crtl_list = list()
+        for j in range(len(bin_str_suffix)):
+            if bin_str_suffix[j] == '0' and bin_str_prefixes[j] == '0':
+                zero_crtl_list.append(j)  # position qubit before color qubit in the circuit
+        crtl_list = []
+        for j in range(len(bin_str_suffix)):
+            if bin_str_suffix[j] == '0':
+                crtl_list.append(j)
+        return zero_crtl_list,crtl_list
+ 
+    def create_img_list(self,img):
+        img_dic = dict()
+        for i in range(len(img)):
+            if img[i] not in img_dic:
+                img_dic[str(img[i])] = [i]
+            else:
+                img_dic[str(img[i])].append(i) 
+        return img_dic
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
     def encoding(self, img, grayscale=2,):
         img = img.flatten()
         img_theta = img / (grayscale - 1) * np.pi
@@ -104,12 +138,17 @@ class FRQI:
         assert 1 << n_pos_qubits == N
         n_qubits = n_pos_qubits + 1
 
+<<<<<<< HEAD
         #color_img_list = self.create_img_list(img,n_color_qubits=)
+=======
+        img_dict = self.create_img_list(img_theta)
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
 
         self._circuit = Circuit(n_qubits)
         for qid in range(n_pos_qubits):
             H | self._circuit(qid)
 
+<<<<<<< HEAD
         for i in range(N):
             if i > 0:
                 bin_str = bin((i - 1) ^ i)[2:].zfill(n_pos_qubits)
@@ -135,6 +174,22 @@ class NEQR:
         self._device = device
         self._circuit = None
         self._ansatz = None
+=======
+        for item in img_dict:
+            img_dict[item] = Binary_reduction(img_dict[item],n_pos_qubits)
+            for jtem in img_dict[item]:
+                zero_crtl_list,crtl_list = self.get_ctrl_list(jtem,n_pos_qubits)
+                multi_x_gate =self.multi_X_gate(zero_crtl_list)
+                multi_x_gate |self._circuit
+
+                mcr = MultiControlRotation(GateType.ry, float(item))
+                gates = mcr(control=crtl_list, target=n_pos_qubits)
+                gates | self._circuit
+
+                multi_x_gate |self._circuit
+
+class NEQR(FRQI):
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
     
     def create_img_list(self,img,n_color_qubits,N):
         img_list = []
@@ -147,6 +202,7 @@ class NEQR:
                     img_list[n_color_qubits-1-j].append(i)
         return img_list
     
+<<<<<<< HEAD
     def multi_X_gate(self,act_qubit_list):
         composite_xgate = CompositeGate()
         for i in act_qubit_list:
@@ -157,12 +213,20 @@ class NEQR:
     def encoding(self, img):
         n_color_qubits = int(np.log2(256))
         color_list = list()
+=======
+   
+    def encoding(self, img):
+        n_color_qubits = int(np.log2(256))
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
         img = img.flatten()
         N = img.shape[0]
         n_pos_qubits = int(np.log2(N))
         assert 1 << n_pos_qubits >= N
+<<<<<<< HEAD
         #n_pos_qubits = int(np.log2(N))
         #assert 1 << n_pos_qubits == N
+=======
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
         n_qubits = n_pos_qubits + n_color_qubits + 1
         gate_ncnot = MultiControlToffoli()
         self._circuit = Circuit(n_qubits)
@@ -174,6 +238,7 @@ class NEQR:
         for i in range(n_color_qubits):
             img_list[i] = Binary_reduction(img_list[i],n_pos_qubits)
             for item in img_list[i]:
+<<<<<<< HEAD
                 bin_str_suffix = bin(item)[-n_pos_qubits:]
                 bin_str_prefixes = bin(item).zfill(n_pos_qubits*2+2)[2: -n_pos_qubits]
                 zero_crtl_list = list()
@@ -187,12 +252,19 @@ class NEQR:
                 for j in range(len(bin_str_suffix)):
                     if bin_str_suffix[j] == '0':
                         crtl_list.append(j)
+=======
+                zero_crtl_list,crtl_list = self.get_ctrl_list(item,n_pos_qubits)
+                multi_x_gate =self.multi_X_gate(zero_crtl_list)
+                multi_x_gate |self._circuit
+
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
                 act_qubit_list = crtl_list.copy()
                 act_qubit_list.append(i+n_pos_qubits)
                 gate_ncnot = MultiControlToffoli()
                 gate_ncnot(control=len(crtl_list))|self._circuit(act_qubit_list)
 
                 multi_x_gate |self._circuit
+<<<<<<< HEAD
                
 
 
@@ -210,3 +282,5 @@ if __name__ == "__main__":
     print(time.time() - start)
 
 
+=======
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd

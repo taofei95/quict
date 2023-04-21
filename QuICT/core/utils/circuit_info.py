@@ -3,19 +3,16 @@
 # @TIME    : 2022/1/15 10:31
 # @Author  : Han Yu, Li Kaiqi
 # @File    : _circuit_computing.py
-from collections import Iterable
-from typing import List
-import numpy as np
 from enum import Enum
+import numpy as np
 
 from .gate_type import GateType
-from .circuit_matrix import CircuitMatrix, get_gates_order_by_depth
 
 
 class CircuitBased(object):
     """ Based Class for Circuit and Composite Gate. """
     @property
-    def name(self) -> int:
+    def name(self) -> str:
         return self._name
 
     @name.setter
@@ -23,19 +20,48 @@ class CircuitBased(object):
         self._name = name
 
     @property
+    def precision(self) -> str:
+        return self._precision
+
+    @property
     def gates(self) -> list:
+        """ Return the list of BasicGate/CompositeGate/Operator in the current circuit. \n
+        *Warning*: this is slowly due to the copy of gates, you can use self.fast_gates to
+        get list of tuple(gate, qidxes, size) for further using.
+        """
+        combined_gates = [gate.copy() & targs for gate, targs, _ in self._gates]
+
+        return combined_gates
+
+    @property
+    def fast_gates(self) -> list:
+        """ Return the list of tuple(gates' info) in the current circuit. it contains the gate,
+        the qubit indexes and the gate's size."""
         return self._gates
 
-    @gates.setter
-    def gates(self, gates):
-        self._gates = gates
+    def flatten_gates(self, decomposition: bool = False) -> list:
+        """ Return the list of BasicGate/Operator. """
+        flatten_gates = []
+        for gate, qidxes, _ in self._gates:
+            gate = gate.copy() & qidxes
+            if hasattr(gate, "flatten_gates"):
+                flatten_gates.extend(gate.flatten_gates(decomposition))
+            else:
+                if decomposition:
+                    cgate = gate.build_gate()
+                    if cgate is not None:
+                        flatten_gates.extend(cgate.gates)
+                        continue
+
+                flatten_gates.append(gate)
+
+        return flatten_gates
 
     def __init__(self, name: str):
         self._name = name
         self._gates = []
-        self._gate_type = {}        # gate_type: # of gates
         self._pointer = None
-        self._precision = np.complex128
+        self._precision = "double"
 
     def size(self) -> int:
         """ the number of gates in the circuit/CompositeGate
@@ -43,7 +69,11 @@ class CircuitBased(object):
         Returns:
             int: the number of gates in circuit
         """
-        return len(self._gates)
+        tsize = 0
+        for _, _, size in self._gates:
+            tsize += size
+
+        return tsize
 
     def width(self):
         """ the number of qubits in circuit
@@ -51,20 +81,24 @@ class CircuitBased(object):
         Returns:
             int: the number of qubits in circuit
         """
-        return len(self.qubits)
+        return len(self._qubits)
 
-    def depth(self) -> int:
-        """ the depth of the circuit/CompositeGate.
+    def depth(self, depth_per_qubits: bool = False) -> int:
+        """ the depth of the circuit.
 
         Returns:
             int: the depth
         """
         depth = np.zeros(self.width(), dtype=int)
-        for gate in self._gates:
-            targs = gate.cargs + gate.targs
-            depth[targs] = np.max(depth[targs]) + 1
+        for gate, targs, _ in self._gates:
+            if hasattr(gate, "depth"):
+                gdepth = gate.depth(True)
+                for i, targ in enumerate(targs):
+                    depth[targ] += gdepth[i]
+            else:
+                depth[targs] = np.max(depth[targs]) + 1
 
-        return np.max(depth)
+        return np.max(depth) if not depth_per_qubits else depth
 
     def count_2qubit_gate(self) -> int:
         """ the number of the two qubit gates in the circuit/CompositeGate
@@ -73,7 +107,11 @@ class CircuitBased(object):
             int: the number of the two qubit gates
         """
         count = 0
-        for gate in self._gates:
+        for gate, _, size in self._gates:
+            if size > 1 or hasattr(gate, "count_2qubit_gate"):
+                count += gate.count_2qubit_gate()
+                continue
+
             if gate.controls + gate.targets == 2:
                 count += 1
 
@@ -86,8 +124,12 @@ class CircuitBased(object):
             int: the number of the one qubit gates
         """
         count = 0
-        for gate in self._gates:
-            if gate.is_single():
+        for gate, _, size in self._gates:
+            if size > 1 or hasattr(gate, "count_1qubit_gate"):
+                count += gate.count_1qubit_gate()
+                continue
+
+            if gate.controls + gate.targets == 1:
                 count += 1
 
         return count
@@ -101,10 +143,14 @@ class CircuitBased(object):
         Returns:
             int: the number of the gates which are some type
         """
-        if gate_type in self._gate_type.keys():
-            return self._gate_type[gate_type]
+        count = 0
+        for gate, _, size in self._gates:
+            if size > 1 or hasattr(gate, "count_gate_by_gatetype"):
+                count += gate.count_gate_by_gatetype(gate_type)
+            elif gate.type == gate_type:
+                count += 1
 
-        return 0
+        return count
 
     def __str__(self):
         circuit_info = {
@@ -127,6 +173,7 @@ class CircuitBased(object):
         Returns:
             str: The string of Circuit/CompositeGate's qasm.
         """
+        qasm_string = ""
         qreg = self.width()
         creg = min(self.count_gate_by_gatetype(GateType.measure), qreg)
         if creg == 0:
@@ -137,13 +184,17 @@ class CircuitBased(object):
         qasm_string += f"creg c[{creg}];\n"
 
         cbits = 0
-        for gate in self._gates:
+        for gate, targs, size in self._gates:
+            if size > 1 or hasattr(gate, "qasm_gates_only"):
+                qasm_string += gate.qasm_gates_only(creg, cbits, targs)
+                continue
+
             if gate.qasm_name == "measure":
-                qasm_string += f"measure q[{gate.targ}] -> c[{cbits}];\n"
+                qasm_string += f"measure q[{targs}] -> c[{cbits}];\n"
                 cbits += 1
                 cbits = cbits % creg
             else:
-                qasm_string += gate.qasm()
+                qasm_string += gate.qasm(targs)
 
         if output_file is not None:
             with open(output_file, 'w+') as of:
@@ -151,79 +202,147 @@ class CircuitBased(object):
 
         return qasm_string
 
-    def get_lastcall_for_each_qubits(self) -> List[GateType]:
-        lastcall_per_qubits = [None] * self.width()
-        inside_qargs = []
-        for i in range(self.size() - 1, -1, -1):
-            gate_args = self._gates[i].cargs + self._gates[i].targs
-            gate_type = self._gates[i].type
-            for garg in gate_args:
-                if lastcall_per_qubits[garg] is None:
-                    lastcall_per_qubits[garg] = gate_type
-                    inside_qargs.append(garg)
-
-            if len(inside_qargs) == self.width():
-                break
-
-        return lastcall_per_qubits
-
-    def get_gates_order_by_depth(self) -> List[List]:
-        """ Order the gates of circuit by its depth layer
-
-        Returns:
-            List[List[BasicGate]]: The list of gates which at same layers in circuit.
-        """
-        return get_gates_order_by_depth(self.gates)
-
-    def matrix(self, device: str = "CPU", mini_arg: int = 0) -> np.ndarray:
-        """ Generate the circuit's unitary matrix which compose by all quantum gates' matrix in current circuit.
+    def set_precision(self, precision: str):
+        """ Set precision for Cicuit/CompositeGate
 
         Args:
-            device (str, optional): The device type for generate circuit's matrix, one of [CPU, GPU]. Defaults to "CPU".
-            mini_arg (int, optional): The minimal qubit args, only use for CompositeGate local mode. Default to 0.
+            precision(str): The precision of Circuit/CompositeGate, should be one of [single, double]
         """
-        assert device in ["CPU", "GPU"]
-        circuit_matrix = CircuitMatrix(device)
+        assert precision in ["single", "double"], "Circuit's precision should be one of [double, single]"
+        self._precision = precision
 
-        if self.size() == 0:
-            if device == "CPU":
-                circuit_matrix = np.identity(1 << self.width(), dtype=self._precision)
+    def gate_decomposition(self, self_flatten: bool = True, decomposition: bool = True) -> list:
+        decomp_gates = []
+        for gate, qidxes, size in self._gates:
+            if size > 1 or hasattr(gate, "gate_decomposition"):
+                decomp_gates += gate.gate_decomposition()
+                continue
             else:
-                import cupy as cp
+                if decomposition and hasattr(gate, "build_gate"):
+                    cgate = gate.build_gate()
+                    if cgate is not None:
+                        cgate & qidxes
+                        decomp_gates += cgate._gates
+            decomp_gates.append((gate, qidxes, size))
 
-                circuit_matrix = cp.identity(1 << self.width(), dtype=self._precision)
+        if not self_flatten:
+            return decomp_gates
+        else:
+            self._gates = decomp_gates
+            return self._gates
+        
+    
+    def count_training_gates(self):
+        training_gates = 0
+        for gate, _, size in self._gates:
+            if size > 1:
+                training_gates += gate.count_training_gates()
+            if gate.variables > 0:
+                training_gates += 1
+        return training_gates
 
-            return circuit_matrix
+    def update(self, variables):
+        remain_training_gates = self.count_training_gates()
+        for gate, _, _ in self._gates:
+            if remain_training_gates == 0:
+                return
+            if gate.variables > 0:
+                remain_training_gates -= 1
+            for i in range(gate.variables):
+                assert gate.pargs[i].identity[:32] == variables.identity
+                index = gate.pargs[i].index
+                gate.pargs[i].pargs = variables.pargs[index]
 
-        if self.size() > self.count_1qubit_gate() + self.count_2qubit_gate():
-            self.gate_decomposition()
+        return
 
-        return circuit_matrix.get_unitary_matrix(self.gates, self.width(), mini_arg)
+    def draw(self, method: str = 'matp_auto', filename: str = None):
+        """Draw the figure of circuit.
 
-    def convert_precision(self):
-        """ Convert all gates in Cicuit/CompositeGate into single precision. """
-        for gate in self.gates:
-            if hasattr(gate, "convert_precision"):
-                gate.convert_precision()
+        Args:
+            method(str): the method to draw the circuit
+                matp_inline: Show the figure interactively but do not save it to file.
+                matp_file: Save the figure to file but do not show it interactively.
+                matp_auto: Automatically select inline or file mode according to matplotlib backend.
+                matp_silent: Return the drawn figure without saving or showing.
+                command : command
+            filename(str): the output filename without file extensions, default to None.
+                If filename is None, it will using matlibplot.show() except matlibplot.backend
+                is agg, it will output jpg file named circuit's name.
+            get_figure(bool): Whether to return the figure object of matplotlib.
 
-        self._precision = np.complex64 if self._precision == np.complex128 else np.complex128
+        Returns:
+            If method is 'matp_silent', a matplotlib Figure is returned. Note that that figure is created in matplotlib
+            Object Oriented interface, which means it must be display with IPython.display.
 
-    def gate_decomposition(self):
-        added_idxes = 0     # The number of gates which add from gate.build_gate()
-        for i in range(self.size()):
-            gate = self.gates[i + added_idxes]
-            if hasattr(gate, "build_gate"):
-                decomp_gates = gate.build_gate()
-                self.gates.remove(gate)
-                for g in decomp_gates:
-                    self._gates.insert(i + added_idxes, g)
-                    added_idxes += 1
+        Examples:
+            >>> from IPython.display import display
+            >>> circ = Circuit(5)
+            >>> circ.random_append()
+            >>> silent_fig = circ.draw(method="matp_silent")
+            >>> display(silent_fig)
 
-                added_idxes -= 1    # minus the original gate
+            >>> from IPython.display import display
+            >>> compositegate = CompositeGate()
+            >>> cx_gate=CX & [1,3]
+            >>> u2_gate= U2(1, 0)
+            >>> H| compositegate(1)
+            >>> cx_gate | compositegate
+            >>> u2_gate | compositegate(1)
+            >>> silent_fig = compositegate.draw(method="matp_silent")
+            >>> display(silent_fig)
+        """
+        from QuICT.tools.drawer import PhotoDrawer, TextDrawing
+        import matplotlib
+
+        if method.startswith('matp'):
+            if filename is not None:
+                if '.' not in filename:
+                    filename += '.jpg'
+
+            photo_drawer = PhotoDrawer()
+            if method == 'matp_auto':
+                save_file = matplotlib.get_backend() == 'agg'
+                show_inline = matplotlib.get_backend() != 'agg'
+            elif method == 'matp_file':
+                save_file = True
+                show_inline = False
+            elif method == 'matp_inline':
+                save_file = False
+                show_inline = True
+            elif method == 'matp_silent':
+                save_file = False
+                show_inline = False
+            else:
+                raise ValueError(
+                    "Circuit.draw.matp_method", "[matp_auto, matp_file, matp_inline, matp_silent]", method
+                )
+
+            silent = (not show_inline) and (not save_file)
+            photo_drawer.run(circuit=self, filename=filename, save_file=save_file)
+
+            if show_inline:
+                from IPython.display import display
+                display(photo_drawer.figure)
+            elif silent:
+                return photo_drawer.figure
+
+        elif method == 'command':
+            text_drawer = TextDrawing(self._qubits, self.gates)
+            if filename is None:
+                print(text_drawer.single_string())
+                return
+            elif '.' not in filename:
+                filename += '.txt'
+
+            text_drawer.dump(filename)
+        else:
+            raise ValueError(
+                "Circuit.draw.method", "[matp_auto, matp_file, matp_inline, matp_silent, command]", method
+            )
 
 
 class CircuitMode(Enum):
     Clifford = "Clifford"
     CliffordRz = "CliffordRz"
-    Arithmetic = 'Arithmetic'
+    Arithmetic = "Arithmetic"
     Misc = "Misc"

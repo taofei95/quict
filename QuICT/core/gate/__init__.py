@@ -6,7 +6,8 @@
 
 from .gate import *
 from .composite_gate import CompositeGate
-from .gate_builder import build_gate, build_random_gate, GATE_TYPE_TO_CLASS
+from .quantum_frourier_transform import QFT, IQFT
 from .multicontrol_toffoli import MultiControlToffoli
 from .multicontrol_rotation import MultiControlRotation
 from .uniformly_control_gate import UniformlyControlGate
+from .multicontrol_rotation import MultiControlRotation

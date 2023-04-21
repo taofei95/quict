@@ -1,14 +1,22 @@
 import os
-from QuICT.core import Circuit
-from QuICT.algorithm.quantum_algorithm.CNF.cnf import CNFSATOracle
+
+from QuICT.algorithm.quantum_algorithm import CNFSATOracle
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
+# Read CNF files
 filename_test = os.path.join(os.path.dirname(__file__), "test.cnf")
-n_var = 3
-n_aux = 3
+variable_number, clause_number, CNF_data = CNFSATOracle.read_CNF(filename_test)
+# Find CNF Solutions
+solutions = CNFSATOracle.find_solution_count(variable_number, clause_number, CNF_data)
+print(solutions)
 
-cnf = CNFSATOracle()
-cnf.run(filename_test, n_aux, 1)
-circ = Circuit(n_var + n_aux + 1)
-cnf.circuit() | circ
+# Get CNF Circuit
+cnf = CNFSATOracle(StateVectorSimulator())
+circ = cnf.circuit([variable_number, clause_number, CNF_data], 3, 1, output_cgate=False)
+print(circ)
 circ.draw(method="matp_file")
+
+# Solve CNF
+sample_result = cnf.run([variable_number, clause_number, CNF_data], 3, 1, 100)
+print(sample_result)

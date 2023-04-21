@@ -1,0 +1,1 @@
+::: QuICT.algorithm.quantum_algorithm.grover.GroverWithPriorKnowledge

@@ -15,7 +15,7 @@ from functools import reduce
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.arithmetic.bea import *
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from .utility import *
 
 from QuICT.tools import Logger
@@ -46,7 +46,7 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
         )
     for k in range(len(trickbits) // 2):
         Swap | circuit([trickbits[k], trickbits[len(trickbits) - 1 - k]])
-    IQFT.build_gate(len(trickbits)) | circuit(trickbits)
+    IQFT(len(trickbits)) | circuit(trickbits)
     for k in range(len(trickbits) // 2):
         Swap | circuit([trickbits[k], trickbits[len(trickbits) - 1 - k]])
     for idx in b_reg + trickbits + qreg_low:
@@ -54,7 +54,7 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     return circuit, trickbits[::-1]  # for int(circuit[trickbits]) convenience
 
 
-def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulator()):
+def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=StateVectorSimulator()):
     circuit, trickbits = construct_circuit(a, N, eps)
     simulator.run(circuit)
     t = len(trickbits)
@@ -71,7 +71,7 @@ MAX_ROUND = 3
 
 
 def reinforced_order_finding(
-    a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulator()
+    a: int, N: int, eps: float = 1 / 10, simulator=StateVectorSimulator()
 ):
     circuit, trickbits = construct_circuit(a, N, eps)
     t = len(trickbits)

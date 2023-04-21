@@ -9,8 +9,8 @@ def simulate_random_circuit(device, backend, shots, precision):
 
     sim = Simulator(
         device, backend, precision,
-        circuit_record=False,     # Record circuit or not
-        amplitude_record=False,   # Record amplitude or not
+        circuit_record=False,       # Record circuit or not
+        amplitude_record=False,     # Record amplitude or not
         output_path=None            # The path to store result
     )
     result = sim.run(cir, shots)

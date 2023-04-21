@@ -4,7 +4,7 @@ from QuICT.core import *
 
 from QuICT.core.gate import *
 from QuICT.qcda.mapping import MCTSMapping
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 CircuitLike = Union[Circuit, CompositeGate]
 
@@ -41,7 +41,7 @@ def _wrap_to_circ(circuit_like: CircuitLike, width: int) -> Circuit:
 
 
 def check_circ_eq(lhs: Circuit, rhs: Circuit) -> bool:
-    simulator = CircuitSimulator()
+    simulator = StateVectorSimulator()
     state_1 = simulator.run(circuit=lhs)
     state_2 = simulator.run(circuit=rhs)
     assert np.allclose(state_1, state_2)

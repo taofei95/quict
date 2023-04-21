@@ -1,14 +1,18 @@
 import copy
-
 import numpy as np
 import torch
 
-from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
-from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+<<<<<<< HEAD
 from QuICT.tools.exception.algorithm import *
 from QuICT.tools.exception.core import *
+=======
+from QuICT.tools.exception.core import *
+
+from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
+from QuICT.algorithm.quantum_machine_learning.tools.exception import *
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
 
 
 class Hamiltonian:
@@ -77,16 +81,23 @@ class Hamiltonian:
             pauli_operator[0] *= other
         return Hamiltonian(new_pauli_str)
 
+    def __rmul__(self, other: float):
+        return self.__mul__(other)
+
     def _remove_I(self):
         new_pauli_str = []
         for pauli_operator in self._pauli_str:
             assert isinstance(pauli_operator[0], int) or isinstance(
                 pauli_operator[0], float
+<<<<<<< HEAD
             ), TypeError(
                 "Hamiltonian.init",
                 "int or float",
                 pauli_operator[0].type,
             )
+=======
+            ), TypeError("Hamiltonian.init", "int or float", pauli_operator[0].type,)
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
             for pauli_gate in pauli_operator[1:][::-1]:
                 if "I" in pauli_gate:
                     pauli_operator.remove(pauli_gate)
@@ -130,6 +141,7 @@ class Hamiltonian:
             hamiton_circuits.append(circuit)
         return hamiton_circuits
 
+<<<<<<< HEAD
     def construct_hamiton_ansatz(self, n_qubits, device=torch.device("cuda:0")):
         """Construct an ansatz form of the Hamiltonian.
 
@@ -149,6 +161,8 @@ class Hamiltonian:
                 ansatz.add_gate(gate_dict[gate], qid)
             hamiton_ansatz.append(ansatz)
         return hamiton_ansatz
+=======
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
 
     def _pauli_str_validation(self):
         """Validate the Pauli string."""
@@ -159,11 +173,15 @@ class Hamiltonian:
         """Validate the Pauli operator."""
         assert isinstance(pauli_operator[0], int) or isinstance(
             pauli_operator[0], float
+<<<<<<< HEAD
         ), TypeError(
             "Hamiltonian.init",
             "int or float",
             pauli_operator[0].type,
         )
+=======
+        ), TypeError("Hamiltonian.init", "int or float", pauli_operator[0].type,)
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
 
         indexes = []
         pauli_gates = ""

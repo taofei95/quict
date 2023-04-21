@@ -2,11 +2,16 @@ import cupy as cp
 import numpy as np
 import torch
 
-
 from QuICT.ops.utils import LinAlgLoader
+from QuICT.tools.exception.core import *
+
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
+<<<<<<< HEAD
 from QuICT.tools.exception.algorithm import *
 from QuICT.tools.exception.core import *
+=======
+from QuICT.algorithm.quantum_machine_learning.tools.exception import *
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
 
 
 class GpuSimulator:

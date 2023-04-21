@@ -66,4 +66,4 @@ def test_store():
 
 
 if __name__ == "__main__":
-    pytest.main(["./topology_unit_test.py"])
+    pytest.main()

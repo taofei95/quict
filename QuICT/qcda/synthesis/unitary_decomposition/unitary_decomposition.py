@@ -13,7 +13,7 @@ from .utility import *
 
 
 class UnitaryDecomposition(object):
-    def __init__(self, include_phase_gate: bool = True, recursive_basis: int = 2):
+    def __init__(self, include_phase_gate: bool = False, recursive_basis: int = 2):
         """
         Args:
             include_phase_gate(bool): Whether to include a phase gate to keep synthesized gate matrix the same
@@ -81,7 +81,7 @@ class UnitaryDecomposition(object):
         _kak = CartanKAKDiagonalDecomposition() if keep_left_diagonal else CartanKAKDecomposition()
 
         if qubit_num == 1:
-            u = build_gate(GateType.unitary, [0], mat)
+            u = Unitary(mat) & 0
             _ret = CompositeGate(gates=[u])
             return _ret, 1.0 + 0.0j
         elif qubit_num == 2 and recursive_basis == 2:
@@ -171,7 +171,7 @@ class UnitaryDecomposition(object):
         v2_dagger = v_dagger[1]
 
         if recursive_basis == 2:
-            forwarded_d_gate: BasicGate = u_gates.gates.pop(0)
+            forwarded_d_gate: BasicGate = u_gates.flatten_gates().pop(0)
             forwarded_mat = forwarded_d_gate.matrix
             for i in range(0, mat_size // 2, 4):
                 for k in range(4):

@@ -1,10 +1,14 @@
-from collections import Iterable
 from functools import cached_property
 from itertools import chain
 from typing import List
 
-from QuICT.core.utils import GateType
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
+
 from QuICT.core import Circuit
+from QuICT.core.utils import GateType
 
 from .matching_dag_circuit import Match, MatchingDAGCircuit, MatchingDAGNode
 
@@ -241,7 +245,8 @@ class TemplateSubstitution:
                 node: MatchingDAGNode = circuit.get_node(node_id)
                 new_circ.append(node.gate.copy())
 
-            new_circ.extend(sub.get_substitution().gates)
+            for temp_gate in sub.get_substitution().gates:
+                new_circ.append(temp_gate)
 
             visited_nodes.update(sub.pred)
             visited_nodes.update(sub.match.circuit_nodes)

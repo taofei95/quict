@@ -1,7 +1,14 @@
+<<<<<<< HEAD
 import string
 import numpy as np
 import time
 import tensorflow
+=======
+
+import numpy as np
+import time
+
+>>>>>>> 3f5539fac7f58b5765c00c227eb2da8bfa11b3dd
 
 
 def is_adjont(binary1 , binary2,half_length):

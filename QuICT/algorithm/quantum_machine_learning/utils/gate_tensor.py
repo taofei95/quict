@@ -1,11 +1,10 @@
 import copy
-from typing import Union
-
 import numpy as np
 import torch
+from typing import Union
 
 from QuICT.core.gate import *
-from QuICT.core.utils import SPECIAL_GATE_SET, GateType
+from QuICT.core.utils import GateType, MatrixType
 
 
 class BasicGateTensor(object):
@@ -295,10 +294,9 @@ class BasicGateTensor(object):
         class_name = str(self.__class__.__name__)
         gate = globals()[class_name]()
 
-        if gate.type in SPECIAL_GATE_SET:
-            gate.controls = self.controls
-            gate.targets = self.targets
-            gate.params = self.params
+        gate.controls = self.controls
+        gate.targets = self.targets
+        gate.params = self.params
 
         gate.pargs = self.pargs
         gate.targs = copy.deepcopy(self.targs)
@@ -401,6 +399,35 @@ class CXGate(BasicGateTensor):
 
 
 CX_tensor = CXGate()
+
+
+class SquareRootiSwapGate(BasicGateTensor):
+    """ Square Root of iSwap gate"""
+    def __init__(self):
+        super().__init__(
+            controls=0,
+            targets=2,
+            params=0,
+            type=GateType.sqiswap
+        )
+
+        self.matrix = torch.tensor(
+            [
+                [1, 0, 0, 0],
+                [0, 1 / np.sqrt(2), 1j / np.sqrt(2), 0],
+                [0, 1j / np.sqrt(2), 1 / np.sqrt(2), 0],
+                [0, 0, 0, 1]
+            ], dtype=self._precision
+        ).to(self.device)
+
+    @property
+    def gradient(self):
+        raise AttributeError(
+            "Only parametric gates with trainable parameters have attribute 'gradient'"
+        )
+
+
+sqiSwap_tensor = SquareRootiSwapGate()
 
 
 class XGate(BasicGateTensor):
