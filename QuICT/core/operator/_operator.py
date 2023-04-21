@@ -64,7 +64,7 @@ class Operator:
             assert targets >= 0 and self.targets == 1
             self._targs = [targets]
         elif isinstance(targets, list):
-            assert len(targets) == self.targets
+            assert len(targets) == self._targets
             for q in targets:
                 assert q >= 0 and isinstance(q, int), f"targets must be a positive integer, not {q}"
 
