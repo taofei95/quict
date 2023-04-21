@@ -10,7 +10,6 @@ from QuICT.qcda.synthesis.unitary_decomposition.controlled_unitary import Contro
 from QuICT.tools import Logger
 from QuICT.tools.exception import QuICTException
 
-from copy import deepcopy
 from scipy.linalg import expm
 
 
@@ -147,7 +146,7 @@ class HHL:
         for idx in phase:
             H | circuit(idx)
         unitary_matrix_gates | circuit
-        IQFT.build_gate(len(phase)) | circuit(list(reversed(phase)))
+        IQFT(len(phase)) | circuit(list(reversed(phase)))
 
         # Controlled-Rotation
         param_c = ((1 << phase_qubits - 1) - 1) * min_abs_eig / dominant_eig
@@ -155,7 +154,7 @@ class HHL:
         control_rotation | circuit
 
         # Inversed-QPE
-        QFT.build_gate(len(phase)) | circuit(list(reversed(phase)))
+        QFT(len(phase)) | circuit(list(reversed(phase)))
         unitary_matrix_gates.inverse() | circuit
         for idx in phase:
             H | circuit(idx)
@@ -199,7 +198,7 @@ class HHL:
         """
         size = len(vector)
 
-        circuit = deepcopy(self.circuit(matrix, vector, dominant_eig, min_abs_eig, phase_qubits, measure))
+        circuit = self.circuit(matrix, vector, dominant_eig, min_abs_eig, phase_qubits, measure)
 
         state_vector = self.simulator.run(circuit)
 
