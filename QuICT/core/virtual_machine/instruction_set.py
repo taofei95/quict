@@ -5,8 +5,6 @@
 # @File    : instruction_set.py
 
 from QuICT.core.gate import GateType
-from .transform_rule.one_qubit_gate_rules import *
-from .transform_rule.two_qubit_gate_rules import *
 
 
 class InstructionSet(object):
@@ -82,17 +80,17 @@ class InstructionSet(object):
         if self.__one_qubit_rule:
             return self.__one_qubit_rule
         if set((GateType.rz, GateType.ry)).issubset(set(self.one_qubit_gates)):
-            return zyz_rule
+            return "zyz_rule"
         if set((GateType.rz, GateType.rx)).issubset(set(self.one_qubit_gates)):
-            return zxz_rule
+            return "zxz_rule"
         if set((GateType.rx, GateType.ry)).issubset(set(self.one_qubit_gates)):
-            return xyx_rule
+            return "xyx_rule"
         if set((GateType.h, GateType.rz)).issubset(set(self.one_qubit_gates)):
-            return hrz_rule
+            return "hrz_rule"
         if set((GateType.rz, GateType.sx, GateType.x)).issubset(set(self.one_qubit_gates)):
-            return ibmq_rule
+            return "ibmq_rule"
         if set((GateType.u3)).issubset(set(self.one_qubit_gates)):
-            return u3_rule
+            return "u3_rule"
         raise Exception("please register the SU2 decomposition rule.")
 
     def __init__(self, two_qubit_gate, one_qubit_gates):
@@ -113,7 +111,8 @@ class InstructionSet(object):
         assert isinstance(source, GateType)
         if source in self.two_qubit_rule_map:
             return self.two_qubit_rule_map[source]
-        rule = eval(f"{source.name}2{self.two_qubit_gate.name}_rule")
+
+        rule = f"{source.name}2{self.two_qubit_gate.name}_rule"
         self.two_qubit_rule_map[source] = rule
         return rule
 
