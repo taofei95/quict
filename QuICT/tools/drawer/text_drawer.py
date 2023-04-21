@@ -1043,6 +1043,9 @@ class TextDrawing:
         layers = [circuit_layer()]
         for gate in gates:
             for i in range(len(layers) - 1, -2, -1):
+                if isinstance(gate, CompositeGate) and gate.size() == 0:
+                    continue
+
                 if i == -1 or not layers[i].checkGate(gate):
                     if i + 1 >= len(layers):
                         layers.append(circuit_layer())

@@ -2,8 +2,7 @@ import numpy as np
 from random import choice
 
 from QuICT.core.circuit import Circuit
-from QuICT.core.utils import CLIFFORD_GATE_SET, GateType
-from QuICT.core.utils.circuit_info import CircuitMode
+from QuICT.core.utils import CLIFFORD_GATE_SET, GateType, CircuitMode
 from QuICT.qcda import QCDA
 
 
