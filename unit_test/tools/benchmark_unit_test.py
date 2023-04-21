@@ -4,7 +4,7 @@ import unittest
 from QuICT.benchmark.benchmark import QuICTBenchmark
 from QuICT.core.layout.layout import Layout
 from QuICT.core.utils.gate_type import GateType
-from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
+from QuICT.core.virtual_machine import InstructionSet
 from QuICT.simulation.state_vector import StateVectorSimulator
 
 

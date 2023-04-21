@@ -661,7 +661,7 @@ class PhotoDrawer(object):
             layer_width = 1
 
             for gate in layer.gates:
-                if isinstance(gate, (CompositeGate, Operator)) or gate.type == GateType.perm or gate.type == GateType.unitary:
+                if isinstance(gate, (CompositeGate, Operator)) or gate.type in [GateType.perm, GateType.unitary]:
                     continue
                 elif gate.params > 1:
                     param = self.get_parameter_str(gate.pargs)
