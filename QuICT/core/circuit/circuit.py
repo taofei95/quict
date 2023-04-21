@@ -267,10 +267,13 @@ class Circuit(CircuitBased):
             else:
                 gate_qidxes = self._get_extend_circuit_qidxes(gates)
 
+        
         if isinstance(gates, Circuit):
             gates = gates.to_compositegate()
             if gates.width() != len(gate_qidxes):
                 gate_qidxes = [gate_qidxes[idx] for idx in gates.qubits]
+
+            position = -1
         else:
             position = self.find_position(gates.checkpoint)
 
