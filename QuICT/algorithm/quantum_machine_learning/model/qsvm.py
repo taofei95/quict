@@ -52,14 +52,14 @@ class QSVM:
         self._t = HHL_t
         self._X = train_data[0]
         self._quantum_X ,self._size= self.quantum_norm_data()
-        self._K_hat = self.enact_K_hat()
+        self._K_hat,self._expend_M = self.enact_K_hat()
         self._F = self.get_F()
 
-    def initial_circuit(self,)
+    
     def solve(self,):
-        y_true = np.zeros((self._size))
+        y_true = np.zeros((self._expend_M))
         y_true[1:self._X.shape[0]+1] = self._data[1]
-        hhl = HHL(simulator=Simulator())
+        hhl = HHL(simulator=StateVectorSimulator())
         return hhl.run(self._F,y_true)
     def quantum_norm_data(self,):  
         X = self._X
@@ -72,11 +72,15 @@ class QSVM:
     def enact_K_hat(self,): # it shouldn't be using numerical calculate here!
         X = self._X
         N_= np.sum(np.sum(X*X,axis= 1))
-        K_hat = np.zeros((X.shape[0],X.shape[0]))
+        expend_M = int(2**math.ceil(np.log2(X.shape[0])))
+        K_hat = np.zeros((expend_M,expend_M),dtype=complex)
         for i in range(X.shape[0]):
             for j in range(X.shape[0]):
                 K_hat[i,j] = np.dot(self._quantum_X[i],self._quantum_X[j])*modulus(X[i])*modulus(X[j])
         K_hat = K_hat /N_
+        for i in range(X.shape[0],expend_M):
+            K_hat[i,i] = 1
+        return K_hat,expend_M
     def kernel(self,x1,x2):
         n_qubit = int(np.log2(len(x1)))
         state_vec = np.kron(np.array([1,0]),x1)
@@ -97,12 +101,11 @@ class QSVM:
         return kernel_value
    
     def get_F(self,):
-        n = self._X.shape[0]
-        size = self._size
-        F = np.zeros((size,size))
+        size = self._expend_M
+        F = np.zeros((size,size),dtype=complex)
         F[0,1:] = 1
         F[1:,0] = 1
-        F[1:n+1,1:n+1] =self._K_hat
+        F[1:,1:] =self._K_hat[:-1,:-1]
         return F
     
     
