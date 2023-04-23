@@ -99,13 +99,14 @@ class TestCircuit(unittest.TestCase):
         CCRz(1) | cgate_append([0, 1, 2])
         cgate_append | cir
         assert len(cir.gates) == 21
-        
+
         cgate_complex3 | cgate_append
         cgate_complex3 | cir
         c_1 = cir.gates[-1]
-        
+
         cgate_complex3 ^ cgate_append
         cgate_append | cir
+
         c_2 = cir.gates[-1]
         assert c_1 != c_2
         assert len(cir.gates) == 23
@@ -302,20 +303,21 @@ class TestCircuit(unittest.TestCase):
         SY | cir1(1)
         SW | cir1(1)
         ID | cir1(4)
-        T | cir(3)
-        T_dagger | cir(5)
-        Phase(0) | cir(6)
-        GPhase(0) | cir(6)
-        CZ | cir([0, 1])
-        CH | cir([0, 1])
-        CRz(0) | cir([5, 6])
-        Measure | cir1(7)
-        Reset | cir1(8)
-        Barrier | cir1(8)
+        T | cir1(3)
+        T_dagger | cir1(3)
+        Phase(0) | cir1(3)
+        GPhase(0) | cir1(4)
+        CZ | cir1([0, 1])
+        CH | cir1([0, 1])
+        CRz(0) | cir1([4, 3])
+        Measure | cir1(2)
+        Reset | cir1(1)
+        Barrier | cir1(2)
         iSwap_dagger | cir1([0, 1])
         sqiSwap | cir1([0, 1])
-        FSim(np.pi / 2, 0) | cir([3, 4])
+        FSim(np.pi / 2, 0) | cir1([3, 4])
         cir1 | cir
+        
         cir.qasm()
         assert 1
 
@@ -341,7 +343,7 @@ class TestCircuit(unittest.TestCase):
 
         assert cir.width() == 15 
         assert cir.size() == 61
-        assert cir.depth() == 20
+        assert cir.depth() == 17
         assert len(cir.qubits) == 15
         assert cir.count_1qubit_gate() == 35
         assert cir.count_2qubit_gate() == 22
