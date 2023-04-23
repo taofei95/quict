@@ -19,11 +19,10 @@ from QuICT.core.utils import (
     unique_id_generator
 )
 from QuICT.core.operator import (
-    Trigger,
     CheckPoint,
+    NoiseGate,
     Operator,
-    CheckPointChild,
-    NoiseGate
+    CheckPointChild
 )
 from .dag_circuit import DAGCircuit
 
@@ -68,19 +67,10 @@ class Circuit(CircuitBased):
 
     @topology.setter
     def topology(self, topology: Layout):
-        if topology is None:
-            self._topology = None
-            return
-
-        if not isinstance(topology, Layout):
-            raise TypeError(
-                "Circuit.topology", "Layout", type(topology)
-            )
-
-        if topology.qubit_number != self.width():
-            raise ValueError(
-                "Circuit.topology.qubit_number", self.width(), topology.qubit_number
-            )
+        assert isinstance(topology, Layout), TypeError("Circuit.topology", "Layout", type(topology))
+        assert topology.qubit_number == self.width(), ValueError(
+            "Circuit.topology.qubit_number", self.width(), topology.qubit_number
+        )
 
         self._topology = topology
 
@@ -118,7 +108,7 @@ class Circuit(CircuitBased):
         """ release the memory """
         self._gates = None
         self._qubits = None
-        self.topology = None
+        self._topology = None
 
     def __or__(self, targets):
         """deal the operator '|'
@@ -211,24 +201,6 @@ class Circuit(CircuitBased):
     ####################################################################
     ############          Circuit Gates Operators           ############
     ####################################################################
-    def replace_gate(self, gate: BasicGate, idx: int):
-        """ Replace the quantum gate in the target index, only accept BasicGate or NoiseGate.
-
-        Args:
-            idx (int): The index of replaced quantum gate in circuit.
-            gate (BasicGate): The new quantum gate
-        """
-        assert idx >= 0 and idx < len(self._gates), IndexExceedError(
-            "Circuit.replace_gate.idx", [0, len(self._gates)], idx
-        )
-        assert isinstance(gate, (BasicGate, NoiseGate)), TypeError(
-            "Circuit.replace_gate.gate", "[BasicGate, NoiseGate]", type(gate)
-        )
-
-        self._logger.debug(f"The origin gate {self._gates[idx]} is replaced by {gate}")
-        self._gates[idx] = gate
-
-    # TODO: refactoring
     def find_position(self, cp_child: CheckPointChild):
         position = -1
         if cp_child is None:
@@ -273,11 +245,11 @@ class Circuit(CircuitBased):
     ####################################################################
     ############          Circuit Build Operators           ############
     ####################################################################
-    def extend(self, gates):
+    def extend(self, gates: Union[BasicGate, CompositeGate]):
         """ Add a CompositeGate/Circuit to the circuit.
 
         Args:
-            gates(CompositeGate|Circuit): the compositegate or circuit to be added to the circuit
+            gates (Union[BasicGate, CompositeGate]): the compositegate or circuit to be added to the circuit
         """
         assert isinstance(gates, (Circuit, CompositeGate)), \
             "The circuit extend method only accept CompositeGate or Circuit."
@@ -295,15 +267,29 @@ class Circuit(CircuitBased):
             else:
                 gate_qidxes = self._get_extend_circuit_qidxes(gates)
 
+        
         if isinstance(gates, Circuit):
             gates = gates.to_compositegate()
             if gates.width() != len(gate_qidxes):
                 gate_qidxes = [gate_qidxes[idx] for idx in gates.qubits]
 
-        self._gates.append((gates, gate_qidxes, gates.size()))
+            position = -1
+        else:
+            position = self.find_position(gates.checkpoint)
+
+        if position == -1:
+            self._gates.append((gates, gate_qidxes, gates.size()))
+        else:
+            self._gates.insert(position, (gates, gate_qidxes, gates.size()))
+
         self._pointer = None
 
     def append(self, op: Union[BasicGate, Operator]):
+        """ Add a Quantum Gate or Operator into current circuit.
+
+        Args:
+            op (Union[BasicGate, Operator]): The Quantum Gate or Operator
+        """
         if isinstance(op, BasicGate):
             self._add_gate(op)
         elif isinstance(op, Operator):
@@ -315,8 +301,13 @@ class Circuit(CircuitBased):
 
         self._pointer = None
 
-    def insert(self, gate, insert_idx: int):
-        """ Insert a Quantum Gate into current CompositeGate, only support BasicGate/CompositeGate. """
+    def insert(self, gate: Union[CompositeGate, BasicGate], insert_idx: int):
+        """ Insert a Quantum Gate into current Circuit, only support BasicGate/CompositeGate.
+
+        Args:
+            gate (Union[CompositeGate, BasicGate]): The quantum gate want to insert
+            insert_idx (int): the index of insert
+        """
         assert isinstance(gate, (BasicGate, Operator, CompositeGate)), \
             TypeError("CompositeGate.insert", "BasicGate", type(gate))
         gate_args = gate.qubits if isinstance(gate, CompositeGate) else gate.cargs + gate.targs
@@ -359,11 +350,21 @@ class Circuit(CircuitBased):
 
         self._gates.append((gate, qubit_index, 1))
 
-    def _add_gate_to_all_qubits(self, gate):
+    def _add_gate_to_all_qubits(self, gate: BasicGate):
+        """ Add gate to all qubits.
+
+        Args:
+            gate (BasicGate): The quantum gate.
+        """
         for idx in range(self.width()):
             self._gates.append((gate, [idx], 1))
 
     def _add_operator(self, op: Operator):
+        """ Add operator. """
+        if isinstance(op, CheckPoint):
+            self._checkpoints.append(op)
+            return
+
         if self._pointer is not None:
             if len(self._pointer) != op.targets:
                 raise CircuitAppendError("Failure to add Trigger into Circuit, as un-matched qureg.")
@@ -379,10 +380,12 @@ class Circuit(CircuitBased):
 
             op_qidxes = op.targs
 
-        self._gates.append((op, op_qidxes, 1))
+        size = 1 if isinstance(op, NoiseGate) else 0
+        self._gates.append((op, op_qidxes, size))
         self._logger.debug(f"Add an Operator {type(op)} with qubit indexes {op_qidxes}.")
 
     def _get_extend_circuit_qidxes(self, circuit: Circuit):
+        """ Append qubits from expand circuit. """
         ec_qidxes = []
         aqubit_idxes = circuit.ancilla_qubits
         for idx, qubit in enumerate(circuit.qubits):
@@ -492,11 +495,11 @@ class Circuit(CircuitBased):
 
         return _cgate
 
-    def inverse(self):
-        """ the inverse of CompositeGate
+    def inverse(self) -> Circuit:
+        """ the inverse of Circuit
 
         Returns:
-            CompositeGate: the inverse of the gateSet
+            Circuit: the inverse of the gateSet
         """
         _cir = Circuit(self.width())
         inverse_gates = []
@@ -515,7 +518,6 @@ class Circuit(CircuitBased):
 
         Args:
             device (str, optional): The device type for generate circuit's matrix, one of [CPU, GPU]. Defaults to "CPU".
-            target_width (int, optional): The minimal qubit args, only use for CompositeGate mode. Default to 0.
         """
         assert device in ["CPU", "GPU"]
         circuit_matrix = CircuitMatrix(device, self._precision)
@@ -537,7 +539,6 @@ class Circuit(CircuitBased):
             qubit_limit(int/list<int>/Qubit/Qureg): the required qubits' indexes, if [], accept all qubits.
                 default to be [].
             gate_limit(List[GateType]): list of required gate's type, if [], accept all quantum gate. default to be [].
-            remove(bool): whether deleting the slice gates from origin circuit, default False
         Return:
             Circuit: the sub circuit
         """

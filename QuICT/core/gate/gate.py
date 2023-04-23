@@ -23,22 +23,24 @@ class BasicGate(object):
     which defined in this class
 
     Attributes:
-        controls(int): the number of the control bits of the gate
-        cargs(list<int>): the list of the index of control bits in the circuit
-        carg(int, read only): the first object of cargs
+        type(GateType, read only): gate's type described by GateType
+        matrix_type(MatrixType, read only): gate matrix's type described by MatrixType
+        precision(str): The gate's precision, one of [double, single]
+        qasm_name(str, read only): gate's name in the OpenQASM 2.0
+        matrix(np.array): the unitary matrix of the quantum gate act on qubits
+        target_matrix(np.array): the unitary matrix of the quantum gate act on targets
 
         targets(int): the number of the target bits of the gate
         targs(list<int>): the list of the index of target bits in the circuit
         targ(int, read only): the first object of targs
 
+        controls(int): the number of the control bits of the gate
+        cargs(list<int>): the list of the index of control bits in the circuit
+        carg(int, read only): the first object of cargs
+
         params(list): the number of the parameter of the gate
         pargs(list): the list of the parameter
         parg(read only): the first object of pargs
-
-        qasm_name(str, read only): gate's name in the OpenQASM 2.0
-        type(GateType, read only): gate's type described by GateType
-
-        matrix(np.array): the unitary matrix of the quantum gate act on targets
     """
     ####################################################################
     ############          Quantum Gate's property           ############
@@ -178,6 +180,17 @@ class BasicGate(object):
         precision: str = "double",
         is_original_gate: bool = False
     ):
+        """
+        Args:
+            controls (int): The number of control qubits
+            targets (int): The number of target qubits
+            params (int): The number of gate's parameters
+            type_ (GateType): The gate's type
+            matrix_type (MatrixType, optional): The gate matrix's type. Defaults to MatrixType.normal.
+            pargs (list, optional): The gate's parameters. Defaults to [].
+            precision (str, optional): The gate's precison, one of [double, single]. Defaults to "double".
+            is_original_gate (bool, optional): Whether is the initial quantum gate, such as H. Defaults to False.
+        """
         assert isinstance(controls, int), TypeError("BasicGate.controls", "int", type(controls))
         assert isinstance(targets, int), TypeError("BasicGate.targets", "int", type(targets))
         assert isinstance(params, int), TypeError("BasicGate.params", "int", type(params))
@@ -370,6 +383,7 @@ class BasicGate(object):
         return gate_builder(inverse_gargs, params=inverse_pargs)
 
     def build_gate(self):
+        """ Gate Decomposition, which divided the current gate with a set of small gates. """
         if self.type == GateType.cu3:
             return ComplexGateBuilder.build_gate(self.type, self.parg, self.matrix)
 
@@ -394,7 +408,7 @@ class BasicGate(object):
 
         return cgate
 
-    def commutative(self, goal, eps=1e-7):
+    def commutative(self, goal: BasicGate, eps=1e-7):
         """ decide whether gate is commutative with another gate
 
         note when the gate is special gates like Unitary, Permutation, Measure and so on, return False.
@@ -516,7 +530,12 @@ class BasicGate(object):
         return self.matrix_type == MatrixType.special
 
     def is_identity(self) -> bool:
-        return self.matrix_type == MatrixType.identity
+        """ judge whether gate's matrix is identity matrix
+
+        Returns:
+            bool: True if gate's matrix is identity
+        """
+        return self.type == GateType.id or self.matrix_type == MatrixType.identity
 
     def expand(self, qubits: Union[int, list], device: str = "CPU") -> bool:
         """ expand self matrix into the circuit's unitary linear space. If input qubits is integer, please make sure
@@ -584,6 +603,7 @@ class BasicGate(object):
 
 
 class Unitary(BasicGate):
+    """ The class about the Unitary Quantum Gate """
     @property
     def matrix(self):
         return self._matrix
@@ -597,6 +617,11 @@ class Unitary(BasicGate):
         return self._matrix
 
     def __init__(self, matrix: Union[list, np.ndarray], matrix_type: MatrixType = None):
+        """
+        Args:
+            matrix (Union[list, np.ndarray]): The unitary matrix.
+            matrix_type (MatrixType, optional): The matrix's type. Defaults to None.
+        """
         # Validate matrix type
         if isinstance(matrix, list):
             matrix = np.array(matrix)
@@ -633,7 +658,15 @@ class Unitary(BasicGate):
         self._matrix = matrix
 
     @staticmethod
-    def validate_matrix_type(matrix) -> MatrixType:
+    def validate_matrix_type(matrix: np.ndarray) -> MatrixType:
+        """ Check the matrix's type about given unitary matrix
+
+        Args:
+            matrix (np.ndarry): The given unitary matrix
+
+        Returns:
+            MatrixType: The matrix type
+        """
         length = matrix.shape[0]
         matrix_type = matrix.dtype
 
@@ -773,7 +806,18 @@ class PermFx(Perm):
         super().__init__(0, targets, parameters, GateType.perm_fx, MatrixType.normal, pargs)
 
 
-def gate_builder(gate_type, precision: str = "double", params: list = [], random_params: bool = False):
+def gate_builder(gate_type, precision: str = "double", params: list = [], random_params: bool = False) -> BasicGate:
+    """ Build the target Quantum Gate.
+
+    Args:
+        gate_type (_type_): The gate's type
+        precision (str, optional): The gate's precision. Defaults to "double".
+        params (list, optional): The gate's parameters. Defaults to [].
+        random_params (bool, optional): Whether using random parameters. Defaults to False.
+
+    Returns:
+        BasicGate: The class of target quantum gate
+    """
     if gate_type not in GATEINFO_MAP.keys():
         raise TypeError("gate_builder.gate_type", "only support for fixed qubits gate", gate_type)
 

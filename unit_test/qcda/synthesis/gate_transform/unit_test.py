@@ -6,7 +6,8 @@
 
 from QuICT.core import *
 from QuICT.qcda.synthesis.gate_transform import *
-from QuICT.qcda.synthesis.gate_transform.special_set.origin_set import OriginSet
+from QuICT.core.virtual_machine import InstructionSet
+from QuICT.core.virtual_machine.special_set import *
 
 
 def test_google():

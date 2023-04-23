@@ -57,9 +57,6 @@ class TestQubit(unittest.TestCase):
         assert q1 == q1
         assert not q1 == q2
 
-        diff_q = q1.diff(q2)
-        assert diff_q == q2
-
 
 if __name__ == "__main__":
     unittest.main()

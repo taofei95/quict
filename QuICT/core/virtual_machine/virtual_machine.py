@@ -2,18 +2,21 @@ from typing import Union, List
 
 from QuICT.core import Qureg, Layout, Circuit
 from QuICT.core.noise import NoiseModel
-from QuICT.qcda.synthesis import InstructionSet
 from QuICT.tools.exception.core import TypeError, ValueError
+
+from .instruction_set import InstructionSet
 
 
 class VirtualQuantumMachine:
     """ The Class store the information about Quantum Machine. """
     @property
     def qubit_number(self) -> int:
+        """ Return the number of qubits. """
         return len(self._qubits)
 
     @property
     def qubits(self) -> Qureg:
+        """ Return the Qureg of current Machine. """
         return self._qubits
 
     @qubits.setter
@@ -23,6 +26,7 @@ class VirtualQuantumMachine:
 
     @property
     def instruction_set(self) -> InstructionSet:
+        """ Return the instruction set of current Machine. """
         return self._instruction_set
 
     @instruction_set.setter
@@ -33,6 +37,7 @@ class VirtualQuantumMachine:
 
     @property
     def layout(self) -> Layout:
+        """ Return the layout of current Machine. """
         return self._layout
 
     @layout.setter
@@ -43,6 +48,7 @@ class VirtualQuantumMachine:
 
     @property
     def qubit_fidelity(self) -> list:
+        """ Return the fidelity of each qubits. """
         return self._qubit_fidelity
 
     @qubit_fidelity.setter
@@ -52,6 +58,7 @@ class VirtualQuantumMachine:
 
     @property
     def t1_time(self) -> list:
+        """ Return the t1 coherence strength of each qubits. """
         return self._t1_times
 
     @t1_time.setter
@@ -109,7 +116,7 @@ class VirtualQuantumMachine:
         t2_coherence_time: list = None,
         coupling_strength: dict = None,
         layout: Layout = None,
-        gate_fidelity: dict = None,
+        gate_fidelity: Union[float, dict] = None,
         noise_model: NoiseModel = None
     ):
         """
@@ -121,7 +128,7 @@ class VirtualQuantumMachine:
             t2_coherence_time (list, optional): The t2 coherence time for each qubit. Defaults to None.
             coupling_strength (dict, optional): The coupling strength between the qubits. Defaults to None.
             layout (Layout, optional): The description of physical topology of Quantum Machine. Defaults to None.
-            gate_fidelity (dict, optional): The fidelity for each quantum gate. Defaults to None.
+            gate_fidelity (Union[float, dict], optional): The fidelity for single qubit quantum gate. Defaults to None.
             noise_model (NoiseModel, optional): The noise model which describe the noise of Quantum Machine.
                 Defaults to None.
 
@@ -189,7 +196,7 @@ class VirtualQuantumMachine:
         pass
 
     def transpile(self, circuit: Circuit) -> Circuit:
-        """ Return the circuit that can run on this Quantum Machine. 
+        """ Return the circuit that can run on this Quantum Machine.
         Consider the layout and instruction set of current Quantum Machine.
         """
         pass
