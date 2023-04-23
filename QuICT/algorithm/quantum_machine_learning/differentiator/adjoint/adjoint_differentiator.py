@@ -83,12 +83,12 @@ class AdjointDifferentiator:
         self._grad_vector = self._initial_grad_vector(
             state_vector.copy(), self._qubits, expectation_op
         )
-        # loss
-        loss = (state_vector.conj() @ self._grad_vector).real
+        # expectation
+        expectation = (state_vector.conj() @ self._grad_vector).real
 
         for idx in range(len(self._bp_pipeline)):
             if self._remain_training_gates == 0:
-                return variables, loss
+                return variables, expectation
             origin_gate = self._pipeline[idx]
             gate, qidxes, _ = self._bp_pipeline[idx]
             if isinstance(gate, BasicGate):
@@ -104,7 +104,7 @@ class AdjointDifferentiator:
                 raise TypeError(
                     "AdjointDifferentiator.run.circuit", "BasicGate".type(gate)
                 )
-        return variables, loss
+        return variables, expectation
 
     def initial_circuit(self, circuit: Circuit):
         circuit.gate_decomposition(decomposition=False)

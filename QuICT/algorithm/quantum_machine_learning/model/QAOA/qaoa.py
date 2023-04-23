@@ -2,7 +2,6 @@ from QuICT.algorithm.quantum_machine_learning.ansatz_library import *
 from QuICT.algorithm.quantum_machine_learning.differentiator import Differentiator
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
-from QuICT.simulation.simulator import Simulator
 from QuICT.simulation.state_vector import StateVectorSimulator
 
 
