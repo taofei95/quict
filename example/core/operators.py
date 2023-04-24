@@ -1,6 +1,7 @@
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.core.operator import Trigger
+from QuICT.core.noise import BitflipError
+from QuICT.core.operator import Trigger, NoiseGate, CheckPoint
 
 from QuICT.simulation.state_vector import StateVectorSimulator
 
@@ -29,8 +30,28 @@ def build_trigger():
 
 
 def build_noisegate():
-    pass
+    error = BitflipError(0.1)
+    gate = gate_builder(GateType.h)
+    ng = NoiseGate(gate, error)
+    print(ng.noise_matrix)
 
 
 def build_checkpoint():
-    pass
+    # Normally, work with Trigger for more flexible
+    cp = CheckPoint()
+    cir = Circuit(4)
+    cir.random_append(10)
+    cp | cir
+    cir.random_append(10)
+
+    cpc = cp.get_child()
+    cgate = CompositeGate("target")
+    H | cgate(0)
+    cpc | cgate
+
+    cgate | cir
+    print(cir.gates[10].name)
+
+
+if __name__ == "__main__":
+    build_checkpoint()
