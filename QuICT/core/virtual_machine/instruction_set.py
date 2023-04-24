@@ -3,6 +3,8 @@
 # @TIME    : 2021/3/20 4:31 下午
 # @Author  : Han Yu
 # @File    : instruction_set.py
+from typing import Union, List, Dict
+from types import FunctionType
 
 from QuICT.core.gate import GateType
 
@@ -13,10 +15,11 @@ class InstructionSet(object):
     Instruction Set contains gates and some rules, which can be assigned by user.
 
     Attributes:
-        one_qubit_gates(list<GateType>): the types of the one_qubit_gate
-        one_qubit_rule(callable): rules to transform SU(2) into instruction set
-        two_qubit_gate(GateType): the type of the two_qubit_gate
-        rule_map(dictionary): A two-dimensional map from source gate and target gate to transform rule
+        two_qubit_gate (GateType): the type of the two_qubit_gate
+        one_qubit_gates (list<GateType>): the types of the one_qubit_gate
+        one_qubit_gates_fidelity (Union[float, Dict, List], optional): The fidelity for single qubit quantum gate.
+            Defaults to None.
+        one_qubit_rule (Union[str, callable], optional): rules to transform SU(2) into instruction set
     """
     @property
     def size(self):
@@ -93,10 +96,27 @@ class InstructionSet(object):
             return "u3_rule"
         raise Exception("please register the SU2 decomposition rule.")
 
-    def __init__(self, two_qubit_gate, one_qubit_gates):
+    @property
+    def one_qubit_fidelity(self):
+        return self.__one_qubit_gates_fidelity
+
+    def __init__(
+        self,
+        two_qubit_gate: GateType,
+        one_qubit_gates: List[GateType],
+        one_qubit_gates_fidelity: Union[float, List, Dict] = None,
+        one_qubit_rule: Union[str, callable] = None
+    ):
         self.two_qubit_gate = two_qubit_gate
         self.one_qubit_gates = one_qubit_gates
+        self.__one_qubit_gates_fidelity = None
+        if one_qubit_gates_fidelity is not None:
+            self.register_one_qubit_fidelity(one_qubit_gates_fidelity)
+
         self.__one_qubit_rule = None
+        if one_qubit_rule is not None:
+            self.register_one_qubit_rule(one_qubit_rule)
+
         self.__two_qubit_rule_map = {}
 
     def select_transform_rule(self, source):
@@ -109,22 +129,49 @@ class InstructionSet(object):
             callable: the transform rules
         """
         assert isinstance(source, GateType)
-        if source in self.two_qubit_rule_map:
+        if source in self.two_qubit_rule_map.keys():
             return self.two_qubit_rule_map[source]
 
         rule = f"{source.name}2{self.two_qubit_gate.name}_rule"
         self.two_qubit_rule_map[source] = rule
         return rule
 
-    def register_one_qubit_rule(self, one_qubit_rule):
+    def register_one_qubit_fidelity(self, gates_fidelity: Union[float, List, Dict]):
+        if isinstance(gates_fidelity, float):
+            gates_fidelity = [gates_fidelity] * len(self.one_qubit_gates)
+        elif isinstance(gates_fidelity, list):
+            assert len(gates_fidelity) == len(self.one_qubit_fidelity)
+        elif isinstance(gates_fidelity, dict):
+            assert len(gates_fidelity.keys()) == len(self.one_qubit_fidelity)
+            for gate_type, fidelity in gates_fidelity.items():
+                assert gate_type in self.one_qubit_gates, ValueError(f"Unknown Single-Qubit Gate {gate_type}.")
+                assert fidelity >= 0 and fidelity <= 1, \
+                    ValueError(f"Wrong Fidelity {fidelity}, it should between 0 and 1.")
+        else:
+            raise TypeError(f"Unsupport Single-Qubit Gates' Fidelity, {type(gates_fidelity)}.")
+
+        if isinstance(gates_fidelity, list):
+            self.__one_qubit_gates_fidelity = {}
+            for idx, fidelity in enumerate(gates_fidelity):
+                assert fidelity >= 0 and fidelity <= 1, ValueError(
+                    f"Wrong Fidelity {fidelity}, it should between 0 and 1."
+                )
+                self.__one_qubit_gates_fidelity[self.__one_qubit_gates[idx]] = fidelity
+        else:
+            self.__one_qubit_gates_fidelity = gates_fidelity
+
+    def register_one_qubit_rule(self, one_qubit_rule: Union[str, callable]):
         """ register one-qubit gate decompostion rule
 
         Args:
-            one_qubit_rule(callable): decompostion rule
+            one_qubit_rule(callable): decompostion rule, you can define your self rule function or use one of
+                [zyz_rule, zxz_rule, hrz_rule, xyx_rule, ibmq_rule, u3_rule].
         """
+        assert isinstance(one_qubit_rule, (str, FunctionType)), \
+            TypeError("Unsupport Type, should be one of [string, Callable].")
         self.__one_qubit_rule = one_qubit_rule
 
-    def register_two_qubit_rule_map(self, two_qubit_rule, source):
+    def register_two_qubit_rule_map(self, two_qubit_rule: Union[str, callable], source: GateType):
         """ register rule which transforms from source gate into target gate
 
         Args:
