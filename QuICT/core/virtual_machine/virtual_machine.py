@@ -111,10 +111,10 @@ class VirtualQuantumMachine:
         self,
         qubits: Union[int, Qureg],
         instruction_set: InstructionSet,
-        qubit_fidelity: list = None,
-        t1_coherence_time: list = None,
-        t2_coherence_time: list = None,
-        coupling_strength: dict = None,
+        qubit_fidelity: List[float] = None,
+        t1_coherence_time: List[float] = None,
+        t2_coherence_time: List[float] = None,
+        coupling_strength: List[tuple] = None,
         layout: Layout = None,
         gate_fidelity: Union[float, dict] = None,
         noise_model: NoiseModel = None
@@ -126,7 +126,7 @@ class VirtualQuantumMachine:
             qubit_fidelity (list, optional): The fidelity for each qubit. Defaults to None.
             t1_coherence_time (list, optional): The t1 coherence time for each qubit. Defaults to None.
             t2_coherence_time (list, optional): The t2 coherence time for each qubit. Defaults to None.
-            coupling_strength (dict, optional): The coupling strength between the qubits. Defaults to None.
+            coupling_strength (list, optional): The coupling strength between the qubits. Defaults to None.
             layout (Layout, optional): The description of physical topology of Quantum Machine. Defaults to None.
             gate_fidelity (Union[float, dict], optional): The fidelity for single qubit quantum gate. Defaults to None.
             noise_model (NoiseModel, optional): The noise model which describe the noise of Quantum Machine.

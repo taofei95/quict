@@ -5,6 +5,7 @@
 # @File    : qubit.py
 from __future__ import annotations
 from typing import Union, List
+from collections import defaultdict
 
 from QuICT.core.utils import unique_id_generator
 from QuICT.tools.exception.core import TypeError, ValueError, IndexExceedError, QubitMeasureError
@@ -69,9 +70,9 @@ class Qubit(object):
         Args:
             fidelity (float): The qubit's fidelity, where the fidelity of a quantum qubit is the overlap between
                 the ideal theoretical operation and the actual experimental operation.
-            T1 (float): The longitudinal coherence time, which refers to the time it takes for the qubit to decay
+            T1 (float, μs): The longitudinal coherence time, which refers to the time it takes for the qubit to decay
                 back to its ground state from an excited state. Default to None.
-            T2 (float): the transverse coherence time, which refers to the time it takes for the qubit to lose its
+            T2 (float, μs): the transverse coherence time, which refers to the time it takes for the qubit to lose its
                 coherence when subjected to unwanted phase or amplitude fluctuations. Default to None.
         """
         self._id = unique_id_generator()
@@ -138,8 +139,8 @@ class Qureg(list):
                 1) int
                 2) qubit
                 3) [qubits/quregs]
-            coupling_strength List[List[float, int]]: The strength of the interaction between two qubits in a
-                quantum computing system. It should be a 2D array with size (n * n) where n is the number of qubits.
+            coupling_strength List[Tuple(idx, idx, float)]: The strength of the interaction between two qubits in a
+                quantum computing system. It should follow by the physical topology.
         """
         super().__init__()
         if qubits is None:
@@ -161,7 +162,7 @@ class Qureg(list):
         else:
             raise TypeError("Qureg.qubits", "int/Qubit/list<Qubit/Qureg>", type(qubit))
 
-        self._coupling_strength = None
+        self._coupling_strength = defaultdict(dict)
         if coupling_strength is not None:
             self.set_coupling_strength(coupling_strength)
 
@@ -358,13 +359,11 @@ class Qureg(list):
         Args:
             coupling_strength (list): The coupling strength, should be a 2D array with shape(len(qureg) * len(qureg))
         """
-        assert len(self) == len(coupling_strength)
-        for cs in coupling_strength:
-            assert len(self) == cs
-            for item in cs:
-                assert isinstance(item, (int, float)) and item >= 0 and item <= 1
-
-        self._coupling_strength = coupling_strength
+        for start, end, val in coupling_strength:
+            assert start != end and start >= 0 and end >= 0 and start < len(self) and end < len(self)
+            assert val >= 0 and val <= 1
+            self._coupling_strength[start][end] = val
+            self._coupling_strength[end][start] = val
 
     def reset_qubits(self):
         """ Reset all qubits' status. """
