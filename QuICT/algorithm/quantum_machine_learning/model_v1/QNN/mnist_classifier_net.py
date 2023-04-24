@@ -8,7 +8,7 @@ from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.algorithm.quantum_machine_learning.ansatz_library import QNNLayer
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.utils.encoding import *
+from QuICT.algorithm.quantum_machine_learning.utils.encoding_v1 import *
 from QuICT.algorithm.quantum_machine_learning.utils import GpuSimulator
 from QuICT.algorithm.quantum_machine_learning.tools.exception import *
 

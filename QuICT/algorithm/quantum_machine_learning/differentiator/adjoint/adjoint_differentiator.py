@@ -106,6 +106,24 @@ class AdjointDifferentiator:
                 )
         return variables, expectation
 
+    def run_batch(
+        self,
+        circuits: list,
+        variables: Variable,
+        state_vector_list: list,
+        expectation_op: Hamiltonian,
+    ):
+        params_list = []
+        expectation_list = []
+        for circuit, state_vector in zip(circuits, state_vector_list):
+            params, expectation = self.run(
+                circuit, variables.copy(), state_vector, expectation_op
+            )
+            params_list.append(params)
+            expectation_list.append(expectation)
+
+        return params_list, expectation_list
+
     def initial_circuit(self, circuit: Circuit):
         circuit.gate_decomposition(decomposition=False)
         self._training_gates = circuit.count_training_gates()
