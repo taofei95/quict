@@ -1,6 +1,6 @@
 import os
 import random
-from QuICT.benchmark.benchmark2 import QuICTBenchmark
+from QuICT.benchmark import QuICTBenchmark
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from scipy.stats import unitary_group
@@ -82,7 +82,7 @@ class QCDAbench:
 
         return circuit, circuit_opt, bench_result
 
-    def syntesisbench(self, synthesis_func):
+    def synthesisbench(self, synthesis_func):
         _synthesis_func = [UnitaryDecomposition, QuantumStatePreparation, gate_transform]
         _InSet = ["GoogleSet", "IBMQSet", "IonQSet", "NamSet", "OriginSet", "USTCSet"]
 

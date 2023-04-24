@@ -42,14 +42,13 @@ class SpecialCirbench:
                 eigenvalue_score.append([based_circuits_list[i], S])
         return eigenvalue_score
 
-        
-        
-        
-    def mirrorcir_evaluate(self,
-            num_gates:int = 100,
-            max_depth:int = 10,
-            num_repeats:int = 10
-            ):
+
+    def mirrorcir_evaluate(
+        self,
+        num_gates:int = 100,
+        max_depth:int = 10,
+        num_repeats:int = 10
+        ):
         # Define circuit size depth and repeat counts
         # Define a set of gate list
         typelist = [ID, X, Y, Z, H, SX, CX]
@@ -59,52 +58,52 @@ class SpecialCirbench:
 
         for num_depth in range(1, max_depth + 1):
             for num_gate in range(num_gates):
-               # Create a random gate sequence of the required depth
-               sequence = []
-               for _ in range(num_depth):
-                   gate_idx = np.random.randint(0, len(typelist))
-                   sequence.append(typelist[gate_idx])
+                # Create a random gate sequence of the required depth
+                sequence = []
+                for _ in range(num_depth):
+                    gate_idx = np.random.randint(0, len(typelist))
+                    sequence.append(typelist[gate_idx])
 
-            # build circuit
-            cir = Circuit(2)
+                # build circuit
+                cir = Circuit(2)
 
-            # Apply the gate sequence to the circuit
-            for gate in sequence:
-                if gate == ID:
-                    ID | cir(0)
-                elif gate == X:
-                    X | cir(0)
-                elif gate == Y:
-                    Y | cir(0)
-                elif gate == Z:
-                    Z | cir(0)
-                elif gate == H:
-                    H | cir(0)
-                elif gate == SX:
-                    SX | cir(0)
-                elif gate == CX:
-                    CX | cir([0, 1])
-            
-            # Add a mirror circuit to origin circuit
-            mirror_circuit = MirrorCircuitBuilder().build_mirror_circuit(width=5, rand_unit=1, pro=0.8)
-            mirror_circuit | cir
-        print(cir.qasm())
-        # simulate the circuit by quantum machine
-        # result = QuICTBenchmark().bench_run()
-        sim = Simulator()
-        result = sim.run(cir, num_repeats)['data']['counts']
+                # Apply the gate sequence to the circuit
+                for gate in sequence:
+                    if gate == ID:
+                        ID | cir(0)
+                    elif gate == X:
+                        X | cir(0)
+                    elif gate == Y:
+                        Y | cir(0)
+                    elif gate == Z:
+                        Z | cir(0)
+                    elif gate == H:
+                        H | cir(0)
+                    elif gate == SX:
+                        SX | cir(0)
+                    elif gate == CX:
+                        CX | cir([0, 1])
 
-        # Compare the expected and actual outcomes to calculate the fidelity
-        expected = '0' * num_repeats
-        actual = ''.join([str(result[key]) for key in result])
-        fidelity = (actual.count(expected) / num_repeats)
+                # Add a mirror circuit to origin circuit
+                mirror_circuit = MirrorCircuitBuilder().build_mirror_circuit(width=2, rand_unit=1, pro=1)
+                mirror_circuit | cir
 
-        # Add the fidelity value to the results array
-        fidelity_results[num_gate, num_depth - 1] = fidelity
+                # simulate the circuit by quantum machine
+                # result = QuICTBenchmark().bench_run()
+                sim = Simulator()
+                result = sim.run(cir, num_repeats)['data']['counts']
+
+                # Compare the expected and actual outcomes to calculate the fidelity
+                expected = '0' * num_repeats
+                actual = ''.join([str(result[key]) for key in result])
+                fidelity = (actual.count(expected) / num_repeats)
+
+                # Add the fidelity value to the results array
+                fidelity_results[num_gate, num_depth - 1] = fidelity
         
         # Calculate the average fidelity over all gate sequences for each sequence length
         average_fidelities = np.mean(fidelity_results, axis=0)
-        
+
         return average_fidelities
 
     def qvcir_evaluate():
@@ -124,44 +123,44 @@ class SpecialCirbench:
         for num_depth in range(1, max_depth + 1):
             for num_gate in range(num_gates):
                # Create a random gate sequence of the required depth
-               sequence = []
-               for _ in range(num_depth):
+                sequence = []
+                for _ in range(num_depth):
                    gate_idx = np.random.randint(0, len(typelist))
                    sequence.append(typelist[gate_idx])
 
-            # build circuit
-            cir = Circuit(2)
+                # build circuit
+                cir = Circuit(2)
 
-            # Apply the gate sequence to the circuit
-            for gate in sequence:
-                if gate == ID:
-                    ID | cir(0)
-                elif gate == X:
-                    X | cir(0)
-                elif gate == Y:
-                    Y | cir(0)
-                elif gate == Z:
-                    Z | cir(0)
-                elif gate == H:
-                    H | cir(0)
-                elif gate == SX:
-                    SX | cir(0)
-                elif gate == CX:
-                    CX | cir([0, 1])
-            Measure | cir
+                # Apply the gate sequence to the circuit
+                for gate in sequence:
+                    if gate == ID:
+                        ID | cir(0)
+                    elif gate == X:
+                        X | cir(0)
+                    elif gate == Y:
+                        Y | cir(0)
+                    elif gate == Z:
+                        Z | cir(0)
+                    elif gate == H:
+                        H | cir(0)
+                    elif gate == SX:
+                        SX | cir(0)
+                    elif gate == CX:
+                        CX | cir([0, 1])
+                Measure | cir
 
-        # simulate the circuit by quantum machine
-        # result = QuICTBenchmark().bench_run()
-        sim = Simulator()
-        result = sim.run(cir, num_repeats)['data']['counts']
+            # simulate the circuit by quantum machine
+            # result = QuICTBenchmark().bench_run()
+            sim = Simulator()
+            result = sim.run(cir, num_repeats)['data']['counts']
 
-        # Compare the expected and actual outcomes to calculate the fidelity
-        expected = '0' * num_repeats
-        actual = ''.join([str(result[key]) for key in result])
-        fidelity = (actual.count(expected) / num_repeats)
+            # Compare the expected and actual outcomes to calculate the fidelity
+            expected = '0' * num_repeats
+            actual = ''.join([str(result[key]) for key in result])
+            fidelity = (actual.count(expected) / num_repeats)
 
-        # Add the fidelity value to the results array
-        fidelity_results[num_gate, num_depth - 1] = fidelity
+            # Add the fidelity value to the results array
+            fidelity_results[num_gate, num_depth - 1] = fidelity
         
         # Calculate the average fidelity over all gate sequences for each sequence length
         average_fidelities = np.mean(fidelity_results, axis=0)
@@ -170,10 +169,6 @@ class SpecialCirbench:
 
 if __name__ == "__main__":
     print(SpecialCirbench(5, 5).mirrorcir_evaluate())
-        
-
-
-# SpecialCirbench(2, 8).SRB_evaluate()
 
 
 
