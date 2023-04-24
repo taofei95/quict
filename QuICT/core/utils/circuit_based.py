@@ -201,7 +201,7 @@ class CircuitBased(object):
                 continue
 
             if gate.qasm_name == "measure":
-                qasm_string += f"measure q[{targs}] -> c[{cbits}];\n"
+                qasm_string += f"measure q[{targs[0]}] -> c[{cbits}];\n"
                 cbits += 1
                 cbits = cbits % creg
             else:
