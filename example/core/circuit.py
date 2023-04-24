@@ -6,6 +6,7 @@
 import os
 
 from QuICT.core import Circuit
+from QuICT.core.gate import *
 from QuICT.tools.interface import OPENQASMInterface
 
 
@@ -90,4 +91,4 @@ def load_circuit_from_qasm():
 
 
 if __name__ == "__main__":
-    load_circuit_from_qasm()
+    circuit_build()
