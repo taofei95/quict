@@ -79,9 +79,8 @@ class Layout:
     """Implement a topology in a physical device
 
     Attributes:
-        name(string): the name of the topology
-        edge_list(list<LayoutEdge>): the edge in layout
         qubit_number(int): the number of qubits
+        name(string): the name of the topology        
     """
 
     DIRECTIONAL_DEFAULT = False
