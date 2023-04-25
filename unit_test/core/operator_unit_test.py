@@ -70,16 +70,16 @@ class TestOperator(unittest.TestCase):
         )
 
         cir = Circuit(4)
-        pauil_error_rate = 0.4
+        error_rate = 0.4
         depolarizing_rate = 0.05
 
         amp_err = DampingError(amplitude_prob=0.2, phase_prob=0, dissipation_state=0.3)
-        bf_err = BitflipError(pauil_error_rate)
-        pf_err = PhaseflipError(pauil_error_rate)
-        bpf_err = PhaseBitflipError(pauil_error_rate)
+        bf_err = BitflipError(error_rate)
+        pf_err = PhaseflipError(error_rate)
+        bpf_err = PhaseBitflipError(error_rate)
         single_dep = DepolarizingError(depolarizing_rate, num_qubits=1)
         bits_err = PauliError(
-            [('zy', pauil_error_rate), ('xi', 1 - pauil_error_rate)],
+            [('zy', error_rate), ('xi', 1 - error_rate)],
             num_qubits=1
         )
 
