@@ -12,12 +12,11 @@ class TestOperator(unittest.TestCase):
         # Build Circuit and CompositeGate
         cir = Circuit(5)
         QFT(5) | cir
-        qft_size = cir.size()
-
-        cgate = CompositeGate()
+        
+        cgate = CompositeGate("x")
         X | cgate(0)
         X | cgate(1)
-        cgate1 = CompositeGate()
+        cgate1 = CompositeGate("y")
         Y | cgate1(0)
         Y | cgate1(1)
 
@@ -36,36 +35,66 @@ class TestOperator(unittest.TestCase):
         cgate | cir
         cgate1 | cir
 
-        # get target gate from circuit
-        # x_gate = cir.gates[qft_size - 1]
-        # y_gate = cir.gates[qft_size + 5]
+        # get compositegate name from circuit
+        x_gate = cir.gates[-2].name
+        y_gate = cir.gates[-1].name
 
-        # assert x_gate.type == GateType.x and y_gate.type == GateType.y
+        assert x_gate == "x" and y_gate == "y"
 
     def test_trigger(self):
         # Build circuit and compositegate
         cir = Circuit(4)
-        H | cir(0)
-
         cgate = CompositeGate()
-        CX | cgate([0, 1])
-        CX | cgate([1, 2])
-        CX | cgate([2, 3])
+        H | cgate(0)
+
+        cgate1 = CompositeGate()
+        CX | cgate1([0, 1])
+        CX | cgate1([1, 2])
+        CX | cgate1([2, 3])
+
+        gates = [cgate, cgate1]
 
         # Build Trigger
-        trigger = Trigger(1, [None, cgate])
-        trigger | cir(0)
+        trigger = Trigger(1, gates)
+        trigger | cir([0])
 
         sim = StateVectorSimulator()
         sv = sim.run(cir)
 
         if cir[0].measured:
             assert np.isclose(sv[-1], 1)
-        else:
-            assert np.isclose(sv[0], 1)
 
     def test_noise(self):
-        pass
+        from QuICT.core.noise import (
+        BitflipError, DampingError, DepolarizingError, PauliError, PhaseflipError, PhaseBitflipError
+        )
+
+        cir = Circuit(4)
+        pauil_error_rate = 0.4
+        depolarizing_rate = 0.05
+
+        amp_err = DampingError(amplitude_prob=0.2, phase_prob=0, dissipation_state=0.3)
+        bf_err = BitflipError(pauil_error_rate)
+        pf_err = PhaseflipError(pauil_error_rate)
+        bpf_err = PhaseBitflipError(pauil_error_rate)
+        single_dep = DepolarizingError(depolarizing_rate, num_qubits=1)
+        bits_err = PauliError(
+            [('zy', pauil_error_rate), ('xi', 1 - pauil_error_rate)],
+            num_qubits=1
+        )
+
+        gate = gate_builder(GateType.h)
+
+        noisegate = [
+            NoiseGate(gate, amp_err), NoiseGate(gate, bf_err),
+            NoiseGate(gate, pf_err), NoiseGate(gate, bpf_err),
+            NoiseGate(gate, single_dep), NoiseGate(gate, bits_err)
+        ]
+        for noise in noisegate:
+            noise | cir([0])
+
+        assert cir.gates[0].noise_matrix != cir.gates[1].noise_matrix
+        assert cir.size() == 6
 
 if __name__ == "__main__":
     unittest.main()
