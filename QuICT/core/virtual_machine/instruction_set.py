@@ -92,7 +92,7 @@ class InstructionSet(object):
             return "hrz_rule"
         if set((GateType.rz, GateType.sx, GateType.x)).issubset(set(self.one_qubit_gates)):
             return "ibmq_rule"
-        if set((GateType.u3)).issubset(set(self.one_qubit_gates)):
+        if set((GateType.u3,)).issubset(set(self.one_qubit_gates)):
             return "u3_rule"
         raise Exception("please register the SU2 decomposition rule.")
 

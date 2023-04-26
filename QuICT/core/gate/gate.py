@@ -705,8 +705,13 @@ class Unitary(BasicGate):
 
         return matrix_type, controls
 
-    def build_gate(self):
-        return ComplexGateBuilder.build_unitary(self._matrix)
+    def build_gate(self, qidxes: list = None):
+        decomp_gate = ComplexGateBuilder.build_unitary(self._matrix)
+        gate_args = self.cargs + self.targs if qidxes is None else qidxes
+        if len(gate_args) > 0:
+            decomp_gate & gate_args
+
+        return decomp_gate
 
     def inverse(self):
         inverse_matrix = np.asmatrix(self.matrix).H
