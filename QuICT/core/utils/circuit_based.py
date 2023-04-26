@@ -229,9 +229,8 @@ class CircuitBased(object):
                 decomp_gates += gate.gate_decomposition()
                 continue
 
-            cgate = gate.build_gate()
+            cgate = gate.build_gate(qidxes)
             if cgate is not None:
-                cgate & qidxes
                 decomp_gates += cgate._gates
                 continue
 
