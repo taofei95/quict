@@ -242,6 +242,13 @@ class CircuitBased(object):
             self._gates = decomp_gates
             return self._gates
 
+    def show_detail(self):
+        """
+        Print the list of gates in the Circuit/CompositeGate
+        """
+        for g in self.flatten_gates():
+            print(g.type, g.cargs, g.targs, g.pargs)
+
     def draw(self, method: str = 'matp_auto', filename: str = None):
         """Draw the figure of circuit.
 
