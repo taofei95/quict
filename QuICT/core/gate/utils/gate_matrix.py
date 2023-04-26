@@ -23,10 +23,15 @@ class GateMatrixGenerator:
         _precision = gate.precision if precision is None else precision
         gate_precision = np.complex128 if _precision == "double" else np.complex64
         gate_params = gate.params
+            
+
         if gate_params == 0:
             if is_get_grad:
                 raise ValueError("Only parameter gates are supported.")
-            based_matrix = self.based_matrix(gate_type, gate_precision)
+            if gate_type == GateType.unitary:
+                based_matrix = gate.matrix
+            else:
+                based_matrix = self.based_matrix(gate_type, gate_precision)
         else:
             if is_get_grad:
                 based_matrix = self.grad_for_param(

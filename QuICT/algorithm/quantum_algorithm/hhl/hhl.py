@@ -15,23 +15,7 @@ from scipy.linalg import expm
 
 logger = Logger('hhl')
 
-
-class HHL:
-    """ original HHL algorithm
-
-    References:
-        [1] Quantum Algorithm for Linear Systems of Equations: https://doi.org/10.1103/PhysRevLett.103.150502
-        [2] Quantum circuit design for solving linear systems of equations: https://doi.org/10.1080/00268976.2012.668289
-    """
-    def __init__(self, simulator=None) -> None:
-        self.simulator = simulator
-
-    def _reconstruct(self, matrix):
-        matrix_conj = matrix.T.conj()
-        matrix_rec = np.kron([[0, 1], [0, 0]], matrix_conj) + np.kron([[0, 0], [1, 0]], matrix)
-        return matrix_rec
-
-    def _c_rotation(self, control, target):
+def c_rotation(control, target):
         """Controlled-Rotation part in HHL algorithm
 
         Args:
@@ -70,6 +54,23 @@ class HHL:
 
         X & target | control_rotation_gates
         return control_rotation_gates
+
+class HHL:
+    """ original HHL algorithm
+
+    References:
+        [1] Quantum Algorithm for Linear Systems of Equations: https://doi.org/10.1103/PhysRevLett.103.150502
+        [2] Quantum circuit design for solving linear systems of equations: https://doi.org/10.1080/00268976.2012.668289
+    """
+    def __init__(self, simulator=None) -> None:
+        self.simulator = simulator
+
+    def _reconstruct(self, matrix):
+        matrix_conj = matrix.T.conj()
+        matrix_rec = np.kron([[0, 1], [0, 0]], matrix_conj) + np.kron([[0, 0], [1, 0]], matrix)
+        return matrix_rec
+
+    
 
     def circuit(
         self,
@@ -134,14 +135,14 @@ class HHL:
         for idx in phase:
             H | circuit(idx)
         unitary_matrix_gates | circuit
-        IQFT.build_gate(len(phase)) | circuit(list(reversed(phase)))
+        IQFT(len(phase)) | circuit(list(reversed(phase)))
 
         # Controlled-Rotation
-        control_rotation = self._c_rotation(phase, ancilla)
+        control_rotation = c_rotation(phase, ancilla)
         control_rotation | circuit
 
         # Inversed-QPE
-        QFT.build_gate(len(phase)) | circuit(list(reversed(phase)))
+        QFT(len(phase)) | circuit(list(reversed(phase)))
         unitary_matrix_gates.inverse() | circuit
         for idx in phase:
             H | circuit(idx)
@@ -185,7 +186,7 @@ class HHL:
 
         circuit = self.circuit(matrix, vector, dominant_eig, phase_qubits, measure)
 
-        state_vector = simulator.run(circuit)
+        state_vector = simulator.run(circuit=circuit)
         try:
             state_vector = state_vector.get()
         except:
@@ -193,3 +194,4 @@ class HHL:
 
         if measure and int(circuit[0]) == 0 or not measure:
             return np.array(state_vector[: size], dtype=np.complex128)
+        return np.array(state_vector[: size], dtype=np.complex128)

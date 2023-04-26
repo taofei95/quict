@@ -144,6 +144,7 @@ class StateVectorSimulator:
         cgate_qlist = gate.qubits
         for idx, cq in enumerate(cgate_qlist):
             qidxes_mapping[cq] = qidxes[idx]
+        
 
         for cgate, cg_idx, _ in gate.fast_gates:
             real_qidx = [qidxes_mapping[idx] for idx in cg_idx]
@@ -151,6 +152,7 @@ class StateVectorSimulator:
                 self._apply_compositegate(cgate, real_qidx)
             else:
                 self._apply_gate(cgate, real_qidx)
+                #print('use composit_gate -- basic_gate')
 
     def _apply_trigger(self, op: Trigger, qidxes: list, current_idx: int) -> CompositeGate:
         """ Deal with the Operator <Trigger>.
