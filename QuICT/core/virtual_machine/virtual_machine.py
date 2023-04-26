@@ -1,8 +1,8 @@
-from typing import Union, List
+from typing import Union, List, Dict
 
 from QuICT.core import Qureg, Layout, Circuit
 from QuICT.core.noise import NoiseModel
-from QuICT.tools.exception.core import TypeError, ValueError
+from QuICT.tools.exception.core import TypeError
 
 from .instruction_set import InstructionSet
 
@@ -89,13 +89,8 @@ class VirtualQuantumMachine:
         return self._gate_fidelity
 
     @gate_fidelity.setter
-    def gate_fidelity(self, gf: dict):
-        assert isinstance(gf, dict), TypeError("VirtualQuantumMachine.gate_fidelity", "List", f"{type(gf)}")
-        assert len(gf.keys()) == self._instruction_set.size() and self._gate_in_set(gf.keys()), \
-            ValueError(
-                "VirtualQuantumMachine.gate_fidelity", f"equal to {self._instruction_set.size()}", f"{len(gf.keys())}"
-            )
-
+    def gate_fidelity(self, gf):
+        self._instruction_set.register_one_qubit_fidelity(gf)
         self._gate_fidelity = gf
 
     @property
@@ -112,11 +107,11 @@ class VirtualQuantumMachine:
         qubits: Union[int, Qureg],
         instruction_set: InstructionSet,
         qubit_fidelity: List[float] = None,
+        gate_fidelity: Union[float, List, Dict] = None,
         t1_coherence_time: List[float] = None,
         t2_coherence_time: List[float] = None,
         coupling_strength: List[tuple] = None,
         layout: Layout = None,
-        gate_fidelity: Union[float, dict] = None,
         noise_model: NoiseModel = None
     ):
         """
@@ -124,17 +119,16 @@ class VirtualQuantumMachine:
             qubits (Union[int, Qureg]): The qubit number or the Qureg which is the list of Qubit.
             instruction_set (InstructionSet): The set of quantum gates which Quantum Machine supports.
             qubit_fidelity (list, optional): The fidelity for each qubit. Defaults to None.
+            gate_fidelity (Union[float, dict], optional): The fidelity for single qubit quantum gate. Defaults to None.
             t1_coherence_time (list, optional): The t1 coherence time for each qubit. Defaults to None.
             t2_coherence_time (list, optional): The t2 coherence time for each qubit. Defaults to None.
             coupling_strength (list, optional): The coupling strength between the qubits. Defaults to None.
             layout (Layout, optional): The description of physical topology of Quantum Machine. Defaults to None.
-            gate_fidelity (Union[float, dict], optional): The fidelity for single qubit quantum gate. Defaults to None.
             noise_model (NoiseModel, optional): The noise model which describe the noise of Quantum Machine.
                 Defaults to None.
 
         Raises:
             TypeError: The wrong type about input.
-            ValueError: The illegal value of the given input.
         """
         # Describe the qubits of Quantum Machine
         if isinstance(qubits, int):
