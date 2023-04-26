@@ -106,6 +106,7 @@ class VirtualQuantumMachine:
         self,
         qubits: Union[int, Qureg],
         instruction_set: InstructionSet,
+        name: str = None,
         qubit_fidelity: List[float] = None,
         gate_fidelity: Union[float, List, Dict] = None,
         t1_coherence_time: List[float] = None,
@@ -118,6 +119,7 @@ class VirtualQuantumMachine:
         Args:
             qubits (Union[int, Qureg]): The qubit number or the Qureg which is the list of Qubit.
             instruction_set (InstructionSet): The set of quantum gates which Quantum Machine supports.
+            name (str): The name of quantum machine.
             qubit_fidelity (list, optional): The fidelity for each qubit. Defaults to None.
             gate_fidelity (Union[float, dict], optional): The fidelity for single qubit quantum gate. Defaults to None.
             t1_coherence_time (list, optional): The t1 coherence time for each qubit. Defaults to None.
@@ -130,6 +132,8 @@ class VirtualQuantumMachine:
         Raises:
             TypeError: The wrong type about input.
         """
+        self.name = name if name is not None else "Quantum_Machine"
+
         # Describe the qubits of Quantum Machine
         if isinstance(qubits, int):
             self._qubits = Qureg(qubits)
