@@ -2,6 +2,7 @@ from math import log
 
 from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate
+from QuICT.core.virtual_machine.virtual_machine import VirtualQuantumMachine
 
 try:
     from collections.abc import Iterable
@@ -63,31 +64,38 @@ class CircuitCost(object):
     Measure of gate cost in quantum circuit.
     """
 
-    def __init__(self, backend=None):
+    def __init__(self, backend: VirtualQuantumMachine = None):
+        # qubit_info[i]: Dict {
+        #     'T1': float,
+        #     'T2': float,
+        #     'prob_meas0_prep1': float,
+        #     'prob_meas1_prep0': float,
+        # }
+        self.qubit_info = {}
+        # gate_fidelity[qubit tuple]: Dict {
+        #     GateType: fidelity
+        # }
+        self.gate_fidelity = {}
+
         self.backend = backend
+        self._load_backend_model()
 
-    def _basic_cost(self, gate_type: GateType):
-        # TODO compute based on backend
-        return StaticCircuitCost.NISQ_GATE_COST[gate_type]
+    def _load_backend_model(self):
+        pass
 
-    def _relax_time_const(self):
-        # TODO compute based on backend
-        return 100
+    def gate_cost(self, gate, a=1., c=1.):
+        tot_time = 0
+        qubits = tuple(gate.cargs + gate.targs)
+        for q in qubits:
+            tot_time += self.qubit_info[q]['T1'] + self.qubit_info[q]['T2']
+        avg_time = tot_time / (gate.controls + gate.targets)
+        gate_f = self.gate_fidelity[qubits][gate.type]
+        # print(-100 * log(gate_f) + 1)
+        # return (-100 * log(gate_f) + 1) / avg_time / 1.2
+        return (-log(gate_f) * a + 1) / avg_time / c
 
-    def _mapping_distance(self, gate: BasicGate):
-        # TODO decompose gate into backend.basic_gates
-        # TODO calculate distance of each 2-qubit gate in backend.topological_structure
-        return 0
-
-    def _gate_cost(self, circ: Circuit, gate: BasicGate):
-        tot_relax_t = sum([circ(q).t1 + circ(q).t2 for q in gate.cargs + gate.targs])
-        avg_relax_t = tot_relax_t / (gate.controls + gate.targets)
-
-        # TODO consider mapping distance
-        return self._basic_cost(gate.type) / gate.fidelity * (self._relax_time_const() / avg_relax_t)
-
-    def cost(self, circ: Circuit):
+    def evaluate(self, circuit: Circuit, a=400, c=2.3):
         cost = 0
-        for gate in circ.gates:
-            cost += self._gate_cost(circ, gate)
+        for g in circuit.gates:
+            cost += self.gate_cost(g, a=a, c=c)
         return cost

@@ -6,6 +6,7 @@ import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate, CompositeGate
 from QuICT.core.utils import GateType
+from QuICT.simulation import Simulator
 
 
 class Backend:
@@ -73,6 +74,11 @@ class Backend:
             g: BasicGate
             g.inverse() | new_circ(g.cargs + g.targs)
 
+        # new_circ.draw(filename='new_circ.jpg')
+        sim = Simulator()
+        sim_res = sim.run(new_circ)
+        print(sim_res)
+
         prob_dist = self.execute_circuit(new_circ, 2000)
         if not prob_dist:
             return -1
@@ -80,8 +86,40 @@ class Backend:
         new_dist = {int(key, 2): val for key, val in prob_dist.items()}
         return new_dist[0] if 0 in new_dist else 0
 
-    def _get_circost_tv(self, circ: Circuit):
-        pass
+    def _get_circuit_tv(self, circ: Circuit):
+        prob_dist = self.execute_circuit(circ, 2000)
+        if not prob_dist:
+            return -1
+        new_dist = {int(key, 2): val for key, val in prob_dist.items()}
+
+        sim = Simulator()
+        sim_res = sim.run(circ)
+        state_vec = sim_res['data']['state_vector']
+        tv = 0
+        for i in range(len(state_vec)):
+            prob = new_dist.get(i, 0)
+            prob_true = state_vec[i] * state_vec[i].conjugate()
+            tv += abs(prob - prob_true) / 2
+        return tv
+
+    def _get_circuit_measured_fidelity(self, circ: Circuit):
+        prob_dist = self.execute_circuit(circ, 2000)
+        new_dist = {int(key, 2): val for key, val in prob_dist.items()}
+
+        if not prob_dist:
+            return -1
+
+        sim = Simulator()
+        sim_res = sim.run(circ)
+        state_vec = sim_res['data']['state_vector']
+        mf = 0
+        for i in range(len(state_vec)):
+            prob = new_dist.get(i, 0)
+            prob_true = state_vec[i] * state_vec[i].conjugate()
+            # print(i, f'{i:0{circ.size()}b}', prob, prob_true)
+            mf += np.sqrt(prob * prob_true)
+
+        return mf
 
     def generate_benchmark(self, n: int, max_qubit: int, max_gate: int):
         """
@@ -99,14 +137,17 @@ class Backend:
         for _ in range(n):
             n_qubit = np.random.randint(2, max_qubit + 1)
             n_gate = np.random.randint(1, max_gate + 1)
+            # n_gate = max_gate
             circ = self._generate_random_circuit(n_qubit, n_gate)
             pst = self._get_circuit_pst(circ)
+            # pst = self._get_circuit_measured_fidelity(circ)
+
             # print(f'bmk {_}: n_qubit={n_qubit}, n_gate={n_gate}, pst={pst}')
             if pst >= 0:
                 bmks.append((circ, pst))
         return bmks
 
-    def estimated_cost(self, circ):
+    def estimated_cost(self, circ, a=1, b=1, c=1, d=1):
         """
         Estimate the cost of a circuit.
 
@@ -138,7 +179,7 @@ class Backend:
             # g_cost = (-np.log(gate_f) + 1) / avg_time
             # g_cost = (-np.log(gate_f) * 100 + 1) / avg_time
 
-            g_cost = (-np.log(gate_f) + 1) / avg_time
+            g_cost = a * (-np.log(gate_f ** b) + c) / avg_time ** d
             # print(g_cost)
             cost += g_cost
         return cost

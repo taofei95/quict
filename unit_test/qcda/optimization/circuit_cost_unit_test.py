@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from QuICT.core import *
 from QuICT.core.gate import *
 from QuICT.qcda.utility.circuit_cost.quafu_backend import QuafuBackend
+from QuICT.simulation import Simulator
 
 from my_tokens import quafu_api_token as my_token
 
@@ -13,21 +14,22 @@ def run_quafu():
     """
     Test Quafu Backend
     """
-    bkd = QuafuBackend(api_token=my_token, system='ScQ-P136')
+    bkd = QuafuBackend(api_token=my_token, system='ScQ-P10')
     circ = Circuit(2)
-    H | circ(0)
-    H | circ(1)
+    Rx(np.pi) | circ(0)
 
-    print(bkd.execute_circuit(circ, n_shot=1000))
+    print(bkd._get_circuit_measured_fidelity(circ))
+    # res = bkd.execute_circuit(circ, n_shot=1000)
+    # print(res)
 
 
 def get_benchmark():
     """
     Get 10 random circuit with #qubit <= 10, #gate <= 10
     """
-    bkd = QuafuBackend(api_token=my_token, system='ScQ-P10')
-    bmks = bkd.generate_benchmark(10, 10, 10)
-    pickle.dump(bmks, open('bmks_10_10_20.pkl', 'wb'))
+    bkd = QuafuBackend(api_token=my_token, system='ScQ-P18')
+    bmks = bkd.generate_benchmark(10, 10, 15)
+    pickle.dump(bmks, open('bmks_scq18_10_10_15.pkl', 'wb'))
 
 
 def analyze_data(filename):
@@ -35,7 +37,7 @@ def analyze_data(filename):
     Compare the cost and pst of the benchmark circuits
     """
     bmks = pickle.load(open(filename, 'rb'))
-    bkd = QuafuBackend(api_token=my_token, system='ScQ-P10')
+    bkd = QuafuBackend(api_token=my_token, system='ScQ-P18')
 
     data = []
     for idx, val in enumerate(bmks):
@@ -46,10 +48,8 @@ def analyze_data(filename):
     data.sort()
     data = np.array(data)
 
-    """
     for i in range(data.shape[0]):
         bmks[int(data[i, 2])][0].draw(filename=f'c{i}.jpg')
-    """
 
     plt.show()
     plt.plot(range(data.shape[0]), -np.log(data[:, 0]), label='pst-cost')
@@ -60,35 +60,23 @@ def analyze_data(filename):
 
 
 def run_case():
-    bkd = QuafuBackend(api_token=my_token, system='ScQ-P10')
-
-    circ = Circuit(10)
-    H | circ(0)
-    H | circ(0)
-    Rx(np.pi / 2) | circ(2)
-    Ry(np.pi / 2) | circ(2)
-    Ry(np.pi / 2) | circ(2)
-    Ry(np.pi / 2) | circ(3)
+    bmks = pickle.load(open('bmks_scq18_10_10_15.pkl', 'rb'))
+    bkd = QuafuBackend(api_token=my_token, system='ScQ-P18')
+    circ, pst = bmks[6]
+    print(pst)
     print(bkd._get_circuit_pst(circ))
 
-    circ = Circuit(10)
-    CZ | circ([5, 6])
-    Ry(np.pi / 2) | circ(5)
-    Ry(np.pi / 2) | circ(5)
-    H | circ(9)
-    Rx(np.pi / 2) | circ(9)
-    Ry(np.pi / 2) | circ(9)
-    print(bkd._get_circuit_pst(circ))
 
-    circ = Circuit(10)
-    Ry(np.pi / 2) | circ(8)
-    Ry(np.pi / 2) | circ(8)
-    CZ | circ([7, 8])
-    H | circ(7)
-    print(bkd._get_circuit_pst(circ))
+def run_simulator():
+    sim = Simulator()
+    circ = Circuit(2)
+    X | circ(0)
+    res = sim.run(circ)
+    print(res)
 
 
 if __name__ == '__main__':
-    run_quafu()
     # get_benchmark()
-    # analyze_data('bmks_10_10_20.pkl')
+    # analyze_data('bmks_scq18_10_10_15.pkl')
+    # run_simulator()
+    run_case()
