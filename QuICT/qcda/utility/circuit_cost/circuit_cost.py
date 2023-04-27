@@ -1,7 +1,9 @@
+from functools import reduce
 from math import log
 
 from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate
+from QuICT.core.virtual_machine import InstructionSet
 from QuICT.core.virtual_machine.virtual_machine import VirtualQuantumMachine
 
 try:
@@ -65,37 +67,124 @@ class CircuitCost(object):
     """
 
     def __init__(self, backend: VirtualQuantumMachine = None):
+        """
+        Args:
+            backend(VirtualQuantumMachine): Backend machine.
+        """
+        self.backend = backend
+
+        n_qubit = self.backend.qubit_number
+        self.max_T1 = max(self.backend.t1_times) if self.backend.t1_times else 0
+        self.max_T2 = max(self.backend.t2_times) if self.backend.t2_times else 0
+
         # qubit_info[i]: Dict {
         #     'T1': float,
         #     'T2': float,
         #     'prob_meas0_prep1': float,
         #     'prob_meas1_prep0': float,
         # }
-        self.qubit_info = {}
+        # self.qubit_info = {}
         # gate_fidelity[qubit tuple]: Dict {
         #     GateType: fidelity
         # }
-        self.gate_fidelity = {}
+        # self.gate_fidelity = {}
 
-        self.backend = backend
-        self._load_backend_model()
+    @staticmethod
+    def from_quest_data(model_info):
+        """
+        Create a CircuitCost object from QuEST data.
 
-    def _load_backend_model(self):
-        pass
+        Wang, Hanrui, et al. "QuEst: Graph Transformer for Quantum Circuit Reliability Estimation."
+        arXiv preprint arXiv:2210.16724 (2022).
+        """
 
-    def gate_cost(self, gate, a=1., c=1.):
+        qubit_info = model_info['qubit']
+        gate_info = model_info['gate']
+        one_qubit_gates = [
+            getattr(GateType, gate_str) for gate_str in
+            reduce(set.__or__, [set(val.keys()) for key, val in gate_info.items() if len(key) == 1])
+        ]
+        two_qubit_str = list(reduce(
+            set.__or__,
+            [set(val.keys()) for key, val in gate_info.items() if len(key) > 1]
+        ))[0]
+
+        two_qubit_gate = getattr(GateType, two_qubit_str)
+        backend = VirtualQuantumMachine(
+            len(qubit_info),
+            InstructionSet(two_qubit_gate, one_qubit_gates)
+        )
+
+        backend.t1_times = [0] * len(qubit_info)
+        backend.t2_times = [0] * len(qubit_info)
+        for q in qubit_info:
+            backend.t1_times[q] = qubit_info[q]['T1']
+            backend.t2_times[q] = qubit_info[q]['T2']
+
+        backend.gate_fidelity = [{}] * len(qubit_info)
+        backend.coupling_strength = {}
+        for qubits in gate_info:
+            if len(qubits) == 1:
+                for g, f in gate_info[qubits].items():
+                    backend.gate_fidelity[qubits[0]][getattr(GateType, g)] = 1 - f
+            else:
+                backend.coupling_strength[qubits] = 1 - gate_info[qubits][two_qubit_str]
+        return CircuitCost(backend)
+
+    def gate_cost(self, gate: BasicGate, fidelity_coef=1):
+        """
+        Calculate cost of a gate.
+
+        Args:
+            gate(BasicGate): Gate to calculate cost.
+            fidelity_coef(float): Coefficient of fidelity in cost function.
+
+        Returns:
+            float: Cost of the gate.
+        """
         tot_time = 0
         qubits = tuple(gate.cargs + gate.targs)
         for q in qubits:
-            tot_time += self.qubit_info[q]['T1'] + self.qubit_info[q]['T2']
-        avg_time = tot_time / (gate.controls + gate.targets)
-        gate_f = self.gate_fidelity[qubits][gate.type]
-        # print(-100 * log(gate_f) + 1)
-        # return (-100 * log(gate_f) + 1) / avg_time / 1.2
-        return (-log(gate_f) * a + 1) / avg_time / c
+            if self.backend.t1_times:
+                tot_time += self.backend.t1_times[q]
+            if self.backend.t2_times:
+                tot_time += self.backend.t2_times[q]
 
-    def evaluate(self, circuit: Circuit, a=400, c=2.3):
+        avg_time = tot_time / (gate.controls + gate.targets) / (self.max_T1 + self.max_T2) if \
+            self.max_T1 + self.max_T2 else 1
+
+        if gate.type not in self.backend.instruction_set.one_qubit_gates and \
+                gate.type != self.backend.instruction_set.two_qubit_gate:
+            assert False, f'Gate type {gate.type} not in instruction set'
+        if gate.controls + gate.targets == 1:
+            gate_f = self.backend.gate_fidelity[qubits[0]][gate.type] if \
+                self.backend.gate_fidelity else 1
+        else:
+            if self.backend.layout and not self.backend.layout.check_edge(*qubits):
+                assert False, f'Qubits {qubits} not connected'
+
+            gate_f = 1
+            if self.backend.coupling_strength:
+                if qubits in self.backend.coupling_strength:
+                    gate_f = self.backend.coupling_strength[qubits]
+                elif tuple(reversed(qubits)) in self.backend.coupling_strength:
+                    gate_f = self.backend.coupling_strength[tuple(reversed(qubits))]
+
+        return (-fidelity_coef * log(gate_f) + 1) / avg_time
+
+    def evaluate(self, circuit: Circuit, fidelity_coef=1):
+        """
+        Evaluate cost of a circuit.
+
+        Args:
+            circuit(Circuit): Circuit to evaluate.
+            fidelity_coef(float): Coefficient of fidelity in cost function.
+
+        Returns:
+            float: Cost of the circuit.
+        """
+
         cost = 0
         for g in circuit.gates:
-            cost += self.gate_cost(g, a=a, c=c)
+            cost += self.gate_cost(g, fidelity_coef)
         return cost
