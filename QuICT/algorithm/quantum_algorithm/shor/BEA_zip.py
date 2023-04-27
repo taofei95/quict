@@ -113,15 +113,11 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=StateVectorSimu
         H | circuit(trickbit)
         gate_pow = pow(a, 1 << (t - 1 - k), N)
         BEACUa.execute(n, gate_pow, N) | circuit
-        simulator.run(circuit, use_previous=True)
         # subcircuit: semi-classical QFT
-        circuit = Circuit(2 * n + 3)
         for i in range(k):
             if trickbit_store[i]:
                 Rz(-pi / (1 << (k - i))) | circuit(trickbit)
         H | circuit(trickbit)
-        simulator.run(circuit, use_previous=True)
-        circuit = Circuit(2 * n + 3)
         for idx in b_reg + trickbit + qreg_low:
             Measure | circuit(idx)
         simulator.run(circuit, use_previous=True)

@@ -6,13 +6,14 @@
 
 from QuICT.core import *
 from QuICT.qcda.synthesis.gate_transform import *
-from QuICT.qcda.synthesis.gate_transform.special_set.origin_set import OriginSet
+from QuICT.core.virtual_machine import InstructionSet
+from QuICT.core.virtual_machine.special_set import *
 
 
 def test_google():
     for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(10)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
         GT = GateTransform(GoogleSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
@@ -23,7 +24,7 @@ def test_google():
 def test_ustc():
     for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(10)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
         GT = GateTransform(USTCSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
@@ -34,7 +35,7 @@ def test_ustc():
 def test_ibmq():
     for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(10)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
         GT = GateTransform(IBMQSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
@@ -45,7 +46,7 @@ def test_ibmq():
 def test_ionq():
     for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(10)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
         GT = GateTransform(IonQSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
@@ -56,7 +57,7 @@ def test_ionq():
 def test_nam():
     for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(10)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
         GT = GateTransform(NamSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
@@ -67,7 +68,7 @@ def test_nam():
 def test_origin():
     for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(10)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
         GT = GateTransform(OriginSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
@@ -79,7 +80,7 @@ def test_buildZyz():
     buildSet = InstructionSet(GateType.cy, [GateType.rz, GateType.ry])
     for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(10)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
         GT = GateTransform(buildSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
@@ -93,7 +94,7 @@ def test_buildZyzWithRegister():
     buildSet.register_two_qubit_rule_map(cx2cy_rule, GateType.cx)
     for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(10)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
         GT = GateTransform(buildSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)

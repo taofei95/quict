@@ -1,9 +1,10 @@
-from typing import Union, List
+from typing import Union, List, Dict
 
 from QuICT.core import Qureg, Layout, Circuit
 from QuICT.core.noise import NoiseModel
-from QuICT.qcda.synthesis import InstructionSet
-from QuICT.tools.exception.core import TypeError, ValueError
+from QuICT.tools.exception.core import TypeError
+
+from .instruction_set import InstructionSet
 
 
 class VirtualQuantumMachine:
@@ -56,21 +57,21 @@ class VirtualQuantumMachine:
         self._qubit_fidelity = qf
 
     @property
-    def t1_time(self) -> list:
+    def t1_times(self) -> list:
         """ Return the t1 coherence strength of each qubits. """
         return self._t1_times
 
-    @t1_time.setter
-    def t1_time(self, t1: list):
+    @t1_times.setter
+    def t1_times(self, t1: list):
         self._qubits.set_t1_time(t1)
         self._t1_times = t1
 
     @property
-    def t2_time(self) -> list:
+    def t2_times(self) -> list:
         return self._t2_times
 
-    @t2_time.setter
-    def t2_time(self, t2: list):
+    @t2_times.setter
+    def t2_times(self, t2: list):
         self._qubits.set_t2_time(t2)
         self._t2_times = t2
 
@@ -88,13 +89,8 @@ class VirtualQuantumMachine:
         return self._gate_fidelity
 
     @gate_fidelity.setter
-    def gate_fidelity(self, gf: dict):
-        assert isinstance(gf, dict), TypeError("VirtualQuantumMachine.gate_fidelity", "List", f"{type(gf)}")
-        assert len(gf.keys()) == self._instruction_set.size() and self._gate_in_set(gf.keys()), \
-            ValueError(
-                "VirtualQuantumMachine.gate_fidelity", f"equal to {self._instruction_set.size()}", f"{len(gf.keys())}"
-            )
-
+    def gate_fidelity(self, gf):
+        self._instruction_set.register_one_qubit_fidelity(gf)
         self._gate_fidelity = gf
 
     @property
@@ -110,31 +106,34 @@ class VirtualQuantumMachine:
         self,
         qubits: Union[int, Qureg],
         instruction_set: InstructionSet,
-        qubit_fidelity: list = None,
-        t1_coherence_time: list = None,
-        t2_coherence_time: list = None,
-        coupling_strength: dict = None,
+        name: str = None,
+        qubit_fidelity: List[float] = None,
+        gate_fidelity: Union[float, List, Dict] = None,
+        t1_coherence_time: List[float] = None,
+        t2_coherence_time: List[float] = None,
+        coupling_strength: List[tuple] = None,
         layout: Layout = None,
-        gate_fidelity: dict = None,
         noise_model: NoiseModel = None
     ):
         """
         Args:
             qubits (Union[int, Qureg]): The qubit number or the Qureg which is the list of Qubit.
             instruction_set (InstructionSet): The set of quantum gates which Quantum Machine supports.
+            name (str): The name of quantum machine.
             qubit_fidelity (list, optional): The fidelity for each qubit. Defaults to None.
+            gate_fidelity (Union[float, dict], optional): The fidelity for single qubit quantum gate. Defaults to None.
             t1_coherence_time (list, optional): The t1 coherence time for each qubit. Defaults to None.
             t2_coherence_time (list, optional): The t2 coherence time for each qubit. Defaults to None.
-            coupling_strength (dict, optional): The coupling strength between the qubits. Defaults to None.
+            coupling_strength (list, optional): The coupling strength between the qubits. Defaults to None.
             layout (Layout, optional): The description of physical topology of Quantum Machine. Defaults to None.
-            gate_fidelity (dict, optional): The fidelity for each quantum gate. Defaults to None.
             noise_model (NoiseModel, optional): The noise model which describe the noise of Quantum Machine.
                 Defaults to None.
 
         Raises:
             TypeError: The wrong type about input.
-            ValueError: The illegal value of the given input.
         """
+        self.name = name if name is not None else "Quantum_Machine"
+
         # Describe the qubits of Quantum Machine
         if isinstance(qubits, int):
             self._qubits = Qureg(qubits)
@@ -195,7 +194,7 @@ class VirtualQuantumMachine:
         pass
 
     def transpile(self, circuit: Circuit) -> Circuit:
-        """ Return the circuit that can run on this Quantum Machine. 
+        """ Return the circuit that can run on this Quantum Machine.
         Consider the layout and instruction set of current Quantum Machine.
         """
         pass

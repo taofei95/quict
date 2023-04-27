@@ -382,17 +382,17 @@ class BasicGate(object):
 
         return gate_builder(inverse_gargs, params=inverse_pargs)
 
-    def build_gate(self):
+    def build_gate(self, qidxes: list = None):
         """ Gate Decomposition, which divided the current gate with a set of small gates. """
         if self.type == GateType.cu3:
             return ComplexGateBuilder.build_gate(self.type, self.parg, self.matrix)
 
         gate_list = ComplexGateBuilder.build_gate(self.type, self.parg)
         if gate_list is None:
-            return None
+            return gate_list
 
         cgate = self._cgate_generator_from_build_gate(gate_list)
-        gate_args = self.cargs + self.targs
+        gate_args = self.cargs + self.targs if qidxes is None else qidxes
         if len(gate_args) > 0:
             cgate & gate_args
 
@@ -705,8 +705,13 @@ class Unitary(BasicGate):
 
         return matrix_type, controls
 
-    def build_gate(self):
-        return ComplexGateBuilder.build_unitary(self._matrix)
+    def build_gate(self, qidxes: list = None):
+        decomp_gate = ComplexGateBuilder.build_unitary(self._matrix)
+        gate_args = self.cargs + self.targs if qidxes is None else qidxes
+        if len(gate_args) > 0:
+            decomp_gate & gate_args
+
+        return decomp_gate
 
     def inverse(self):
         inverse_matrix = np.asmatrix(self.matrix).H

@@ -201,7 +201,7 @@ class CircuitBased(object):
                 continue
 
             if gate.qasm_name == "measure":
-                qasm_string += f"measure q[{targs}] -> c[{cbits}];\n"
+                qasm_string += f"measure q[{targs[0]}] -> c[{cbits}];\n"
                 cbits += 1
                 cbits = cbits % creg
             else:
@@ -229,9 +229,8 @@ class CircuitBased(object):
                 decomp_gates += gate.gate_decomposition()
                 continue
 
-            cgate = gate.build_gate()
+            cgate = gate.build_gate(qidxes)
             if cgate is not None:
-                cgate & qidxes
                 decomp_gates += cgate._gates
                 continue
 
@@ -242,6 +241,13 @@ class CircuitBased(object):
         else:
             self._gates = decomp_gates
             return self._gates
+
+    def show_detail(self):
+        """
+        Print the list of gates in the Circuit/CompositeGate
+        """
+        for g in self.flatten_gates():
+            print(g.type, g.cargs, g.targs, g.pargs)
 
     def draw(self, method: str = 'matp_auto', filename: str = None):
         """Draw the figure of circuit.

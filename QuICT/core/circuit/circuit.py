@@ -201,7 +201,6 @@ class Circuit(CircuitBased):
     ####################################################################
     ############          Circuit Gates Operators           ############
     ####################################################################
-    # TODO: refactoring
     def find_position(self, cp_child: CheckPointChild):
         position = -1
         if cp_child is None:
@@ -268,12 +267,21 @@ class Circuit(CircuitBased):
             else:
                 gate_qidxes = self._get_extend_circuit_qidxes(gates)
 
+        
         if isinstance(gates, Circuit):
             gates = gates.to_compositegate()
             if gates.width() != len(gate_qidxes):
                 gate_qidxes = [gate_qidxes[idx] for idx in gates.qubits]
 
-        self._gates.append((gates, gate_qidxes, gates.size()))
+            position = -1
+        else:
+            position = self.find_position(gates.checkpoint)
+
+        if position == -1:
+            self._gates.append((gates, gate_qidxes, gates.size()))
+        else:
+            self._gates.insert(position, (gates, gate_qidxes, gates.size()))
+
         self._pointer = None
 
     def append(self, op: Union[BasicGate, Operator]):
@@ -353,6 +361,10 @@ class Circuit(CircuitBased):
 
     def _add_operator(self, op: Operator):
         """ Add operator. """
+        if isinstance(op, CheckPoint):
+            self._checkpoints.append(op)
+            return
+
         if self._pointer is not None:
             if len(self._pointer) != op.targets:
                 raise CircuitAppendError("Failure to add Trigger into Circuit, as un-matched qureg.")

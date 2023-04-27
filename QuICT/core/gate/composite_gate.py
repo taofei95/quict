@@ -91,6 +91,10 @@ class CompositeGate(CircuitBased):
             raise ValueError("CompositeGate.&", f"not equal {self.width}", len(targets))
 
         self._mapping(targets)
+
+        if CGATE_LIST:
+            CGATE_LIST[-1].extend(self)
+
         return self
 
     def _mapping(self, targets: list):
@@ -216,7 +220,7 @@ class CompositeGate(CircuitBased):
         self._pointer = None
 
     def insert(self, gate: Union[BasicGate, CompositeGate], insert_idx: int):
-        """ Insert a Quantum Gate into current CompositeGate. 
+        """ Insert a Quantum Gate into current CompositeGate.
 
         Args:
             gate (Union[BasicGate, CompositeGate]): The quantum gate want to insert
