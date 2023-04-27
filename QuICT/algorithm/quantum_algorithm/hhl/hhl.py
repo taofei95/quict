@@ -43,34 +43,34 @@ class HHL:
         Return:
             CompositeGate
         """
-        c = max(1, c)
+        c = 1
         n = len(control)
         control_rotation_gates = CompositeGate()
         multi_control = MultiControlToffoli()(n - 1)
         for l in range(c, (1 << n) - c + 1):
             for idx in range(n):
                 if ((l >> idx) & 1) == 0:
-                    X & [control[idx]] | control_rotation_gates
+                    X | control_rotation_gates(control[idx])
 
-            if l < (1 << (n - 1)):
-                CU3(np.arcsin(c / l), 0, 0) & [control[0], target] | control_rotation_gates
-            else:
-                CU3(np.arcsin(c / (l - (1 << n))), 0, 0) & [control[0], target] | control_rotation_gates
+            if l < (1 << n - 1):
+                CU3(np.arcsin(c / l), 0, 0) | control_rotation_gates([control[0], target])
+            elif l > (1 << n - 1):
+                CU3(np.arcsin(c / (l - (1 << n))), 0, 0) | control_rotation_gates([control[0], target])
 
             multi_control | control_rotation_gates(control[1:] + [target])
 
-            if l < (1 << (n - 1)):
-                CU3(-np.arcsin(c / l), 0, 0) & [control[0], target] | control_rotation_gates
-            else:
-                CU3(-np.arcsin(c / (l - (1 << n))), 0, 0) & [control[0], target] | control_rotation_gates
+            if l < (1 << n - 1):
+                CU3(-np.arcsin(c / l), 0, 0) | control_rotation_gates([control[0], target])
+            elif l > (1 << n - 1):
+                CU3(-np.arcsin(c / (l - (1 << n))), 0, 0) | control_rotation_gates([control[0], target])
 
             multi_control | control_rotation_gates(control[1:] + [target])
 
             for idx in range(n):
                 if ((l >> idx) & 1) == 0:
-                    X & control[idx] | control_rotation_gates
+                    X | control_rotation_gates(control[idx])
 
-        X & target | control_rotation_gates
+        X | control_rotation_gates(target)
         return control_rotation_gates
 
     def circuit(
@@ -104,7 +104,7 @@ class HHL:
                 f"shape of matrix and vector should be 2^n, here are {len(matrix)}*{len(matrix[0])} and {len(vector)}")
 
         vector /= np.linalg.norm(vector)
-        if not np.allclose(matrix, matrix.T.conj()):
+        if not np.allclose(matrix, matrix.T.conj(), rtol=1e-6, atol=1e-6):
             matrix = self._reconstruct(matrix)
             n += 1
             vector_ancilla = True
@@ -134,7 +134,7 @@ class HHL:
         # prepare Controlled-Unitary Gate
         unitary_matrix_gates = CompositeGate()
         scale = 1 - 1 / (1 << phase_qubits - 1)
-        m = expm(matrix / dominant_eig * np.pi * 1j * scale)
+        m = expm(matrix / dominant_eig * np.pi * 1.0j * scale)
         for idx in reversed(phase):
             U, _ = ControlledUnitaryDecomposition().execute(
                 np.identity(1 << n, dtype=np.complex128), m
@@ -151,7 +151,7 @@ class HHL:
         # Controlled-Rotation
         param_c = ((1 << phase_qubits - 1) - 1) * min_abs_eig / dominant_eig
         control_rotation = self._c_rotation(phase, ancilla, int(param_c))
-        control_rotation | circuit
+        # control_rotation | circuit
 
         # Inversed-QPE
         QFT(len(phase)) | circuit(list(reversed(phase)))
