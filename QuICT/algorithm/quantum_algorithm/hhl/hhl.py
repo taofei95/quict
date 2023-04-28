@@ -32,7 +32,7 @@ class HHL:
         matrix_rec = np.kron([[0, 1], [0, 0]], matrix_conj) + np.kron([[0, 0], [1, 0]], matrix)
         return matrix_rec
 
-    def _c_rotation(self, control, target, c=1):
+    def _c_rotation(self, control, target, c: int = 1):
         """Controlled-Rotation part in HHL algorithm
 
         Args:
@@ -146,15 +146,15 @@ class HHL:
         for idx in phase:
             H | circuit(idx)
         unitary_matrix_gates | circuit
-        IQFT(len(phase)) | circuit(list(reversed(phase)))
+        IQFT(phase_qubits) | circuit(list(reversed(phase)))
 
         # Controlled-Rotation
         param_c = ((1 << phase_qubits - 1) - 1) * min_abs_eig / dominant_eig
         control_rotation = self._c_rotation(phase, ancilla, int(param_c))
-        # control_rotation | circuit
+        control_rotation | circuit
 
         # Inversed-QPE
-        QFT(len(phase)) | circuit(list(reversed(phase)))
+        QFT(phase_qubits) | circuit(list(reversed(phase)))
         unitary_matrix_gates.inverse() | circuit
         for idx in phase:
             H | circuit(idx)
