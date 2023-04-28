@@ -97,7 +97,7 @@ class InstructionSet(object):
         raise Exception("please register the SU2 decomposition rule.")
 
     @property
-    def one_qubit_fidelity(self):
+    def one_qubit_fidelity(self) -> Union[Dict, None]:
         return self.__one_qubit_gates_fidelity
 
     def __init__(
