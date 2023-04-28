@@ -84,8 +84,11 @@ class AdjointDifferentiator:
             state_vector.copy(), self._qubits, expectation_op
         )
         # expectation
-        expectation = (state_vector.conj() @ self._grad_vector).real
-
+        expectation = (
+            (state_vector.conj() @ self._grad_vector).real
+            if self._device == "CPU"
+            else (state_vector.conj() @ self._grad_vector).real.get()
+        )
         for idx in range(len(self._bp_pipeline)):
             if self._remain_training_gates == 0:
                 return variables, expectation
@@ -113,16 +116,16 @@ class AdjointDifferentiator:
         state_vector_list: list,
         expectation_op: Hamiltonian,
     ):
-        params_list = []
+        params_grad_list = []
         expectation_list = []
         for circuit, state_vector in zip(circuits, state_vector_list):
             params, expectation = self.run(
                 circuit, variables.copy(), state_vector, expectation_op
             )
-            params_list.append(params)
+            params_grad_list.append(params.grads)
             expectation_list.append(expectation)
 
-        return params_list, expectation_list
+        return params_grad_list, np.array(expectation_list)
 
     def initial_circuit(self, circuit: Circuit):
         circuit.gate_decomposition(decomposition=False)

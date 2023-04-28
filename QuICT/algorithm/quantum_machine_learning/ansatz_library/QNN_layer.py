@@ -21,7 +21,8 @@ class QNNLayer:
         self._n_qubits = n_qubits
         if readout < 0 or readout >= self._n_qubits:
             raise ValueError
-        self._data_qubits = list(range(n_qubits)).remove(readout)
+        self._data_qubits = list(range(n_qubits))
+        self._data_qubits.remove(readout)
         self._readout = readout
         self._layers = layers
         self._params = None

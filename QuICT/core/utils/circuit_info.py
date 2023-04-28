@@ -215,7 +215,7 @@ class CircuitBased(object):
         decomp_gates = []
         for gate, qidxes, size in self._gates:
             if size > 1 or hasattr(gate, "gate_decomposition"):
-                decomp_gates += gate.gate_decomposition()
+                decomp_gates += gate.gate_decomposition(self_flatten, decomposition)
                 continue
             else:
                 if decomposition and hasattr(gate, "build_gate"):
