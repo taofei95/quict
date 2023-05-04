@@ -10,24 +10,9 @@ def build_iset():
     iset = InstructionSet(
         two_qubit_gate=double_qubit_gate,
         one_qubit_gates=single_qubit_gates,
-        one_qubit_gates_fidelity=None,
         one_qubit_rule=None
     )
     print(iset.gates)
-
-    # Set Single-Qubit Gates' fidelity
-    iset.register_one_qubit_fidelity(0.9)
-    print(iset.one_qubit_fidelity)
-    iset.register_one_qubit_fidelity([0.9, 0.8, 0.7, 0.6])
-    print(iset.one_qubit_fidelity)
-    gates_fidelity = {
-        GateType.h: 0.9,
-        GateType.rx: 0.8,
-        GateType.ry: 0.8,
-        GateType.rz: 0.8,
-    }
-    iset.register_one_qubit_fidelity(gates_fidelity)
-    print(iset.one_qubit_fidelity)
 
     # Set Single-Qubit Gates' Rule, you can define yourself function rule or one of 
     # [zyz_rule, zxz_rule, hrz_rule, xyx_rule, ibmq_rule, u3_rule]

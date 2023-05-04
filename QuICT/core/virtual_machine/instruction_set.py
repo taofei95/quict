@@ -96,23 +96,14 @@ class InstructionSet(object):
             return "u3_rule"
         raise Exception("please register the SU2 decomposition rule.")
 
-    @property
-    def one_qubit_fidelity(self) -> Union[Dict, None]:
-        return self.__one_qubit_gates_fidelity
-
     def __init__(
         self,
         two_qubit_gate: GateType,
         one_qubit_gates: List[GateType],
-        one_qubit_gates_fidelity: Union[float, List, Dict] = None,
         one_qubit_rule: Union[str, callable] = None
     ):
         self.two_qubit_gate = two_qubit_gate
         self.one_qubit_gates = one_qubit_gates
-        self.__one_qubit_gates_fidelity = None
-        if one_qubit_gates_fidelity is not None:
-            self.register_one_qubit_fidelity(one_qubit_gates_fidelity)
-
         self.__one_qubit_rule = None
         if one_qubit_rule is not None:
             self.register_one_qubit_rule(one_qubit_rule)

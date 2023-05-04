@@ -99,8 +99,35 @@ class VirtualQuantumMachine:
 
     @gate_fidelity.setter
     def gate_fidelity(self, gf):
-        self._instruction_set.register_one_qubit_fidelity(gf)
+        self._qubits.set_gate_fidelity(gf)
         self._gate_fidelity = gf
+
+    @property
+    def work_frequency(self) -> List:
+        return self._work_frequency
+
+    @work_frequency.setter
+    def work_frequency(self, wf: List):
+        self._qubits.set_work_frequency(wf)
+        self._gate_duration = wf
+
+    @property
+    def readout_frequency(self) -> List:
+        return self._gate_duration
+
+    @readout_frequency.setter
+    def readout_frequency(self, rf: List):
+        self._qubits.set_readout_frequency(rf)
+        self._gate_duration = rf
+
+    @property
+    def gate_duration(self) -> List:
+        return self._gate_duration
+
+    @gate_duration.setter
+    def gate_duration(self, gd: List):
+        self._qubits.set_gate_duration(gd)
+        self._gate_duration = gd
 
     def __init__(
         self,
@@ -109,11 +136,14 @@ class VirtualQuantumMachine:
         name: str = None,
         qubit_fidelity: List[float] = None,
         preparation_fidelity: List[float] = None,
-        gate_fidelity: Union[float, List, Dict] = None,
+        gate_fidelity: Union[float, Dict] = None,
         t1_coherence_time: List[float] = None,
         t2_coherence_time: List[float] = None,
         coupling_strength: List[tuple] = None,
-        layout: Layout = None
+        layout: Layout = None,
+        work_frequency: Union[float, list] = None,
+        readout_frequency: Union[float, list] = None,
+        gate_duration: Union[float, list] = None,
     ):
         """
         Args:
@@ -174,3 +204,15 @@ class VirtualQuantumMachine:
         self._gate_fidelity = None
         if gate_fidelity is not None:
             self.gate_fidelity = gate_fidelity
+
+        self._work_frequency = None
+        if work_frequency is not None:
+            self.work_frequency = work_frequency
+
+        self._readout_frequency = None
+        if readout_frequency is not None:
+            self.readout_frequency = readout_frequency
+
+        self._gate_duration = None
+        if gate_duration is not None:
+            self.gate_duration = gate_duration
