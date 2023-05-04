@@ -47,6 +47,17 @@ class Qubit(object):
         self._fidelity = fidelity
 
     @property
+    def preparation_fidelity(self) -> float:
+        return self._qsp_fidelity
+
+    @preparation_fidelity.setter
+    def preparation_fidelity(self, fidelity: float):
+        assert isinstance(fidelity, (float, int)), TypeError("Qubit.fidelity", "float, int", type(fidelity))
+        assert fidelity >= 0 and fidelity <= 1, ValueError("Qubit.fidelity", "within [0, 1]", {fidelity})
+
+        self._qsp_fidelity = fidelity
+
+    @property
     def T1(self) -> float:
         return self._t1
 
@@ -64,12 +75,14 @@ class Qubit(object):
         assert isinstance(t2, (float, int)) and t2 >= 0, ValueError("Qubit.T2", "greater than 0", t2)
         self._t2 = t2
 
-    def __init__(self, fidelity: float = 1.0, T1: float = 0.0, T2: float = 0.0):
+    def __init__(self, fidelity: float = 1.0, preparation_fidelity: float = 1.0, T1: float = 0.0, T2: float = 0.0):
         """ initial a qubit
 
         Args:
             fidelity (float): The qubit's fidelity, where the fidelity of a quantum qubit is the overlap between
                 the ideal theoretical operation and the actual experimental operation.
+            preparation_fidelity (float): The qubit's state preparation fidelity refers to the degree of accuracy with
+                which a quantum bit (qubit) can be prepared in a specific state.
             T1 (float, μs): The longitudinal coherence time, which refers to the time it takes for the qubit to decay
                 back to its ground state from an excited state. Default to None.
             T2 (float, μs): the transverse coherence time, which refers to the time it takes for the qubit to lose its
@@ -77,6 +90,7 @@ class Qubit(object):
         """
         self._id = unique_id_generator()
         self.fidelity = fidelity
+        self.preparation_fidelity = preparation_fidelity
         self.T1 = T1
         self.T2 = T2
 
@@ -89,7 +103,8 @@ class Qubit(object):
         Returns:
             str: a simple describe
         """
-        return f"qubit id: {self.id}; fidelity: {self.fidelity}; Coherence time: T1: {self._t1}; T2: {self._t2}."
+        return f"qubit id: {self.id}; fidelity: {self.fidelity}; QSP_fidelity: {self.preparation_fidelity}; " \
+            + f"Coherence time: T1: {self._t1}; T2: {self._t2}."
 
     def __int__(self):
         """ int value of the qubit(measure result)
@@ -324,6 +339,20 @@ class Qureg(list):
 
         for idx, qubit in enumerate(self):
             qubit.fidelity = fidelity[idx]
+
+    def set_preparation_fidelity(self, fidelity: list):
+        """ Set the QSP fidelity for each qubits
+
+        Args:
+            fidelity (list): The list of fidelity for each qubits, should equal to len(qureg).
+        """
+        assert isinstance(fidelity, list), \
+            TypeError("Qureg.fidelity", "List", f"{type(fidelity)}")
+        assert len(fidelity) == len(self), \
+            ValueError("Qureg.fidelity", f"the length should equal {len(self)}", f"{len(fidelity)}")
+
+        for idx, qubit in enumerate(self):
+            qubit.preparation_fidelity = fidelity[idx]
 
     def set_t1_time(self, t1_time: list):
         """ Set the T1 coherence time for each qubit
