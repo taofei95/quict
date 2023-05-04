@@ -38,7 +38,9 @@ class QuantumNet:
             device=device, backend=differentiator, gpu_device_id=gpu_device_id
         )
 
-    def run_step(self, data_circuits, y_true, optimizer, loss_fun: Loss):
+    def run_step(
+        self, data_circuits, y_true, optimizer, loss_fun: Loss, train: bool = True
+    ):
         circuit_list = []
         state_list = []
         # FP
@@ -49,27 +51,33 @@ class QuantumNet:
             state = self._simulator.run(circuit)
             circuit_list.append(circuit)
             state_list.append(state)
-        # BP get expectations and d(exp) / d(params)
-        params_grads, poss = self._differentiator.run_batch(
-            circuit_list, self._params.copy(), state_list, self._hamiltonian
-        )
-        # BP get loss and d(loss) / d(exp)
+        if train:
+            # BP get expectations and d(exp) / d(params)
+            params_grads, poss = self._differentiator.run_batch(
+                circuit_list, self._params.copy(), state_list, self._hamiltonian
+            )
+        else:
+            poss = self._differentiator.get_expectations_batch(state_list, self._hamiltonian)
+
         y_true = 2 * y_true - 1.0
         y_pred = -poss
         loss = loss_fun(y_pred, y_true)
-        grads = -loss_fun.gradient(y_pred, y_true)
         correct = np.where(y_true * y_pred > 0)[0].shape[0]
-        # BP get d(loss) / d(params)
-        for params_grad, grad in zip(params_grads, grads):
-            self._params.grads += grad * params_grad
 
-        # optimize
-        self._params.pargs = optimizer.update(
-            self._params.pargs, self._params.grads, "params"
-        )
-        self._params.zero_grad()
-        # update
-        self._model_circuit.update(self._params)
+        if train:
+            # BP get loss and d(loss) / d(exp)
+            grads = -loss_fun.gradient(y_pred, y_true)
+            # BP get d(loss) / d(params)
+            for params_grad, grad in zip(params_grads, grads):
+                self._params.grads += grad * params_grad
+
+            # optimize
+            self._params.pargs = optimizer.update(
+                self._params.pargs, self._params.grads, "params"
+            )
+            self._params.zero_grad()
+            # update
+            self._model_circuit.update(self._params)
 
         return loss, correct
 

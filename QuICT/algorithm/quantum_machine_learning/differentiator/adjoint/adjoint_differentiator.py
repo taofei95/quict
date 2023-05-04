@@ -127,6 +127,30 @@ class AdjointDifferentiator:
 
         return params_grad_list, np.array(expectation_list)
 
+    def get_expectation(
+        self, state_vector: np.ndarray, expectation_op: Hamiltonian,
+    ):
+        # Calculate d(L)/d(|psi_t>)
+        self._grad_vector = self._initial_grad_vector(
+            state_vector.copy(), self._qubits, expectation_op
+        )
+        # expectation
+        expectation = (
+            (state_vector.conj() @ self._grad_vector).real
+            if self._device == "CPU"
+            else (state_vector.conj() @ self._grad_vector).real.get()
+        )
+        return expectation
+
+    def get_expectations_batch(
+        self, state_vector_list: list, expectation_op: Hamiltonian,
+    ):
+        expectation_list = []
+        for state_vector in state_vector_list:
+            expectation = self.get_expectation(state_vector, expectation_op)
+            expectation_list.append(expectation)
+        return np.array(expectation_list)
+
     def initial_circuit(self, circuit: Circuit):
         circuit.gate_decomposition(decomposition=False)
         self._training_gates = circuit.count_training_gates()

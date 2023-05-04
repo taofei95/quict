@@ -88,3 +88,15 @@ class Differentiator:
             circuits, variables, state_vector_list, expectation_op
         )
 
+    def get_expectation(
+        self, state_vector: np.ndarray, expectation_op: Hamiltonian,
+    ):
+        return self._differentiator.get_expectation(state_vector, expectation_op)
+
+    def get_expectations_batch(
+        self, state_vector_list: list, expectation_op: Hamiltonian,
+    ):
+        return self._differentiator.get_expectations_batch(
+            state_vector_list, expectation_op
+        )
+
