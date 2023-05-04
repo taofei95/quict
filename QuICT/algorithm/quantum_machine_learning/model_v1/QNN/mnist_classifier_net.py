@@ -5,7 +5,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.state_vector import StateVectorSimulator
 
-from QuICT.algorithm.quantum_machine_learning.ansatz_library import QNNLayer
+from QuICT.algorithm.quantum_machine_learning.ansatz_library import QNNLayerV1
 from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
 from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.utils.encoding_v1 import *
@@ -46,7 +46,7 @@ class QuantumNet(nn.Module):
             self._encoding = FRQI(device)
         self._n_qubits = self._data_qubits + 1
         self._simulator = GpuSimulator()
-        self._pqc = QNNLayer(
+        self._pqc = QNNLayerV1(
             list(range(self._data_qubits)), self._data_qubits, device=self._device
         )
         self._define_params()
@@ -63,19 +63,15 @@ class QuantumNet(nn.Module):
         Y_pred = torch.zeros([X.shape[0]], device=self._device)
         for i in range(X.shape[0]):
             self._encoding.encoding(X[i])
-            # data_ansatz = self._encoding.ansatz
+            data_ansatz = self._encoding.ansatz
             model_ansatz = self._construct_ansatz()
-            # ansatz = data_ansatz + model_ansatz
-            data_circuit = self._encoding.circuit
-            cir_simulator = StateVectorSimulator()
-            img_state = cir_simulator.run(data_circuit)
-            ansatz = model_ansatz
+            ansatz = data_ansatz + model_ansatz
 
             if self._device.type == "cpu":
                 state = ansatz.forward()
                 prob = ansatz.measure_prob(self._data_qubits, state)
             else:
-                state = self._simulator.forward(ansatz, state=img_state)
+                state = self._simulator.forward(ansatz)
                 prob = self._simulator.measure_prob(self._data_qubits, state)
             if prob is None:
                 raise QNNModelError("There is no Measure Gate on the readout qubit.")

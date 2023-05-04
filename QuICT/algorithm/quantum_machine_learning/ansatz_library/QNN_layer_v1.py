@@ -9,7 +9,7 @@ from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.tools.exception import *
 
 
-class QNNLayer:
+class QNNLayerV1:
     """Initialize a QNNLayer instance."""
 
     def __init__(self, data_qubits, result_qubit, device=torch.device("cuda:0")):

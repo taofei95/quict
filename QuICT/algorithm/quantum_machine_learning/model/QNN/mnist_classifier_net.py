@@ -19,6 +19,7 @@ class QuantumNet:
         device="GPU",
         gpu_device_id: int = 0,
         differentiator: str = "adjoint",
+        params: np.ndarray = None,
     ):
         self._n_qubits = n_qubits
         self._readout = readout
@@ -26,7 +27,7 @@ class QuantumNet:
         self._data_qubits.remove(readout)
         self._layers = layers
         self._qnn_builder = QNNLayer(n_qubits, readout, layers)
-        self._model_circuit = self._qnn_builder.init_circuit()
+        self._model_circuit = self._qnn_builder.init_circuit(params=params)
         self._params = self._qnn_builder.params
         self._hamiltonian = Hamiltonian([[1.0, "Z" + str(self._readout)]])
 
@@ -49,14 +50,14 @@ class QuantumNet:
             circuit_list.append(circuit)
             state_list.append(state)
         # BP get expectations and d(exp) / d(params)
-        params_grads, y_pred = self._differentiator.run_batch(
+        params_grads, poss = self._differentiator.run_batch(
             circuit_list, self._params.copy(), state_list, self._hamiltonian
         )
         # BP get loss and d(loss) / d(exp)
         y_true = 2 * y_true - 1.0
-        y_pred = 2 * y_pred - 1.0
+        y_pred = -poss
         loss = loss_fun(y_pred, y_true)
-        grads = 2 * loss_fun.gradient(y_pred, y_true)
+        grads = -loss_fun.gradient(y_pred, y_true)
         correct = np.where(y_true * y_pred > 0)[0].shape[0]
         # BP get d(loss) / d(params)
         for params_grad, grad in zip(params_grads, grads):

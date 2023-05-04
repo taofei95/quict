@@ -30,10 +30,12 @@ class QNNLayer:
 
     def init_circuit(self, params: Union[Variable, np.ndarray] = None):
         params = (
-            Variable(np.random.randn(len(self._layers), self._n_qubits - 1))
+            np.random.randn(len(self._layers), self._n_qubits - 1)
             if params is None
             else params
         )
+        params = Variable(pargs=params) if isinstance(params, np.ndarray) else params
+
         if params.shape == (len(self._layers), self._n_qubits - 1):
             self._params = params
         else:
