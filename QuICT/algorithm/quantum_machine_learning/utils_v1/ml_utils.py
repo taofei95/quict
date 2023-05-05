@@ -18,16 +18,6 @@ def set_seed(seed: int):
     Args:
         seed (int): The random seed.
     """
-    np.random.seed(seed)
-    random.seed(seed)
-
-
-def set_seed_torch(seed: int):
-    """Set random seed.
-
-    Args:
-        seed (int): The random seed.
-    """
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
