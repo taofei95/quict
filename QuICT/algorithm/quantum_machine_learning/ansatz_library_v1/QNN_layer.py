@@ -4,12 +4,12 @@ import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
-from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
-from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
+from QuICT.algorithm.quantum_machine_learning.utils_v1 import Ansatz
+from QuICT.algorithm.quantum_machine_learning.utils_v1.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.tools.exception import *
 
 
-class QNNLayerV1:
+class QNNLayer:
     """Initialize a QNNLayer instance."""
 
     def __init__(self, data_qubits, result_qubit, device=torch.device("cuda:0")):

@@ -5,11 +5,11 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.state_vector import StateVectorSimulator
 
-from QuICT.algorithm.quantum_machine_learning.ansatz_library import QNNLayerV1
-from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
-from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.utils.encoding_v1 import *
-from QuICT.algorithm.quantum_machine_learning.utils import GpuSimulator
+from QuICT.algorithm.quantum_machine_learning.ansatz_library_v1 import QNNLayer
+from QuICT.algorithm.quantum_machine_learning.utils_v1 import Ansatz
+from QuICT.algorithm.quantum_machine_learning.utils_v1.gate_tensor import *
+from QuICT.algorithm.quantum_machine_learning.utils_v1.encoding import *
+from QuICT.algorithm.quantum_machine_learning.utils_v1 import GpuSimulator
 from QuICT.algorithm.quantum_machine_learning.tools.exception import *
 
 
@@ -46,7 +46,7 @@ class QuantumNet(nn.Module):
             self._encoding = FRQI(device)
         self._n_qubits = self._data_qubits + 1
         self._simulator = GpuSimulator()
-        self._pqc = QNNLayerV1(
+        self._pqc = QNNLayer(
             list(range(self._data_qubits)), self._data_qubits, device=self._device
         )
         self._define_params()

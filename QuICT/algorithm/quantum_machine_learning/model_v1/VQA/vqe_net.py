@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 
-from QuICT.algorithm.quantum_machine_learning.utils import GpuSimulator
-from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
+from QuICT.algorithm.quantum_machine_learning.utils_v1 import GpuSimulator
+from QuICT.algorithm.quantum_machine_learning.utils_v1 import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.tools.exception import *
 
 

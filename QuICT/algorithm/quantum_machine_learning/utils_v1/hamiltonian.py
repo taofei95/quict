@@ -6,6 +6,8 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.tools.exception.core import *
 
+from QuICT.algorithm.quantum_machine_learning.utils_v1 import Ansatz
+from QuICT.algorithm.quantum_machine_learning.utils_v1.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.tools.exception import *
 
 
@@ -126,6 +128,26 @@ class Hamiltonian:
                 gate_dict[gate] | circuit(qid)
             hamiton_circuits.append(circuit)
         return hamiton_circuits
+
+    def construct_hamiton_ansatz(self, n_qubits, device=torch.device("cuda:0")):
+        """Construct an ansatz form of the Hamiltonian.
+
+        Args:
+            n_qubits (int): The number of qubits.
+
+        Returns:
+            list<Ansatz>: A list of ansatz corresponding to the Hamiltonian.
+        """
+        hamiton_ansatz = []
+        gate_dict = {"X": X_tensor, "Y": Y_tensor, "Z": Z_tensor}
+        for qubit_index, pauli_gate in zip(self._qubit_indexes, self._pauli_gates):
+            ansatz = Ansatz(n_qubits, device=device)
+            for qid, gate in zip(qubit_index, pauli_gate):
+                if gate not in gate_dict.keys():
+                    raise HamiltonianError("Invalid Pauli gate.")
+                ansatz.add_gate(gate_dict[gate], qid)
+            hamiton_ansatz.append(ansatz)
+        return hamiton_ansatz
 
     def _pauli_str_validation(self):
         """Validate the Pauli string."""
