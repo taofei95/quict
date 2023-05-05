@@ -3,7 +3,6 @@ from QuICT.core.gate import *
 import random
 
 
-
 class MirrorCircuitBuilder:
 
     def _random_paulis(self, width:int):
@@ -100,7 +99,16 @@ class MirrorCircuitBuilder:
 
         return cir
 
+    def mirror_circuit_transform(circuit):
+        inverse_list = []
+        cgate = circuit.to_compositegate()
+        for c in cgate:
+            inverse_list.append(c)
+        for inv in reversed(inverse_list):
+            inv | circuit
+
+        return circuit
 
 if __name__ == "__main__":
     cir = MirrorCircuitBuilder().build_mirror_circuit(width=5, rand_unit=2, pro=0.8)
-    cir.draw(filename="mirror")
+    cir.draw(filename="mirror_circuit")
