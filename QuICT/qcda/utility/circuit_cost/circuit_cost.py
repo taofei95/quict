@@ -1,6 +1,8 @@
 from functools import reduce
 from math import log
 
+import numpy as np
+
 from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate
 from QuICT.core.virtual_machine import InstructionSet
@@ -116,10 +118,22 @@ class CircuitCost(object):
         )
 
         backend.t1_times = [0] * len(qubit_info)
+        for q in qubit_info:
+            if 'T1' in qubit_info[q]:
+                backend.t1_times[q] = qubit_info[q]['T1']
+
         backend.t2_times = [0] * len(qubit_info)
         for q in qubit_info:
-            backend.t1_times[q] = qubit_info[q]['T1']
-            backend.t2_times[q] = qubit_info[q]['T2']
+            if 'T2' in qubit_info[q]:
+                backend.t2_times[q] = qubit_info[q]['T2']
+
+        avg_t1 = sum(backend.t1_times) / len(list(filter(lambda x: x, backend.t1_times)))
+        avg_t2 = sum(backend.t2_times) / len(list(filter(lambda x: x, backend.t2_times)))
+        for q in qubit_info:
+            if backend.t1_times[q] == 0:
+                backend.t2_times[q] = avg_t1
+            if backend.t2_times[q] == 0:
+                backend.t2_times[q] = avg_t2
 
         backend.gate_fidelity = [{}] * len(qubit_info)
         backend.coupling_strength = {}
@@ -129,7 +143,34 @@ class CircuitCost(object):
                     backend.gate_fidelity[qubits[0]][getattr(GateType, g)] = 1 - f
             else:
                 backend.coupling_strength[qubits] = 1 - gate_info[qubits][two_qubit_str]
+
+        backend.qubit_fidelity = [1] * len(qubit_info)
+        for q in qubit_info:
+            avg_fidelity = 1 - (qubit_info[q]['prob_meas0_prep1'] + qubit_info[q]['prob_meas1_prep0']) / 2
+            backend.qubit_fidelity[q] = avg_fidelity
+
         return CircuitCost(backend)
+
+    def _gate_fidelity(self, gate: BasicGate):
+        qubits = tuple(gate.cargs + gate.targs)
+        if gate.type not in self.backend.instruction_set.one_qubit_gates and \
+                gate.type != self.backend.instruction_set.two_qubit_gate:
+            assert False, f'Gate type {gate.type} not in instruction set'
+        if gate.controls + gate.targets == 1:
+            gate_f = self.backend.gate_fidelity[qubits[0]][gate.type] if \
+                self.backend.gate_fidelity else 1
+        else:
+            if self.backend.layout and not self.backend.layout.check_edge(*qubits):
+                assert False, f'Qubits {qubits} not connected'
+
+            gate_f = 1
+            if self.backend.coupling_strength:
+                if qubits in self.backend.coupling_strength:
+                    gate_f = self.backend.coupling_strength[qubits]
+                elif tuple(reversed(qubits)) in self.backend.coupling_strength:
+                    gate_f = self.backend.coupling_strength[tuple(reversed(qubits))]
+
+        return gate_f
 
     def gate_cost(self, gate: BasicGate, fidelity_coef=1):
         """
@@ -153,26 +194,47 @@ class CircuitCost(object):
         avg_time = tot_time / (gate.controls + gate.targets) / (self.max_T1 + self.max_T2) if \
             self.max_T1 + self.max_T2 else 1
 
-        if gate.type not in self.backend.instruction_set.one_qubit_gates and \
-                gate.type != self.backend.instruction_set.two_qubit_gate:
-            assert False, f'Gate type {gate.type} not in instruction set'
-        if gate.controls + gate.targets == 1:
-            gate_f = self.backend.gate_fidelity[qubits[0]][gate.type] if \
-                self.backend.gate_fidelity else 1
-        else:
-            if self.backend.layout and not self.backend.layout.check_edge(*qubits):
-                assert False, f'Qubits {qubits} not connected'
-
-            gate_f = 1
-            if self.backend.coupling_strength:
-                if qubits in self.backend.coupling_strength:
-                    gate_f = self.backend.coupling_strength[qubits]
-                elif tuple(reversed(qubits)) in self.backend.coupling_strength:
-                    gate_f = self.backend.coupling_strength[tuple(reversed(qubits))]
-
+        gate_f = self._gate_fidelity(gate)
         return (-fidelity_coef * log(gate_f) + 1) / avg_time
 
-    def evaluate(self, circuit: Circuit, fidelity_coef=1):
+    def evaluate(self, circuit: Circuit):
+        """
+        Estimate the fidelity of a circuit.
+
+        Args:
+            circuit(Circuit): Circuit to evaluate.
+
+        Returns:
+            float: Estimated fidelity of the circuit.
+        """
+        qubit_f = [1] * circuit.width()
+        qubit_gate_count = [0] * circuit.width()
+
+        for g in circuit.gates:
+            gate_f = self._gate_fidelity(g)
+            for q in g.cargs + g.targs:
+                qubit_f[q] *= gate_f
+                qubit_gate_count[q] += 1
+
+        for q in range(circuit.width()):
+            tot_time, cnt = 0, 0
+            if self.backend.t1_times:
+                tot_time += self.backend.t1_times[q]
+                cnt += 1
+            if self.backend.t2_times:
+                tot_time += self.backend.t2_times[q]
+                cnt += 1
+            avg_time = tot_time / cnt
+
+            if qubit_gate_count[q]:
+                qubit_f[q] *= np.exp(-1 * qubit_gate_count[q] / avg_time)
+                if self.backend.qubit_fidelity:
+                    qubit_f[q] *= self.backend.qubit_fidelity[q]
+        circ_f = np.prod(qubit_f)
+
+        return circ_f
+
+    def evaluate_backup(self, circuit: Circuit, fidelity_coef=1):
         """
         Evaluate cost of a circuit.
 
