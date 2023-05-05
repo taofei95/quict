@@ -184,6 +184,7 @@ class GateSimulator:
         parg_id: int = 0,
     ):
         matrix_type = gate.matrix_type
+        
         args_num = gate.controls + gate.targets
         matrix = self._get_gate_matrix(gate, fp, parg_id) if gate.type != GateType.unitary else gate.matrix
         control_idx = np.array(cargs, dtype=np.int64)

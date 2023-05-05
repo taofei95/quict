@@ -4,7 +4,6 @@ import torch
 import shutil
 import numpy as np
 import random
-import tensorflow as tf
 
 from QuICT.core.gate.utils import Variable
 from QuICT.tools.logger import *
@@ -80,23 +79,23 @@ def restore_checkpoint(net, optim, model_path, device):
     return ep, it
 
 
-def apply_optimizer(optimizer: tf.keras.optimizers.Optimizer, variables: Variable):
-    tfvariable_list = convert_to_tfvariable(variables.pargs)
-    optimizer.apply_gradients(zip(variables.grads, tfvariable_list), experimental_aggregate_gradients=True)
-    pargs = convert_to_numpy(tfvariable_list)
-    variables.pargs = pargs
-    return variables
+# def apply_optimizer(optimizer: tf.keras.optimizers.Optimizer, variables: Variable):
+#     tfvariable_list = convert_to_tfvariable(variables.pargs)
+#     optimizer.apply_gradients(zip(variables.grads, tfvariable_list), experimental_aggregate_gradients=True)
+#     pargs = convert_to_numpy(tfvariable_list)
+#     variables.pargs = pargs
+#     return variables
 
 
-def convert_to_tfvariable(pargs: np.ndarray):
-    pargs_list = []
-    for parg in pargs:
-        pargs_list.append(tf.Variable(parg))
-    return pargs_list
+# def convert_to_tfvariable(pargs: np.ndarray):
+#     pargs_list = []
+#     for parg in pargs:
+#         pargs_list.append(tf.Variable(parg))
+#     return pargs_list
 
 
-def convert_to_numpy(variable_list: list):
-    pargs_list = []
-    for variable in variable_list:
-        pargs_list.append(variable.numpy())
-    return np.array(pargs_list)
+# def convert_to_numpy(variable_list: list):
+#     pargs_list = []
+#     for variable in variable_list:
+#         pargs_list.append(variable.numpy())
+#     return np.array(pargs_list)

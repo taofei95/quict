@@ -11,10 +11,6 @@ class QAOALayer:
     def params(self):
         return self._params
 
-    @property
-    def circuit(self):
-        return self._circuit
-
     def __init__(
         self, n_qubits: int, p: int, hamiltonian: Hamiltonian,
     ):

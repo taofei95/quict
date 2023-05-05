@@ -144,6 +144,7 @@ class GateMatrixGenerator:
             raise TypeError(gate_type)
 
     def matrix_with_param(self, gate_type, gate_pargs, precision):
+        #print(str(gate_type)+' '+str(gate_pargs[0].pargs))
         n_pargs = len(gate_pargs)
         pargs = [0.0] * n_pargs
         for i in range(n_pargs):

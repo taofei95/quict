@@ -7,11 +7,12 @@ from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.differentiator.adjoint import (
     AdjointDifferentiator,
 )
+from QuICT.algorithm.quantum_machine_learning.differentiator.parameter_shift import  ParameterShift
 
 
 class Differentiator:
     __DEVICE = ["CPU", "GPU"]
-    __BACKEND = ["adjoint"]
+    __BACKEND = ["adjoint","parameter shift"]
     __PRECISION = ["single", "double"]
     __OPTIONS_DICT = {
         "adjoint": ["gpu_device_id"],
@@ -61,6 +62,10 @@ class Differentiator:
             differentiator = AdjointDifferentiator(
                 self._device, self._precision, **self._options
             )
+        elif self._backend == "parameter shift":
+            differentiator = ParameterShift(
+                self._device, self._precision, **self._options
+            )
         else:
             raise ValueError
 
@@ -75,5 +80,16 @@ class Differentiator:
     ):
         return self._differentiator.run(
             circuit, variables, state_vector, expectation_op
+        )
+
+    def run_batch(
+        self,
+        circuits: list,
+        variables: Variable,
+        state_vector_list: list,
+        expectation_op: Hamiltonian,
+    ):
+        return self._differentiator.run_batch(
+            circuits, variables, state_vector_list, expectation_op
         )
 

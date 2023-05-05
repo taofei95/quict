@@ -34,10 +34,14 @@ def tile(inputs,multiples):
     
     return outputs
 class PQC(tf.keras.layers.Layer):
+    __PRECISION = ["single", "double"]
+
     def __init__(
         self,
-        model_circuit,
+        model_circuit: Circuit,
+        params: Variable,
         hamiltonian,
+        precision: str = "double",
         *,
         repetitions=None,
         differentiator=None,
@@ -45,11 +49,12 @@ class PQC(tf.keras.layers.Layer):
         regularizer=None,
         constraint=None,
         **kwargs,
-    ):  
+    ):
         super().__init__(**kwargs)
         self._model_circuit = model_circuit
         self._hamiltonian = hamiltonian
         self._differ = differentiator
+        self._paramter = params
 
     def append_layer(self,circuit_list,append_circuit_list):
         def add_circuit(circuit,append_circuit):

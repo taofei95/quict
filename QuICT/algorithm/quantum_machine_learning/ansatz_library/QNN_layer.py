@@ -7,9 +7,15 @@ from QuICT.core.gate import *
 class QNNLayer:
     """Initialize a QNNLayer instance."""
 
-    __DEVICE = ["CPU", "GPU"]
+    @property
+    def params(self):
+        return self._params
 
-    def __init__(self, n_qubits: int, readout: int):
+    @property
+    def circuit(self):
+        return self._circuit
+
+    def __init__(self, n_qubits: int, readout: int, layers: list):
         """The QNN layer constructor.
         """
         self._n_qubits = n_qubits
@@ -17,22 +23,33 @@ class QNNLayer:
             raise ValueError
         self._data_qubits = list(range(n_qubits)).remove(readout)
         self._readout = readout
+        self._layers = layers
+        self._params = None
+        self._circuit = None
 
-    def __call__(self, two_qubit_gates, params: Variable):
-        if not isinstance(two_qubit_gates, list):
-            two_qubit_gates = [two_qubit_gates]
-        n_layers = len(two_qubit_gates)
-        if params.shape[0] != n_layers or params.shape[1] != self._n_qubits - 1:
+    def init_circuit(self, params: Union[Variable, np.ndarray] = None):
+        params = (
+            Variable(np.random.randn(len(self._layers), self._n_qubits - 1))
+            if params is None
+            else params
+        )
+        if params.shape == (len(self._layers), self._n_qubits - 1):
+            self._params = params
+        else:
             raise ValueError
 
         gate_dict = {"XX": Rxx, "YY": Ryy, "ZZ": Rzz, "ZX": Rzx}
-        circuit = Circuit(self._n_qubits)
-        for l, gate in zip(range(n_layers), two_qubit_gates):
+        self._circuit = Circuit(self._n_qubits)
+        X | self._circuit(self._readout)
+        H | self._circuit(self._readout)
+        for l, gate in zip(range(len(self._layers)), self._layers):
             if gate not in gate_dict.keys():
                 raise ValueError
 
             for i in range(self._n_qubits - 1):
-                gate_dict[gate](params[l][i]) | circuit(
+                gate_dict[gate](params[l][i]) | self._circuit(
                     [self._data_qubits[i], self._readout]
                 )
-        return circuit
+        H | self._circuit(self._readout)
+
+        return self._circuit
