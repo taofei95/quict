@@ -75,22 +75,6 @@ class CircuitCost(object):
         """
         self.backend = backend
 
-        n_qubit = self.backend.qubit_number
-        self.max_T1 = max(self.backend.t1_times) if self.backend.t1_times else 0
-        self.max_T2 = max(self.backend.t2_times) if self.backend.t2_times else 0
-
-        # qubit_info[i]: Dict {
-        #     'T1': float,
-        #     'T2': float,
-        #     'prob_meas0_prep1': float,
-        #     'prob_meas1_prep0': float,
-        # }
-        # self.qubit_info = {}
-        # gate_fidelity[qubit tuple]: Dict {
-        #     GateType: fidelity
-        # }
-        # self.gate_fidelity = {}
-
     @staticmethod
     def from_quest_data(model_info):
         """
@@ -117,37 +101,43 @@ class CircuitCost(object):
             InstructionSet(two_qubit_gate, one_qubit_gates)
         )
 
-        backend.t1_times = [0] * len(qubit_info)
+        t1_times = [0] * len(qubit_info)
         for q in qubit_info:
             if 'T1' in qubit_info[q]:
-                backend.t1_times[q] = qubit_info[q]['T1']
+                t1_times[q] = qubit_info[q]['T1']
 
-        backend.t2_times = [0] * len(qubit_info)
+        t2_times = [0] * len(qubit_info)
         for q in qubit_info:
             if 'T2' in qubit_info[q]:
-                backend.t2_times[q] = qubit_info[q]['T2']
+                t2_times[q] = qubit_info[q]['T2']
 
-        avg_t1 = sum(backend.t1_times) / len(list(filter(lambda x: x, backend.t1_times)))
-        avg_t2 = sum(backend.t2_times) / len(list(filter(lambda x: x, backend.t2_times)))
-        for q in qubit_info:
-            if backend.t1_times[q] == 0:
-                backend.t2_times[q] = avg_t1
-            if backend.t2_times[q] == 0:
-                backend.t2_times[q] = avg_t2
+        # avg_t1 = sum(t1_times) / len(list(filter(lambda x: x, t1_times)))
+        # avg_t2 = sum(t2_times) / len(list(filter(lambda x: x, t2_times)))
+        # for q in range(len(qubit_info)):
+        #     if t1_times[q] == 0:
+        #         t2_times[q] = avg_t1
+        #     if t2_times[q] == 0:
+        #         t2_times[q] = avg_t2
 
-        backend.gate_fidelity = [{}] * len(qubit_info)
-        backend.coupling_strength = {}
+        gate_fidelity = [{}] * len(qubit_info)
+        coupling_strength = []
         for qubits in gate_info:
             if len(qubits) == 1:
                 for g, f in gate_info[qubits].items():
-                    backend.gate_fidelity[qubits[0]][getattr(GateType, g)] = 1 - f
+                    gate_fidelity[qubits[0]][getattr(GateType, g)] = 1 - f
             else:
-                backend.coupling_strength[qubits] = 1 - gate_info[qubits][two_qubit_str]
+                coupling_strength.append(qubits + (1 - gate_info[qubits][two_qubit_str], ))
 
-        backend.qubit_fidelity = [1] * len(qubit_info)
+        qubit_fidelity = [1] * len(qubit_info)
         for q in qubit_info:
             avg_fidelity = 1 - (qubit_info[q]['prob_meas0_prep1'] + qubit_info[q]['prob_meas1_prep0']) / 2
-            backend.qubit_fidelity[q] = avg_fidelity
+            qubit_fidelity[q] = avg_fidelity
+
+        backend.t1_times = t1_times
+        backend.t2_times = t2_times
+        backend.coupling_strength = coupling_strength
+        backend.qubit_fidelity = qubit_fidelity
+        backend.gate_fidelity = gate_fidelity
 
         return CircuitCost(backend)
 
@@ -157,18 +147,16 @@ class CircuitCost(object):
                 gate.type != self.backend.instruction_set.two_qubit_gate:
             assert False, f'Gate type {gate.type} not in instruction set'
         if gate.controls + gate.targets == 1:
-            gate_f = self.backend.gate_fidelity[qubits[0]][gate.type] if \
-                self.backend.gate_fidelity else 1
+            if isinstance(self.backend.qubits[qubits[0]].gate_fidelity, dict):
+                gate_f = self.backend.qubits[qubits[0]].gate_fidelity.get(gate.type, 1.)
+            else:
+                gate_f = self.backend.qubits[qubits[0]].gate_fidelity
+
         else:
             if self.backend.layout and not self.backend.layout.check_edge(*qubits):
                 assert False, f'Qubits {qubits} not connected'
 
-            gate_f = 1
-            if self.backend.coupling_strength:
-                if qubits in self.backend.coupling_strength:
-                    gate_f = self.backend.coupling_strength[qubits]
-                elif tuple(reversed(qubits)) in self.backend.coupling_strength:
-                    gate_f = self.backend.coupling_strength[tuple(reversed(qubits))]
+            gate_f = self.backend.qubits.coupling_strength[qubits[0]][qubits[1]]
 
         return gate_f
 
@@ -218,35 +206,17 @@ class CircuitCost(object):
 
         for q in range(circuit.width()):
             tot_time, cnt = 0, 0
-            if self.backend.t1_times:
-                tot_time += self.backend.t1_times[q]
+            if self.backend.qubits[q].T1:
+                tot_time += self.backend.qubits[q].T1
                 cnt += 1
-            if self.backend.t2_times:
-                tot_time += self.backend.t2_times[q]
+            if self.backend.qubits[q].T2:
+                tot_time += self.backend.qubits[q].T2
                 cnt += 1
             avg_time = tot_time / cnt
 
             if qubit_gate_count[q]:
                 qubit_f[q] *= np.exp(-1 * qubit_gate_count[q] / avg_time)
-                if self.backend.qubit_fidelity:
-                    qubit_f[q] *= self.backend.qubit_fidelity[q]
+                qubit_f[q] *= self.backend.qubits[q].fidelity
         circ_f = np.prod(qubit_f)
 
         return circ_f
-
-    def evaluate_backup(self, circuit: Circuit, fidelity_coef=1):
-        """
-        Evaluate cost of a circuit.
-
-        Args:
-            circuit(Circuit): Circuit to evaluate.
-            fidelity_coef(float): Coefficient of fidelity in cost function.
-
-        Returns:
-            float: Cost of the circuit.
-        """
-
-        cost = 0
-        for g in circuit.gates:
-            cost += self.gate_cost(g, fidelity_coef)
-        return cost
