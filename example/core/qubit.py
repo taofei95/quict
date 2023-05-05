@@ -5,12 +5,14 @@ def build_qubit():
     # create a qubit
     q = Qubit(
         fidelity = 1.0,
+        preparation_fidelity= 1.0,
         T1 = 0.0,
         T2 = 0.0
     )
 
     # Set fidelity and T1, T2 coherence time
     q.fidelity = 0.5
+    q.preparation_fidelity = 0.9
     q.T1 = 33.712
     q.T2 = 2.128
 
@@ -27,6 +29,7 @@ def build_qreg():
 
     # Set Fidelity/T1/T2 for Qureg
     qreg1.set_fidelity([0.5] * 5)
+    qreg1.set_preparation_fidelity([0.9] * 5)
     qreg1.set_t1_time([30.1] * 5)
     qreg1.set_t2_time([2.3] * 5)
     print(qreg1[3])
