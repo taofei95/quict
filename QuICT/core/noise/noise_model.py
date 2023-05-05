@@ -1,40 +1,70 @@
 from numpy.random import random
 from typing import Union, List
 
-from .noise_error import QuantumNoiseError, NoiseChannel
+from .noise_error import QuantumNoiseError, NoiseChannel, BitflipError
 from .readout_error import ReadoutError
 from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate, GateType, gate_builder, Unitary
 from QuICT.core.operator import NoiseGate
+from QuICT.core.virtual_machine import VirtualQuantumMachine
 from QuICT.tools.exception.core import TypeError, ValueError, NoiseApplyError
 
 
 class NoiseModel:
     """
     The Noise Model, which contains the QuantumNoiseErrors and can translated circuit with the given QuantumNoiseError.
-
-    Args:
-        name (str, optional): The name of this NoiseModel. Defaults to "Noise Model".
-        basic_gates (List, optional): The list of quantum gates will apply the NoiseError.
-            Defaults to [h, s, sdg, x, y, z, rx, ry, rz, u1, t, tdg, cx, cz, crz, cu1].
     """
-    __BASED_GATES = [
-        "h", "s", "sdg", "x", "y", "z", "rx", "ry", "rz",
-        "u1", "t", "tdg", "cx", "cz", "crz", "cu1"
-    ]
-
-    def __init__(self, name: str = "Noise Model", basic_gates: List = __BASED_GATES):
+    def __init__(
+        self,
+        name: str = "Noise Model",
+        quantum_machine_info: VirtualQuantumMachine = None
+    ):
+        """
+        Args:
+            name (str, optional): The name of this NoiseModel. Defaults to "Noise Model".
+            quantum_machine_info (VirtualQuantumMachine, optional): The information about the quantum machine,
+                can use those info to build NoiseModel for target machine. Defaults to None.
+        """
         self._name = name
-        self._basic_gates = basic_gates
+        self._vqm = quantum_machine_info
 
+        self._gate_type = []
         self._error_by_gate = {}
-        for gate in basic_gates:
-            self._error_by_gate[gate] = []
-
+        self._all_qubits_error_gates = {}
         self._readout_errors = []
 
+        if self._vqm is not None:
+            self._build_nm_from_vqm()
+
+    def _build_nm_from_vqm(self):
+        qureg = self._vqm.qubits
+        iset = self._vqm.instruction_set
+
+        # Build gate error from Instruction Set
+        self._gate_type = iset.gates
+        gate_fidelity = self._vqm.gate_fidelity
+        if gate_fidelity is not None:
+            for gate_type, fidelity in iset.one_qubit_fidelity.items():
+                gate_error = BitflipError(fidelity)
+                self.add_noise_for_all_qubits(gate_error, gate_type)
+
+        # Build Readout Error from the given Qureg. TODO: add QSP fidelity Error later
+        for idx, qubit in enumerate(qureg):
+            if qubit.fidelity != 1.0:
+                readout_error = ReadoutError([[qubit.fidelity, 1 - qubit.fidelity], [1 - qubit.fidelity, qubit.fidelity]])
+                self.add_readout_error(readout_error, idx)
+
+        # Deal with bi-qubits gate fidelity (coupling strength)
+        coupling_strength = self._vqm.coupling_strength
+        if coupling_strength is not None:
+            bi_qubits_gate = self._gate_type[-1]
+            for start, end, val in coupling_strength:
+                noise_error = BitflipError(val)
+                noise_error = noise_error.tensor(noise_error)
+                self.add(noise_error, bi_qubits_gate, [start, end])
+
     def __str__(self):
-        nm_str = f"{self._name}:\nBasic Gates: {self._basic_gates}\nNoise Errors:\n"
+        nm_str = f"{self._name}:\nBasic Gates: {self._gate_type}\nNoise Errors:\n"
         if self._all_qubits_error_gates:
             nm_str += f"Gates with all qubits: {set(self._all_qubits_error_gates)}\n"
 
@@ -149,40 +179,6 @@ class NoiseModel:
 
         self._readout_errors.append((noise, qubits))
 
-    def transpile(self, circuit: Circuit, accumulated_mode: bool = False):
-        """ Apply all noise in the Noise Model to the given circuit, replaced related gate with the NoiseGate
-
-        Args:
-            circuit (Circuit): The given circuit.
-
-        Returns:
-            Circuit: The circuit with NoiseGates
-        """
-        qubit_num = circuit.width()
-        noised_circuit = Circuit(qubit_num)
-        for gate in circuit.gates:
-            if isinstance(gate, BasicGate) and gate.type.name in self._basic_gates:
-                gate_str = gate.type.name
-                gate_args = gate.cargs + gate.targs
-                noise_list = self._error_by_gate[gate_str]
-                append_origin_gate = True
-                for noise, qubits in noise_list:
-                    if qubits == -1 or (set(qubits) & set(gate_args)) == set(gate_args):    # noise's qubit matched
-                        if accumulated_mode or noise.type == NoiseChannel.damping:
-                            NoiseGate(gate, noise) & gate_args | noised_circuit
-                            append_origin_gate = False
-                        else:
-                            prob = random()
-                            noise_matrix = noise.prob_mapping_operator(prob)
-                            Unitary(noise_matrix) | noised_circuit(gate_args)
-
-                if append_origin_gate:
-                    gate | noised_circuit
-            else:
-                gate | noised_circuit
-
-        return noised_circuit
-
     def apply_readout_error(self, qureg):
         """ Apply readout error to target qubits.
 
@@ -212,3 +208,38 @@ class NoiseModel:
                 for q in qubits[::-1]:
                     qureg[q].measured = noised_result & 1
                     noised_result >>= 1
+
+    def transpile(self, circuit: Circuit, accumulated_mode: bool = False) -> Circuit:
+        """ Apply all noise in the Noise Model to the given circuit, replaced related gate with the NoiseGate
+
+        Args:
+            circuit (Circuit): The given circuit.
+            accumulated_mode (bool): Whether using accumulated mode to generate Noise Circuit.
+
+        Returns:
+            Circuit: The noised circuit with.
+        """
+        qubit_num = circuit.width()
+        noised_circuit = Circuit(qubit_num)
+        for gate in circuit.gates:
+            if isinstance(gate, BasicGate) and gate.type.name in self._basic_gates:
+                gate_str = gate.type.name
+                gate_args = gate.cargs + gate.targs
+                noise_list = self._error_by_gate[gate_str]
+                append_origin_gate = True
+                for noise, qubits in noise_list:
+                    if qubits == -1 or (set(qubits) & set(gate_args)) == set(gate_args):    # noise's qubit matched
+                        if accumulated_mode or noise.type == NoiseChannel.damping:
+                            NoiseGate(gate, noise) & gate_args | noised_circuit
+                            append_origin_gate = False
+                        else:
+                            prob = random()
+                            noise_matrix = noise.prob_mapping_operator(prob)
+                            Unitary(noise_matrix) | noised_circuit(gate_args)
+
+                if append_origin_gate:
+                    gate | noised_circuit
+            else:
+                gate | noised_circuit
+
+        return noised_circuit

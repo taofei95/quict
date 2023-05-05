@@ -90,7 +90,7 @@ class SymbolicCliffordOptimization(object):
         for gate in f_gate:
             assert gate.type in [GateType.cx, GateType.h, GateType.s],\
                 ValueError('Only CX, H, S gates are allowed in reorder')
-        width = gates.width()
+        width = max(gates._qubits) + 1
         gates_reorder = CompositeGate()
         S_stack = [[] for _ in range(width)]
         for gate in f_gate:

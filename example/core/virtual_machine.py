@@ -17,10 +17,10 @@ def build_VQM():
         qubits=9,
         instruction_set=iset,
         qubit_fidelity=[0.9] * 9,
+        preparation_fidelity= [0.8] * 9,
         t1_coherence_time=[30.1] * 9,
         layout=layout,
-        coupling_strength=cs,
-        noise_model=None
+        coupling_strength=cs
     )
     vqm.t2_times = [2.3] * 9
     print(vqm.qubits[2])
