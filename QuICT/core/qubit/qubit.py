@@ -213,8 +213,40 @@ class Qureg(list):
     Qureg is a list of Qubits, which is a subClass of list.
     """
     @property
+    def fidelity(self) -> List[Union[float, tuple]]:
+        return [qubit.fidelity for qubit in self]
+
+    @property
+    def preparation_fidelity(self) -> List[float]:
+        return [qubit.preparation_fidelity for qubit in self]
+
+    @property
+    def gate_fidelity(self) -> List[Union[dict, float]]:
+        return [qubit.gate_fidelity for qubit in self]
+
+    @property
+    def T1(self) -> List[float]:
+        return [qubit.T1 for qubit in self]
+
+    @property
+    def T2(self) -> List[float]:
+        return [qubit.T2 for qubit in self]
+
+    @property
+    def work_frequency(self) -> List[float]:
+        return [qubit.work_frequency for qubit in self]
+
+    @property
+    def readout_frequency(self) -> List[float]:
+        return [qubit.readout_frequency for qubit in self]
+
+    @property
     def coupling_strength(self) -> list:
         return self._coupling_strength
+
+    @property
+    def gate_duration(self) -> List[float]:
+        return [qubit.gate_duration for qubit in self]
 
     def __init__(self, qubits: Union[int, Qubit, Qureg] = None, coupling_strength: list = None):
         """ initial a qureg with qubit(s)
@@ -248,6 +280,7 @@ class Qureg(list):
             raise TypeError("Qureg.qubits", "int/Qubit/list<Qubit/Qureg>", type(qubit))
 
         self._coupling_strength = defaultdict(dict)
+        self._original_coupling_strength = None
         if coupling_strength is not None:
             self.set_coupling_strength(coupling_strength)
 
@@ -462,7 +495,7 @@ class Qureg(list):
         for idx, qubit in enumerate(self):
             qubit.work_frequency = work_frequency[idx]
 
-    def set_work_frequency(self, readout_frequency: Union[float, list]):
+    def set_readout_frequency(self, readout_frequency: Union[float, list]):
         readout_frequency = self._normalized_parameters(readout_frequency, "readout_frequency")
         for idx, qubit in enumerate(self):
             qubit.readout_frequency = readout_frequency[idx]
@@ -478,6 +511,10 @@ class Qureg(list):
         Args:
             coupling_strength (list): The coupling strength, should be a 2D array with shape(len(qureg) * len(qureg))
         """
+        # Reset coupling strength
+        self._coupling_strength = defaultdict(dict)
+        self._original_coupling_strength = coupling_strength
+
         for start, end, val in coupling_strength:
             assert start != end and start >= 0 and end >= 0 and start < len(self) and end < len(self)
             assert val >= 0 and val <= 1

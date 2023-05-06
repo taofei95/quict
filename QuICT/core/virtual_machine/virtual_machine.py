@@ -48,86 +48,77 @@ class VirtualQuantumMachine:
     @property
     def qubit_fidelity(self) -> list:
         """ Return the fidelity of each qubits. """
-        return self._qubit_fidelity
+        return self._qubits.fidelity
 
     @qubit_fidelity.setter
     def qubit_fidelity(self, qf: list):
         self._qubits.set_fidelity(qf)
-        self._qubit_fidelity = qf
 
     @property
     def preparation_fidelity(self) -> list:
         """ Return the fidelity of each qubits. """
-        return self._qsp_fidelity
+        return self._qubits.preparation_fidelity
 
     @preparation_fidelity.setter
     def preparation_fidelity(self, qsp: list):
         self._qubits.set_preparation_fidelity(qsp)
-        self._qsp_fidelity = qsp
 
     @property
     def t1_times(self) -> list:
         """ Return the t1 coherence strength of each qubits. """
-        return self._t1_times
+        return self._qubits.T1
 
     @t1_times.setter
     def t1_times(self, t1: list):
         self._qubits.set_t1_time(t1)
-        self._t1_times = t1
 
     @property
     def t2_times(self) -> list:
-        return self._t2_times
+        return self._qubits.T2
 
     @t2_times.setter
     def t2_times(self, t2: list):
         self._qubits.set_t2_time(t2)
-        self._t2_times = t2
 
     @property
     def coupling_strength(self) -> list:
-        return self._coupling_strength
+        return self._qubits.coupling_strength
 
     @coupling_strength.setter
     def coupling_strength(self, cs: list):
         self._qubits.set_coupling_strength(cs)
-        self._coupling_strength = cs
 
     @property
     def gate_fidelity(self) -> dict:
-        return self._gate_fidelity
+        return self._qubits.gate_fidelity
 
     @gate_fidelity.setter
     def gate_fidelity(self, gf):
         self._qubits.set_gate_fidelity(gf)
-        self._gate_fidelity = gf
 
     @property
     def work_frequency(self) -> List:
-        return self._work_frequency
+        return self._qubits.work_frequency
 
     @work_frequency.setter
     def work_frequency(self, wf: List):
         self._qubits.set_work_frequency(wf)
-        self._gate_duration = wf
 
     @property
     def readout_frequency(self) -> List:
-        return self._gate_duration
+        return self._qubits.readout_frequency
 
     @readout_frequency.setter
     def readout_frequency(self, rf: List):
         self._qubits.set_readout_frequency(rf)
-        self._gate_duration = rf
 
     @property
     def gate_duration(self) -> List:
-        return self._gate_duration
+        return self._qubits.gate_duration
 
     @gate_duration.setter
     def gate_duration(self, gd: List):
         self._qubits.set_gate_duration(gd)
-        self._gate_duration = gd
 
     def __init__(
         self,
@@ -171,23 +162,18 @@ class VirtualQuantumMachine:
         else:
             raise TypeError("VirtualQuantumMachine.qubits", "one of [int, Qureg]", f"{type(qubits)}")
 
-        self._qubit_fidelity = None
         if qubit_fidelity is not None:
             self.qubit_fidelity = qubit_fidelity
 
-        self._qsp_fidelity = None
         if preparation_fidelity is not None:
             self.preparation_fidelity = preparation_fidelity
 
-        self._t1_times = None
         if t1_coherence_time is not None:
             self.t1_times = t1_coherence_time
 
-        self._t2_times = None
         if t2_coherence_time is not None:
             self.t2_times = t2_coherence_time
 
-        self._coupling_strength = None
         if coupling_strength is not None:
             self.coupling_strength = coupling_strength
 
@@ -201,18 +187,14 @@ class VirtualQuantumMachine:
         if instruction_set is not None:
             self.instruction_set = instruction_set
 
-        self._gate_fidelity = None
         if gate_fidelity is not None:
             self.gate_fidelity = gate_fidelity
 
-        self._work_frequency = None
         if work_frequency is not None:
             self.work_frequency = work_frequency
 
-        self._readout_frequency = None
         if readout_frequency is not None:
             self.readout_frequency = readout_frequency
 
-        self._gate_duration = None
         if gate_duration is not None:
             self.gate_duration = gate_duration
