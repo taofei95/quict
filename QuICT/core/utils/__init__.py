@@ -3,3 +3,4 @@ from .circuit_info import CircuitBased
 from .circuit_matrix import CircuitMatrix, get_gates_order_by_depth
 from .utils import matrix_product_to_circuit, CGATE_LIST
 from .id_generator import unique_id_generator
+from .variable import Variable

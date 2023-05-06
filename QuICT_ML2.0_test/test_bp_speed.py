@@ -3,7 +3,6 @@ import numpy_ml
 
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.differentiator import Differentiator
-from QuICT.core.gate.utils import Variable
 from QuICT.core.circuit import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.state_vector import StateVectorSimulator

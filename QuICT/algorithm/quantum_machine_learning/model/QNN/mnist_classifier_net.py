@@ -11,6 +11,14 @@ from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 class QuantumNet:
+    @property
+    def params(self):
+        return self._params
+
+    @params.setter
+    def params(self, params):
+        self._params = params
+
     def __init__(
         self,
         n_qubits: int,
@@ -57,7 +65,9 @@ class QuantumNet:
                 circuit_list, self._params.copy(), state_list, self._hamiltonian
             )
         else:
-            poss = self._differentiator.get_expectations_batch(state_list, self._hamiltonian)
+            poss = self._differentiator.get_expectations_batch(
+                state_list, self._hamiltonian
+            )
 
         y_true = 2 * y_true - 1.0
         y_pred = -poss
@@ -77,7 +87,10 @@ class QuantumNet:
             )
             self._params.zero_grad()
             # update
-            self._model_circuit.update(self._params)
+            self.update()
 
         return loss, correct
+
+    def update(self):
+        self._model_circuit.update(self._params)
 

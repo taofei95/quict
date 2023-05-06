@@ -153,7 +153,7 @@ class AdjointDifferentiator:
 
     def initial_circuit(self, circuit: Circuit):
         circuit.gate_decomposition(decomposition=False)
-        self._training_gates = circuit.count_training_gates()
+        self._training_gates = circuit.count_training_gate()
         self._remain_training_gates = self._training_gates
         self._qubits = int(circuit.width())
         self._circuit = circuit

@@ -6,6 +6,14 @@ from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 class QAOA:
+    @property
+    def params(self):
+        return self._params
+    
+    @params.setter
+    def params(self, params):
+        self._params = params
+
     def __init__(
         self,
         n_qubits: int,
@@ -18,7 +26,6 @@ class QAOA:
         self._qaoa_builder = QAOALayer(n_qubits, p, hamiltonian)
         self._circuit = self._qaoa_builder.init_circuit()
         self._params = self._qaoa_builder.params
-        self._circuit.gate_decomposition(decomposition=False)
         self._hamiltonian = hamiltonian
         self._simulator = StateVectorSimulator(
             device=device, gpu_device_id=gpu_device_id
@@ -40,9 +47,12 @@ class QAOA:
         )
         self._params.zero_grad()
         # update
-        self._circuit = self._qaoa_builder.init_circuit(self._params)
+        self.update()
         return state, loss
-
+    
+    def update(self):
+        self._circuit = self._qaoa_builder.init_circuit(self._params)
+    
     def sample(self, shots):
         sample = self._simulator.sample(shots)
 

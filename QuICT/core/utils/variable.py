@@ -25,6 +25,10 @@ class Variable(object):
     def shape(self):
         return self._shape
 
+    @property
+    def origin_shape(self):
+        return self._origin_shape
+
     @pargs.setter
     def pargs(self, pargs):
         if isinstance(pargs, np.ndarray):
@@ -50,6 +54,7 @@ class Variable(object):
         pargs: Union[float, np.float64, np.ndarray],
         grads: Union[float, np.float64, np.ndarray] = None,
         identity: str = None,
+        origin_shape: tuple = None,
     ):
         if isinstance(pargs, np.ndarray):
             self._pargs = pargs.astype(np.float64)
@@ -64,6 +69,7 @@ class Variable(object):
             else:
                 self._grads = np.float64(grads)
         self._shape = self._pargs.shape
+        self._origin_shape = self._shape if origin_shape is None else origin_shape
         self._identity = (
             identity if identity is not None else str(uuid.uuid1()).replace("-", "")
         )
@@ -75,6 +81,7 @@ class Variable(object):
             identity=self.identity
             + str(index).replace("(", "").replace(")", "")
             + ", ",
+            origin_shape=self.origin_shape,
         )
 
     def __eq__(self, other):
@@ -87,7 +94,10 @@ class Variable(object):
         if isinstance(other, (int, float, np.float64)):
             if isinstance(self.pargs, np.float64):
                 return Variable(
-                    pargs=self.pargs + other, grads=self.grads, identity=self.identity
+                    pargs=self.pargs + other,
+                    grads=self.grads,
+                    identity=self.identity,
+                    origin_shape=self.origin_shape,
                 )
         raise TypeError
 
@@ -105,7 +115,10 @@ class Variable(object):
             if isinstance(self.pargs, np.float64):
                 grads = other if abs(self.grads) < 1e-12 else self.grads * other
                 return Variable(
-                    pargs=self.pargs * other, grads=grads, identity=self.identity
+                    pargs=self.pargs * other,
+                    grads=grads,
+                    identity=self.identity,
+                    origin_shape=self.origin_shape,
                 )
         raise TypeError
 
@@ -126,12 +139,25 @@ class Variable(object):
                 grad = other * self.pargs ** (other - 1.0)
                 grads = grad if abs(self.grads) < 1e-12 else self.grads * grad
                 return Variable(
-                    pargs=self.pargs ** other, grads=grads, identity=self.identity
+                    pargs=self.pargs ** other,
+                    grads=grads,
+                    identity=self.identity,
+                    origin_shape=self.origin_shape,
                 )
         raise TypeError
 
+    def __str__(self):
+        return "Variable(pargs={}, grads={}, identity={}, shape={})".format(
+            self.pargs, self.grads, self.identity, self.shape
+        )
+
     def copy(self):
-        return Variable(pargs=self.pargs, grads=self.grads, identity=self.identity)
+        return Variable(
+            pargs=self.pargs,
+            grads=self.grads,
+            identity=self.identity,
+            origin_shape=self.origin_shape,
+        )
 
     def zero_grad(self):
         self._grads = np.zeros(self._shape, dtype=np.float64)

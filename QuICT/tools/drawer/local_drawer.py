@@ -17,7 +17,6 @@ from QuICT.core.gate import *
 
 from .ibmq_style import DefaultStyle
 
-from QuICT.core.gate.utils.variable import Variable
 
 LINE_WIDTH = 1.5
 FOLD = 26

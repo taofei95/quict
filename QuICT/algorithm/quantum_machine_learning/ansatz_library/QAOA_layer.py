@@ -44,6 +44,7 @@ class QAOALayer:
             U_beta = Rx(2 * self._params[1][p])
             U_beta | circuit
 
+        circuit.gate_decomposition(decomposition=False)
         return circuit
 
     def _construct_U_gamma_circuit(self, gamma):

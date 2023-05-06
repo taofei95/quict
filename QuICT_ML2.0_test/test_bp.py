@@ -6,7 +6,6 @@ from QuICT.algorithm.quantum_machine_learning.utils_v1 import Ansatz
 from QuICT.algorithm.quantum_machine_learning.utils_v1.gate_tensor import *
 from QuICT.algorithm.quantum_machine_learning.utils_v1 import GpuSimulator
 from QuICT.algorithm.quantum_machine_learning.differentiator import Differentiator
-from QuICT.core.gate.utils import Variable
 from QuICT.core.circuit import Circuit
 from QuICT.core.gate import *
 from QuICT.simulation.utils import GateSimulator
