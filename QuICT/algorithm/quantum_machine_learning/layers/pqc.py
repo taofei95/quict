@@ -27,7 +27,7 @@ class PQC(tf.keras.layers.Layer):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        if model_circuit.count_training_gates() == 0:
+        if model_circuit.count_training_gate() == 0:
             raise ValueError
 
         self._params = params
