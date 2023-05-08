@@ -256,10 +256,11 @@ class CircuitBased(object):
 
     def get_variable_shape(self):
         for gate, _, _ in self._gates:
-            if gate.variables > 0:
-                for i in range(gate.params):
-                    if isinstance(gate.pargs[i], Variable):
-                        return gate.pargs[i].origin_shape
+            if gate.variables == 0:
+                continue
+            for i in range(gate.params):
+                if isinstance(gate.pargs[i], Variable):
+                    return gate.pargs[i].origin_shape
 
     def get_variables(self):
         shape = self.get_variable_shape()
@@ -270,13 +271,14 @@ class CircuitBased(object):
         for gate, _, _ in self._gates:
             if remain_training_gates == 0:
                 break
-            if gate.variables > 0:
-                remain_training_gates -= 1
-                for i in range(gate.params):
-                    if isinstance(gate.pargs[i], Variable):
-                        index = gate.pargs[i].index
-                        pargs[index] = gate.pargs[i].pargs
-                        grads[index] = gate.pargs[i].grads
+            if gate.variables == 0:
+                continue
+            remain_training_gates -= 1
+            for i in range(gate.params):
+                if isinstance(gate.pargs[i], Variable):
+                    index = gate.pargs[i].index
+                    pargs[index] = gate.pargs[i].pargs
+                    grads[index] = gate.pargs[i].grads
         return Variable(pargs=pargs, grads=grads)
 
     def update(self, variables):
@@ -285,12 +287,14 @@ class CircuitBased(object):
         for gate, _, _ in self._gates:
             if remain_training_gates == 0:
                 return
-            if gate.variables > 0:
-                remain_training_gates -= 1
-                for i in range(gate.params):
-                    if isinstance(gate.pargs[i], Variable):
-                        index = gate.pargs[i].index
-                        gate.pargs[i].pargs = variables.pargs[index]
+            if gate.variables == 0:
+                continue
+            remain_training_gates -= 1
+            for i in range(gate.params):
+                if isinstance(gate.pargs[i], Variable):
+                    index = gate.pargs[i].index
+                    gate.pargs[i].pargs = variables.pargs[index]
+
     def show_detail(self):
         """
         Print the list of gates in the Circuit/CompositeGate
