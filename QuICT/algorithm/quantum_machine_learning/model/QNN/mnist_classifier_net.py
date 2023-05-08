@@ -1,35 +1,29 @@
+from ..model import Model
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
 from QuICT.algorithm.quantum_machine_learning.ansatz_library import *
-from QuICT.algorithm.quantum_machine_learning.differentiator import Differentiator
 from QuICT.algorithm.quantum_machine_learning.encoding import *
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.loss import *
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
-from QuICT.simulation.state_vector import StateVectorSimulator
 
 
-class QuantumNet:
-    @property
-    def params(self):
-        return self._params
-
-    @params.setter
-    def params(self, params):
-        self._params = params
-
+class QuantumNet(Model):
     def __init__(
         self,
         n_qubits: int,
         readout: int,
         layers: list = ["XX", "ZZ"],
+        hamiltonian: Hamiltonian = None,
+        params: np.ndarray = None,
         device="GPU",
         gpu_device_id: int = 0,
         differentiator: str = "adjoint",
-        params: np.ndarray = None,
     ):
-        self._n_qubits = n_qubits
+        super(QuantumNet, self).__init__(
+            n_qubits, hamiltonian, params, device, gpu_device_id, differentiator
+        )
         self._readout = readout
         self._data_qubits = list(range(n_qubits))
         self._data_qubits.remove(readout)
@@ -37,13 +31,10 @@ class QuantumNet:
         self._qnn_builder = QNNLayer(n_qubits, readout, layers)
         self._model_circuit = self._qnn_builder.init_circuit(params=params)
         self._params = self._qnn_builder.params
-        self._hamiltonian = Hamiltonian([[1.0, "Z" + str(self._readout)]])
-
-        self._simulator = StateVectorSimulator(
-            device=device, gpu_device_id=gpu_device_id
-        )
-        self._differentiator = Differentiator(
-            device=device, backend=differentiator, gpu_device_id=gpu_device_id
+        self._hamiltonian = (
+            Hamiltonian([[1.0, "Z" + str(self._readout)]])
+            if hamiltonian is None
+            else hamiltonian
         )
 
     def run_step(
