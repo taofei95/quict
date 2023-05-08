@@ -35,6 +35,13 @@ class NoiseModel:
         if self._vqm is not None:
             self._build_nm_from_vqm()
 
+    def is_ideal_model(self) -> bool:
+        """ Validate it is a ideal(No noise) Quantum Machine Model or not. """
+        if len(self._error_by_gate) + len(self._readout_errors) == 0:
+            return True
+
+        return False
+
     def _build_nm_from_vqm(self):
         qureg = self._vqm.qubits
         iset = self._vqm.instruction_set
