@@ -4,10 +4,10 @@ from QuICT.core import Qubit, Qureg
 def build_qubit():
     # create a qubit
     q = Qubit(
-        fidelity = 1.0,
-        preparation_fidelity= 1.0,
-        T1 = 0.0,
-        T2 = 0.0
+        fidelity=1.0,
+        preparation_fidelity=1.0,
+        T1=0.0,
+        T2=0.0
     )
 
     # Set fidelity and T1, T2 coherence time
@@ -32,6 +32,8 @@ def build_qreg():
     qreg1.set_preparation_fidelity([0.9] * 5)
     qreg1.set_t1_time([30.1] * 5)
     qreg1.set_t2_time([2.3] * 5)
+    qreg1.set_gate_duration(40)
+    qreg1.set_work_frequency(5.66)
     print(qreg1[3])
 
     # Set Coupling Strength for Qureg with linearly topology

@@ -14,6 +14,7 @@ from QuICT.qcda.qcda import QCDA
 typelist = [GateType.rx, GateType.ry, GateType.rz, GateType.x, GateType.y, GateType.z, GateType.cx]
 cli_tlist = [GateType.cx, GateType.x, GateType.y, GateType.z, GateType.h]
 
+
 def qcda_workflow():
     layout_path = os.path.join(os.path.dirname(__file__), "../layout/ibmqx2_layout.json")
     layout = Layout.load_file(layout_path)
