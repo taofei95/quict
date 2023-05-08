@@ -6,17 +6,14 @@ from QuICT.core.gate import H, CU1, CompositeGate
 class QFT(CompositeGate):
     def __init__(self, targets: int, name: str = None):
         assert targets >= 2, "QFT Gate need at least two targets."
-        qft_gates = self.qft_build(targets)
-        super().__init__(name, gates=qft_gates)
+        super().__init__(name)
+        self.qft_build(targets)
 
     def qft_build(self, targets):
-        qft_gates = []
         for i in range(targets):
-            qft_gates.append(H & i)
+            H | self(i)
             for j in range(i + 1, targets):
-                qft_gates.append(CU1(2 * np.pi / (1 << j - i + 1)) & [j, i])
-
-        return qft_gates
+                CU1(2 * np.pi / (1 << j - i + 1)) | self([j, i])
 
     def depth(self, depth_per_qubits: bool = False):
         return 2 * self.width() - 1 if not depth_per_qubits else list(range(self.width(), 2 * self.width()))
@@ -31,18 +28,15 @@ class QFT(CompositeGate):
 class IQFT(CompositeGate):
     def __init__(self, targets: int, name: str = None):
         assert targets >= 2, "QFT Gate need at least two targets."
-        iqft_gates = self.iqft_build(targets)
-        super().__init__(name, gates=iqft_gates)
+        super().__init__(name)
+        self.iqft_build(targets)
 
     def iqft_build(self, targets):
-        iqft_gates = []
         for i in range(targets - 1, -1, -1):
             for j in range(targets - 1, i, -1):
-                iqft_gates.append(CU1(-2 * np.pi / (1 << j - i + 1)) & [j, i])
+                CU1(-2 * np.pi / (1 << j - i + 1)) | self([j, i])
 
-            iqft_gates.append(H & i)
-
-        return iqft_gates
+            H | self(i)
 
     def depth(self, depth_per_qubits: bool = False):
         return 2 * self.width() - 1 if not depth_per_qubits else list(range(self.width(), 2 * self.width()))

@@ -14,7 +14,7 @@ class CircuitBased(object):
     """ Based Class for Circuit and Composite Gate. """
 
     @property
-    def name(self) -> int:
+    def name(self) -> str:
         return self._name
 
     @name.setter
@@ -110,6 +110,9 @@ class CircuitBased(object):
         """
         count = 0
         for gate, _, size in self._gates:
+            if size == 0:
+                continue
+
             if size > 1 or hasattr(gate, "count_2qubit_gate"):
                 count += gate.count_2qubit_gate()
                 continue
@@ -127,6 +130,9 @@ class CircuitBased(object):
         """
         count = 0
         for gate, _, size in self._gates:
+            if size == 0:
+                continue
+
             if size > 1 or hasattr(gate, "count_1qubit_gate"):
                 count += gate.count_1qubit_gate()
                 continue
@@ -147,9 +153,14 @@ class CircuitBased(object):
         """
         count = 0
         for gate, _, size in self._gates:
+            if size == 0:
+                continue
+
             if size > 1 or hasattr(gate, "count_gate_by_gatetype"):
                 count += gate.count_gate_by_gatetype(gate_type)
-            elif gate.type == gate_type:
+                continue
+
+            if gate.type == gate_type:
                 count += 1
 
         return count
@@ -193,7 +204,7 @@ class CircuitBased(object):
                 continue
 
             if gate.qasm_name == "measure":
-                qasm_string += f"measure q[{targs}] -> c[{cbits}];\n"
+                qasm_string += f"measure q[{targs[0]}] -> c[{cbits}];\n"
                 cbits += 1
                 cbits = cbits % creg
             else:
@@ -280,6 +291,97 @@ class CircuitBased(object):
                     if isinstance(gate.pargs[i], Variable):
                         index = gate.pargs[i].index
                         gate.pargs[i].pargs = variables.pargs[index]
+    def show_detail(self):
+        """
+        Print the list of gates in the Circuit/CompositeGate
+        """
+        for g in self.flatten_gates():
+            print(g.type, g.cargs, g.targs, g.pargs)
+
+    def draw(self, method: str = 'matp_auto', filename: str = None):
+        """Draw the figure of circuit.
+
+        Args:
+            method(str): the method to draw the circuit
+                matp_inline: Show the figure interactively but do not save it to file.
+                matp_file: Save the figure to file but do not show it interactively.
+                matp_auto: Automatically select inline or file mode according to matplotlib backend.
+                matp_silent: Return the drawn figure without saving or showing.
+                command : command
+            filename(str): the output filename without file extensions, default to None.
+                If filename is None, it will using matlibplot.show() except matlibplot.backend
+                is agg, it will output jpg file named circuit's name.
+            get_figure(bool): Whether to return the figure object of matplotlib.
+
+        Returns:
+            If method is 'matp_silent', a matplotlib Figure is returned. Note that that figure is created in matplotlib
+            Object Oriented interface, which means it must be display with IPython.display.
+
+        Examples:
+            >>> from IPython.display import display
+            >>> circ = Circuit(5)
+            >>> circ.random_append()
+            >>> silent_fig = circ.draw(method="matp_silent")
+            >>> display(silent_fig)
+
+            >>> from IPython.display import display
+            >>> compositegate = CompositeGate()
+            >>> cx_gate=CX & [1,3]
+            >>> u2_gate= U2(1, 0)
+            >>> H| compositegate(1)
+            >>> cx_gate | compositegate
+            >>> u2_gate | compositegate(1)
+            >>> silent_fig = compositegate.draw(method="matp_silent")
+            >>> display(silent_fig)
+        """
+        from QuICT.tools.drawer import PhotoDrawer, TextDrawing
+        import matplotlib
+
+        if method.startswith('matp'):
+            if filename is not None:
+                if '.' not in filename:
+                    filename += '.jpg'
+
+            photo_drawer = PhotoDrawer()
+            if method == 'matp_auto':
+                save_file = matplotlib.get_backend() == 'agg'
+                show_inline = matplotlib.get_backend() != 'agg'
+            elif method == 'matp_file':
+                save_file = True
+                show_inline = False
+            elif method == 'matp_inline':
+                save_file = False
+                show_inline = True
+            elif method == 'matp_silent':
+                save_file = False
+                show_inline = False
+            else:
+                raise ValueError(
+                    "Circuit.draw.matp_method", "[matp_auto, matp_file, matp_inline, matp_silent]", method
+                )
+
+            silent = (not show_inline) and (not save_file)
+            photo_drawer.run(circuit=self, filename=filename, save_file=save_file)
+
+            if show_inline:
+                from IPython.display import display
+                display(photo_drawer.figure)
+            elif silent:
+                return photo_drawer.figure
+
+        elif method == 'command':
+            text_drawer = TextDrawing(self._qubits, self.gates)
+            if filename is None:
+                print(text_drawer.single_string())
+                return
+            elif '.' not in filename:
+                filename += '.txt'
+
+            text_drawer.dump(filename)
+        else:
+            raise ValueError(
+                "Circuit.draw.method", "[matp_auto, matp_file, matp_inline, matp_silent, command]", method
+            )
 
 
 class CircuitMode(Enum):

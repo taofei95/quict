@@ -6,10 +6,6 @@ from ._operator import Operator
 class NoiseGate(Operator):
     """
     The quantum gate with noise error.
-
-    Args:
-        gate (BasicGate): The quantum gate.
-        error (QuantumNoiseError): The noise error.
     """
     @property
     def noise_matrix(self) -> list:
@@ -22,15 +18,32 @@ class NoiseGate(Operator):
 
     @property
     def type(self) -> str:
-        return "noise"
+        return self._gate.type
 
-    def __init__(self, noise_matrix, args_num: int):
-        super().__init__(args_num)
-        self._noise_matrix = noise_matrix
-        self._precision = self._noise_matrix[0].dtype
+    @property
+    def targets(self) -> int:
+        return self._gate.targets
+
+    @property
+    def controls(self) -> int:
+        return self._gate.controls
+
+    def __init__(self, gate, noise):
+        """
+        Args:
+            gate (BasicGate): The quantum gate.
+            error (QuantumNoiseError): The noise error.
+        """
+        self._gate = gate
+        self._noise = noise
+        args_num = gate.controls + gate.targets
+        gate_name = gate.type.name
+        super().__init__(args_num, name=f"ng_{gate_name}")
+        self._noise_matrix = noise.apply_to_gate(gate.matrix)
+        self._precision = gate.precision
 
     def copy(self):
-        _ngate = NoiseGate(self._noise_matrix, self._targets)
+        _ngate = NoiseGate(self._gate, self._noise)
 
         if len(self.targs) > 0:
             _ngate.targs = self._targs

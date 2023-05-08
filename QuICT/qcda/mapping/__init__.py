@@ -7,5 +7,6 @@ try:
 except:
     RLMapping = None
     print(
-        "Please install pytorch, torch-geometric, torch-sparse, tensorboard, cupy and quict_ml first, you can use 'pip install quict-ml' to install quict_ml. "
+        "Please install pytorch, torch-geometric, torch-sparse, tensorboard, cupy and quict_ml first, "
+        + "you can use 'pip install quict-ml' to install quict_ml. "
     )

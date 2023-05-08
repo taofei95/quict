@@ -169,7 +169,7 @@ class StateVectorSimulator:
             # Check for checkpoint
             cp = mapping_cgate.checkpoint
             position = current_idx if cp is None else self._circuit.find_position(cp)
-            self._pipeline = self._pipeline[:position] + mapping_cgate.gates + \
+            self._pipeline = self._pipeline[:position] + mapping_cgate.fast_gates + \
                 self._pipeline[position:]
 
     def _apply_measure_gate(self, qidx):
