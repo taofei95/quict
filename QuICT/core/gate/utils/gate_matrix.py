@@ -1,7 +1,7 @@
 import numpy as np
 
-from .variable import Variable
 from QuICT.core.utils import GateType
+from QuICT.core.utils import Variable
 
 
 class GateMatrixGenerator:

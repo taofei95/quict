@@ -1,7 +1,7 @@
 import numpy as np
 import torch
-from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
-from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
+from QuICT.algorithm.quantum_machine_learning.utils_v1 import Ansatz
+from QuICT.algorithm.quantum_machine_learning.utils_v1.gate_tensor import *
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.algorithm.quantum_machine_learning.utils.binary_reduction import Binary_reduction

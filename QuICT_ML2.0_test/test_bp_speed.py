@@ -1,16 +1,10 @@
-import torch
 import time
-import tensorflow as tf
+import numpy_ml
 
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
-from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
-from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.utils import GpuSimulator
-from QuICT.algorithm.quantum_machine_learning.differentiator import Adjoint
-from QuICT.core.gate.utils import Variable
+from QuICT.algorithm.quantum_machine_learning.differentiator import Differentiator
 from QuICT.core.circuit import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.utils import GateSimulator
 from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 
@@ -32,22 +26,25 @@ def test_fp_bp(n_qubit, layers):
     sv = simulator.run(circuit)
     print("FP", time.time() - start)
 
-    differ = Adjoint(device="GPU")
-    optim = tf.keras.optimizers.SGD(learning_rate=0.1)
+    differ = Differentiator(device="GPU")
+    optim = numpy_ml.neural_nets.optimizers.Adam(lr=0.1)
     h = Hamiltonian([[1, "Y1"]])
     start = time.time()
-    variables = differ.run(circuit, variables, sv, h)
+    variables, _ = differ.run(circuit, variables, sv, h)
     print("BP", time.time() - start)
 
     start = time.time()
-    variables = apply_optimizer(optim, variables)
-    print("UPDATE", time.time() - start)
+    variables.pargs = optim.update(variables.pargs, variables.grads, "variables")
+    print("OPTIMIZE", time.time() - start)
     variables.zero_grad()
+    
+    start = time.time()
+    circuit.update(variables)
+    print("UPDATE", time.time() - start)
 
 
 if __name__ == "__main__":
     # 17qubits FP0.005s, BP0.034s
     # 20qubits FP0.014s, BP0.16s
     # 25qubits FP0.35s, BP4.5s
-    with tf.device('/GPU:0'):
-        test_fp_bp(17, [Rzx] * 2)
+    test_fp_bp(17, [Rzx] * 2)

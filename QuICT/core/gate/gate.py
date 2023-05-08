@@ -4,7 +4,7 @@ from typing import Union
 import numpy as np
 
 from QuICT.core.utils import (
-    matrix_product_to_circuit, GateType, MatrixType,
+    Variable, matrix_product_to_circuit, GateType, MatrixType,
     CGATE_LIST, GATE_ARGS_MAP, PAULI_GATE_SET, CLIFFORD_GATE_SET, GATEINFO_MAP
 )
 from QuICT.tools.exception.core import (
@@ -12,7 +12,7 @@ from QuICT.tools.exception.core import (
     QASMError, GateMatrixError, GateParametersAssignedError
 )
 
-from .utils import Variable, GateMatrixGenerator, ComplexGateBuilder, InverseGate
+from .utils import GateMatrixGenerator, ComplexGateBuilder, InverseGate
 
 
 class BasicGate(object):
