@@ -36,7 +36,7 @@ def _quick_sort(arr: List[int], begin: int, end: int, swaps: List[Tuple[int, int
 
 def _wrap_to_circ(circuit_like: CircuitLike, width: int) -> Circuit:
     circ = Circuit(width)
-    circ.extend(circuit_like.gates)
+    circ.extend(circuit_like)
     return circ
 
 
@@ -51,7 +51,7 @@ def check_circ_mapped(circ: Circuit, layout: Layout) -> bool:
     allowed_positions = set()
     for pos in layout.directionalized:
         allowed_positions.add((pos.u, pos.v))
-    for gate in circ.gates:
+    for gate in circ.flatten_gates():
         if gate.controls + gate.targets == 1:
             continue
         pos = tuple(gate.cargs + gate.targs)
