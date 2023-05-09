@@ -1,15 +1,18 @@
+from abc import ABC, abstractmethod
 from sympy import *
 import autograd.numpy as np
 from autograd import grad
 
 
-class Loss:
+class Loss(ABC):
     def __init__(self):
         return
 
+    @abstractmethod
     def __call__(self, pred, true):
         raise NotImplementedError
 
+    @abstractmethod
     def gradient(self, pred, true):
         raise NotImplementedError
 

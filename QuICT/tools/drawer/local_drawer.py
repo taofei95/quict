@@ -665,8 +665,15 @@ class PhotoDrawer(object):
             layer_width = 1
 
             for gate in layer.gates:
-                if isinstance(gate, (CompositeGate, Operator)) or gate.type == GateType.perm or gate.type == GateType.unitary:
-                    continue
+                if isinstance(gate, (CompositeGate, Operator)) or gate.type in [GateType.perm, GateType.unitary]:
+                    if isinstance(gate, (CompositeGate, Operator)):
+                        name = "cg_" + gate.name[-4:] if isinstance(gate, CompositeGate) else gate.name
+                    else:
+                        name = gate.type.name
+
+                    name_width = round(self._get_text_width(name, self.style.fs) + 0.21 * 2)
+                    if layer_width <= name_width:
+                        layer_width = name_width + 1
                 elif gate.params > 1:
                     param = self.get_parameter_str(gate.pargs)
                     if '$\\pi$' in param:

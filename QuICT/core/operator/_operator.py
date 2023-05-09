@@ -32,7 +32,7 @@ class Operator:
         assert isinstance(targets, list), TypeError(
             f"qubits must be one of [List[int], int], not {type(targets)}"
         )
-        assert len(targets) == self.targets, f"The length of targets should be equal {self.targets}."
+        assert len(targets) == self._targets, f"The length of targets should be equal {self._targets}."
         for idx in targets:
             assert idx >= 0, f"targets must be a positive integer, not {idx}"
 

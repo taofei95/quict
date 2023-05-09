@@ -220,7 +220,7 @@ class CompositeGate(CircuitBased):
         self._pointer = None
 
     def insert(self, gate: Union[BasicGate, CompositeGate], insert_idx: int):
-        """ Insert a Quantum Gate into current CompositeGate. 
+        """ Insert a Quantum Gate into current CompositeGate.
 
         Args:
             gate (Union[BasicGate, CompositeGate]): The quantum gate want to insert

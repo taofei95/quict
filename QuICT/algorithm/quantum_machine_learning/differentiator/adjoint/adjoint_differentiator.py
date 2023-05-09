@@ -66,6 +66,9 @@ class AdjointDifferentiator:
         self._gate_calculator = GateSimulator(
             self._device, self._precision, self._device_id, self._sync
         )
+        self._simulator = StateVectorSimulator(
+            self._device, self._precision, self._device_id, self._sync
+        )
 
     def run(
         self,
@@ -74,7 +77,7 @@ class AdjointDifferentiator:
         state_vector: np.ndarray,
         expectation_op: Hamiltonian,
     ):
-        self.initial_circuit(circuit)
+        self._initial_circuit(circuit)
         assert state_vector is not None
         self._vector = self._gate_calculator.normalized_state_vector(
             state_vector.copy(), self._qubits
@@ -151,13 +154,13 @@ class AdjointDifferentiator:
             expectation_list.append(expectation)
         return np.array(expectation_list)
 
-    def initial_circuit(self, circuit: Circuit):
+    def _initial_circuit(self, circuit: Circuit):
         circuit.gate_decomposition(decomposition=False)
         self._training_gates = circuit.count_training_gate()
         self._remain_training_gates = self._training_gates
         self._qubits = int(circuit.width())
         self._circuit = circuit
-        self._bp_circuit = Circuit(circuit.width())
+        self._bp_circuit = Circuit(self._qubits)
         gates = [gate & targs for gate, targs, _ in circuit.fast_gates][::-1]
         for i in range(len(gates)):
             inverse_gate = gates[i].inverse()
@@ -172,16 +175,12 @@ class AdjointDifferentiator:
     def _initial_grad_vector(
         self, state_vector, qubits: int, expectation_op: Hamiltonian
     ):
-        simulator = StateVectorSimulator(
-            self._device, self._precision, self._device_id, self._sync
-        )
-
         circuit_list = expectation_op.construct_hamiton_circuit(qubits)
         coefficients = expectation_op.coefficients
         grad_vector = np.zeros(1 << qubits, dtype=np.complex128)
         grad_vector = self._gate_calculator.normalized_state_vector(grad_vector, qubits)
         for coeff, circuit in zip(coefficients, circuit_list):
-            grad_vec = simulator.run(circuit, state_vector)
+            grad_vec = self._simulator.run(circuit, state_vector)
             grad_vector += coeff * grad_vec
 
         return grad_vector
@@ -198,24 +197,26 @@ class AdjointDifferentiator:
             )
 
     def _calculate_grad(self, variables: Variable, origin_gate, qidxes: list):
-        if origin_gate.variables > 0:
-            self._remain_training_gates -= 1
-        for i in range(origin_gate.variables):
-            vector = self._vector.copy()
-            # d(|psi_t>) / d(theta_t^j)
-            self._apply_gate(origin_gate, qidxes, vector, fp=False, parg_id=i)
+        if origin_gate.variables == 0:
+            return
+        self._remain_training_gates -= 1
+        for i in range(origin_gate.params):
+            if isinstance(origin_gate.pargs[i], Variable):
+                vector = self._vector.copy()
+                # d(|psi_t>) / d(theta_t^j)
+                self._apply_gate(origin_gate, qidxes, vector, fp=False, parg_id=i)
 
-            # d(L)/d(|psi_t>) * d(|psi_t>) / d(theta_t^j)
-            grad = np.float64((self._grad_vector @ vector.conj()).real)
+                # d(L)/d(|psi_t>) * d(|psi_t>) / d(theta_t^j)
+                grad = np.float64((self._grad_vector @ vector.conj()).real)
 
-            # write gradient
-            origin_gate.pargs[i].grads = (
-                grad
-                if abs(origin_gate.pargs[i].grads) < 1e-12
-                else grad * origin_gate.pargs[i].grads
-            )
-            index = origin_gate.pargs[i].index
-            variables.grads[index] += origin_gate.pargs[i].grads
+                # write gradient
+                origin_gate.pargs[i].grads = (
+                    grad
+                    if abs(origin_gate.pargs[i].grads) < 1e-12
+                    else grad * origin_gate.pargs[i].grads
+                )
+                index = origin_gate.pargs[i].index
+                variables.grads[index] += origin_gate.pargs[i].grads
 
 
 if __name__ == "__main__":

@@ -7,15 +7,18 @@ from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.differentiator.adjoint import (
     AdjointDifferentiator,
 )
-from QuICT.algorithm.quantum_machine_learning.differentiator.parameter_shift import  ParameterShift
+from QuICT.algorithm.quantum_machine_learning.differentiator.parameter_shift import (
+    ParameterShift,
+)
 
 
 class Differentiator:
     __DEVICE = ["CPU", "GPU"]
-    __BACKEND = ["adjoint","parameter shift"]
+    __BACKEND = ["adjoint", "parameter_shift"]
     __PRECISION = ["single", "double"]
     __OPTIONS_DICT = {
         "adjoint": ["gpu_device_id"],
+        "parameter_shift": ["gpu_device_id"],
     }
 
     def __init__(
@@ -62,7 +65,7 @@ class Differentiator:
             differentiator = AdjointDifferentiator(
                 self._device, self._precision, **self._options
             )
-        elif self._backend == "parameter shift":
+        elif self._backend == "parameter_shift":
             differentiator = ParameterShift(
                 self._device, self._precision, **self._options
             )
