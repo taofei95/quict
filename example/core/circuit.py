@@ -11,7 +11,7 @@ from QuICT.tools.interface import OPENQASMInterface
 
 
 def circuit_build():
-    qubits = 8     # qubits number
+    qubits = 5     # qubits number
     cir = Circuit(qubits)
     qureg = cir.qubits
 
@@ -21,23 +21,13 @@ def circuit_build():
     Rzz(np.pi / 2) | cir([1, 2])
     CU3(np.pi / 2, 0, 0) | cir([3, 4])
     CCZ | cir([1, 2, 3])
-    Barrier | cir(2)
-    iSwap_dagger | cir([0, 1])
+    CY | cir(qureg[1, 3])  # Assign gate's qubits through qureg
 
-    S | cir(qureg[0])
-    CY | cir(qureg[1, 3])
-    CSwap | cir(qureg[3, 4, 5])
-
-    c1 = Hy
-    c1 | cir(1)
-    c1 = U2
-    c1(0, 0) | cir(2)
+    # Add self-design Gate
     c1 = CZ & [3, 4]
+    c2 = U2(np.pi / 2, np.pi / 2)
     c1 | cir
-    c1 = Ryy & [5, 6]
-    c1(np.pi / 4) | cir
-    c1 = CCX & [4, 5, 6]
-    c1 | cir
+    c2 | cir(1)
 
     matrix = np.array([
         [1, 0, 0, 0],
@@ -45,17 +35,16 @@ def circuit_build():
         [0, 0, 1, 0],
         [0, 0, 0, -1]
     ], dtype=np.complex128)
-    cgate_complex4 = Unitary(matrix, MatrixType.identity)
-    u_gate = cgate_complex4.build_gate()
-    u_gate | cir
+    cgate_complex4 = Unitary(matrix, MatrixType.control)
+    cgate_complex4 | cir([0, 1])
 
     cgate = CompositeGate()
     CCRz(1) | cgate([0, 1, 2])
     QFT(3) | cgate
     cgate | cir
 
-    print(cir.qasm())
     cir.draw(filename="circuit_build")
+
 
 def random_build():
     circuit = Circuit(5)
