@@ -1,21 +1,13 @@
 import collections
-import torch
-import torch.nn as nn
-import torch.utils.data as data
-import torch.nn.functional as F
 import tqdm
 from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
-import seaborn as sns
 import sys
 import numpy_ml
 import time
 
 sys.path.append("/home/zoker/quict")
 
-from QuICT.core.gate import *
-from QuICT.core.circuit import Circuit
-from QuICT.algorithm.quantum_machine_learning.ansatz_library import QNNLayer
 from QuICT.algorithm.quantum_machine_learning.encoding import *
 from QuICT.algorithm.quantum_machine_learning.utils.loss import *
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
@@ -127,9 +119,9 @@ net = QuantumNet(n_qubits=17, readout=16)
 
 import torch.utils.tensorboard
 
-tb = torch.utils.tensorboard.SummaryWriter(
-    log_dir="/home/zoker/quict/QNN2.0_MNIST_2300504/logs"
-)
+now_time = time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime(time.time()))
+model_path = "/home/zoker/quict/QNN2.0_MNIST_" + now_time + "/"
+tb = torch.utils.tensorboard.SummaryWriter(log_dir=model_path + "logs")
 
 # train epoch
 for ep in range(EPOCH):
@@ -145,6 +137,10 @@ for ep in range(EPOCH):
         )
         tb.add_scalar("train/loss", loss, ep * len(loader) + it)
         tb.add_scalar("train/accuracy", accuracy, ep * len(loader) + it)
+        # Save checkpoint
+        latest = (ep + 1) == EPOCH and (it + 1) == len(loader)
+        if (it != 0 and it % 30 == 0) or latest:
+            save_checkpoint(net, optimizer, model_path, ep, it, latest)
 
     # Validation
     loader_val = tqdm.tqdm(
