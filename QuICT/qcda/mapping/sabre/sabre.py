@@ -94,12 +94,12 @@ class SABREMapping:
 
         for edge in layout.edge_list:
             D[edge.u][edge.v] = D[edge.v][edge.u] = 1
-        for i in range(phy_number):
-            for j in range(phy_number):
-                if j == i:
+        for k in range(phy_number):
+            for i in range(phy_number):
+                if i == k:
                     continue
-                for k in range(phy_number):
-                    if k == i or k == j:
+                for j in range(phy_number):
+                    if j == k or j == i:
                         continue
                     D[i][j] = min(D[i][j], D[i][k] + D[k][j])
 
@@ -253,6 +253,7 @@ class SABREMapping:
                             assert False
                         if succ.pre_number == 0:
                             F.append(succ)
+                decay = [1 for _ in range(phy_number)]
                 continue
             else:
                 candidate_list = obtain_swaps()

@@ -159,7 +159,7 @@ class CircuitLib:
                     circuit.random_append(size * width, gateset, True, prob)
                     depth = circuit.depth()
                     if max_depth is None or depth <= max_depth:
-                        circuit.name = "+".join([type, classify, f"w{width}_s{size}_d{depth}"])
+                        circuit.name = "+".join([type, classify, f"w{width}_s{size * width}_d{depth}"])
                         circuit_list.append(circuit)
                 else:
                     circuits_list = self._get_circuit_from_benchmark(classify, width, size * width)

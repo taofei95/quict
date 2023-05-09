@@ -11,7 +11,7 @@ from QuICT.core.layout.layout import Layout
 from QuICT.qcda.qcda import QCDA
 from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.tools.circuit_library.circuitlib import CircuitLib
-from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
+from QuICT.core.virtual_machine import InstructionSet
 
 
 class QuICTBenchmark:
@@ -23,7 +23,11 @@ class QuICTBenchmark:
         output_file_type: str = "txt"
     ):
         """
-        Initial circuit library
+<<<<<<< HEAD
+        Initial benchmarking for QuICT
+=======
+        Initial benchmark for QuICT
+>>>>>>> core_refactoring_v2
 
         Args:
             output_path (str, optional): The path of the Analysis of the results.
@@ -35,9 +39,6 @@ class QuICTBenchmark:
         self._output_file_type = output_file_type
         self._device = device
         self.simulator = StateVectorSimulator(device=self._device)
-
-        if not os.path.exists(self._output_path):
-            os.makedirs(self._output_path)
 
     def _circuit_selection(self, qubit_num, level):
         based_circuits_list = []
@@ -113,15 +114,17 @@ class QuICTBenchmark:
 
         # Step 2: Whether it goes through QCDA or not
         cir_qcda_list, layout_width_mapping = [], {}
+        if mapping:
+            for i in range(2, quantum_machine_info["qubits_number"] + 1):
+                layout_file = quantum_machine_info["layout_file"].sub_layout(i)
+                layout_width_mapping[i] = layout_file
 
         for circuit in circuits_list:
             cir_width = int(re.findall(r"\d+", circuit.name)[0])
             qcda = QCDA()
             if mapping is True and cir_width > 1:
-                for i in range(2, quantum_machine_info["qubits_number"] + 1):
-                    layout_file = quantum_machine_info["layout_file"].sub_layout(i)
-                    layout_width_mapping[i] = layout_file
-                    qcda.add_mapping(layout_width_mapping[cir_width])
+                qcda.add_mapping(layout_width_mapping[cir_width])
+
             if gate_transform is True and circuit.name.split("+")[-2] != "mediate_measure":
                 qcda.add_gate_transform(quantum_machine_info["Instruction_Set"])
             cir_qcda = qcda.compile(circuit)
@@ -292,6 +295,9 @@ class QuICTBenchmark:
 
     def show_result(self, entropy_QV_score, eigenvalue_QV_score, valid_circuits_list):
         """ show benchmark result. """
+        if not os.path.exists(self._output_path):
+            os.makedirs(self._output_path)
+
         if len(eigenvalue_QV_score) > 0:
             self._graph_show(entropy_QV_score, eigenvalue_QV_score, valid_circuits_list)
 

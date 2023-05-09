@@ -1,9 +1,9 @@
 import os
 
 from QuICT.benchmark.benchmark import QuICTBenchmark
-from QuICT.core.layout.layout import Layout
+from QuICT.core.layout import Layout
 from QuICT.core.utils.gate_type import GateType
-from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
+from QuICT.core.virtual_machine import InstructionSet
 from QuICT.simulation.state_vector import StateVectorSimulator
 
 layout = Layout.load_file(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/layout/grid_3x3.json")
@@ -41,7 +41,7 @@ def step_benchmark():
         # The sub-physical machine properties to be measured.
         # qubits_number is The number of physical machine bits, layout_file is Physical machine topology,
         # Instruction_Set is Physical machine instruction set type.
-        level=3,              # choose circuits group level, one of [1, 2, 3].
+        level=1,              # choose circuits group level, one of [1, 2, 3].
         mapping=True,         # Mapping according to the physical machine topology or not.
         gate_transform=True   # Gate transform according to the physical machine Instruction Set or not.
     )

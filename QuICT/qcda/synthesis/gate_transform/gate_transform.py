@@ -7,9 +7,10 @@
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import *
-from QuICT.qcda.synthesis.gate_transform.special_set import *
+from QuICT.core.gate import CompositeGate, GateType, Unitary, GPhase
+from QuICT.core.virtual_machine.special_set import USTCSet
 from QuICT.qcda.utility import OutputAligner
+from .transform_rule import *
 
 
 class GateTransform(object):
@@ -40,7 +41,7 @@ class GateTransform(object):
         if isinstance(circuit, CompositeGate):
             gates.extend(circuit)
         elif isinstance(circuit, Circuit):
-            gates.extend(circuit.gates)
+            gates.extend(circuit.to_compositegate())
         else:
             raise TypeError("Invalid input for GateTransform")
 
@@ -49,14 +50,18 @@ class GateTransform(object):
         gates = self.one_qubit_transform(gates)
         return gates
 
-    def one_qubit_transform(self, gates):
+    def one_qubit_transform(self, gates: CompositeGate):
         gates_tran = CompositeGate()
-        unitaries = [np.identity(2, dtype=np.complex128) for _ in range(gates.width())]
-        for gate in gates:
+        unitaries = [np.identity(2, dtype=np.complex128) for _ in range(max(gates.qubits) + 1)]
+        single_qubit_rule = self.instruction_set.one_qubit_rule
+        if isinstance(single_qubit_rule, str):
+            single_qubit_rule = eval(single_qubit_rule)
+
+        for gate in gates.flatten_gates(True):
             if gate.targets + gate.controls == 2:
                 targs = gate.cargs + gate.targs
                 for targ in targs:
-                    gates_transformed = self.instruction_set.one_qubit_rule(Unitary(unitaries[targ]) & targ)
+                    gates_transformed = single_qubit_rule(Unitary(unitaries[targ].copy()) & targ)
                     if gates_transformed.width() == 0:
                         local_matrix = np.eye(2)
                     else:
@@ -73,8 +78,9 @@ class GateTransform(object):
                 gates_tran.append(gate)
             else:
                 unitaries[gate.targ] = np.dot(gate.matrix, unitaries[gate.targ])
-        for i in range(gates.width()):
-            gates_transformed = self.instruction_set.one_qubit_rule(Unitary(unitaries[i]) & i)
+
+        for i in range(max(gates.qubits) + 1):
+            gates_transformed = single_qubit_rule(Unitary(unitaries[i].copy()) & i)
             if gates_transformed.width() == 0:
                 local_matrix = np.eye(2)
             else:
@@ -89,17 +95,20 @@ class GateTransform(object):
             gates_tran.extend(gates_transformed)
         return gates_tran
 
-    def two_qubit_transform(self, gates):
+    def two_qubit_transform(self, gates: CompositeGate):
         gates_tran = CompositeGate()
         for gate in gates:
             if gate.targets + gate.controls > 2:
                 raise Exception("gate_transform only support 2-qubit and 1-qubit gate now.")
             if gate.type != self.instruction_set.two_qubit_gate and gate.targets + gate.controls == 2:
-                rule = self.instruction_set.select_transform_rule(gate.type)
+                double_qubit_rule = self.instruction_set.select_transform_rule(gate.type)
+                if isinstance(double_qubit_rule, str):
+                    double_qubit_rule = eval(double_qubit_rule)
+
                 if self.keep_phase:
-                    gates_tran.extend(rule(gate))
+                    gates_tran.extend(double_qubit_rule(gate))
                 else:
-                    for g in rule(gate):
+                    for g in double_qubit_rule(gate):
                         if g.type != GateType.gphase:
                             gates_tran.append(g)
             else:

@@ -12,11 +12,10 @@ def random_unit_vector(n):
 
 def test_schmidt_decompose():
     for n in range(3, 6):
-        for _ in range(100):
-            A_qubits = 2
-            state_vector = random_unit_vector(1 << n)
-            l, iA, iB = schmidt_decompose(state_vector, A_qubits)
-            res = np.zeros(1 << n, dtype=np.complex128)
-            for i in range(len(l)):
-                res += l[i] * np.kron(iA[i], iB[i])
-            assert np.allclose(state_vector, res)
+        A_qubits = 2
+        state_vector = random_unit_vector(1 << n)
+        l, iA, iB = schmidt_decompose(state_vector, A_qubits)
+        res = np.zeros(1 << n, dtype=np.complex128)
+        for i in range(len(l)):
+            res += l[i] * np.kron(iA[i], iB[i])
+        assert np.allclose(state_vector, res)

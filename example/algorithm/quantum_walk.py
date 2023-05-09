@@ -9,4 +9,4 @@ step = 10
 edges = [[1, 3], [2, 0], [3, 1], [0, 2]]
 sample = qw.run(step=step, position=4, edges=edges, coin_operator=H.matrix)
 print(sample)
-draw_samples_with_auxiliary(sample, 2, 1)
+draw_samples_with_auxiliary(sample, 2, 1, save_path=".")

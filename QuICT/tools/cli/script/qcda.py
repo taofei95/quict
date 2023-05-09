@@ -2,11 +2,11 @@ import os
 import sys
 
 from QuICT.core import Layout
+from QuICT.core.virtual_machine.special_set import USTCSet, GoogleSet, IBMQSet, IonQSet, NamSet, OriginSet
 from QuICT.tools import Logger, LogFormat
 from QuICT.tools.interface import OPENQASMInterface
 from QuICT.tools.circuit_library import CircuitLib
 from QuICT.qcda.qcda import QCDA
-from QuICT.qcda.synthesis.gate_transform import USTCSet, GoogleSet, IBMQSet, IonQSet, NamSet, OriginSet
 from QuICT.qcda.synthesis import GateTransform, CliffordUnidirectionalSynthesizer
 from QuICT.qcda.optimization import (
     CliffordRzOptimization, CommutativeOptimization, SymbolicCliffordOptimization,

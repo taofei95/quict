@@ -1,2 +1,2 @@
-from .gate_based import GateMatrixs
+from .apply_gate import GateSimulator
 from .result import Result
