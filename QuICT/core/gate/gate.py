@@ -706,7 +706,15 @@ class Unitary(BasicGate):
         return matrix_type, controls
 
     def build_gate(self, qidxes: list = None):
-        decomp_gate = ComplexGateBuilder.build_unitary(self._matrix)
+        try:
+            decomp_gate = ComplexGateBuilder.build_unitary(self._matrix)
+        except:
+            from QuICT.core.gate import CompositeGate
+            decomp_gate = CompositeGate()
+            decomp_gate.append(self)
+
+            return decomp_gate
+
         gate_args = self.cargs + self.targs if qidxes is None else qidxes
         if len(gate_args) > 0:
             decomp_gate & gate_args
