@@ -80,7 +80,7 @@ class Layout:
 
     Attributes:
         qubit_number(int): the number of qubits
-        name(string): the name of the topology        
+        name(string): the name of the topology
     """
 
     DIRECTIONAL_DEFAULT = False

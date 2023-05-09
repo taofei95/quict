@@ -14,7 +14,7 @@ def build_iset():
     )
     print(iset.gates)
 
-    # Set Single-Qubit Gates' Rule, you can define yourself function rule or one of 
+    # Set Single-Qubit Gates' Rule, you can define yourself function rule or one of
     # [zyz_rule, zxz_rule, hrz_rule, xyx_rule, ibmq_rule, u3_rule]
     print(iset.one_qubit_rule)
     iset.register_one_qubit_rule('hrz_rule')

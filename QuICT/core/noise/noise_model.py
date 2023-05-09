@@ -1,10 +1,11 @@
 from numpy.random import random
 from typing import Union, List
+from collections import defaultdict
 
 from .noise_error import QuantumNoiseError, NoiseChannel, BitflipError
 from .readout_error import ReadoutError
 from QuICT.core import Circuit
-from QuICT.core.gate import BasicGate, GateType, gate_builder, Unitary
+from QuICT.core.gate import BasicGate, GateType, GATEINFO_MAP, Unitary
 from QuICT.core.operator import NoiseGate
 from QuICT.core.virtual_machine import VirtualQuantumMachine
 from QuICT.tools.exception.core import TypeError, ValueError, NoiseApplyError
@@ -28,56 +29,68 @@ class NoiseModel:
         self._name = name
         self._vqm = quantum_machine_info
 
-        self._gate_type = []
-        self._error_by_gate = {}
-        self._all_qubits_error_gates = {}
+        self._error_by_gate = defaultdict(list)
         self._readout_errors = []
 
         if self._vqm is not None:
             self._build_nm_from_vqm()
 
+    def is_ideal_model(self) -> bool:
+        """ Validate it is a ideal(No noise) Quantum Machine Model or not. """
+        if len(self._error_by_gate) + len(self._readout_errors) == 0:
+            return True
+
+        return False
+
     def _build_nm_from_vqm(self):
         qureg = self._vqm.qubits
         iset = self._vqm.instruction_set
 
-        # Build gate error from Instruction Set
-        self._gate_type = iset.gates
-        gate_fidelity = self._vqm.gate_fidelity
-        if gate_fidelity is not None:
-            for gate_type, fidelity in iset.one_qubit_fidelity.items():
-                gate_error = BitflipError(fidelity)
-                self.add_noise_for_all_qubits(gate_error, gate_type)
-
-        # Build Readout Error from the given Qureg. TODO: add QSP fidelity Error later
+        # Build Error from the given Qubits Fidelity. TODO: add QSP fidelity Error later
         for idx, qubit in enumerate(qureg):
-            if qubit.fidelity != 1.0:
-                readout_error = ReadoutError([[qubit.fidelity, 1 - qubit.fidelity], [1 - qubit.fidelity, qubit.fidelity]])
+            # Readout Error
+            measured_fidelity = qubit.fidelity
+            if isinstance(measured_fidelity, tuple):
+                f0, f1 = measured_fidelity
+            else:
+                f0, f1 = measured_fidelity, measured_fidelity
+
+            if f0 != 1.0 or f1 != 1.0:
+                readout_error = ReadoutError([[f0, 1 - f0], [1 - f1, f1]])
                 self.add_readout_error(readout_error, idx)
 
+            # Gate Error
+            gate_fidelity = qubit.gate_fidelity
+            target_gate_type = iset.gates[:-1] if isinstance(gate_fidelity, float) else gate_fidelity.keys()
+            for gate_type in target_gate_type:
+                current_fidelity = gate_fidelity if isinstance(gate_fidelity, float) else gate_fidelity[gate_type]
+                if current_fidelity != 1.0:
+                    self.add(BitflipError(current_fidelity), gate_type.name, idx)
+
         # Deal with bi-qubits gate fidelity (coupling strength)
-        coupling_strength = self._vqm.coupling_strength
+        coupling_strength = qureg._original_coupling_strength
         if coupling_strength is not None:
-            bi_qubits_gate = self._gate_type[-1]
+            bi_qubits_gate = iset.gates[-1]
             for start, end, val in coupling_strength:
                 noise_error = BitflipError(val)
                 noise_error = noise_error.tensor(noise_error)
-                self.add(noise_error, bi_qubits_gate, [start, end])
+                self.add(noise_error, bi_qubits_gate.name, [start, end])
 
     def __str__(self):
-        nm_str = f"{self._name}:\nBasic Gates: {self._gate_type}\nNoise Errors:\n"
-        if self._all_qubits_error_gates:
-            nm_str += f"Gates with all qubits: {set(self._all_qubits_error_gates)}\n"
+        nm_str = f"{self._name}:\nBasic Gates: {self._error_by_gate.keys()}\nNoise Errors:\n"
 
-        if self._specified_error_gates:
-            nm_str += "Gates with specified qubits:"
-            for _, q, g in self._instruction["specific"]:
-                nm_str += f"[qubits: {q}, gates: {g}] "
+        for gate_type, noise_list in self._error_by_gate.items():
+            nm_str += f"Gate {gate_type} with noise: \n"
+            for noise, qubits in noise_list:
+                if qubits == -1:
+                    nm_str += f"target qubits: All, noise type: {noise.type.name};\n"
+                else:
+                    nm_str += f"target qubits: {qubits}, noise type: {noise.type.name};\n"
 
         if self._readout_errors:
-            nm_str += "Measured Gates with Readout Error:"
-            for idx, re_qubit in enumerate(self._readout_errors):
-                readout_error = self._instruction["readout"][idx]
-                nm_str += f"[qubits: {re_qubit}, Readout Error Prob: {readout_error.prob}]"
+            nm_str += "Readout Error: \n"
+            for re_error, re_qubit in self._readout_errors:
+                nm_str += f"target qubits: {re_qubit}, Readout Error Prob: {re_error.prob}; \n"
 
         return nm_str
 
@@ -96,8 +109,6 @@ class NoiseModel:
     def _gates_normalize(self, noise: QuantumNoiseError, gates: Union[str, List[str]]):
         assert isinstance(noise, QuantumNoiseError), \
             TypeError("NoiseModel.add.noise", "QuantumNoiseError", type(noise))
-        if not gates:
-            raise ValueError("NoiseModel.add.gates", "not be empty", gates)
 
         if isinstance(gates, str):
             gates = [gates]
@@ -105,13 +116,12 @@ class NoiseModel:
             raise TypeError("NoiseModel.add.gates", "str/list<str>", type(gates))
 
         for g in gates:
-            if g not in self._basic_gates:
-                raise ValueError("NoiseModel.add.gates", self._basic_gates, g)
+            assert isinstance(g, str), TypeError("NoiseModel.add.gates", "str/list<str>", type(g))
 
-            gate = gate_builder(GateType.__members__[g])
-            if gate.controls + gate.targets != noise.qubits:
+            gate_info = GATEINFO_MAP[GateType.__members__[g]]
+            if gate_info[0] + gate_info[1] != noise.qubits:
                 raise NoiseApplyError(
-                    f"Un-matched qubits number between gate {gate.controls + gate.targets}" +
+                    f"Un-matched qubits number between gate {gate_info[0] + gate_info[1]}" +
                     f"with noise error {noise.qubits}."
                 )
 
@@ -222,8 +232,12 @@ class NoiseModel:
         qubit_num = circuit.width()
         noised_circuit = Circuit(qubit_num)
         for gate in circuit.gates:
-            if isinstance(gate, BasicGate) and gate.type.name in self._basic_gates:
+            if isinstance(gate, BasicGate):
                 gate_str = gate.type.name
+                if gate_str not in self._error_by_gate.keys():
+                    gate | noised_circuit
+                    continue
+
                 gate_args = gate.cargs + gate.targs
                 noise_list = self._error_by_gate[gate_str]
                 append_origin_gate = True
