@@ -84,8 +84,11 @@ class AdjointDifferentiator:
             state_vector.copy(), self._qubits, expectation_op
         )
         # expectation
-        expectation = (state_vector.conj() @ self._grad_vector).real
-
+        expectation = (
+            (state_vector.conj() @ self._grad_vector).real
+            if self._device == "CPU"
+            else (state_vector.conj() @ self._grad_vector).real.get()
+        )
         for idx in range(len(self._bp_pipeline)):
             if self._remain_training_gates == 0:
                 return variables, expectation
@@ -113,20 +116,44 @@ class AdjointDifferentiator:
         state_vector_list: list,
         expectation_op: Hamiltonian,
     ):
-        params_list = []
+        params_grad_list = []
         expectation_list = []
         for circuit, state_vector in zip(circuits, state_vector_list):
             params, expectation = self.run(
                 circuit, variables.copy(), state_vector, expectation_op
             )
-            params_list.append(params)
+            params_grad_list.append(params.grads)
             expectation_list.append(expectation)
 
-        return params_list, expectation_list
+        return params_grad_list, np.array(expectation_list)
+
+    def get_expectation(
+        self, state_vector: np.ndarray, expectation_op: Hamiltonian,
+    ):
+        # Calculate d(L)/d(|psi_t>)
+        self._grad_vector = self._initial_grad_vector(
+            state_vector.copy(), self._qubits, expectation_op
+        )
+        # expectation
+        expectation = (
+            (state_vector.conj() @ self._grad_vector).real
+            if self._device == "CPU"
+            else (state_vector.conj() @ self._grad_vector).real.get()
+        )
+        return expectation
+
+    def get_expectations_batch(
+        self, state_vector_list: list, expectation_op: Hamiltonian,
+    ):
+        expectation_list = []
+        for state_vector in state_vector_list:
+            expectation = self.get_expectation(state_vector, expectation_op)
+            expectation_list.append(expectation)
+        return np.array(expectation_list)
 
     def initial_circuit(self, circuit: Circuit):
         circuit.gate_decomposition(decomposition=False)
-        self._training_gates = circuit.count_training_gates()
+        self._training_gates = circuit.count_training_gate()
         self._remain_training_gates = self._training_gates
         self._qubits = int(circuit.width())
         self._circuit = circuit

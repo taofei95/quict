@@ -7,7 +7,7 @@ from QuICT.core.gate import *
 class Qubit:
     """Qubit encoding for encoding classical image data into quantum circuits."""
 
-    def __init__(self, data_qubits: list):
+    def __init__(self, data_qubits: int):
         self._data_qubits = data_qubits
 
     def encoding(self, img):

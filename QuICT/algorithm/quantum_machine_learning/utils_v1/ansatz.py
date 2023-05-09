@@ -8,8 +8,8 @@ from QuICT.ops.utils import LinAlgLoader
 from QuICT.tools.exception.core import *
 from QuICT.tools.logger import *
 
-from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.utils import apply_gate
+from QuICT.algorithm.quantum_machine_learning.utils_v1.gate_tensor import *
+from QuICT.algorithm.quantum_machine_learning.utils_v1 import apply_gate
 from QuICT.algorithm.quantum_machine_learning.tools.exception import *
 
 logger = Logger("ansatz")
