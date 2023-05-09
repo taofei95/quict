@@ -10,18 +10,49 @@ from QuICT.qcda.mapping.sabre import SABREMapping
 from QuICT.core.utils.gate_type import GateType
 from QuICT.core.layout.layout import Layout
 from QuICT.qcda.optimization import clifford_rz_optimization, cnot_without_ancilla, commutative_optimization, symbolic_clifford_optimization, template_optimization
+from QuICT.qcda.optimization.commutative_optimization.commutative_optimization import CommutativeOptimization
 from QuICT.qcda.synthesis import gate_transform
 from QuICT.qcda.synthesis.gate_transform.gate_transform import GateTransform
 from QuICT.qcda.synthesis.quantum_state_preparation.quantum_state_preparation import QuantumStatePreparation
 from QuICT.qcda.synthesis.unitary_decomposition.unitary_decomposition import UnitaryDecomposition
+from QuICT.tools.circuit_library.circuitlib import CircuitLib
 from unit_test.qcda.synthesis.quantum_state_preparation.quantum_state_preparation_unit_test import random_unit_vector
 
 
 class QCDAbench:
 
-    def __init__(self, width, size):
+    def __init__(self, width, size, level):
         self._width = width
         self._size = size
+        if level is not None:
+            _circuits = self._circuit_selection(level)
+
+    _based_fields_list = ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure", "mirror", "qv"]
+    _alg_fields_list = ["adder", "clifford", "qft", "grover", "cnf", "maxcut", "qnn", "quantum_walk", "vqe", "qpe"]
+    _ran_fields_list = [
+        "aspen-4", "ourense", "rochester", "sycamore", "tokyo", "ctrl_unitary", "diag",
+        "single_bit", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"
+        ]
+
+    def _circuit_selection(self, level):
+        based_circuits_list = []
+        for field in self._based_fields_list:
+            circuits = CircuitLib().get_benchmark_circuit(str(field), qubits_interval=self._width )
+            based_circuits_list.extend(circuits)
+        random_fields_list = random.sample(self._ran_fields_list, 5)
+        for field in random_fields_list:
+            circuits = CircuitLib().get_random_circuit(str(field), qubits_interval=self._width )
+            based_circuits_list.extend(circuits)
+        if level >= 2:
+            for field in self._alg_fields_list[:3]:
+                circuits = CircuitLib().get_algorithm_circuit(str(field), qubits_interval=self._width )
+                based_circuits_list.extend(circuits)
+        if level >= 3:
+            for field in self._alg_fields_list[3:]:
+                circuits = CircuitLib().get_algorithm_circuit(str(field), qubits_interval=self._width )
+                based_circuits_list.extend(circuits)
+
+        return based_circuits_list
 
     def _circuit_construct(self, cir_type="random"):
         """ Construct random circuit. """
@@ -36,16 +67,16 @@ class QCDAbench:
 
         return circuit
 
-    def mappingbench(self, layout_file=None, map_func=None):
+    def mappingbench(self, layout=None, map_func=None):
         _map_func = [RlMapping, SABREMapping, MCTSMapping]
         assert map_func in _map_func, "please check mapping function"
         # circuit model
         circuit = self._circuit_construct()
         # layout
-        if layout_file is None:
+        if layout is None:
             layout = Layout.load_file(os.path.dirname(os.path.abspath(__file__)) + f"/example/layout/grid_3x3.json")
         else:
-            layout = Layout.load_file(layout_file)
+            layout = Layout.load_file(layout)
         # mapping function
         if map_func is None:
             map_func = random.choice(_map_func)
@@ -59,18 +90,23 @@ class QCDAbench:
     
     def optimizebench(self, optimizer_func=None):
         # circuit model
-        circuit = self._circuit_construct()
         _optimizer_func = [
-            commutative_optimization,
+            CommutativeOptimization,
             symbolic_clifford_optimization,
             clifford_rz_optimization,
             cnot_without_ancilla,
             template_optimization
         ]
         assert optimizer_func in _optimizer_func, "please check optimization function"
-        if optimizer_func is None:
-            optimizer_func = random.choice(_optimizer_func)
-            circuit_opt = optimizer_func.execute(circuit)
+        if optimizer_func == _optimizer_func[0] or optimizer_func == _optimizer_func[1] or optimizer_func == _optimizer_func[4]:
+            circuit = self._circuit_construct()
+            circuit_opt = _optimizer_func().execute(circuit)
+        if optimizer_func == _optimizer_func[2]:
+            circuit = self._circuit_construct("clifford")
+            circuit_opt = _optimizer_func().execute(circuit)
+        if optimizer_func == _optimizer_func[3]:
+            circuit = self._circuit_construct("cnot")
+            circuit_opt = _optimizer_func().execute(circuit)
 
         bench_result = [
             circuit_opt.width(),

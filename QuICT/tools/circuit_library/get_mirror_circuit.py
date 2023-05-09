@@ -50,7 +50,7 @@ class MirrorCircuitBuilder:
 
         return cliffords_cgate
 
-    def build_mirror_circuit(self, width:int, rand_unit:int, pro:float):
+    def build_mirror_circuit(self, width:int, rand_unit:int=2, pro:float=0.8):
         """Get mirror circuit for benchmark.
 
         Args:

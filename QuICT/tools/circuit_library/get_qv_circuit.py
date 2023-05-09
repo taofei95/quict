@@ -33,7 +33,7 @@ class QuantumVolumnCircuitBuilder:
                 U3 | cgate(i)
         return cgate
 
-    def build_qv_circuit(self, width:int, depth:int):
+    def build_qv_circuit(self, width:int, depth:int=1):
         circuit = Circuit(width)
         width_indexes = list(range(width))
 
