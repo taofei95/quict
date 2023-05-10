@@ -256,18 +256,11 @@ class CircuitBased(object):
 
     def get_variable_shape(self):
         for gate, _, _ in self._gates:
-<<<<<<< HEAD
-            if gate.variables > 0:
-                for i in range(gate.params):
-                    if isinstance(gate.pargs[i], Variable):
-                        return gate.pargs[i].origin_shape
-=======
             if gate.variables == 0:
                 continue
             for i in range(gate.params):
                 if isinstance(gate.pargs[i], Variable):
                     return gate.pargs[i].origin_shape
->>>>>>> 3bf487dc551c2aa40c91386add28a35cf46cb4e5
 
     def get_variables(self):
         shape = self.get_variable_shape()
@@ -278,15 +271,6 @@ class CircuitBased(object):
         for gate, _, _ in self._gates:
             if remain_training_gates == 0:
                 break
-<<<<<<< HEAD
-            if gate.variables > 0:
-                remain_training_gates -= 1
-                for i in range(gate.params):
-                    if isinstance(gate.pargs[i], Variable):
-                        index = gate.pargs[i].index
-                        pargs[index] = gate.pargs[i].pargs
-                        grads[index] = gate.pargs[i].grads
-=======
             if gate.variables == 0:
                 continue
             remain_training_gates -= 1
@@ -295,7 +279,6 @@ class CircuitBased(object):
                     index = gate.pargs[i].index
                     pargs[index] = gate.pargs[i].pargs
                     grads[index] = gate.pargs[i].grads
->>>>>>> 3bf487dc551c2aa40c91386add28a35cf46cb4e5
         return Variable(pargs=pargs, grads=grads)
 
     def update(self, variables):
@@ -304,14 +287,6 @@ class CircuitBased(object):
         for gate, _, _ in self._gates:
             if remain_training_gates == 0:
                 return
-<<<<<<< HEAD
-            if gate.variables > 0:
-                remain_training_gates -= 1
-                for i in range(gate.params):
-                    if isinstance(gate.pargs[i], Variable):
-                        index = gate.pargs[i].index
-                        gate.pargs[i].pargs = variables.pargs[index]
-=======
             if gate.variables == 0:
                 continue
             remain_training_gates -= 1
@@ -326,7 +301,6 @@ class CircuitBased(object):
         """
         for g in self.flatten_gates():
             print(g.type, g.cargs, g.targs, g.pargs)
->>>>>>> 3bf487dc551c2aa40c91386add28a35cf46cb4e5
 
     def draw(self, method: str = 'matp_auto', filename: str = None):
         """Draw the figure of circuit.

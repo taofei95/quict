@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Union
 import uuid
+import re
 
 
 class Variable(object):
@@ -19,6 +20,9 @@ class Variable(object):
     @property
     def index(self):
         index = self.identity[32:]
+        if index[0] == '[':
+            temp = index.index(']')+2
+            index= index[temp:]
         return tuple(map(int, index.split(", ")[:-1]))
 
     @property

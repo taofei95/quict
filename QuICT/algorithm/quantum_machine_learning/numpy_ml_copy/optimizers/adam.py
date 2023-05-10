@@ -1,6 +1,6 @@
 from copy import deepcopy
 from abc import ABC, abstractmethod
-from QuICT.core.gate.utils.variable import Variable
+from QuICT.core.utils.variable import Variable
 import numpy as np
 from numpy.linalg import norm
 from .optimizer_base import OptimizerBase
