@@ -1,23 +1,19 @@
 import numpy as np
 
+from .ansatz import Ansatz
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 
 
-class QAOALayer:
-    @property
-    def params(self):
-        return self._params
-
+class QAOALayer(Ansatz):
     def __init__(
         self, n_qubits: int, p: int, hamiltonian: Hamiltonian,
     ):
-        self._n_qubits = n_qubits
+        super(QAOALayer, self).__init__(n_qubits)
         self._p = p
         self._hamiltonian = hamiltonian
-        self._params = None
 
     def init_circuit(self, params: Union[Variable, np.ndarray] = None):
         """Build QAOA circuit with optimizable parameters.
@@ -25,7 +21,8 @@ class QAOALayer:
         Returns:
             Circuit: The QAOA circuit.
         """
-        params = Variable(np.random.randn(2, self._p)) if params is None else params
+        params = np.random.randn(2, self._p) if params is None else params
+        params = Variable(pargs=params) if isinstance(params, np.ndarray) else params
         if params.shape == (2, self._p):
             self._params = params
         else:
