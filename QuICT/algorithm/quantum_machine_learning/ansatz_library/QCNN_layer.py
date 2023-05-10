@@ -17,12 +17,11 @@ class QCNNLayer(QNNLayer):
         super().__init__(data_qubits, result_qubit, device)
         self.param = params
         """
+      
         Args:
-            params(tuple): the parm of gates,it is expected to be a 1*4 tuple
-            tuple[0] contains params for qconv
-            tuple[1] contains params for pool
-            tuple[2] contains params for fc's G_param:list
-            tuple[3] contains params for fc's G2_param:list
+        params(Variable):  the number of elements in self.param is not exactly match the number of parameters 
+        in model-circuit,and the former should be not less than the after.
+     
         """
         
     def qconv(self,wires:list,idx_param:list):
@@ -30,15 +29,10 @@ class QCNNLayer(QNNLayer):
         The qconv2 class, which is a quatnum convoluitional used in QCNN model
         Args:
             wires(list): the wires where qcnov acting on
-            param(Variable):the parm of gates,it is expected to be a 1*4 list
-            idx_param(list): index of self.param
+            idx_param(list): index of self.param ,it is expected to be a 1*4 list
         """
         kernal_gate = CompositeGate()
         param = self.param[idx_param]
-        try:
-            see = param[0]
-        except:
-            see1 = 1
         Ry(param[0]) | kernal_gate(wires[0])
         Ry(param[1]) | kernal_gate(wires[1])
         CX | kernal_gate([wires[1], wires[0]])
@@ -50,7 +44,8 @@ class QCNNLayer(QNNLayer):
     def pool(self,wires:list,idx_param:list):
         """
         Args:
-            parm(list): the parm of gates,it is expected to be a 1*6 list
+            wires(list): the index of qubits  which circuit_layer acting on 
+            idx_param(list): contain the index of parameter ,it is expected to be a 1*6 list
             reference:
             http://www.juestc.uestc.edu.cn/cn/article/doi/10.12178/1001-0548.2022279
         """
@@ -73,9 +68,8 @@ class QCNNLayer(QNNLayer):
     def FC(self, wires:list, idx1_param, idx2_param, )-> CompositeGate:
         """
         Args:
-            param(list): the param of gates,it is expected to be a  list
-            range_control: , where r is the 'range' of the control 
-
+            wires(list): the index of qubits  which circuit_layer acting on 
+            idx_param(list): contain the index of parameter 
             reference:
             https://journals.aps.org/pra/abstract/10.1103/PhysRevA.101.032308
         """
@@ -97,20 +91,22 @@ class QCNNLayer(QNNLayer):
             #cu3_gate |fc_gate  ([(l-i)%len(G2_param),l-i-1])
         return fc_gate
 
-    def circuit_layer(self,idx_param:list,wires,com_gate:CompositeGate):
+    def circuit_layer(self,idx_param:list,wires:list,com_gate:CompositeGate):
         """
+        one layer contains two conv and one pool
         Args:
-            params(tuple): the parm of gates,it is expected to be a 1*4 tuple
-            tuple[0] contains params for qconv
-            tuple[1] contains params for pool
-            tuple[2] contains params for fc's G_param:list
-            tuple[3] contains params for fc's G2_param:list
+            idx_param(list): contain the index of parameter 
+            list[0] contains params for qconv
+            list[1] contains params for pool
+            wires(list): the index of qubits  which circuit_layer acting on 
+        return:
+        com_gate(CompositeGate):composite gate of circuit layer
         """
         index_param0 = 0
         index_param1= 0
         new_wires=list()
         n_wires=len(wires)
-        for i in range(1,n_wires,2):  # one layer contains two conv and one pool
+        for i in range(1,n_wires,2): 
             wire_list1=[wires[i],wires[(i+1)%n_wires]]
             wire_list2=[wires[i-1],wires[(i)%n_wires]]
             self.qconv(wires=wire_list1,idx_param= idx_param[0][index_param0:index_param0+4]) |com_gate

@@ -10,6 +10,9 @@ from QuICT.algorithm.quantum_machine_learning.utils.binary_reduction import (
 
 class NEQR(FRQI):
     def create_img_list(self, img, n_color_qubits, N):
+        """
+        overwritten of FRQI method
+        """
         img_list = []
         for i in range(n_color_qubits):
             img_list.append(list())

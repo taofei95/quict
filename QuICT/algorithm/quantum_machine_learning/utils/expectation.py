@@ -51,7 +51,9 @@ class Expectation(tf.keras.layers.Layer):
             expectation_value = self.get_expe(sv,hamiltonian[i],n_qubit)
             foward_pass_vals.append(expectation_value)
         
-        def todo_grad(model_circuit,hamiltonian,params,differentiator,tile_up_sv):
+        # TODO differtiaor should be called in this method, so follows are not finished code
+        def todo_grad(model_circuit,hamiltonian,params,differentiator,tile_up_sv): 
+            
             for i in range(len(model_circuit)):
                  differentiator[i].run(model_circuit[i],params[i],tile_up_sv[i],hamiltonian[i])
             return

@@ -4,7 +4,12 @@ import time
 
 
 
-def is_adjont(binary1 , binary2,half_length):
+def is_adjont(binary1 , binary2,half_length): # this method name is spelled mistake...
+    """
+    this method used to judge wheather two binaries can be reduced:
+    00010 and 01010 is adjacent 
+    00010 and 00001 is not adjacent
+    """
     if binary1 % (2**half_length) != binary1 % (2**half_length):
         return False
     same_bit_bin = binary1 ^ binary2
@@ -20,6 +25,12 @@ def is_adjont(binary1 , binary2,half_length):
 
 
 def reduce_bin(binary1, binary2,half_length ): # binary1 : int
+    """
+    input :00010 00000 and 01010 00000 
+    output:00010 01000
+    the first five bits denote 'postion information',
+    the after five bits denote wheather this qubit is already reduced
+    """
     bin1_int = binary1
     bin2_int = binary2
     binary1 = bin(binary1)
@@ -67,10 +78,9 @@ def may_adj(color:set):
 
 def Binary_reduction(bins,half_length:int): 
     """
-
-        Args:
-            bins(np.array):
-            half_length(int): the length of the longest of bianary.for a qcircuit:it should larger than number of qubits
+    Args:
+    bins(np.array):
+    half_length(int): the length of the longest of bianary.for a qcircuit:it should larger than number of qubits
 
     """   
     #half_length = 13

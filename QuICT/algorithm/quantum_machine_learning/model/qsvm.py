@@ -52,6 +52,13 @@ def quantum_norm_data(X):
     return quantum_X,len_sv
 
 def train_data_oracle(train_data,psi):
+    """
+    an oracle ,
+    reference:
+    Quantum support vector machine for big data classification
+    arXiv:1307.0471v3 [quant-ph] 10 Jul 2014
+    
+    """
     epsilo = 1e-5
     psi += epsilo
     quantum_data, size_train = quantum_norm_data(train_data)
@@ -67,6 +74,7 @@ def train_data_oracle(train_data,psi):
 
 class QSVM:
     '''
+    the most of variable in this class is named by article in reference
     reference:
     Quantum support vector machine for big data classification
     arXiv:1307.0471v3 [quant-ph] 10 Jul 2014
@@ -98,7 +106,7 @@ class QSVM:
         if not np.where(self._SVM_param != 0):
             print('hhl give bad solution')
        
-    def solve1(self,n_copies): # 
+    def solve1(self,n_copies): 
         '''
         use DensityMatrixSimulator to exponent controled e^(-iF*t)
         this method cannot run in fact
@@ -197,7 +205,10 @@ class QSVM:
         for i in range(X.shape[0],expend_M):
             K_hat[i,i] = 1
         return K_hat,expend_M
-    def kernel(self,x1,x2):
+    def kernel(self,x1,x2):  
+        """
+        this method use swap-test to calculate the inner product of two vector
+        """
         n_qubit = int(np.log2(len(x1)))
         state_vec = np.kron(np.array([1,0]),x1)
         state_vec = np.kron(state_vec,x2)
