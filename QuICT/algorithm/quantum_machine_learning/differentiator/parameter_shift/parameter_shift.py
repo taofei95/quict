@@ -51,6 +51,24 @@ class ParameterShift:
 
         return variables, expectation
 
+    def run_batch(
+        self,
+        circuits: list,
+        variables: Variable,
+        state_vector_list: list,
+        expectation_op: Hamiltonian,
+    ):
+        params_grad_list = []
+        expectation_list = []
+        for circuit, state_vector in zip(circuits, state_vector_list):
+            params, expectation = self.run(
+                circuit, variables.copy(), state_vector, expectation_op
+            )
+            params_grad_list.append(params.grads)
+            expectation_list.append(expectation)
+
+        return params_grad_list, np.array(expectation_list)
+
     def get_expectation(
         self, state_vector: np.ndarray, expectation_op: Hamiltonian,
     ):
@@ -70,6 +88,15 @@ class ParameterShift:
             else (state_vector.conj() @ grad_vector).real.get()
         )
         return expectation
+
+    def get_expectations_batch(
+        self, state_vector_list: list, expectation_op: Hamiltonian,
+    ):
+        expectation_list = []
+        for state_vector in state_vector_list:
+            expectation = self.get_expectation(state_vector, expectation_op)
+            expectation_list.append(expectation)
+        return np.array(expectation_list)
 
     def _calculate_grad(self, variables: Variable, gate, expectation_op):
         if gate.variables == 0:
