@@ -67,7 +67,7 @@ class QuantumNet(Model):
 
         if train:
             # BP get loss and d(loss) / d(exp)
-            grads = -loss_fun.gradient(y_pred, y_true)
+            grads = -loss_fun.gradient()
             # BP get d(loss) / d(params)
             for params_grad, grad in zip(params_grads, grads):
                 self._params.grads += grad * params_grad
