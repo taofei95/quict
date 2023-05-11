@@ -7,6 +7,8 @@ from QuICT.core import Circuit
 from QuICT.core.gate import GateType
 from QuICT.lib.qasm.exceptions import QasmError
 from QuICT.tools import Logger
+from QuICT.tools.circuit_library.get_mirror_circuit import MirrorCircuitBuilder
+from QuICT.tools.circuit_library.get_qv_circuit import QuantumVolumnCircuitBuilder
 from QuICT.tools.interface import OPENQASMInterface
 from .circuit_lib_sql import CircuitLibDB
 from .get_benchmark_circuit import BenchmarkCircuitBuilder

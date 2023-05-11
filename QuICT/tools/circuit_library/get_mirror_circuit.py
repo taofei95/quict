@@ -24,7 +24,6 @@ class MirrorCircuitBuilder:
         qubits_indexes = list(range(width))
         if single is False:
             prob = int((pro * width) / 2)
-            assert 0 <= pro <= 1, "two qubits gate prob must be between 0 and 1"
             assert prob >= 1 , "Circuit must have one double qubits gate."
             count = 0
             for _ in range(width):
@@ -50,65 +49,56 @@ class MirrorCircuitBuilder:
 
         return cliffords_cgate
 
-    def build_mirror_circuit(self, width:int, rand_unit:int=2, pro:float=0.8):
+    def build_mirror_circuit(self, width:int, size:int):
         """Get mirror circuit for benchmark.
 
         Args:
             width (int): The width of the circuit.
-            rand_unit (int): The number of sampling units.
-            pro (float): The probability of two qubits gate in circuit.
+            size (int): The gates of the circuit.
 
         Returns:
             (List[Circuit]): Return the mirror circuit.
 
         """
-        cir = Circuit(width)
+        cir_list = []
+        pro_list = [0.4, 0.6, 0.8]
+        for i in range(len(pro_list)):
+            cir = Circuit(width)
+            # A layer of H gate
+            H | cir
 
-        # A layer of H gate
-        H | cir
+            # single qubit cliffords
+            single_clifford_gate = self._random_cliffords(width, pro_list[i], single=True)
+            single_clifford_gate | cir
 
-        # single qubit cliffords
-        single_clifford_gate = self._random_cliffords(width, pro, single=True)
-        single_clifford_gate | cir
+            # unit circuits obtain random paulis and random cliffords
+            inverse_group_gate = []
+            rand_unit = int((size - width * 5) / (width * 4))
+            if rand_unit > 0:
+                for _ in range(rand_unit):
+                    cgate_paulis = self._random_paulis(width)
+                    cgate_paulis | cir
+                    cgate_cliffords = self._random_cliffords(width, pro_list[i], single=False)
+                    cgate_cliffords | cir
+                    inverse_group_gate.append(cgate_cliffords.inverse())
 
-        # unit circuits obtain random paulis and random cliffords
-        inverse_group_gate = []
-        for _ in range(rand_unit):
-            cgate_paulis = self._random_paulis(width)
-            cgate_paulis | cir
-            cgate_cliffords = self._random_cliffords(width, pro, single=False)
-            cgate_cliffords | cir
-            inverse_group_gate.append(cgate_cliffords.inverse())
+                # random paulis
+                c_paulis_gate = self._random_paulis(width)
+                c_paulis_gate | cir
 
-        # random paulis
-        c_paulis_gate = self._random_paulis(width)
-        c_paulis_gate | cir
+                # inverse unit circuits
+                for c_group in reversed(inverse_group_gate):
+                    c_group | cir
+                    cgate = self._random_paulis(width)
+                    cgate | cir
 
-        # inverse unit circuits
-        for c_group in reversed(inverse_group_gate):
-            c_group | cir
-            cgate = self._random_paulis(width)
-            cgate | cir
+                # inverse single qubit cliffords
+                inverse_clifford_gate = single_clifford_gate.inverse()
+                inverse_clifford_gate | cir
 
-        # inverse single qubit cliffords
-        inverse_clifford_gate = single_clifford_gate.inverse()
-        inverse_clifford_gate | cir
+                # A layer of measure gate
+                Measure | cir
 
-        # A layer of measure gate
-        Measure | cir
+            cir_list.append(cir)
 
-        return cir
-
-    def mirror_circuit_transform(circuit):
-        inverse_list = []
-        cgate = circuit.to_compositegate()
-        for c in cgate:
-            inverse_list.append(c)
-        for inv in reversed(inverse_list):
-            inv | circuit
-
-        return circuit
-
-if __name__ == "__main__":
-    cir = MirrorCircuitBuilder().build_mirror_circuit(width=5, rand_unit=2, pro=0.8)
-    cir.draw(filename="mirror_circuit")
+        return cir_list
