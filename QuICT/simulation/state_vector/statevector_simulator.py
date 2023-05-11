@@ -112,8 +112,11 @@ class StateVectorSimulator:
 
         # Initial Quantum Circuit and State Vector
         self.initial_circuit(circuit)
+        self._original_state_vector = None
         if state_vector is not None:
             self._vector = self._gate_calculator.normalized_state_vector(state_vector, self._qubits)
+            if self._quantum_machine is not None:
+                self._original_state_vector = state_vector.copy()
         elif not use_previous:
             self.initial_state_vector()
 
@@ -233,25 +236,43 @@ class StateVectorSimulator:
         """
         assert (self._circuit is not None), \
             SampleBeforeRunError("StateVectorSimulation sample without run any circuit.")
-        sv_result_number = 1 << len(target_qubits) if target_qubits is not None else 1 << self._qubits
-        state_list = [0] * sv_result_number
+        if self._quantum_machine is not None:
+            return self._sample_with_noise(shots, target_qubits)
 
-        if self._quantum_machine is None:
-            original_sv = self._vector.copy()
-
+        target_qubits = target_qubits if target_qubits is not None else list(range(self._qubits))
+        state_list = [0] * (1 << len(target_qubits))
+        original_sv = self._vector.copy()
         for _ in range(shots):
             for m_id in target_qubits:
                 index = self._qubits - 1 - m_id
                 self._apply_measure_gate(index)
 
             state_list[int(self._circuit.qubits[target_qubits])] += 1
+            self._vector = original_sv.copy()
 
-            # If using Quantum Machine Model, need generator noised circuit and run it again.
-            if self._quantum_machine is None:
-                self._vector = original_sv.copy()
-            else:
-                noised_circuit = self._quantum_machine.transpile(self._circuit)
-                self._pipeline = noised_circuit.fast_gates
-                self._run()
+        return state_list
+
+    def _sample_with_noise(self, shots: int, target_qubits: list) -> list:
+        target_qubits = target_qubits if target_qubits is not None else list(range(self._qubits))
+        state_list = [0] * (1 << len(target_qubits))
+
+        for _ in range(shots):
+            final_state = 0
+            for m_id in target_qubits:
+                index = self._qubits - 1 - m_id
+                measured = self._gate_calculator.apply_measure_gate(index, self._vector, self._qubits)
+                # Apply readout noise
+                # measured = self._quantum_machine.apply_readout_error(index, measured)
+                final_state <<= 1
+                final_state += measured
+
+            state_list[final_state] += 1
+
+            # Re-generate noised circuit and initial state vector
+            self._vector = self._gate_calculator.get_allzero_state_vector(self._qubits) \
+                if self._original_state_vector is None else self._original_state_vector.copy()
+            noised_circuit = self._quantum_machine.transpile(self._circuit)
+            self._pipeline = noised_circuit.fast_gates
+            self._run()
 
         return state_list
