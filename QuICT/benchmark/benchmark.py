@@ -7,11 +7,9 @@ import numpy as np
 from collections import defaultdict
 from matplotlib import pyplot as plt
 
-from QuICT.core.layout.layout import Layout
 from QuICT.qcda.qcda import QCDA
 from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.tools.circuit_library.circuitlib import CircuitLib
-from QuICT.core.virtual_machine import InstructionSet
 
 
 class QuICTBenchmark:
@@ -23,11 +21,7 @@ class QuICTBenchmark:
         output_file_type: str = "txt"
     ):
         """
-<<<<<<< HEAD
-        Initial benchmarking for QuICT
-=======
         Initial benchmark for QuICT
->>>>>>> core_refactoring_v2
 
         Args:
             output_path (str, optional): The path of the Analysis of the results.
@@ -46,8 +40,10 @@ class QuICTBenchmark:
         for field in based_fields_list:
             circuits = CircuitLib().get_benchmark_circuit(str(field), qubits_interval=qubit_num)
             based_circuits_list.extend(circuits)
+
+        # delete "ctrl_unitary" for the time being
         alg_fields_list = [
-            "ctrl_unitary", "diag", "single_bit", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"
+            "diag", "single_bit", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"
         ]
         random_fields_list = random.sample(alg_fields_list, 5)
         for field in random_fields_list:
@@ -68,88 +64,42 @@ class QuICTBenchmark:
 
         return based_circuits_list
 
-    def _validate_quantum_machine_info(self, quantum_machine_info):
-        assert isinstance(quantum_machine_info["qubits_number"], int)
-        if "layout_file" in quantum_machine_info.keys():
-            assert isinstance(quantum_machine_info["layout_file"], Layout)
-        if "Instruction_Set" in quantum_machine_info.keys():
-            assert isinstance(quantum_machine_info["Instruction_Set"], InstructionSet)
-
     def get_circuits(
         self,
-        quantum_machine_info: dict,
-        level: int = 1,
-        mapping: bool = False,
-        gate_transform: bool = False
+        quantum_machine_info,
+        level: int = 1
     ):
         """
         Get circuit from CircuitLib and Get the circuit after qcda.
 
         Args:
-            quantum_machine_info(dict[str]): Gives the sub-physical machine properties to be measured, include:
-                {"qubits_number": str, the number of physical machine bits, "layout_file": layout, the physical machine
-                topology, "Instruction_Set": InstructionSet, Physical machine instruction set type,only one double-bit
-                gate can be included}.
-                for example:
-
-                layout_file = Layout.load_file(f"grid_3x3.json")
-                Instruction_Set = InstructionSet(GateType.cx, [GateType.h])
-
+            quantum_machine_info(VirtualQuantumMachine, optional): (VirtualQuantumMachine, optional): The information about the quantum machine.
             level (int): Get the type of benchmark circuit group, include different circuits, one of [1, 2, 3],
                 default 1.
-            mapping(bool): Mapping according to the physical machine topology or not, default False.
-            gate_transform(bool): Gate transform according to the physical machine Instruction Set or not,
-                default False.
 
         Returns:
             (List[Circuit]): Return the list of output circuit order by output_type.
         """
-        # whether quantum_machine_info is valid or not
-        self._validate_quantum_machine_info(quantum_machine_info)
 
         # Step 1: get circuits from circuitlib
-        circuits_list = self._circuit_selection(quantum_machine_info["qubits_number"], level)
-        if mapping is False and gate_transform is False:
-            return circuits_list
+        circuits_list = self._circuit_selection(quantum_machine_info.qubit_number, level)
 
-        # Step 2: Whether it goes through QCDA or not
-        cir_qcda_list, layout_width_mapping = [], {}
-        if mapping:
-            for i in range(2, quantum_machine_info["qubits_number"] + 1):
-                layout_file = quantum_machine_info["layout_file"].sub_layout(i)
-                layout_width_mapping[i] = layout_file
-
+        # Step 2: Circuits are mapped or optimised
+        cir_qcda_list = []
         for circuit in circuits_list:
-            cir_width = int(re.findall(r"\d+", circuit.name)[0])
+            field = circuit.name.split("+")[-2]
             qcda = QCDA()
-            if mapping is True and cir_width > 1:
-                qcda.add_mapping(layout_width_mapping[cir_width])
-
-            if gate_transform is True and circuit.name.split("+")[-2] != "mediate_measure":
-                qcda.add_gate_transform(quantum_machine_info["Instruction_Set"])
-            cir_qcda = qcda.compile(circuit)
-
-            type, classify = circuit.name.split("+")[:-1][0], circuit.name.split("+")[:-1][1]
-            if type != "benchmark":
-                cir_qcda.name = "+".join(
-                    [type, classify, f"w{cir_qcda.width()}_s{cir_qcda.size()}_d{cir_qcda.depth()}"]
-                )
-            else:
-                void_value = int(re.findall(r"\d+", circuit.name)[3])
-                cir_qcda.name = "+".join(
-                    [type, classify, f"w{cir_qcda.width()}_s{cir_qcda.size()}_d{cir_qcda.depth()}_v{void_value}"]
-                )
-            cir_qcda_list.append(cir_qcda)
+            if field != "mediate_measure":
+                cir_qcda = qcda.auto_compile(circuit, quantum_machine_info)
+                cir_qcda_list.append(cir_qcda)
 
         return cir_qcda_list
 
     def run(
         self,
+        quantum_machine_info,
         simulator_interface,
-        quantum_machine_info: dict,
-        level: int = 1,
-        mapping: bool = False,
-        gate_transform: bool = False
+        level: int = 1
     ):
         """
         Connect real-time benchmarking to the sub-physical machine to be measured.
@@ -163,20 +113,15 @@ class QuICTBenchmark:
                     simulation(circuit)
                     return amplitude
 
-            quantum_machine_info(dict[str]): Gives the sub-physical machine properties to be measured,for example:
-                {"qubits_number": the number of physical machine bits, "layout_file": the physical machine topology,
-                "Instruction_Set": Physical machine instruction set type, only one double-bit gate can be included}.
+            quantum_machine_info(VirtualQuantumMachine, optional): (VirtualQuantumMachine, optional): The information about the quantum machine.
             level (int): Get the type of benchmark circuit group, include different circuits, one of [1, 2, 3],
                 default 1.
-            mapping(bool): Mapping according to the physical machine topology or not, default False.
-            gate_transform(bool): Gate transform according to the physical machine Instruction Set or not,
-                default False.
 
         Returns:
             Return the analysis of benchmarking.
         """
         # Step1 : get circuits from circuitlib
-        circuits_list = self.get_circuits(quantum_machine_info, level, mapping, gate_transform)
+        circuits_list = self.get_circuits(quantum_machine_info, level)
         # Step 2: physical machine simulation
         amp_results_list = []
         for circuit in circuits_list:
@@ -204,7 +149,7 @@ class QuICTBenchmark:
         valid_circuits_list = self._filter_system(entropy_QV_score)
         if valid_circuits_list == []:
             print("There is no valid circuit, please select again !")
-
+        print(valid_circuits_list)
         # Step 3: It is a score for the special benchmark circuit index value and the quantum volume of all circuits.
         eigenvalue_QV_score = self._eigenvalue_QV_score(valid_circuits_list)
 
@@ -235,7 +180,7 @@ class QuICTBenchmark:
 
             circuit_info = re.findall(r"\d+", circuit_list[index].name)
             QV_value = min(int(circuit_info[0]), int(circuit_info[2]))
-            # print(entropy_QV_score)
+
             # Step 3: return entropy values and quantum volumn values
             entropy_QV_score.append([circuit_list[index].name, entropy_value, entropy_score, QV_value])
             entropy_QV_score.sort(key=lambda x: int(re.findall(r"\d+", x[0])[0]), reverse=False)
