@@ -106,12 +106,8 @@ class UnitarySimulator():
         state_list = [0] * (1 << len(target_qubits))
         original_sv = self._vector.copy()
         for _ in range(shots):
-            measured_result = 0
-            for i in range(len(target_qubits) - 1, -1, -1):
-                measured_result <<= 1
-                measured_result += self._gate_calculator.apply_measure_gate(target_qubits[i], self._vector, self._qubits_num)
-
-            state_list[measured_result] += 1
+            final_state = self._get_measured_result(target_qubits)
+            state_list[final_state] += 1
             self._vector = original_sv.copy()
 
         return state_list
@@ -121,15 +117,10 @@ class UnitarySimulator():
         state_list = [0] * (1 << len(target_qubits))
 
         for _ in range(shots):
-            final_state = 0
-            for m_id in target_qubits:
-                index = self._qubits_num - 1 - m_id
-                measured = self._gate_calculator.apply_measure_gate(index, self._vector, self._qubits_num)
-                # Apply readout noise
-                # measured = self._quantum_machine.apply_readout_error(index, measured)
-                final_state <<= 1
-                final_state += measured
+            final_state = self._get_measured_result(target_qubits)
 
+            # Apply readout noise
+            final_state = self._quantum_machine.apply_readout_error(target_qubits, final_state)
             state_list[final_state] += 1
 
             # Re-generate noised circuit and initial state vector
@@ -142,3 +133,13 @@ class UnitarySimulator():
             )
 
         return state_list
+
+    def _get_measured_result(self, target_qubits: list):
+        final_state = 0
+        for m_id in target_qubits:
+            index = self._qubits_num - 1 - m_id
+            measured = self._gate_calculator.apply_measure_gate(index, self._vector, self._qubits_num)
+            final_state <<= 1
+            final_state += measured
+
+        return final_state

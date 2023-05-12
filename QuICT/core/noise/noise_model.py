@@ -189,35 +189,53 @@ class NoiseModel:
 
         self._readout_errors.append((noise, qubits))
 
-    def apply_readout_error(self, qureg):
+    def apply_readout_error(self, qubit_indexes: list, measured: int) -> int:
         """ Apply readout error to target qubits.
 
         Args:
-            qureg (Qureg): The circuits' qubits.
+            qubit_indexes (List): The indexes of all measured qubits.
+            measured (int): the measured state of all measured qubits.
         """
+        if len(self._readout_errors) == 0:
+            return measured
+
+        bits_measured = "{0:0b}".format(measured).zfill(len(qubit_indexes))
+        bits_measured = [int(i) for i in bits_measured]
         for readouterror, qubits in self._readout_errors:
             if readouterror.qubits == 1:
                 for q in qubits:
-                    if qureg[q].measured is None:
-                        continue
-
-                    truly_result = int(qureg[q])
-                    qureg[q].measured = readouterror.apply_to_qubits(truly_result)
+                    if q in qubit_indexes:
+                        truly_result = bits_measured[qubit_indexes.index(q)]
+                        bits_measured[qubit_indexes.index(q)] = readouterror.apply_to_qubits(truly_result)
             else:
                 all_qubits_measured = True
+                target_qidx = []
                 for q in qubits:
-                    if qureg[q].measured is None:
+                    if q not in qubit_indexes:
                         all_qubits_measured = False
                         break
+
+                    target_qidx.append(qubit_indexes.index(q))
 
                 if not all_qubits_measured:
                     continue
 
-                truly_result = int(qureg[qubits])
+                truly_result = 0
+                for tidx in target_qidx:
+                    truly_result <<= 1
+                    truly_result += int(bits_measured[tidx])
+
                 noised_result = readouterror.apply_to_qubits(truly_result)
-                for q in qubits[::-1]:
-                    qureg[q].measured = noised_result & 1
+                for tidx in target_qidx[::-1]:
+                    bits_measured[q] = noised_result & 1
                     noised_result >>= 1
+
+        noise_state = 0
+        for bm in bits_measured:
+            noise_state <<= 1
+            noise_state += bm
+
+        return noise_state
 
     def transpile(self, circuit: Circuit, accumulated_mode: bool = False) -> Circuit:
         """ Apply all noise in the Noise Model to the given circuit, replaced related gate with the NoiseGate

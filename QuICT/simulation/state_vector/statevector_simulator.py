@@ -200,7 +200,7 @@ class StateVectorSimulator:
         self._gate_calculator.apply_reset_gate(qidx, self._vector, self._qubits)
 
     # TODO: refactoring later, multi-gpu kernel function
-    def apply_multiply(self, value: Union[float, np.complex]):
+    def apply_multiply(self, value: Union[float, complex]):
         """ Deal with Operator <Multiply>
 
         Args:
@@ -261,11 +261,11 @@ class StateVectorSimulator:
             for m_id in target_qubits:
                 index = self._qubits - 1 - m_id
                 measured = self._gate_calculator.apply_measure_gate(index, self._vector, self._qubits)
-                # Apply readout noise
-                # measured = self._quantum_machine.apply_readout_error(index, measured)
                 final_state <<= 1
                 final_state += measured
 
+            # Apply readout noise
+            final_state = self._quantum_machine.apply_readout_error(target_qubits, final_state)
             state_list[final_state] += 1
 
             # Re-generate noised circuit and initial state vector

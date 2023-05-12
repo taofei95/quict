@@ -356,7 +356,7 @@ class Qureg(list):
             str: the value of the qureg
         """
         bit_idx = "{0:0b}".format(self.__int__())
-        bit_idx.zfill(len(self))
+        bit_idx = bit_idx.zfill(len(self))
 
         return bit_idx
 
