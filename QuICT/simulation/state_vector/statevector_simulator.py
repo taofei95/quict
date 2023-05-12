@@ -74,7 +74,8 @@ class StateVectorSimulator:
 
     def initial_circuit(self, circuit: Circuit):
         """ Initial the qubits, quantum gates and state vector by given quantum circuit. """
-        self._circuit = circuit
+        self._origin_circuit = circuit
+        self._circuit = circuit if self._quantum_machine is None else self._quantum_machine.transpile(circuit)
         self._qubits = int(circuit.width())
         self._pipeline = circuit.fast_gates
 
@@ -107,7 +108,6 @@ class StateVectorSimulator:
             noise_model = quantum_machine_model if isinstance(quantum_machine_model, NoiseModel) else \
                 NoiseModel(quantum_machine_info=quantum_machine_model)
             if not noise_model.is_ideal_model():
-                circuit = noise_model.transpile(circuit)
                 self._quantum_machine = noise_model
 
         # Initial Quantum Circuit and State Vector
@@ -194,7 +194,7 @@ class StateVectorSimulator:
 
     def _apply_measure_gate(self, qidx):
         result = self._gate_calculator.apply_measure_gate(qidx, self._vector, self._qubits)
-        self._circuit.qubits[self._qubits - 1 - qidx].measured = int(result)
+        self._origin_circuit.qubits[self._qubits - 1 - qidx].measured = int(result)
 
     def _apply_reset_gate(self, qidx):
         self._gate_calculator.apply_reset_gate(qidx, self._vector, self._qubits)
@@ -271,7 +271,7 @@ class StateVectorSimulator:
             # Re-generate noised circuit and initial state vector
             self._vector = self._gate_calculator.get_allzero_state_vector(self._qubits) \
                 if self._original_state_vector is None else self._original_state_vector.copy()
-            noised_circuit = self._quantum_machine.transpile(self._circuit)
+            noised_circuit = self._quantum_machine.transpile(self._origin_circuit)
             self._pipeline = noised_circuit.fast_gates
             self._run()
 
