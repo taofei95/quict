@@ -668,6 +668,7 @@ export default {
         content: ProgramText,
         source: "QCDA",
       });
+      this.n_ProgramText = ProgramText;
       this.NewConfirmBtnEnable = true;
     },
     GroupGates(Gates) {
@@ -1351,6 +1352,13 @@ export default {
       this.load_qcda();
     });
     this.socket.on("qcda_info", (content) => {
+      console.log(content);
+      if (!content.uuid == this.uuid) {
+        return;
+      }
+      this.ShowOK(content.info);
+    });
+    this.socket.on("qcda_error", (content) => {
       console.log(content);
       if (!content.uuid == this.uuid) {
         return;

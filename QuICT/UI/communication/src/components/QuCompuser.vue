@@ -185,6 +185,7 @@ export default {
         content: ProgramText,
         source: "qucompuser",
       });
+      this.ProgramText = ProgramText;
     },
     GroupGates(Gates) {
       // 把gate按x轴分组

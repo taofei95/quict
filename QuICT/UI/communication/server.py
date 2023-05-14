@@ -352,7 +352,7 @@ def load_file(content):
     except Exception as e:
         if source == 'QCDA':
             emit(
-                'qcda_info', {'uuid': uid, 'info': f"Illegal Qasm file: {e}."}, namespace="/api/pty")
+                'qcda_error', {'uuid': uid, 'info': f"Illegal Qasm file: {e}."}, namespace="/api/pty")
         else:
             emit(
                 'info', {'uuid': uid, 'info': f"Illegal Qasm file: {e}."}, namespace="/api/pty")
@@ -673,7 +673,7 @@ def qcda_load(content):
         import traceback
         logger.warning(f"load gates error: {e}, {traceback.format_exc()}")
         emit(
-            'qcda_info', {'uuid': uid, 'info': f"load gates error: {e}"}, namespace="/api/pty")
+            'qcda_error', {'uuid': uid, 'info': f"load gates error: {e}"}, namespace="/api/pty")
 
 @socketio.on("programe_update", namespace="/api/pty")
 @authenticated_only
