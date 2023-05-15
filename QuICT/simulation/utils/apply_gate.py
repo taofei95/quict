@@ -24,6 +24,7 @@ class GateSimulator:
 
             self._array_helper = cp
             self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
+            cp.cuda.runtime.setDevice(self._gpu_device_id)
         else:
             self._array_helper = np
             self._algorithm = LinAlgLoader(device="CPU")
@@ -147,25 +148,23 @@ class GateSimulator:
         matrix = self._get_gate_matrix(gate) if gate.type != GateType.unitary else gate.matrix
         control_idx = np.array(cargs, dtype=np.int64)
         target_idx = np.array(targs, dtype=np.int64)
-        default_params = (
-            state_vector, qubits, matrix, args_num, control_idx, target_idx
-        )
 
         if matrix_type in [MatrixType.diag_diag, MatrixType.diagonal, MatrixType.control]:
             diagonal_matrix(
-                *default_params,
+                state_vector,
+                matrix,
+                control_idx,
+                target_idx,
                 is_control=True if matrix_type == MatrixType.control else False
             )
         elif matrix_type == MatrixType.swap:
-            swap_matrix(*default_params)
+            swap_matrix(state_vector, control_idx, target_idx)
         elif matrix_type == MatrixType.reverse:
-            reverse_matrix(*default_params)
+            reverse_matrix(state_vector, matrix, control_idx, target_idx)
         else:
             matrix_dot_vector(
                 state_vector,
-                qubits,
                 matrix,
-                gate.controls + gate.targets,
                 np.append(target_idx, control_idx)
             )
 
