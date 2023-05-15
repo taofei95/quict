@@ -385,13 +385,14 @@ class BasicGate(object):
     def build_gate(self, qidxes: list = None):
         """ Gate Decomposition, which divided the current gate with a set of small gates. """
         if self.type == GateType.cu3:
-            return ComplexGateBuilder.build_gate(self.type, self.parg, self.matrix)
+            cgate = ComplexGateBuilder.build_gate(self.type, self.parg, self.matrix)
+        else:
+            gate_list = ComplexGateBuilder.build_gate(self.type, self.parg)
+            if gate_list is None:
+                return gate_list
 
-        gate_list = ComplexGateBuilder.build_gate(self.type, self.parg)
-        if gate_list is None:
-            return gate_list
+            cgate = self._cgate_generator_from_build_gate(gate_list)
 
-        cgate = self._cgate_generator_from_build_gate(gate_list)
         gate_args = self.cargs + self.targs if qidxes is None else qidxes
         if len(gate_args) > 0:
             cgate & gate_args
