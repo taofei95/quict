@@ -41,12 +41,11 @@ class QuICTBenchmark:
             circuits = CircuitLib().get_benchmark_circuit(str(field), qubits_interval=qubit_num)
             based_circuits_list.extend(circuits)
 
-        # delete "ctrl_unitary" for the time being
-        alg_fields_list = [
-            "diag", "single_bit", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"
+        random_fields_list = [
+            "diag", "single_bit", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin", "ctrl_unitary"
         ]
-        random_fields_list = random.sample(alg_fields_list, 5)
-        for field in random_fields_list:
+        fields_list = random.sample(random_fields_list, 5)
+        for field in fields_list:
             circuits = CircuitLib().get_random_circuit(str(field), qubits_interval=qubit_num)
             based_circuits_list.extend(circuits)
 
@@ -67,7 +66,8 @@ class QuICTBenchmark:
     def get_circuits(
         self,
         quantum_machine_info,
-        level: int = 1
+        level: int = 1,
+        qcda_cir: bool = True
     ):
         """
         Get circuit from CircuitLib and Get the circuit after qcda.
@@ -76,6 +76,7 @@ class QuICTBenchmark:
             quantum_machine_info(VirtualQuantumMachine, optional): (VirtualQuantumMachine, optional): The information about the quantum machine.
             level (int): Get the type of benchmark circuit group, include different circuits, one of [1, 2, 3],
                 default 1.
+            qcda_cir(bool): Auto-Compile the circuit with the given quantum machine info, default True.
 
         Returns:
             (List[Circuit]): Return the list of output circuit order by output_type.
@@ -84,22 +85,34 @@ class QuICTBenchmark:
         # Step 1: get circuits from circuitlib
         circuits_list = self._circuit_selection(quantum_machine_info.qubit_number, level)
 
-        # Step 2: Circuits are mapped or optimised
-        cir_qcda_list = []
-        for circuit in circuits_list:
-            field = circuit.name.split("+")[-2]
-            qcda = QCDA()
-            if field != "mediate_measure":
-                cir_qcda = qcda.auto_compile(circuit, quantum_machine_info)
-                cir_qcda_list.append(cir_qcda)
-
-        return cir_qcda_list
+        # Step 2: Whether it goes through QCDA or not
+        if qcda_cir is True:
+            cir_qcda_list = []
+            for circuit in circuits_list:
+                qcda = QCDA()
+                type, classify = circuit.name.split("+")[:-1][0], circuit.name.split("+")[:-1][1]
+                if classify != "mediate_measure":
+                    cir_qcda = qcda.auto_compile(circuit, quantum_machine_info)
+                    if type != "benchmark":
+                        cir_qcda.name = "+".join(
+                            [type, classify, f"w{cir_qcda.width()}_s{cir_qcda.size()}_d{cir_qcda.depth()}"]
+                        )
+                    else:
+                        void_value = int(re.findall(r"\d+", circuit.name)[3])
+                        cir_qcda.name = "+".join(
+                            [type, classify, f"w{cir_qcda.width()}_s{cir_qcda.size()}_d{cir_qcda.depth()}_v{void_value}"]
+                        )
+                    cir_qcda_list.append(cir_qcda)
+            return cir_qcda_list
+        else:
+            return circuits_list
 
     def run(
         self,
         quantum_machine_info,
         simulator_interface,
-        level: int = 1
+        level: int = 1,
+        qcda_cir: bool = True
     ):
         """
         Connect real-time benchmarking to the sub-physical machine to be measured.
@@ -116,12 +129,13 @@ class QuICTBenchmark:
             quantum_machine_info(VirtualQuantumMachine, optional): (VirtualQuantumMachine, optional): The information about the quantum machine.
             level (int): Get the type of benchmark circuit group, include different circuits, one of [1, 2, 3],
                 default 1.
+            qcda_cir(bool): Auto-Compile the circuit with the given quantum machine info, default True.
 
         Returns:
             Return the analysis of benchmarking.
         """
         # Step1 : get circuits from circuitlib
-        circuits_list = self.get_circuits(quantum_machine_info, level)
+        circuits_list = self.get_circuits(quantum_machine_info, level, qcda_cir)
         # Step 2: physical machine simulation
         amp_results_list = []
         for circuit in circuits_list:
@@ -137,7 +151,7 @@ class QuICTBenchmark:
 
         Args:
             circuit_list (List): The list of circuits.
-            mac_results_list (List[ndarray]): Physical machine simulation amplitude results.
+            amp_results_list (List[ndarray]): Physical machine simulation amplitude results.
 
         Returns:
             Return the analysis of benchmarking.
@@ -149,9 +163,10 @@ class QuICTBenchmark:
         valid_circuits_list = self._filter_system(entropy_QV_score)
         if valid_circuits_list == []:
             print("There is no valid circuit, please select again !")
-        print(valid_circuits_list)
+
         # Step 3: It is a score for the special benchmark circuit index value and the quantum volume of all circuits.
         eigenvalue_QV_score = self._eigenvalue_QV_score(valid_circuits_list)
+        print(valid_circuits_list)
 
         # Step 4: Data analysis
         self.show_result(entropy_QV_score, eigenvalue_QV_score, valid_circuits_list)
