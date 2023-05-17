@@ -75,6 +75,22 @@ class CircuitCost(object):
         """
         self.backend = backend
 
+        n_qubit = self.backend.qubit_number
+        self.max_T1 = max(self.backend.t1_times) if self.backend.t1_times else 0
+        self.max_T2 = max(self.backend.t2_times) if self.backend.t2_times else 0
+
+        # qubit_info[i]: Dict {
+        #     'T1': float,
+        #     'T2': float,
+        #     'prob_meas0_prep1': float,
+        #     'prob_meas1_prep0': float,
+        # }
+        # self.qubit_info = {}
+        # gate_fidelity[qubit tuple]: Dict {
+        #     GateType: fidelity
+        # }
+        # self.gate_fidelity = {}
+
     @staticmethod
     def from_quest_data(model_info):
         """
@@ -220,3 +236,20 @@ class CircuitCost(object):
         circ_f = np.prod(qubit_f)
 
         return circ_f
+
+    def evaluate_backup(self, circuit: Circuit, fidelity_coef=1):
+        """
+        Evaluate cost of a circuit.
+
+        Args:
+            circuit(Circuit): Circuit to evaluate.
+            fidelity_coef(float): Coefficient of fidelity in cost function.
+
+        Returns:
+            float: Cost of the circuit.
+        """
+
+        cost = 0
+        for g in circuit.gates:
+            cost += self.gate_cost(g, fidelity_coef)
+        return cost
