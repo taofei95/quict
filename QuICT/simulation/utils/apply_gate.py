@@ -3,10 +3,6 @@ import numpy as np
 from QuICT.core.gate import BasicGate, GateMatrixGenerator
 from QuICT.core.utils import GateType, MatrixType, matrix_product_to_circuit
 from QuICT.ops.utils import LinAlgLoader
-from QuICT.ops.linalg.cpu_calculator import (
-    matrix_dot_vector, diagonal_matrix, swap_matrix, reverse_matrix,
-    measure_gate_apply, reset_gate_apply, get_measured_probability
-)
 from QuICT.tools.exception.core import GateQubitAssignedError
 from QuICT.tools.exception.simulation import GateTypeNotImplementError, GateAlgorithmNotImplementError
 
@@ -27,7 +23,7 @@ class GateSimulator:
             cp.cuda.runtime.setDevice(self._gpu_device_id)
         else:
             self._array_helper = np
-            self._algorithm = LinAlgLoader(device="CPU")
+            self._algorithm = LinAlgLoader(device="CPU", enable_gate_kernel=True)
 
     ####################################################################
     ############          State Vector Generator            ############
@@ -131,26 +127,24 @@ class GateSimulator:
         gate_cargs = [qubits - 1 - assigned_qubits[i] for i in range(gate.controls)]
         gate_targs = [qubits - 1 - assigned_qubits[i] for i in range(gate.controls, len(assigned_qubits))]
         if self._device == "CPU":
-            return self._apply_gate_cpu(gate, gate_cargs, gate_targs, state_vector, qubits)
+            return self._apply_gate_cpu(gate, gate_cargs, gate_targs, state_vector)
         else:
-            return self._apply_gate_gpu(gate, gate_cargs, gate_targs, state_vector, qubits)
+            return self._apply_gate_gpu(gate, gate_cargs, gate_targs, state_vector)
 
     def _apply_gate_cpu(
         self,
         gate: BasicGate,
         cargs: list,
         targs: list,
-        state_vector,
-        qubits
+        state_vector
     ):
         matrix_type = gate.matrix_type
-        args_num = gate.controls + gate.targets
         matrix = self._get_gate_matrix(gate) if gate.type != GateType.unitary else gate.matrix
         control_idx = np.array(cargs, dtype=np.int64)
         target_idx = np.array(targs, dtype=np.int64)
 
         if matrix_type in [MatrixType.diag_diag, MatrixType.diagonal, MatrixType.control]:
-            diagonal_matrix(
+            self._algorithm.diagonal_matrix(
                 state_vector,
                 matrix,
                 control_idx,
@@ -158,11 +152,11 @@ class GateSimulator:
                 is_control=True if matrix_type == MatrixType.control else False
             )
         elif matrix_type == MatrixType.swap:
-            swap_matrix(state_vector, control_idx, target_idx)
+            self._algorithm.swap_matrix(state_vector, control_idx, target_idx)
         elif matrix_type == MatrixType.reverse:
-            reverse_matrix(state_vector, matrix, control_idx, target_idx)
+            self._algorithm.reverse_matrix(state_vector, matrix, control_idx, target_idx)
         else:
-            matrix_dot_vector(
+            self._algorithm.matrix_dot_vector(
                 state_vector,
                 matrix,
                 np.append(target_idx, control_idx)
@@ -368,7 +362,7 @@ class GateSimulator:
     ####################################################################
     def apply_measure_gate(self, index: int, state_vector: np.ndarray, qubits: int) -> int:
         if self._device == "CPU":
-            result = measure_gate_apply(index, state_vector)
+            result = self._algorithm.measure_gate_apply(index, state_vector)
         else:
             prob = self._algorithm.measured_prob_calculate(
                 index, state_vector, qubits, sync=self._sync
@@ -381,7 +375,7 @@ class GateSimulator:
 
     def apply_reset_gate(self, index: int, state_vector: np.ndarray, qubits: int):
         if self._device == "CPU":
-            reset_gate_apply(index, state_vector)
+            self._algorithm.reset_gate_apply(index, state_vector)
         else:
             prob = self._algorithm.measured_prob_calculate(
                 index, state_vector, qubits, sync=self._sync
@@ -392,7 +386,7 @@ class GateSimulator:
 
     def get_measured_prob(self, index: int, state_vector: np.ndarray, qubits: int):
         if self._device == "CPU":
-            return get_measured_probability(index, state_vector)
+            return self._algorithm.get_measured_probability(index, state_vector)
         else:
             return self._algorithm.measured_prob_calculate(
                 index, state_vector, qubits, sync=self._sync

@@ -166,17 +166,17 @@ class TestCPULinalg(unittest.TestCase):
         self.assertTrue(np.isclose(np.sum(cpu_result), np.sum(TestCPULinalg.matrix_A), atol=1e-04))
 
     def test_matrix_dot_vector(self):
+        from QuICT.ops.gate_kernel.cpu import matrix_dot_vector
+
         qubit_num = 10
         circuit = Circuit(qubit_num)
         QFT(qubit_num) | circuit
 
         vec = np.zeros((1 << qubit_num, ), dtype=np.complex128)
         vec[0] = np.complex128(1)
-        CPUCalculator.matrix_dot_vector(
+        matrix_dot_vector(
             vec,
-            qubit_num,
             circuit.matrix(),
-            qubit_num,
             np.array(list(range(10)))
         )
 
@@ -186,13 +186,15 @@ class TestCPULinalg(unittest.TestCase):
         self.assertTrue(np.allclose(vec, sv))
 
     def test_measure_gate_apply(self):
+        from QuICT.ops.gate_kernel.cpu import measure_gate_apply
+
         qubit_num = 10
         circuit = Circuit(qubit_num)
         QFT(qubit_num) | circuit
 
         vec = np.zeros((1 << qubit_num, ), dtype=np.complex128)
         vec[0] = np.complex128(1)
-        vec = CPUCalculator.measure_gate_apply(
+        vec = measure_gate_apply(
             qubit_num,
             vec
         )
