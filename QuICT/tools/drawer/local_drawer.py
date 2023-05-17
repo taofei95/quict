@@ -667,7 +667,7 @@ class PhotoDrawer(object):
                     else:
                         name = gate.type.name
 
-                    name_width = round(self._get_text_width(name, self.style.fs) + 0.21*2)
+                    name_width = round(self._get_text_width(name, self.style.fs) + 0.21 * 2)
                     if layer_width <= name_width:
                         layer_width = name_width + 1
                 elif gate.params > 1:

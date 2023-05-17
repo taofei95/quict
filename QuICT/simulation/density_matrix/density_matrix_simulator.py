@@ -76,8 +76,14 @@ class DensityMatrixSimulator:
         self._run(self._circuit)
 
         # Check Readout Error in the NoiseModel
-        if noise_model is not None:
-            noise_model.apply_readout_error(circuit.qubits)
+        if noise_model is not None and len(self._measured_indexes) > 0:
+            ideal_result = int(self._origin_circuit.qubits[self._measured_indexes])
+            noised_result = noise_model.apply_readout_error(self._measured_indexes, ideal_result)
+            if noised_result != ideal_result:
+                bmode = "{0:0b}".format(noised_result).zfill(len(self._measured_indexes))
+                bmode = [int(i) for i in bmode]
+                for idx, qidx in enumerate(self._measured_indexes):
+                    self._origin_circuit.qubits[qidx].measured = bmode[idx]
 
         return self._density_matrix
 
@@ -85,6 +91,7 @@ class DensityMatrixSimulator:
         # Start simulator
         circuit = Circuit(self._qubits)
         circuit.set_precision(self._precision)
+        self._measured_indexes = []
         for gate in noised_circuit.gates:
             # Store continuous BasicGates into cgate
             if isinstance(gate, BasicGate) and gate.type != GateType.measure:
@@ -149,23 +156,30 @@ class DensityMatrixSimulator:
         _1, self._density_matrix = self._gate_calculator.apply_measure_gate_for_dm(
             index, self._density_matrix, self._qubits
         )
-        self._circuit.qubits[index].measured = int(_1)
+        self._origin_circuit.qubits[index].measured = int(_1)
+        self._measured_indexes.append(index)
 
-    def sample(self, shots: int) -> list:
+    def sample(self, shots: int, target_qubits: list = None) -> list:
         assert (self._density_matrix is not None), \
             SampleBeforeRunError("DensityMatrixSimulator sample without run any circuit.")
         if self._accumulated_mode or self._noise_model is None:
             original_dm = self._density_matrix.copy()
 
-        state_list = [0] * (1 << self._qubits)
+        target_qubits = target_qubits if target_qubits is not None else list(range(self._qubits))
+        state_list = [0] * (1 << len(target_qubits))
         for _ in range(shots):
-            for m_id in range(self._qubits):
-                self.apply_measure(m_id)
+            final_state = 0
+            for m_id in target_qubits:
+                measured, self._density_matrix = self._gate_calculator.apply_measure_gate_for_dm(
+                    m_id, self._density_matrix, self._qubits
+                )
+                final_state <<= 1
+                final_state += int(measured)
 
             if self._noise_model is not None:
-                self._noise_model.apply_readout_error(self._circuit.qubits)
+                final_state = self._noise_model.apply_readout_error(target_qubits, final_state)
 
-            state_list[int(self._circuit.qubits)] += 1
+            state_list[final_state] += 1
             if self._accumulated_mode or self._noise_model is None:
                 self._density_matrix = original_dm.copy()
             else:

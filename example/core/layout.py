@@ -10,5 +10,6 @@ def build_layout():
     layout.add_edge(3, 4, directional=False, error_rate=1.0)
     print(layout)
 
+
 if __name__ == "__main__":
     build_layout()

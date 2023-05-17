@@ -253,8 +253,7 @@ class ComplexGateBuilder:
 
         if gate_type == GateType.cu3:
             # TODO: currently not correct for cu3 decomposition
-            # cgate = cls.build_unitary(gate_matrix)
-            return None
+            cgate = cls.build_unitary(gate_matrix)
         elif gate_type == GateType.cu1:
             cgate = cls.build_cu1(parg)
         elif gate_type == GateType.rxx:
