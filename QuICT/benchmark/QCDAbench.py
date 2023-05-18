@@ -1,146 +1,144 @@
 import os
 import random
-from QuICT.benchmark import QuICTBenchmark
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from scipy.stats import unitary_group
-from QuICT_ml.rl_mapping import RlMapping
-from QuICT.qcda.mapping.mcts import MCTSMapping
-from QuICT.qcda.mapping.sabre import SABREMapping
 from QuICT.core.utils.gate_type import GateType
 from QuICT.core.layout.layout import Layout
-from QuICT.qcda.optimization import clifford_rz_optimization, cnot_without_ancilla, commutative_optimization, symbolic_clifford_optimization, template_optimization
-from QuICT.qcda.optimization.commutative_optimization.commutative_optimization import CommutativeOptimization
-from QuICT.qcda.synthesis import gate_transform
-from QuICT.qcda.synthesis.gate_transform.gate_transform import GateTransform
-from QuICT.qcda.synthesis.quantum_state_preparation.quantum_state_preparation import QuantumStatePreparation
-from QuICT.qcda.synthesis.unitary_decomposition.unitary_decomposition import UnitaryDecomposition
+from scipy.stats import unitary_group
+from QuICT.qcda.mapping.mcts.mcts_mapping import MCTSMapping
 from QuICT.tools.circuit_library.circuitlib import CircuitLib
 from unit_test.qcda.synthesis.quantum_state_preparation.quantum_state_preparation_unit_test import random_unit_vector
 
-
 class QCDAbench:
 
-    def __init__(self, width, size, level):
-        self._width = width
-        self._size = size
-        if level is not None:
-            _circuits = self._circuit_selection(level)
+    def __init__(self, qubit_number, bench_func=None):
+        self._qubit_number = qubit_number
+        self._bench_func = bench_func
 
-    _based_fields_list = ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure", "mirror", "qv"]
-    _alg_fields_list = ["adder", "clifford", "qft", "grover", "cnf", "maxcut", "qnn", "quantum_walk", "vqe", "qpe"]
-    _ran_fields_list = [
-        "aspen-4", "ourense", "rochester", "sycamore", "tokyo", "ctrl_unitary", "diag",
-        "single_bit", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"
-        ]
+    def circuit_construct(self):
+        mapping_circuit, optimization_circuit, synthesis_circuit = [], [], []
+        # completely random circuits
+        def _random_circuit():
+            cir_random = Circuit(self._qubit_number)
+            cir_random.random_append(self._qubit_number * 5)
+            return cir_random
 
-    def _circuit_selection(self, level):
-        based_circuits_list = []
-        for field in self._based_fields_list:
-            circuits = CircuitLib().get_benchmark_circuit(str(field), qubits_interval=self._width )
-            based_circuits_list.extend(circuits)
-        random_fields_list = random.sample(self._ran_fields_list, 5)
-        for field in random_fields_list:
-            circuits = CircuitLib().get_random_circuit(str(field), qubits_interval=self._width )
-            based_circuits_list.extend(circuits)
-        if level >= 2:
-            for field in self._alg_fields_list[:3]:
-                circuits = CircuitLib().get_algorithm_circuit(str(field), qubits_interval=self._width )
-                based_circuits_list.extend(circuits)
-        if level >= 3:
-            for field in self._alg_fields_list[3:]:
-                circuits = CircuitLib().get_algorithm_circuit(str(field), qubits_interval=self._width )
-                based_circuits_list.extend(circuits)
-
-        return based_circuits_list
-
-    def _circuit_construct(self, cir_type="random"):
-        """ Construct random circuit. """
-        # Build Circuit
-        circuit = Circuit(self._width)
-        if cir_type == "random":
-            circuit.random_append(self._size)
-        if cir_type == "clifford":
-            circuit.random_append(self._size, CLIFFORD_GATE_SET)
-        if cir_type == "cnot":
-            circuit.random_append(self._size, [GateType.cx])
-
-        return circuit
-
-    def mappingbench(self, layout=None, map_func=None):
-        _map_func = [RlMapping, SABREMapping, MCTSMapping]
-        assert map_func in _map_func, "please check mapping function"
-        # circuit model
-        circuit = self._circuit_construct()
-        # layout
-        if layout is None:
-            layout = Layout.load_file(os.path.dirname(os.path.abspath(__file__)) + f"/example/layout/grid_3x3.json")
-        else:
-            layout = Layout.load_file(layout)
-        # mapping function
-        if map_func is None:
-            map_func = random.choice(_map_func)
-        mapper = map_func(layout)
-        # circuit after mapping
-        circuit_map = mapper.execute(circuit)
+        # algorithm circuits
+        def _alg_circuit():
+            cir_alg = []
+            alg_fields_list = ["adder", "clifford", "qft", "grover", "cnf", "maxcut", "qnn", "quantum_walk", "vqe"]
+            for field in alg_fields_list:
+                cir = CircuitLib().get_algorithm_circuit(str(field), qubits_interval=self._qubit_number)
+                cir_alg.append(cir)
+            return cir_alg
         
-        bench_result = circuit_map.count_gate_by_gatetype([GateType.swap])
+        # random instruction set circuits
+        def _inset_circuit():
+            cir_inset = []
+            random_fields_list = [
+                "aspen-4", "ourense", "rochester", "sycamore", "tokyo", "ctrl_unitary", "diag",
+                "single_bit", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"
+                ]
+            for field in random_fields_list:
+                cir_inset = CircuitLib().get_random_circuit(str(field), qubits_interval=self._qubit_number)
+                cir_inset.append(cir_inset)
+            return cir_inset
 
-        return circuit, circuit_map, bench_result
-    
-    def optimizebench(self, optimizer_func=None):
-        # circuit model
-        _optimizer_func = [
-            CommutativeOptimization,
-            symbolic_clifford_optimization,
-            clifford_rz_optimization,
-            cnot_without_ancilla,
-            template_optimization
-        ]
-        assert optimizer_func in _optimizer_func, "please check optimization function"
-        if optimizer_func == _optimizer_func[0] or optimizer_func == _optimizer_func[1] or optimizer_func == _optimizer_func[4]:
-            circuit = self._circuit_construct()
-            circuit_opt = _optimizer_func().execute(circuit)
-        if optimizer_func == _optimizer_func[2]:
-            circuit = self._circuit_construct("clifford")
-            circuit_opt = _optimizer_func().execute(circuit)
-        if optimizer_func == _optimizer_func[3]:
-            circuit = self._circuit_construct("cnot")
-            circuit_opt = _optimizer_func().execute(circuit)
+        # clifford circuits
+        def _clifford_circuit():
+            cir_cliff = Circuit(self._qubit_number)
+            cir_cliff.random_append(self._qubit_number * 5, CLIFFORD_GATE_SET)
+            return cir_cliff
 
-        bench_result = [
-            circuit_opt.width(),
-            circuit_opt.size(),
-            circuit_opt.depth(),
-            circuit_opt.count_1qubit_gate(),
-            circuit_opt.count_2qubit_gate()
-        ]
+        # circuits with different probabilities of cnot
+        def _cx_circuit():
+            cir_cx = []
+            prob_list = [[1, 0], [0.8, 0.2], [0.6, 0.4], [0.4, 0.6], [0.2, 0.8]]
+            for prob in prob_list:
+                circuit = Circuit(self._qubit_number)
+                circuit.random_append(self._qubit_number * 5, [GateType.cx, GateType.h], prob)
+                cir_cx.append(circuit)
+            return cir_cx
 
-        return circuit, circuit_opt, bench_result
+        # unitary matrix
+        U = unitary_group.rvs(2 ** self._qubit_number)
 
-    def synthesisbench(self, synthesis_func):
-        _synthesis_func = [UnitaryDecomposition, QuantumStatePreparation, gate_transform]
-        _InSet = ["GoogleSet", "IBMQSet", "IonQSet", "NamSet", "OriginSet", "USTCSet"]
+        # general state vectors
+        state_vector = random_unit_vector(1 << self._qubit_number)
 
-        assert synthesis_func in _synthesis_func, "please check synthesis function"
+        # error connection layout mapping circuit
+        def _errorlayout_circuit():
+            cir_map = []
+            cir = Circuit(self._qubit_number)
+            cir.random_append(self._qubit_number * 5)
+            sub_layout = Layout(self._qubit_number)
+            related_list = list(range(self._qubit_number))
+            n = 0
+            edges_list = []
+            while n < len(related_list) - 1:
+                edges = (related_list[n], related_list[n + 1])
+                edges_list.append(edges)
+                n += 1
+                related_list.remove(random.choice(related_list))
+            for u, v in edges_list:
+                sub_layout.add_edge(u, v)
 
-        if synthesis_func == _synthesis_func[0]:
-            matrix = unitary_group.rvs(2 ** self._width)
-            circuit_syn, _ = synthesis_func.execute(matrix)
-        if synthesis_func == _synthesis_func[1]:
-            state_vector = random_unit_vector(1 << self._width)
-            gates = synthesis_func.execute(state_vector)
-            circuit_syn = Circuit(self._width)
-            circuit_syn.extend(gates)
+            mcts = MCTSMapping(sub_layout)
+            cir1 = mcts.execute(cir)
+            cir_map.append(cir1)
+            return cir_map
+
+        # different distance between cx gates
+
+        if self._bench_func == "mapping":
+            cir1 = _errorlayout_circuit()
+            mapping_circuit.append(cir1)
+
+            return mapping_circuit
+        if self._bench_func == "optimizaiton":
+            cir1 = _random_circuit()
+            optimization_circuit.append(cir1)
+            cir2 = _alg_circuit()
+            optimization_circuit.append(cir2)
+            cir3 = _inset_circuit
+            optimization_circuit.append(cir3)
+            cir4 = _clifford_circuit()
+            optimization_circuit.append(cir4)
+            cir5 = _cx_circuit()
+            optimization_circuit.append(cir5)
+
+            return optimization_circuit
         else:
-            circuit = self._circuit_construct()
-            for InSet in _InSet:
-                GT = GateTransform(InSet)
-                circuit_syn = GT.execute(circuit)
+            synthesis_circuit.append(cir1)
+            synthesis_circuit.append(cir2)
+            synthesis_circuit.append(cir3)
 
-        bench_result = [circuit_syn.size(), circuit_syn.depth()]
+            return synthesis_circuit
 
-        return circuit_syn, bench_result
+    def get_circuits(self):
+        circuits_list = self.circuit_construct()
+        return circuits_list
 
-    def score(circuits_list):
-        QuICTBenchmark().bench_run(circuits_list)
+    def run(self, qcda_interface):
+        circuits_list = self.get_circuits()
+        circuits_bench = qcda_interface(circuits_list)
+
+        return circuits_bench
+
+    def evaluate(self, circuits_list):
+        bench_results = []
+        for circuit in circuits_list:
+            if self._bench_func == "mapping":
+                bench_result = circuit.count_gate_by_gatetype(GateType.swap)
+            else:
+                bench_result = [
+                    circuit.qubit_number(),
+                    circuit.size(),
+                    circuit.depth(),
+                    circuit.count_1qubit_gate(),
+                    circuit.count_2qubit_gate()
+                ]
+            bench_results.append([circuit, bench_result])
+        return bench_results
+
+QCDAbench(5).circuit_construct()
