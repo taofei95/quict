@@ -129,7 +129,7 @@ class GateSimulator:
         if self._device == "CPU":
             return self._apply_gate_cpu(gate, gate_cargs, gate_targs, state_vector)
         else:
-            return self._apply_gate_gpu(gate, gate_cargs, gate_targs, state_vector)
+            return self._apply_gate_gpu(gate, gate_cargs, gate_targs, state_vector, qubits)
 
     def _apply_gate_cpu(
         self,
