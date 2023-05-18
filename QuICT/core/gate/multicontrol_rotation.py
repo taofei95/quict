@@ -39,8 +39,8 @@ class MultiControlRotation(object):
 
             gates = CompositeGate()
             cgate1 & [control[-1], target] | gates
-            mct(n_ctrl - 1) | gates
+            mct(n_ctrl - 1) & control | gates
             cgate2 & [control[-1], target] | gates
-            mct(n_ctrl - 1) | gates
+            mct(n_ctrl - 1) & control | gates
             mcr(control[:-1], target) | gates
             return gates

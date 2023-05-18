@@ -235,8 +235,8 @@ class CircuitBased(object):
                 if decomposition and hasattr(gate, "build_gate"):
                     cgate = gate.build_gate()
                     if cgate is not None:
-                        cgate & qidxes
                         decomp_gates += cgate._gates
+                        continue
             decomp_gates.append((gate, qidxes, size))
 
         if not self_flatten:

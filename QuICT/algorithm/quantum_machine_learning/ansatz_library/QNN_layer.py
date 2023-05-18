@@ -19,6 +19,7 @@ class QNNLayer(Ansatz):
         self._data_qubits.remove(readout)
         self._readout = readout
         self._layers = layers
+        self._validate_layers()
 
     def init_circuit(self, params: Union[Variable, np.ndarray] = None):
         params = (
@@ -47,3 +48,8 @@ class QNNLayer(Ansatz):
         H | circuit(self._readout)
 
         return circuit
+
+    def _validate_layers(self):
+        for layer in self._layers:
+            if layer not in ["XX", "YY", "ZZ", "ZX"]:
+                raise ValueError
