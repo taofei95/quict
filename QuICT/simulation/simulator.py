@@ -141,7 +141,7 @@ class Simulator:
         if self._backend == "density_matrix":
             amplitude = self._simulator.run(circuit, density_matrix, noise_model, use_previous)
         else:
-            amplitude = self._simulator.run(circuit, state_vector, use_previous)
+            amplitude = self._simulator.run(circuit, state_vector, use_previous=use_previous)
 
         self._result_recorder.record_amplitude(amplitude)
 

@@ -206,7 +206,7 @@ class StateVectorSimulator:
         Args:
             value (Union[float, complex]): The multiply value apply to state vector.
         """
-        from QuICT.ops.gate_kernel import float_multiply, complex_multiply
+        from QuICT.ops.gate_kernel.multigpu import float_multiply, complex_multiply
 
         default_parameters = (self._vector, self._qubits, self._sync)
         if isinstance(value, float):
