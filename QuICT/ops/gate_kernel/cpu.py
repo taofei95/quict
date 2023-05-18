@@ -66,7 +66,7 @@ def _matrix_dot_vector(
     sorted_args: np.ndarray
 ):
     repeat = 1 << (vec_bit - mat_bit)
-    minus_1 = np.array([(1 << sarg) - 1 for sarg in sorted_args], dtype=np.int64)
+    minus_1 = np.array([(1 << sarg) - 1 for sarg in sorted_args], dtype=np.int32)
     for i in prange(repeat):
         for sarg_idx in range(mat_bit):
             less = i & minus_1[sarg_idx]
@@ -127,7 +127,7 @@ def _diagonal_matrix(
     sorted_args: np.ndarray
 ):
     repeat = 1 << (vec_bit - mat_bit)
-    minus_1 = np.array([(1 << sarg) - 1 for sarg in sorted_args], dtype=np.int64)
+    minus_1 = np.array([(1 << sarg) - 1 for sarg in sorted_args], dtype=np.int32)
     for i in prange(repeat):
         for sarg_idx in range(mat_bit):
             less = i & minus_1[sarg_idx]
@@ -147,17 +147,16 @@ def swap_matrix(
     for carg in control_args:
         based_index += 1 << carg
 
-    swap_idxes = np.array([based_index] * 2, dtype=np.int64)
+    swap_idxes = np.array([based_index] * 2, dtype=np.int32)
     if len(target_args) == 1:
         swap_idxes[1] += 1 << target_args[0]
     else:
         swap_idxes[0] += 1 << target_args[0]
         swap_idxes[1] += 1 << target_args[1]
 
-    vec_bit = int(np.log2(vec.shape[0]))
-
     # Step 2: Deal with mat_bit == vec_bit
-    if vec_bit == 2:
+    vec_bit = int(np.log2(vec.shape[0]))
+    if vec_bit == len(control_args) + len(target_args):
         temp_value = vec[swap_idxes[0]]
         vec[swap_idxes[0]] = vec[swap_idxes[1]]
         vec[swap_idxes[1]] = temp_value
@@ -178,10 +177,11 @@ def _swap_matrix(
     indexes: np.ndarray,
     sorted_args: np.ndarray
 ):
-    repeat = 1 << (vec_bit - 2)
-    minus_1 = np.array([(1 << sorted_args[0]) - 1, (1 << sorted_args[1]) - 1], dtype=np.int64)
+    mat_bit = len(sorted_args)
+    repeat = 1 << (vec_bit - mat_bit)
+    minus_1 = np.array([(1 << sarg) - 1 for sarg in sorted_args], dtype=np.int32)
     for i in prange(repeat):
-        for sarg_idx in range(2):
+        for sarg_idx in range(mat_bit):
             less = i & minus_1[sarg_idx]
             i = (i >> sorted_args[sarg_idx] << (sorted_args[sarg_idx] + 1)) + less
 
@@ -207,7 +207,7 @@ def reverse_matrix(
     for carg in control_args:
         based_index += 1 << carg
 
-    swap_idxes = np.array([based_index] * 2, dtype=np.int64)
+    swap_idxes = np.array([based_index] * 2, dtype=np.int32)
     swap_idxes[1] += 1 << target_args[0]
 
     # Step 2: Deal with mat_bit == vec_bit
@@ -237,7 +237,7 @@ def _reverse_matrix(
     sorted_args: np.ndarray
 ):
     repeat = 1 << (vec_bit - mat_bit)
-    minus_1 = [(1 << sarg) - 1 for sarg in sorted_args]
+    minus_1 = np.array([(1 << sarg) - 1 for sarg in sorted_args], dtype=np.int32)
     for i in prange(repeat):
         for sarg_idx in prange(mat_bit):
             less = i & minus_1[sarg_idx]
