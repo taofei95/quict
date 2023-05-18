@@ -222,19 +222,18 @@ class CircuitBased(object):
         assert precision in ["single", "double"], "Circuit's precision should be one of [double, single]"
         self._precision = precision
 
-    def gate_decomposition(self, self_flatten: bool = True) -> list:
+    def gate_decomposition(self, self_flatten: bool = True, decomposition: bool = True) -> list:
         decomp_gates = []
         for gate, qidxes, size in self._gates:
             if size > 1 or hasattr(gate, "gate_decomposition"):
-                decomp_gates += gate.gate_decomposition()
-                continue
-
-            cgate = gate.build_gate(qidxes)
-            if cgate is not None:
-                decomp_gates += cgate._gates
-                continue
-
-            decomp_gates.append((gate, qidxes, size))
+                decomp_gates += gate.gate_decomposition(self_flatten, decomposition)
+            else:
+                if decomposition and hasattr(gate, "build_gate"):
+                    cgate = gate.build_gate(qidxes)
+                    if cgate is not None:
+                        decomp_gates += cgate._gates
+                else:
+                    decomp_gates.append((gate, qidxes, size))
 
         if not self_flatten:
             return decomp_gates
