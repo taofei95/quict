@@ -609,6 +609,13 @@ class Unitary(BasicGate):
     def matrix(self):
         return self._matrix
 
+    @matrix.setter
+    def matrix(self, matrix):
+        self.validate_matrix_shape(matrix)
+        assert int(np.log2(matrix.shape[0])) == self.controls + self.targets, \
+            "Only support redefined unitary matrix with same size as before"
+        self._matrix = matrix
+
     def get_matrix(self, precision) -> np.ndarray:
         _dtype = np.complex128 if precision == "double" else np.complex64
         return self._matrix.astype(_dtype)
@@ -624,13 +631,33 @@ class Unitary(BasicGate):
             matrix_type (MatrixType, optional): The matrix's type. Defaults to None.
         """
         # Validate matrix type
+        self.validate_matrix_shape(matrix)
+
+        # Validate Matrix Type
+        if matrix_type is None:
+            matrix_type, controls = self.validate_matrix_type(matrix)
+        else:
+            matrix_type = matrix_type
+            controls = 0
+
+        n = int(np.log2(matrix.shape[0]))
+        if controls == n:
+            controls = 0
+
+        precision = "double" if matrix.dtype == np.complex64 else "single"
+        super().__init__(
+            controls=controls, targets=(n - controls), params=0,
+            type_=GateType.unitary, matrix_type=matrix_type, precision=precision
+        )
+        self._matrix = matrix
+
+    def validate_matrix_shape(self, matrix: np.ndarray):
         if isinstance(matrix, list):
             matrix = np.array(matrix)
 
         # Validate precision
         assert np.issubdtype(matrix.dtype, np.complex128) or np.issubdtype(matrix.dtype, np.complex64), \
             TypeError("unitary.matrix.dtype", "complex64/128", matrix.dtype)
-        precision = "double" if matrix.dtype == np.complex64 else "single"
 
         # Validate matrix shape is square
         length, width = matrix.shape
@@ -642,21 +669,6 @@ class Unitary(BasicGate):
         n = int(np.log2(matrix.shape[0]))
         if (1 << n) != matrix.shape[0]:
             raise GateMatrixError("the length of list should be the square of power(2, n)")
-
-        if matrix_type is None:
-            matrix_type, controls = self.validate_matrix_type(matrix)
-        else:
-            matrix_type = matrix_type
-            controls = 0
-
-        if controls == n:
-            controls = 0
-
-        super().__init__(
-            controls=controls, targets=(n - controls), params=0,
-            type_=GateType.unitary, matrix_type=matrix_type, precision=precision
-        )
-        self._matrix = matrix
 
     @staticmethod
     def validate_matrix_type(matrix: np.ndarray) -> MatrixType:
