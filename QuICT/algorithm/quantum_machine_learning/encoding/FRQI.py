@@ -14,7 +14,7 @@ class FRQI:
 
     def __call__(self, img, use_qic=True):
         img = img.flatten()
-        assert np.unique(img).shape[0] == self._grayscale
+        assert np.unique(img).shape[0] <= self._grayscale
         N = img.shape[0]
 
         img_theta = img / (self._grayscale - 1) * np.pi
@@ -65,6 +65,9 @@ class FRQI:
         dnf_circuit = Circuit(n_qubits)
         min_expression = self._get_min_expression(pixels, n_pos_qubits)
         cnf_list = self._split_dnf(min_expression)
+        if cnf_list == ["True"]:
+            Ry(float(rotate)) & n_pos_qubits | dnf_circuit
+            return dnf_circuit
         appeared_qids = {"+": set(), "-": set()}
         q_state = [0] * n_pos_qubits
         for i in range(len(cnf_list)):
