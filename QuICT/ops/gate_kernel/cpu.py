@@ -60,7 +60,7 @@ def matrix_dot_vector(
 def _matrix_dot_vector(
     vec: np.ndarray,
     vec_bit: int,
-    mat: np.ndarray, 
+    mat: np.ndarray,
     mat_bit: int,
     indexes: np.ndarray,
     sorted_args: np.ndarray
@@ -121,7 +121,7 @@ def diagonal_matrix(
 def _diagonal_matrix(
     vec: np.ndarray,
     vec_bit: int,
-    mat: np.ndarray, 
+    mat: np.ndarray,
     mat_bit: int,
     indexes: np.ndarray,
     sorted_args: np.ndarray
@@ -231,7 +231,7 @@ def reverse_matrix(
 def _reverse_matrix(
     vec: np.ndarray,
     vec_bit: int,
-    mat: np.ndarray, 
+    mat: np.ndarray,
     mat_bit: int,
     indexes: np.ndarray,
     sorted_args: np.ndarray
