@@ -202,7 +202,7 @@ class SABREMapping:
         # build the DAG
         exe_gates = []
         predag: List[Optional[DAGNode]] = [None for _ in range(qubit_number)]
-        for gate in circuit.gates:
+        for gate in circuit.flatten_gates():
             node = DAGNode(gate)
             nodes.append(node)
             pre_number = 0
