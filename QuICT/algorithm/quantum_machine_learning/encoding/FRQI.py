@@ -18,7 +18,6 @@ class FRQI:
         N = img.shape[0]
 
         img_theta = img / (self._grayscale - 1) * np.pi
-        N = img.shape[0]
         img_dict = self._get_img_dict(img_theta, N)
 
         n_pos_qubits = int(np.log2(N))
