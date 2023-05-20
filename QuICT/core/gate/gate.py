@@ -569,7 +569,7 @@ class BasicGate(object):
         """
         gate = BasicGate(
             self.controls, self.targets, self.params, self.type,
-            self.matrix_type, self.pargs, self.precision
+            self.matrix_type, self.pargs.copy(), self.precision
         )
 
         if len(self.targs) > 0:

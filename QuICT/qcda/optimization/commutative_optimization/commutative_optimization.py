@@ -129,7 +129,7 @@ class CommutativeOptimization(object):
         """
         try:
             gate_para, phase = cls.para_rule[gate.type]
-            return gate_para & gate.targ, phase
+            return gate_para.copy() & gate.targ, phase
         except KeyError:
             return gate, 0
 
