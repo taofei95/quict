@@ -56,7 +56,7 @@ class QuICTBenchmark:
                 based_circuits_list.extend(circuits)
 
         if level == 3:
-            alg_fields_list = ["grover", "cnf", "maxcut", "qnn", "quantum_walk", "vqe"]
+            alg_fields_list = ["grover", "cnf", "maxcut", "qnn", "quantum_walk"] # delete vqe
             for field in alg_fields_list:
                 circuits = CircuitLib().get_algorithm_circuit(str(field), qubits_interval=qubit_num)
                 based_circuits_list.extend(circuits)
