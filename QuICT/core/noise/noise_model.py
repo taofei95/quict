@@ -189,15 +189,18 @@ class NoiseModel:
 
         self._readout_errors.append((noise, qubits))
 
-    def apply_readout_error(self, qubit_indexes: list, measured: int) -> int:
+    def apply_readout_error(self, qubit_indexes: Union[list, int], measured: int) -> int:
         """ Apply readout error to target qubits.
 
         Args:
-            qubit_indexes (List): The indexes of all measured qubits.
+            qubit_indexes (Union(List, int)): The indexes of all measured qubits.
             measured (int): the measured state of all measured qubits.
         """
         if len(self._readout_errors) == 0:
             return measured
+
+        if isinstance(qubit_indexes, int):
+            return self._apply_re_for_single_qubit(qubit_indexes, measured)
 
         bits_measured = "{0:0b}".format(measured).zfill(len(qubit_indexes))
         bits_measured = [int(i) for i in bits_measured]
@@ -236,6 +239,13 @@ class NoiseModel:
             noise_state += bm
 
         return noise_state
+
+    def _apply_re_for_single_qubit(self, qubit_index, measured) -> int:
+        for readouterror, qubits in self._readout_errors:
+            if readouterror.qubits == 1 and qubit_index in qubits:
+                measured = readouterror.apply_to_qubits(measured)
+
+        return measured
 
     def transpile(self, circuit: Circuit, accumulated_mode: bool = False) -> Circuit:
         """ Apply all noise in the Noise Model to the given circuit, replaced related gate with the NoiseGate

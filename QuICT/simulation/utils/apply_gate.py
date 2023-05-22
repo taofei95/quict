@@ -3,27 +3,38 @@ import numpy as np
 from QuICT.core.gate import BasicGate, GateMatrixGenerator
 from QuICT.core.utils import GateType, MatrixType, matrix_product_to_circuit
 from QuICT.ops.utils import LinAlgLoader
-from QuICT.tools.exception.core import GateQubitAssignedError
+from QuICT.tools.exception.core import GateQubitAssignedError, ValueError
 from QuICT.tools.exception.simulation import GateTypeNotImplementError, GateAlgorithmNotImplementError
 
 
 class GateSimulator:
     def __init__(self, device, precision: str = "double", gpu_device_id: int = 0, sync: bool = True):
-        self._gate_matrix_generator = GateMatrixGenerator()
+        if device not in ["CPU", "GPU"]:
+            raise ValueError("Simulation.device", "[CPU, GPU]", device)
+
+        if precision not in ["single", "double"]:
+            raise ValueError("Simulation.precision", "[single, double]", precision)
+
         self._device = device
         self._precision = precision
         self._dtype = np.complex128 if precision == "double" else np.complex64
         self._gpu_device_id = gpu_device_id
         self._sync = sync
+
+        # Gate's Matrix Store
+        self._gate_matrix_generator = GateMatrixGenerator()
+        self._gate_matrix_info: dict = {}   # Record gate's matrix info (location, length)
+        self._gates_matrix = None
+
+        # cupy/numpy and Gate Kernel functions
+        self._algorithm = LinAlgLoader(device=device, enable_gate_kernel=True)
         if self._device == "GPU":
             import cupy as cp
 
             self._array_helper = cp
-            self._algorithm = LinAlgLoader(device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False)
             cp.cuda.runtime.setDevice(self._gpu_device_id)
         else:
             self._array_helper = np
-            self._algorithm = LinAlgLoader(device="CPU", enable_gate_kernel=True)
 
     ####################################################################
     ############          State Vector Generator            ############
@@ -102,14 +113,35 @@ class GateSimulator:
         else:
             return self._algorithm.dot(unitary_matrix, state_vector)
 
-    def _get_gate_matrix(self, gate: BasicGate):
-        if self._device == "CPU":
-            return self._gate_matrix_generator.get_matrix(gate, precision=self._precision)
-        else:
-            return self._gate_matrix_generator.get_matrix(
-                gate, precision=self._precision, special_array_generator=self._array_helper
-            )
+    def gate_matrix_combined(self, circuit):
+        for gate in circuit.flatten_gates():
+            if not isinstance(gate, BasicGate) or gate.type in [GateType.measure, GateType.reset, GateType.barrier]:
+                continue
 
+            gate_name = self._generate_gate_name_for_matrix_stored(gate.type, gate.pargs)
+            if gate_name not in self._gate_matrix_info.keys():
+                matrix = self._gate_matrix_generator.get_matrix(gate, self._precision)
+                matrix = self._array_helper.array(matrix)
+                self._gate_matrix_info[gate_name] = matrix
+
+        # self._concentrate_gate_matrixs()
+
+    def _generate_gate_name_for_matrix_stored(self, gate_type, gate_pargs: list = None):
+        gate_name = str(gate_type)
+
+        for parg in gate_pargs:
+            gate_name += f"_{parg}"
+
+        return gate_name
+
+    def _get_gate_matrix(self, gate: BasicGate):
+        gate_name = self._generate_gate_name_for_matrix_stored(gate.type, gate.pargs)
+        
+        return self._gate_matrix_info[gate_name]
+
+    ####################################################################
+    ############           Gate Kernel Functions            ############
+    ####################################################################
     def apply_gate(
         self,
         gate: BasicGate,
@@ -172,7 +204,7 @@ class GateSimulator:
     ):
         gate_type, matrix_type = gate.type, gate.matrix_type
         args_num = gate.controls + gate.targets
-        matrix = self._get_gate_matrix(gate)
+        matrix = self._get_gate_matrix(gate) if gate.type != GateType.unitary else self._array_helper.array(gate.matrix)
 
         # Deal with quantum gate with more than 3 qubits.
         if gate_type == GateType.unitary and args_num >= 3:
@@ -362,7 +394,7 @@ class GateSimulator:
     ####################################################################
     def apply_measure_gate(self, index: int, state_vector: np.ndarray, qubits: int) -> int:
         if self._device == "CPU":
-            result = self._algorithm.measure_gate_apply(index, state_vector)
+            result = int(self._algorithm.measure_gate_apply(index, state_vector))
         else:
             prob = self._algorithm.measured_prob_calculate(
                 index, state_vector, qubits, sync=self._sync

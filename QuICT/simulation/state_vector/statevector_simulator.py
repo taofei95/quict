@@ -14,7 +14,7 @@ from QuICT.core.utils import GateType
 from QuICT.core.noise import NoiseModel
 from QuICT.core.virtual_machine import VirtualQuantumMachine
 from QuICT.simulation.utils import GateSimulator
-from QuICT.tools.exception.core import ValueError, TypeError
+from QuICT.tools.exception.core import TypeError
 from QuICT.tools.exception.simulation import SampleBeforeRunError
 
 
@@ -26,19 +26,11 @@ class StateVectorSimulator:
         circuit (Circuit): The quantum circuit.
         precision (str): The precision for the state vector, one of [single, double]. Defaults to "double".
         gpu_device_id (int): The GPU device ID.
-        matrix_aggregation (bool): Using quantum gate matrix's aggregation to optimize running speed.
         sync (bool): Sync mode or Async mode.
     """
-    __DEVICE = ["CPU", "GPU"]
-    __PRECISION = ["single", "double"]
-
     @property
     def circuit(self):
         return self._circuit
-
-    @circuit.setter
-    def circuit(self, circuit):
-        self._circuit = circuit
 
     @property
     def vector(self):
@@ -50,7 +42,7 @@ class StateVectorSimulator:
 
     @property
     def device(self):
-        return self._device_id
+        return self._gate_calculator._gpu_device_id
 
     def __init__(
         self,
@@ -59,17 +51,7 @@ class StateVectorSimulator:
         gpu_device_id: int = 0,
         sync: bool = True
     ):
-        if device not in self.__DEVICE:
-            raise ValueError("StateVectorSimulation.device", "[CPU, GPU]", device)
-
-        if precision not in self.__PRECISION:
-            raise ValueError("StateVectorSimulation.precision", "[single, double]", precision)
-
-        self._device = device
-        self._precision = precision
-        self._device_id = gpu_device_id
-        self._sync = sync
-        self._gate_calculator = GateSimulator(self._device, self._precision, self._device_id, self._sync)
+        self._gate_calculator = GateSimulator(device, precision, gpu_device_id, sync)
         self._quantum_machine = None
 
     def initial_circuit(self, circuit: Circuit):
@@ -78,6 +60,8 @@ class StateVectorSimulator:
         self._circuit = circuit if self._quantum_machine is None else self._quantum_machine.transpile(circuit)
         self._qubits = int(circuit.width())
         self._pipeline = circuit.fast_gates
+
+        self._gate_calculator.gate_matrix_combined(self._circuit)
 
     def initial_state_vector(self, all_zeros: bool = False):
         """ Initial qubits' vector states. """
@@ -138,7 +122,7 @@ class StateVectorSimulator:
             elif isinstance(gate, Trigger):
                 self._apply_trigger(gate, qidxes, idx)
             else:
-                raise TypeError("StateVectorSimulation.run.circuit", "[BasicGate, Trigger]". type(gate))
+                raise TypeError("StateVectorSimulation.run.circuit", "[CompositeGate, BasicGate, Trigger]". type(gate))
 
     def _apply_gate(self, gate: BasicGate, qidxes: list):
         """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
@@ -194,6 +178,9 @@ class StateVectorSimulator:
 
     def _apply_measure_gate(self, qidx):
         result = self._gate_calculator.apply_measure_gate(qidx, self._vector, self._qubits)
+        if self._quantum_machine is not None:
+            result = self._quantum_machine.apply_readout_error(qidx, result)
+
         self._origin_circuit.qubits[self._qubits - 1 - qidx].measured = int(result)
 
     def _apply_reset_gate(self, qidx):
