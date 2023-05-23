@@ -139,7 +139,7 @@ class FRQI:
             if rotate is None
             else mc_gate(controls, gid + self._n_pos_qubits)
         )
-        c_gate & (controls + [gid + self._n_pos_qubits]) | cnf_circuit
+        c_gate | cnf_circuit(controls + [gid + self._n_pos_qubits])
 
         return cnf_circuit, appeared_qids, q_state
 

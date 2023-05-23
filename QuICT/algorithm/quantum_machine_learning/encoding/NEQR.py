@@ -1,8 +1,6 @@
 import numpy as np
-from sympy import symbols
-from sympy.logic.boolalg import to_dnf
 
-from FRQI import FRQI
+from .FRQI import FRQI
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
@@ -79,13 +77,13 @@ if __name__ == "__main__":
     # neqr = NEQR(256)
     # img = np.array([[0, 100], [200, 255]])
     circuit = neqr(img)
-    circuit.gate_decomposition(decomposition=False)
-    circuit.draw(filename="neqr")
-    # simulator = StateVectorSimulator(device="GPU")
-    # start = time.time()
-    # sv = simulator.run(circuit)
-    # # print(sv)
-    # print(time.time() - start)
+    # circuit.gate_decomposition(decomposition=False)
+    # circuit.draw(filename="neqr")
+    simulator = StateVectorSimulator(device="GPU")
+    start = time.time()
+    sv = simulator.run(circuit)
+    # print(sv)
+    print(time.time() - start)
     # circuit.gate_decomposition(decomposition=False)
     # mct = MultiControlToffoli()
     # circuit = Circuit(5)
