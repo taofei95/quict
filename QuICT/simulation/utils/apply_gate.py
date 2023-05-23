@@ -114,17 +114,27 @@ class GateSimulator:
             return self._algorithm.dot(unitary_matrix, state_vector)
 
     def gate_matrix_combined(self, circuit):
+        matrix_list_for_gpu_only = []
+        total_matrix_size = 0 if self._gates_matrix is None else self._gates_matrix.size
         for gate in circuit.flatten_gates():
-            if not isinstance(gate, BasicGate) or gate.type in [GateType.measure, GateType.reset, GateType.barrier]:
+            if (
+                not isinstance(gate, BasicGate)
+                or gate.type in [GateType.measure, GateType.reset, GateType.barrier, GateType.unitary]
+            ):
                 continue
 
             gate_name = self._generate_gate_name_for_matrix_stored(gate.type, gate.pargs)
             if gate_name not in self._gate_matrix_info.keys():
                 matrix = self._gate_matrix_generator.get_matrix(gate, self._precision)
-                matrix = self._array_helper.array(matrix)
-                self._gate_matrix_info[gate_name] = matrix
+                if self._device == "CPU":
+                    self._gate_matrix_info[gate_name] = matrix
+                else:
+                    self._gate_matrix_info[gate_name] = (total_matrix_size, matrix.size)
+                    total_matrix_size += matrix.size
+                    matrix_list_for_gpu_only.append(matrix)
 
-        # self._concentrate_gate_matrixs()
+        if len(matrix_list_for_gpu_only) > 0:
+            self._concentrate_gate_matrixs(matrix_list_for_gpu_only, total_matrix_size)
 
     def _generate_gate_name_for_matrix_stored(self, gate_type, gate_pargs: list = None):
         gate_name = str(gate_type)
@@ -134,10 +144,27 @@ class GateSimulator:
 
         return gate_name
 
+    def _concentrate_gate_matrixs(self, matrix_list: list, matrix_size: int):
+        gates_matrix = np.empty(matrix_size, dtype=self._dtype)
+        start = 0
+        for matrix in matrix_list:
+            gates_matrix[start:start + matrix.size] = matrix.ravel()[:]
+            start += matrix.size
+
+        gates_matrix = self._array_helper.array(gates_matrix)
+        if self._gates_matrix is None:
+            self._gates_matrix = gates_matrix
+        else:
+            self._gates_matrix = self._array_helper.concatenate((self._gates_matrix, gates_matrix))
+
     def _get_gate_matrix(self, gate: BasicGate):
         gate_name = self._generate_gate_name_for_matrix_stored(gate.type, gate.pargs)
-        
-        return self._gate_matrix_info[gate_name]
+
+        if self._device == "CPU":
+            return self._gate_matrix_info[gate_name]
+        else:
+            start, interval = self._gate_matrix_info[gate_name]
+            return self._gates_matrix[start:start + interval]
 
     ####################################################################
     ############           Gate Kernel Functions            ############
@@ -232,7 +259,7 @@ class GateSimulator:
             self.apply_reverse_matrix(matrix, args_num, cargs, targs, state_vector, qubits)
         # [S, sdg, Z, U1, T, tdg] # 2-bits [CZ, CU1]
         elif matrix_type == MatrixType.control:
-            self.apply_control_matrix(matrix[-1, -1].get(), args_num, cargs, targs, state_vector, qubits)
+            self.apply_control_matrix(matrix[-1].get(), args_num, cargs, targs, state_vector, qubits)
         # [FSim]
         elif matrix_type == MatrixType.ctrl_normal:
             self._algorithm.ctrl_normal_targs(
