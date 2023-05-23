@@ -42,7 +42,7 @@ class BenchmarkCircuitBuilder:
                 if gsize > len(shuffle_qindexes):
                     continue
 
-                gate & shuffle_qindexes[:gsize] | cir
+                gate | cir(shuffle_qindexes[:gsize])
                 if gsize == len(shuffle_qindexes) or random.random() > random_para[i]:
                     shuffle_qindexes = qubits_indexes[:]
                     random.shuffle(shuffle_qindexes)
@@ -52,6 +52,7 @@ class BenchmarkCircuitBuilder:
             depth = cir.depth()
             cir.name = "+".join(["benchmark", "highly_parallelized", f"w{width}_s{size}_d{depth}_v1"])
             cirs_list.append(cir)
+
         return cirs_list
 
     @staticmethod
@@ -60,19 +61,22 @@ class BenchmarkCircuitBuilder:
         random_para = [0.4, 0.6, 0.8, 1]
 
         for i in range(len(random_para)):
-            void_gates = 0
+            temp_size, void_gates = 0, 0
             cir = Circuit(width)
             H | cir(0)
+            temp_size += 1
             qubit_indexes = list(range(width))
             qubit = random.choice(qubit_indexes)
             qubit_indexes.remove(qubit)
-            while cir.size() < size:
+            while temp_size < size:
                 qubit_new = random.choice(qubit_indexes)
                 qubits_list = [qubit, qubit_new]
                 random.shuffle(qubits_list)
-                CX & (qubits_list) | cir
+                CX | cir(qubits_list)
+                temp_size += 1
                 if random.random() > random_para[i]:
-                    CX & (random.sample(list(range(width)), 2)) | cir
+                    CX | cir(random.sample(list(range(width)), 2))
+                    temp_size += 1
                     void_gates += 1
 
             depth = cir.depth()
@@ -90,13 +94,13 @@ class BenchmarkCircuitBuilder:
             for _ in range(width):
                 if len(qubit_indexes) > 1:
                     qubit_index = random.sample(qubit_indexes, 2)
-                    CX & (qubit_index) | cgate
+                    CX | cgate(qubit_index)
                     qubit_extra.append(qubit_index)
                     qubit_indexes = list(set(qubit_indexes) - set(qubit_index))
                 elif len(qubit_indexes) == 1:
                     for i in range(len(qubit_extra)):
                         q_collect = random.choice(qubit_extra[i])
-                        CX & ([qubit_indexes[0], q_collect]) | cgate
+                        CX | cgate([qubit_indexes[0], q_collect])
                     break
                 else:
                     break
@@ -108,12 +112,12 @@ class BenchmarkCircuitBuilder:
             result = [qubit_indexes[i:i + 2] for i in range(0, len(qubit_indexes), 2)]
             for i in range(len(result)):
                 if len(result[i]) == 2:
-                    CX & (result[i]) | cgate
+                    CX | cgate(result[i])
 
             result = [qubit_indexes[i + 1:i + 3] for i in range(0, len(qubit_indexes), 2)]
             for i in range(len(result)):
                 if len(result[i]) == 2:
-                    CX & (result[i]) | cgate
+                    CX| cgate(result[i]) 
                 else:
                     break
 
