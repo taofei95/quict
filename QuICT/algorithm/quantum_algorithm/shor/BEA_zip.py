@@ -13,7 +13,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis.arithmetic.bea import *
 from QuICT.core.operator import Trigger, CheckPoint
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from .utility import *
 
 from QuICT.tools import Logger
@@ -85,7 +85,7 @@ def construct_circuit(a: int, N: int, eps: float = 1 / 10):
     return circuit, trickbit + history_indices[::-1]
 
 
-def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulator()):
+def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=StateVectorSimulator()):
     """
     The (2n+3)-qubit circuit used in the Shor algorithm is designed by \
     Stephane Beauregard in "Circuit for Shor's algorithm using 2n+3 qubits"
@@ -113,15 +113,11 @@ def order_finding(a: int, N: int, eps: float = 1 / 10, simulator=CircuitSimulato
         H | circuit(trickbit)
         gate_pow = pow(a, 1 << (t - 1 - k), N)
         BEACUa.execute(n, gate_pow, N) | circuit
-        simulator.run(circuit, use_previous=True)
         # subcircuit: semi-classical QFT
-        circuit = Circuit(2 * n + 3)
         for i in range(k):
             if trickbit_store[i]:
                 Rz(-pi / (1 << (k - i))) | circuit(trickbit)
         H | circuit(trickbit)
-        simulator.run(circuit, use_previous=True)
-        circuit = Circuit(2 * n + 3)
         for idx in b_reg + trickbit + qreg_low:
             Measure | circuit(idx)
         simulator.run(circuit, use_previous=True)

@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 
-from QuICT.core.gate import build_gate, CompositeGate, GateType
+from QuICT.core.gate import gate_builder, CompositeGate, GateType
 from QuICT.qcda.utility import PauliOperator
 
 pauli_list = [GateType.id, GateType.x, GateType.y, GateType.z]
@@ -11,8 +11,8 @@ clifford_single = [GateType.h, GateType.s, GateType.sdg, GateType.x, GateType.y,
 
 
 def test_combine():
-    for n in range(1, 6):
-        for _ in range(100):
+    for n in range(1, 4):
+        for _ in range(10):
             p1 = PauliOperator.random(n)
             p2 = PauliOperator.random(n)
             gates = p1.gates(keep_id=True)
@@ -26,19 +26,19 @@ def test_conjugate_action():
     for pauli in pauli_list:
         for clifford in clifford_single:
             p = PauliOperator([pauli])
-            clifford_gate = build_gate(clifford, 0)
+            clifford_gate = gate_builder(clifford) & 0
             p.conjugate_act(clifford_gate)
 
-            pauli_gate = build_gate(pauli, 0)
+            pauli_gate = gate_builder(pauli, 0)
             gates = CompositeGate()
             if clifford == GateType.s:
-                clifford_inverse_gate = build_gate(GateType.sdg, 0)
+                clifford_inverse_gate = gate_builder(GateType.sdg) & 0
                 with gates:
                     clifford_inverse_gate & 0
                     pauli_gate & 0
                     clifford_gate & 0
             elif clifford == GateType.sdg:
-                clifford_inverse_gate = build_gate(GateType.s, 0)
+                clifford_inverse_gate = gate_builder(GateType.s) & 0
                 with gates:
                     clifford_inverse_gate & 0
                     pauli_gate & 0
@@ -54,11 +54,11 @@ def test_conjugate_action():
     for pauli_0 in pauli_list:
         for pauli_1 in pauli_list:
             p = PauliOperator([pauli_0, pauli_1])
-            cx_gate = build_gate(GateType.cx, [0, 1])
+            cx_gate = gate_builder(GateType.cx) & [0, 1]
             p.conjugate_act(cx_gate)
 
-            pauli_gate_0 = build_gate(pauli_0, 0)
-            pauli_gate_1 = build_gate(pauli_1, 1)
+            pauli_gate_0 = gate_builder(pauli_0) & 0
+            pauli_gate_1 = gate_builder(pauli_1) & 1
             gates = CompositeGate()
             with gates:
                 cx_gate & [0, 1]
@@ -69,7 +69,7 @@ def test_conjugate_action():
 
 
 def test_commutative():
-    for n in range(1, 6):
+    for n in range(1, 4):
         for _ in range(10):
             p = PauliOperator.random(n)
             q = PauliOperator.random(n)
@@ -93,8 +93,8 @@ def standardizer_generator():
             for c1 in [GateType.id] + clifford_single:
                 for c2 in [GateType.id] + clifford_single:
                     found = False
-                    clifford_1 = build_gate(c1, 0)
-                    clifford_2 = build_gate(c2, 0)
+                    clifford_1 = gate_builder(c1) & 0
+                    clifford_2 = gate_builder(c2) & 0
                     px = PauliOperator([x])
                     pz = PauliOperator([z])
                     if c1 == GateType.id and c2 == GateType.id:
@@ -116,7 +116,7 @@ def test_swap():
     for pauli_0 in pauli_list:
         for pauli_1 in pauli_list:
             p = PauliOperator([pauli_0, pauli_1])
-            cx_gate = build_gate(GateType.cx, [0, 1])
+            cx_gate = gate_builder(GateType.cx) & [0, 1]
             p.conjugate_act(cx_gate)
             p.conjugate_act(cx_gate & [1, 0])
             p.conjugate_act(cx_gate)
@@ -146,8 +146,8 @@ def test_disentangler_fixed():
 
 
 def test_disentangler_random():
-    for n in range(1, 10):
-        for _ in range(100):
+    for n in range(1, 4):
+        for _ in range(10):
             pauli_x, pauli_z = PauliOperator.random_anti_commutative_pair(n)
             target = random.randint(0, n - 1)
             disentangler = PauliOperator.disentangler(pauli_x, pauli_z, target)

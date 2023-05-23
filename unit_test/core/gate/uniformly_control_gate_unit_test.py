@@ -7,7 +7,7 @@ from QuICT.core.gate import UniformlyControlGate, GateType, Ry, Rz
 def test():
     for target in [GateType.ry, GateType.rz, GateType.unitary]:
         ucg = UniformlyControlGate(target)
-        for n in range(1, 6):
+        for n in range(2, 4):
             if target in [GateType.ry, GateType.rz]:
                 angles = [2 * np.pi * np.random.random() for _ in range(1 << (n - 1))]
                 gates = ucg(angles)

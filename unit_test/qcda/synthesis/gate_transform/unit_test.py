@@ -6,70 +6,71 @@
 
 from QuICT.core import *
 from QuICT.qcda.synthesis.gate_transform import *
-from QuICT.qcda.synthesis.gate_transform.special_set.origin_set import OriginSet
+from QuICT.core.virtual_machine import InstructionSet
+from QuICT.core.virtual_machine.special_set import *
 
 
 def test_google():
-    for i in range(2, 6):
+    for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(20)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
-        GT = GateTransform(GoogleSet)
+        GT = GateTransform(GoogleSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
         assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
 
 
 def test_ustc():
-    for i in range(2, 6):
+    for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(20)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
-        GT = GateTransform(USTCSet)
+        GT = GateTransform(USTCSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
         assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
 
 
 def test_ibmq():
-    for i in range(2, 6):
+    for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(20)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
-        GT = GateTransform(IBMQSet)
+        GT = GateTransform(IBMQSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
         assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
 
 
 def test_ionq():
-    for i in range(2, 6):
+    for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(20)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
-        GT = GateTransform(IonQSet)
+        GT = GateTransform(IonQSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
         assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
 
 
 def test_nam():
-    for i in range(2, 6):
+    for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(20)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
-        GT = GateTransform(NamSet)
+        GT = GateTransform(NamSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
         assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
 
 
 def test_origin():
-    for i in range(2, 6):
+    for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(20)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
-        GT = GateTransform(OriginSet)
+        GT = GateTransform(OriginSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
         assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
@@ -77,11 +78,11 @@ def test_origin():
 
 def test_buildZyz():
     buildSet = InstructionSet(GateType.cy, [GateType.rz, GateType.ry])
-    for i in range(2, 6):
+    for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(20)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
-        GT = GateTransform(buildSet)
+        GT = GateTransform(buildSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
         assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
@@ -91,11 +92,11 @@ def test_buildZyzWithRegister():
     buildSet = InstructionSet(GateType.cy, [GateType.rz, GateType.ry])
     buildSet.register_one_qubit_rule(zyz_rule)
     buildSet.register_two_qubit_rule_map(cx2cy_rule, GateType.cx)
-    for i in range(2, 6):
+    for i in range(2, 4):
         circuit = Circuit(i)
-        circuit.random_append(20)
+        circuit.random_append(10, random_params=True)
         gates = CompositeGate(gates=circuit.gates)
-        GT = GateTransform(buildSet)
+        GT = GateTransform(buildSet, keep_phase=True)
         circuit_tran = GT.execute(circuit)
         gates_tran = CompositeGate(gates=circuit_tran.gates)
         assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)

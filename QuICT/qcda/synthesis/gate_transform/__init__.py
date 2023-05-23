@@ -4,7 +4,5 @@
 # @Author  : Han Yu
 # @File    : __init__.py
 
-from .instruction_set import InstructionSet
 from .gate_transform import GateTransform
-from .special_set import *
 from .transform_rule import *

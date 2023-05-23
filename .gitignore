@@ -2,7 +2,7 @@
 /build/
 **/build
 venv/
-/QuICT.egg-info/
+/quict.egg-info/
 __pycache__/
 /tbb-2020.1/
 *.so
@@ -31,6 +31,9 @@ unit_test/**/*.jpg
 .history
 /QAOA_model*
 /del
-/docs/zh/nohup.out
-nohup.out
-/demo
+/data/
+.log/
+/demo/
+/QNN_MNIST*
+/docs_
+/QNN2.0_MNIST*

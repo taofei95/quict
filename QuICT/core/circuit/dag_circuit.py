@@ -1,5 +1,10 @@
-from collections import Iterable, deque
+from collections import deque
 from typing import Set
+
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -209,7 +214,7 @@ class DAGCircuit:
     ############                Circuit to DAG              ############
     ####################################################################
     def _to_dag_circuit(self):
-        gates = self._circuit.gates
+        gates = self._circuit.flatten_gates()
         reachable = np.zeros(shape=(len(gates), ), dtype=bool)
         for idx, g in enumerate(gates):
             assert isinstance(g, BasicGate), "Only support BasicGate in DAGCircuit."

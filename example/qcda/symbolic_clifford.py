@@ -7,11 +7,11 @@ from QuICT.qcda.optimization.symbolic_clifford_optimization import SymbolicCliff
 if __name__ == '__main__':
     n = 5
     circuit = Circuit(n)
-    circuit.random_append(20 * n, CLIFFORD_GATE_SET)
+    circuit.random_append(10 * n, CLIFFORD_GATE_SET)
     CUS = CliffordUnidirectionalSynthesizer()
     SCO = SymbolicCliffordOptimization()
     circuit_opt = CUS.execute(circuit)
     circuit_opt_opt = SCO.execute(circuit_opt)
-    circuit.draw()
-    circuit_opt.draw()
-    circuit_opt_opt.draw()
+    circuit.draw(filename="origin_circuit")
+    circuit_opt.draw(filename="CliffordSyn")
+    circuit_opt_opt.draw(filename="SymbClifOpt")

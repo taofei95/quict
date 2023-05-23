@@ -26,7 +26,7 @@ class Grover:
     Quantum Computation and Quantum Information - Michael A. Nielsen & Isaac L. Chuang
     """
 
-    def __init__(self, simulator) -> None:
+    def __init__(self, simulator=None) -> None:
         self.simulator = simulator
 
     def _grover_operator(self, n, n_ancilla, oracle, is_bit_flip=False):
@@ -119,7 +119,6 @@ class Grover:
         is_bit_flip=False,
         check_solution=None,
     ):
-        simulator = self.simulator
         index_q = list(range(n))
         # unkonwn solution number
         if n_solution is None:
@@ -130,7 +129,7 @@ class Grover:
                 circ = self.circuit(
                     n, n_ancilla, oracle, n_solution_guess, True, is_bit_flip
                 )
-                simulator.run(circ)
+                self.simulator.run(circ)
                 solution = int(circ[index_q])
                 if check_solution(solution):
                     return solution
@@ -143,5 +142,5 @@ class Grover:
         # standard Grover's algorithm
         else:
             circ = self.circuit(n, n_ancilla, oracle, n_solution, measure, is_bit_flip)
-            simulator.run(circ)
+            self.simulator.run(circ)
             return int(circ[index_q])

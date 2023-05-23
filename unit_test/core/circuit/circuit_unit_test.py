@@ -27,13 +27,13 @@ class TestCircuit(unittest.TestCase):
         cir.supremacy_append()
 
         # append composite gate
-        qft_gate = QFT.build_gate(3)
+        qft_gate = QFT(3)
         qft_gate | cir([0, 1, 3])
 
         # append gate by qubits/qureg
         S | cir(qureg[0])
         CX | cir(qureg[1, 3])
-        assert 1
+        assert 76 == cir.size()
 
     def test_circuit_call(self):
         cir = Circuit(TestCircuit.qubits)
@@ -52,7 +52,7 @@ class TestCircuit(unittest.TestCase):
         cir.supremacy_append()
 
         # append composite gate
-        qft_gate = QFT.build_gate(3)
+        qft_gate = QFT(3)
         qft_gate | cir([0, 1, 3])
         qft_gate | cir([0, 2, 3])
         qft_gate | cir([1, 2, 3])
@@ -68,13 +68,12 @@ class TestCircuit(unittest.TestCase):
         X | cir(qureg[1])
         CY | cir(qureg([1, 3]))
 
-        sub_cir_without_remove = cir.sub_circuit(qubit_limit=[0, 1, 2], remove=False)
+        sub_cir_qlimit = cir.sub_circuit(qubit_limit=[0, 1, 2])
         assert cir.size() == 164
-        assert sub_cir_without_remove.width() == 3
+        assert sub_cir_qlimit.width() == 3
 
-        sub_cir_with_remove = cir.sub_circuit(max_size=120, qubit_limit=[0, 3], remove=True)
-        assert cir.size() + sub_cir_with_remove.size() == 164
-        assert sub_cir_without_remove.width() == 3
+        sub_cir_size = cir.sub_circuit(max_size=10, qubit_limit=[0, 3])
+        assert sub_cir_size.size() == 10
 
     def test_circuit_operation(self):
         # append single qubit gate to all qubits
@@ -98,19 +97,6 @@ class TestCircuit(unittest.TestCase):
 
         assert mp_data.shape == (1 << 5, 1 << 5)
 
-    def test_circuit_remapping(self):
-        cir = Circuit(TestCircuit.qubits)
-        q1 = cir[1:4]
-        assert q1[0] == cir[1]
-
-        cir.remapping(q1, [2, 1, 0])
-        assert q1[0] == cir[3]
-
-        q2 = cir[0, 1, 4]
-        cir.remapping(q2, [0, 2, 1], circuit_update=True)
-
-        assert q2[0] == cir[0]
-
     def test_circuit_decomposition(self):
         # Gate with build_gate function
         build_gate_typelist = [GateType.ccrz, GateType.cswap, GateType.ccz, GateType.ccx]
@@ -124,29 +110,28 @@ class TestCircuit(unittest.TestCase):
         cir.random_append(30)
         cir.random_append(10, build_gate_typelist)
         QFT(5) | cir
-        cir.gate_decomposition()
-        for gate in cir.gates:
+        for gate in cir.flatten_gates(decomposition=True):
             assert gate.controls + gate.targets < 3
 
-    def test_circuit_convert_precision(self):
-        cir = Circuit(TestCircuit.qubits)
-        cir.random_append(100)
-        cir.convert_precision()
-        for gate in cir.gates:
-            assert gate.precision == np.complex64
-
     def test_circuit_matrix(self):
-        from QuICT.simulation.state_vector import CircuitSimulator
+        from QuICT.simulation.state_vector import StateVectorSimulator
         from QuICT.simulation.unitary import UnitarySimulator
 
         cir = Circuit(TestCircuit.qubits)
         cir.random_append(100)
-        state_vector_cir = CircuitSimulator().run(cir)
+        state_vector_cir = StateVectorSimulator().run(cir)
 
         cir_matrix = cir.matrix()
         state_vector_matrix = UnitarySimulator().run(cir_matrix)
 
         assert np.allclose(state_vector_cir, state_vector_matrix)
+
+    # def test_circuit_convert_precision(self):
+    #     cir = Circuit(TestCircuit.qubits)
+    #     cir.random_append(100)
+    #     cir.convert_precision()
+    #     for gate in cir.gates:
+    #         assert gate.precision == np.complex64
 
 
 if __name__ == "__main__":

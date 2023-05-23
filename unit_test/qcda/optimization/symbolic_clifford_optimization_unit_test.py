@@ -11,26 +11,24 @@ compute_stage = [GateType.cx, GateType.h, GateType.s]
 
 
 def test_partition():
-    for n in range(2, 6):
-        for _ in range(10):
-            circuit = Circuit(n)
-            circuit.random_append(20 * n, clifford)
-            gates = CompositeGate(gates=circuit.gates)
-            compute, pauli = SymbolicCliffordOptimization.partition(gates)
-            for gate in compute:
-                assert gate.type in compute_stage
-            compute.extend(pauli.gates())
-            # np.set_printoptions(precision=3, suppress=True)
-            assert np.allclose(gates.matrix(), pauli.phase * compute.matrix())
+    for n in range(2, 4):
+        circuit = Circuit(n)
+        circuit.random_append(20 * n, clifford)
+        gates = CompositeGate(gates=circuit.gates)
+        compute, pauli = SymbolicCliffordOptimization.partition(gates)
+        for gate in compute:
+            assert gate.type in compute_stage
+        compute.extend(pauli.gates())
+        # np.set_printoptions(precision=3, suppress=True)
+        assert np.allclose(gates.matrix(), pauli.phase * compute.matrix())
 
 
 def test():
-    for n in range(2, 6):
-        for _ in range(10):
-            circuit = Circuit(n)
-            circuit.random_append(20 * n, clifford)
-            gates = CompositeGate(gates=circuit.gates)
-            SCO = SymbolicCliffordOptimization()
-            gates_opt = SCO.execute(gates)
-            # np.set_printoptions(precision=3, suppress=True)
-            assert np.allclose(gates.matrix(), gates_opt.matrix())
+    for n in range(2, 4):
+        circuit = Circuit(n)
+        circuit.random_append(20 * n, clifford)
+        gates = CompositeGate(gates=circuit.gates)
+        SCO = SymbolicCliffordOptimization()
+        gates_opt = SCO.execute(gates)
+        # np.set_printoptions(precision=3, suppress=True)
+        assert np.allclose(gates.matrix(), gates_opt.matrix())

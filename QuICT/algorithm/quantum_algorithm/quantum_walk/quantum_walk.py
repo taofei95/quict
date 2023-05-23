@@ -4,7 +4,7 @@ from typing import Dict, List, Union
 from .graph import Graph
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 class QuantumWalk:
@@ -23,12 +23,12 @@ class QuantumWalk:
         """ The quantum circuit of the random walk algorithm, including UnitaryGate. """
         return self._circuit
 
-    def __init__(self, simulator=CircuitSimulator()):
+    def __init__(self, simulator=StateVectorSimulator()):
         """ Initialize the simulator circuit of quantum random walk.
 
         Args:
-            simulator (Union[ConstantStateVectorSimulator, CircuitSimulator], optional):
-                The simulator for simulating quantum circuit. Defaults to CircuitSimulator().
+            simulator (Union[StateVectorSimulator, StateVectorSimulator], optional):
+                The simulator for simulating quantum circuit. Defaults to StateVectorSimulator().
         """
         self._simulator = simulator
         self._step = None
@@ -86,7 +86,7 @@ class QuantumWalk:
             coin_oracle = np.kron(
                 np.eye(self._graph.position), self._coin_unmarked
             ) + np.kron(search_array, self._coin_marked - self._coin_unmarked)
-            return Unitary(coin_oracle)
+            return Unitary(np.complex128(coin_oracle))
 
         action_qubits = [self._position_qubits + i for i in range(self._action_qubits)]
         if not (self._operator_by_position or self._operator_by_time):
@@ -112,7 +112,7 @@ class QuantumWalk:
         action_gate.gate_decomposition()
         return action_gate
 
-    def _mct_generator(self, op: np.ndarray) -> UnitaryGate:
+    def _mct_generator(self, op: np.ndarray) -> Unitary:
         """ Build multi-control-'op' gate. """
         mct_unitary = np.identity(1 << self._total_qubits, dtype=np.complex128)
         op_shape = op.shape
@@ -149,7 +149,7 @@ class QuantumWalk:
         operators: Union[List, Dict] = None,
         coin_operator: np.ndarray = None,
         switched_time: int = -1,
-        shots: int = 1,
+        shots: int = 1000,
     ) -> Union[np.ndarray, List]:
         """ Execute the quantum random walk with given steps, graph and coin operator.
 
@@ -161,7 +161,7 @@ class QuantumWalk:
             switched_time (int, optional): The number of steps of each coin operator in the vector.
                 Defaults to -1, means not switch coin operator.
             coin_operator (np.ndarray, optional): The coin operators, the unitary matrix. Defaults to None.
-            shots (int, optional): The repeated times. Defaults to 1.
+            shots (int, optional): The repeated times. Defaults to 1000.
 
         Returns:
             Union[np.ndarray, List]: The state vector or measured states.

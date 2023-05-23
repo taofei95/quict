@@ -1,97 +1,87 @@
-import torch
-import torch.nn as nn
-
-from QuICT.algorithm.quantum_machine_learning.ansatz_library import QNNLayer
-from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
-from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
-from QuICT.algorithm.quantum_machine_learning.utils.encoding import *
-from QuICT.algorithm.quantum_machine_learning.utils import GpuSimulator
+from ..model import Model
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
+from QuICT.algorithm.quantum_machine_learning.ansatz_library import *
+from QuICT.algorithm.quantum_machine_learning.encoding import *
+from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
+from QuICT.algorithm.quantum_machine_learning.utils.loss import *
+from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 
-class QuantumNet(nn.Module):
+
+class QuantumNet(Model):
     def __init__(
         self,
-        data_qubits,
-        layers=["XX", "ZZ"],
-        encoding="qubit",
-        device=torch.device("cuda:0"),
+        n_qubits: int,
+        readout: int,
+        layers: list = ["XX", "ZZ"],
+        hamiltonian: Hamiltonian = None,
+        params: np.ndarray = None,
+        device="GPU",
+        gpu_device_id: int = 0,
+        differentiator: str = "adjoint",
     ):
-        """Initialize a QuantumNet instance.
-
-        Args:
-            data_qubits (int): The index of the readout qubit.
-            layers (list, optional): The list of types of QNN layers.
-                Currently only supports XX, YY, ZZ, and ZX. Defaults to ["XX", "ZZ"].
-            encoding (str, optional): The encoding method to encode the image as quantum ansatz.
-                Only support qubit encoding and amplitude encoding. Defaults to "qubit".
-            device (torch.device, optional): The device to which the model is assigned.
-                Defaults to torch.device("cuda:0").
-        """
-        super(QuantumNet, self).__init__()
-        assert encoding in ["qubit", "amplitude"]
+        super(QuantumNet, self).__init__(
+            n_qubits, hamiltonian, params, device, gpu_device_id, differentiator
+        )
+        self._readout = readout
+        self._data_qubits = list(range(n_qubits))
+        self._data_qubits.remove(readout)
         self._layers = layers
-        self._device = device
-        self._data_qubits = data_qubits
-        if encoding == "qubit":
-            self._encoding = Qubit(data_qubits, device)
-        elif encoding == "amplitude":
-            self._encoding = Amplitude(data_qubits, device)
-        self._n_qubits = self._data_qubits + 1
-        self._simulator = GpuSimulator()
-        self._pqc = QNNLayer(
-            list(range(self._data_qubits)), self._data_qubits, device=self._device
-        )
-        self._define_params()
-
-    def forward(self, X):
-        """The forward propagation process of QuantumNet.
-
-        Args:
-            X (torch.Tensor): The input images.
-
-        Returns:
-            torch.Tensor: Classification result. The predicted probabilities that the images belongs to class 1.
-        """
-        Y_pred = torch.zeros([X.shape[0]], device=self._device)
-        for i in range(X.shape[0]):
-            self._encoding.encoding(X[i])
-            data_ansatz = self._encoding.ansatz
-            model_ansatz = self._construct_ansatz()
-            ansatz = data_ansatz + model_ansatz
-            if self._device.type == "cpu":
-                state = ansatz.forward()
-                prob = ansatz.measure_prob(self._data_qubits, state)
-            else:
-                state = self._simulator.forward(ansatz)
-                prob = self._simulator.measure_prob(self._data_qubits, state)
-            assert prob is not None, "There is no Measure Gate on the readout qubit."
-            Y_pred[i] = prob[1]
-        return Y_pred
-
-    def _define_params(self):
-        """Define the network parameters to be trained."""
-        self.params = nn.Parameter(
-            torch.rand(len(self._layers), self._data_qubits, device=self._device),
-            requires_grad=True,
+        self._qnn_builder = QNNLayer(n_qubits, readout, layers)
+        self._model_circuit = self._qnn_builder.init_circuit(params=params)
+        self._params = self._qnn_builder.params
+        self._hamiltonian = (
+            Hamiltonian([[1.0, "Z" + str(self._readout)]])
+            if hamiltonian is None
+            else hamiltonian
         )
 
-    def _construct_ansatz(self):
-        """Build the model ansatz."""
-        model_ansatz = Ansatz(self._n_qubits, device=self._device)
-        model_ansatz.add_gate(X_tensor, self._data_qubits)
-        model_ansatz.add_gate(H_tensor, self._data_qubits)
-        model_ansatz += self._pqc(self._layers, self.params)
-        model_ansatz.add_gate(H_tensor, self._data_qubits)
-        return model_ansatz
+    def run_step(
+        self, data_circuits, y_true, optimizer, loss_fun: Loss, train: bool = True
+    ):
+        circuit_list = []
+        state_list = []
+        # FP
+        for data_circuit in data_circuits:
+            circuit = Circuit(self._n_qubits)
+            data_circuit | circuit(self._data_qubits)
+            self._model_circuit | circuit(list(range(self._n_qubits)))
+            state = self._simulator.run(circuit)
+            circuit_list.append(circuit)
+            state_list.append(state)
+        if train:
+            # BP get expectations and d(exp) / d(params)
+            params_grads, poss = self._differentiator.run_batch(
+                circuit_list, self._params.copy(), state_list, self._hamiltonian
+            )
+        else:
+            poss = self._differentiator.get_expectations_batch(
+                state_list, self._hamiltonian
+            )
 
-    def _construct_circuit(self):
-        """Build the model circuit."""
-        model_circuit = Circuit(self._n_qubits)
-        X | model_circuit(self._data_qubits)
-        H | model_circuit(self._data_qubits)
-        sub_circuit = self._pqc.circuit_layer(self._layers, self.params)
-        model_circuit.extend(sub_circuit.gates)
-        H | model_circuit(self._data_qubits)
-        return model_circuit
+        y_true = 2 * y_true - 1.0
+        y_pred = -poss
+        loss = loss_fun(y_pred, y_true)
+        correct = np.where(y_true * y_pred > 0)[0].shape[0]
+
+        if train:
+            # BP get loss and d(loss) / d(exp)
+            grads = -loss_fun.gradient()
+            # BP get d(loss) / d(params)
+            for params_grad, grad in zip(params_grads, grads):
+                self._params.grads += grad * params_grad
+
+            # optimize
+            self._params.pargs = optimizer.update(
+                self._params.pargs, self._params.grads, "params"
+            )
+            self._params.zero_grad()
+            # update
+            self.update()
+
+        return loss, correct
+
+    def update(self):
+        self._model_circuit.update(self._params)
+

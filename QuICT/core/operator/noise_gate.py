@@ -1,4 +1,4 @@
-import numpy as np
+from __future__ import annotations
 
 from ._operator import Operator
 
@@ -6,10 +6,6 @@ from ._operator import Operator
 class NoiseGate(Operator):
     """
     The quantum gate with noise error.
-
-    Args:
-        gate (BasicGate): The quantum gate.
-        error (QuantumNoiseError): The noise error.
     """
     @property
     def noise_matrix(self) -> list:
@@ -22,14 +18,34 @@ class NoiseGate(Operator):
 
     @property
     def type(self) -> str:
-        return "noise"
+        return self._gate.type
 
-    def __init__(self, noise_matrix, args_num: int):
-        super().__init__(args_num)
-        self._noise_matrix = noise_matrix
-        self._precision = self._noise_matrix[0].dtype
+    @property
+    def targets(self) -> int:
+        return self._gate.targets
 
-    def convert_precision(self):
-        self._precision = np.complex128 if self._precision == np.complex64 else np.complex64
-        for noise_matrix in self._noise_matrix:
-            noise_matrix = noise_matrix.astype(self._precision)
+    @property
+    def controls(self) -> int:
+        return self._gate.controls
+
+    def __init__(self, gate, noise):
+        """
+        Args:
+            gate (BasicGate): The quantum gate.
+            error (QuantumNoiseError): The noise error.
+        """
+        self._gate = gate
+        self._noise = noise
+        args_num = gate.controls + gate.targets
+        gate_name = gate.type.name
+        super().__init__(args_num, name=f"ng_{gate_name}")
+        self._noise_matrix = noise.apply_to_gate(gate.matrix)
+        self._precision = gate.precision
+
+    def copy(self):
+        _ngate = NoiseGate(self._gate, self._noise)
+
+        if len(self.targs) > 0:
+            _ngate.targs = self._targs
+
+        return _ngate

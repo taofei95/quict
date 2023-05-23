@@ -1,23 +1,22 @@
-import matplotlib.pyplot as plt
 import numpy as np
 
 from QuICT.algorithm.quantum_algorithm.quantum_walk import Graph, QuantumWalk
-from QuICT.simulation.state_vector import ConstantStateVectorSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 class QuantumWalkSearch(QuantumWalk):
     """ Search algorithm on a hypercube based on quantum walk and Grover.
 
-        https://arxiv.org/pdf/quant-ph/0210064.pdf
-        http://dx.doi.org/10.4236/jqis.2015.51002
+    https://arxiv.org/pdf/quant-ph/0210064.pdf
+    http://dx.doi.org/10.4236/jqis.2015.51002
     """
 
-    def __init__(self, simulator=ConstantStateVectorSimulator()):
+    def __init__(self, simulator=StateVectorSimulator()):
         """ Initialize the simulator circuit of quantum random walk.
 
         Args:
-            simulator (Union[ConstantStateVectorSimulator, CircuitSimulator], optional):
-                The simulator for simulating quantum circuit. Defaults to ConstantStateVectorSimulator().
+            simulator (Union[StateVectorSimulator, StateVectorSimulator], optional):
+                The simulator for simulating quantum circuit. Defaults to StateVectorSimulator().
         """
         QuantumWalk.__init__(self, simulator)
         self._search = True
@@ -65,6 +64,7 @@ class QuantumWalkSearch(QuantumWalk):
         a_r: float = 1,
         a_nr: float = 0,
         switched_time: int = -1,
+        shots: int = 1000,
     ):
         """ Execute the quantum walk search with given number of index qubits.
 
@@ -77,6 +77,7 @@ class QuantumWalkSearch(QuantumWalk):
             a_nr (float, optional): Parameter of the asymmetry degree of the coin. Defaults to 0.
             switched_time (int, optional): The number of steps of each coin operator in the vector.
                 Defaults to -1, means not switch coin operator.
+            shots (int, optional): The repeated times. Defaults to 1000.
 
         Returns:
             Union[np.ndarray, List]: The state vector or measured states.
@@ -111,6 +112,7 @@ class QuantumWalkSearch(QuantumWalk):
         # Build random walk circuit
         self._circuit_construct()
 
-        # Return final state vector
-        self.sv = self._simulator.run(self._circuit)
-        return self.sv
+        # Simulate the circuit
+        _ = self._simulator.run(self._circuit)
+
+        return self._simulator.sample(shots)

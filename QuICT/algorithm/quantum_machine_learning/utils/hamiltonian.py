@@ -1,12 +1,12 @@
 import copy
-
 import numpy as np
 import torch
 
-from QuICT.algorithm.quantum_machine_learning.utils import Ansatz
-from QuICT.algorithm.quantum_machine_learning.utils.gate_tensor import *
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.tools.exception.core import *
+
+from QuICT.algorithm.quantum_machine_learning.tools.exception import *
 
 
 class Hamiltonian:
@@ -75,10 +75,15 @@ class Hamiltonian:
             pauli_operator[0] *= other
         return Hamiltonian(new_pauli_str)
 
+    def __rmul__(self, other: float):
+        return self.__mul__(other)
+
     def _remove_I(self):
         new_pauli_str = []
         for pauli_operator in self._pauli_str:
-            assert isinstance(pauli_operator[0], float)
+            assert isinstance(pauli_operator[0], int) or isinstance(
+                pauli_operator[0], float
+            ), TypeError("Hamiltonian.init", "int or float", pauli_operator[0].type,)
             for pauli_gate in pauli_operator[1:][::-1]:
                 if "I" in pauli_gate:
                     pauli_operator.remove(pauli_gate)
@@ -116,29 +121,11 @@ class Hamiltonian:
         for qubit_index, pauli_gate in zip(self._qubit_indexes, self._pauli_gates):
             circuit = Circuit(n_qubits)
             for qid, gate in zip(qubit_index, pauli_gate):
-                assert gate in gate_dict.keys(), "Invalid Pauli gate."
+                if gate not in gate_dict.keys():
+                    raise HamiltonianError("Invalid Pauli gate.")
                 gate_dict[gate] | circuit(qid)
             hamiton_circuits.append(circuit)
         return hamiton_circuits
-
-    def construct_hamiton_ansatz(self, n_qubits, device=torch.device("cuda:0")):
-        """Construct an ansatz form of the Hamiltonian.
-
-        Args:
-            n_qubits (int): The number of qubits.
-
-        Returns:
-            list<Ansatz>: A list of ansatz corresponding to the Hamiltonian.
-        """
-        hamiton_ansatz = []
-        gate_dict = {"X": X_tensor, "Y": Y_tensor, "Z": Z_tensor}
-        for qubit_index, pauli_gate in zip(self._qubit_indexes, self._pauli_gates):
-            ansatz = Ansatz(n_qubits, device=device)
-            for qid, gate in zip(qubit_index, pauli_gate):
-                assert gate in gate_dict.keys(), "Invalid Pauli gate."
-                ansatz.add_gate(gate_dict[gate], qid)
-            hamiton_ansatz.append(ansatz)
-        return hamiton_ansatz
 
     def _pauli_str_validation(self):
         """Validate the Pauli string."""
@@ -149,20 +136,24 @@ class Hamiltonian:
         """Validate the Pauli operator."""
         assert isinstance(pauli_operator[0], int) or isinstance(
             pauli_operator[0], float
-        ), "A Pauli operator must contain a coefficient, which must be integer or float."
+        ), TypeError("Hamiltonian.init", "int or float", pauli_operator[0].type,)
 
         indexes = []
         pauli_gates = ""
         for pauli_gate in pauli_operator[1:]:
             pauli_gate = pauli_gate.upper()
-            assert (
-                pauli_gate[0] in ["X", "Y", "Z", "I"] and pauli_gate[1:].isdigit()
-            ), "The Pauli gate should be in the format of Pauli gate + qubit index. e.g. Z0, I5, Y3."
+            if (
+                pauli_gate[0] not in ["X", "Y", "Z", "I"]
+                or not pauli_gate[1:].isdigit()
+            ):
+                raise HamiltonianError(
+                    "The Pauli gate should be in the format of Pauli gate + qubit index. e.g. Z0, I5, Y3."
+                )
             pauli_gates += pauli_gate[0]
             indexes.append(int(pauli_gate[1:]))
-        assert len(indexes) == len(
-            set(indexes)
-        ), "Each Pauli Gate should act on different qubit."
+
+        if len(indexes) != len(set(indexes)):
+            raise HamiltonianError("Each Pauli Gate should act on different qubit.")
 
         self._coefficients.append(float(pauli_operator[0]))
         self._qubit_indexes.append(indexes)

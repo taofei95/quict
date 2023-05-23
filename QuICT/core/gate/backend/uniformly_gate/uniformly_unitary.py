@@ -7,7 +7,7 @@
 import numpy as np
 
 from .uniformly_rotation import UniformlyRotation
-from QuICT.core.gate import build_gate, GateType, CompositeGate, H, Rz, CX
+from QuICT.core.gate import gate_builder, GateType, CompositeGate, H, Rz, CX
 
 
 class UniformlyUnitary(object):
@@ -90,7 +90,7 @@ class UniformlyUnitary(object):
         else:
             lamda = 0
             phi = np.angle(unitary[1, 1] / np.cos(theta))
-        gate = build_gate(GateType.u3, target, [theta * 2, phi, lamda])
+        gate = gate_builder(GateType.u3, params=[theta * 2, phi, lamda]) & target
         assert np.allclose(gate.matrix, unitary)
         return gate
 

@@ -6,7 +6,7 @@ from typing import List, Tuple
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
 from .utility import *
 
 from .BEA_zip import construct_circuit as BEA_zip_circuit
@@ -42,7 +42,7 @@ class ShorFactor:
     }
 
     # add a, N here
-    def __init__(self, mode: str, eps: float = 1 / 10, max_rd: int = 2, simulator=CircuitSimulator()) -> None:
+    def __init__(self, mode: str, eps: float = 1 / 10, max_rd: int = 2, simulator=StateVectorSimulator()) -> None:
         if mode not in ShorFactor._ALLOWED_MODES:
             raise ValueError(
                 f"{mode} mode is not valid. Consider {ShorFactor._ALLOWED_MODES}"

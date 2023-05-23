@@ -249,6 +249,6 @@ def u3_rule(gate):
         lamda = 0
     if _check2pi(phi, eps):
         phi = 0
-    g = build_gate(GateType.u3, targ, [theta * 2, phi, lamda])
+    g = gate_builder(GateType.u3, params=[theta * 2, phi, lamda]) & targ
     gates = CompositeGate(gates=[g])
     return gates

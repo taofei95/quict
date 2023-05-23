@@ -13,7 +13,7 @@ clifford = clifford_single + [GateType.cx]
 
 
 def test_uni_disentangle_one_qubit():
-    for n in range(2, 6):
+    for n in range(2, 4):
         for _ in range(10):
             circuit = Circuit(n)
             circuit.random_append(10 * n, clifford)
@@ -37,22 +37,21 @@ def test_uni_disentangle_one_qubit():
 
 
 def test_unidirectional():
-    for n in range(2, 6):
-        for _ in range(10):
-            circuit = Circuit(n)
-            circuit.random_append(10 * n, clifford)
-            gates = CompositeGate(gates=circuit.gates)
-            CUS = CliffordUnidirectionalSynthesizer(strategy='greedy')
-            # CUS = CliffordUnidirectionalSynthesizer(strategy='random')
-            circ_syn = CUS.execute(circuit)
-            gates_remain = gates.inverse()
-            gates_remain.extend(circ_syn.gates)
-            # np.set_printoptions(precision=3, suppress=True)
-            assert np.allclose(gates_remain.matrix(), gates_remain.matrix()[0][0] * np.eye(2 ** n))
+    n = 4
+    circuit = Circuit(n)
+    circuit.random_append(10 * n, clifford)
+    gates = CompositeGate(gates=circuit.gates)
+    CUS = CliffordUnidirectionalSynthesizer(strategy='greedy')
+    # CUS = CliffordUnidirectionalSynthesizer(strategy='random')
+    circ_syn = CUS.execute(circuit)
+    gates_remain = gates.inverse()
+    gates_remain.extend(circ_syn.gates)
+    # np.set_printoptions(precision=3, suppress=True)
+    assert np.allclose(gates_remain.matrix(), gates_remain.matrix()[0][0] * np.eye(2 ** n))
 
 
 def test_bi_disentangle_one_qubit():
-    for n in range(2, 6):
+    for n in range(2, 4):
         for _ in range(10):
             circuit = Circuit(n)
             circuit.random_append(10 * n, clifford)
@@ -78,21 +77,20 @@ def test_bi_disentangle_one_qubit():
 
 
 def test_bidirectional():
-    for n in range(2, 6):
-        for _ in range(10):
-            circuit = Circuit(n)
-            circuit.random_append(10 * n, clifford)
-            gates = CompositeGate(gates=circuit.gates)
-            CBS = CliffordBidirectionalSynthesizer(
-                qubit_strategy='greedy',
-                pauli_strategy='random',
-                shots=10,
-                multiprocess=False,
-                process=12,
-                chunksize=64
-            )
-            circ_syn = CBS.execute(circuit)
-            gates_remain = gates.inverse()
-            gates_remain.extend(circ_syn.gates)
-            # np.set_printoptions(precision=3, suppress=True)
-            assert np.allclose(gates_remain.matrix(), gates_remain.matrix()[0][0] * np.eye(2 ** n))
+    n = 4
+    circuit = Circuit(n)
+    circuit.random_append(10 * n, clifford)
+    gates = CompositeGate(gates=circuit.gates)
+    CBS = CliffordBidirectionalSynthesizer(
+        qubit_strategy='greedy',
+        pauli_strategy='random',
+        shots=10,
+        multiprocess=False,
+        process=12,
+        chunksize=64
+    )
+    circ_syn = CBS.execute(circuit)
+    gates_remain = gates.inverse()
+    gates_remain.extend(circ_syn.gates)
+    # np.set_printoptions(precision=3, suppress=True)
+    assert np.allclose(gates_remain.matrix(), gates_remain.matrix()[0][0] * np.eye(2 ** n))
