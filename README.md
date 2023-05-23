@@ -1,10 +1,10 @@
 [![](https://img.shields.io/badge/license-Apache%202.0-lightgrey)](./LICENSE) ![](https://img.shields.io/badge/platform-windows_|_linux_|_mac-lightgrey) ![](https://img.shields.io/badge/Python-3.7_|_3.8_|_3.9-blue) ![](https://img.shields.io/badge/version-v1.0.0-blue) ![](https://img.shields.io/badge/Docs-Ready-green) [![](https://img.shields.io/badge/UI-Ready-gree)](http://49.235.108.172:8080/) ![](https://img.shields.io/badge/UnitTest-pass-gree) ![](https://img.shields.io/badge/Pypi-v1.0.0-blue) ![](https://img.shields.io/badge/Extra-QML_|_QSIM-orange) ![](https://img.shields.io/badge/Docker-CPU_|_GPU-orange)
-<div align=center><img src="./docs/zh/docs/assets/images/IMG_1986.PNG"></div>
+<div align=center><img src="./docs/zh/docs/assets/images/home/quact.png"></div>
 
 ## QuICT 平台简介
 QuICT (Quantum Computer of Institute of Computing Technology)是一个开源量子计算操作平台。目前QuICT已能支持6种常见指令集以及20余种量子门操作，已实现3种不同类型的量子电路模拟器，并且都有对CPU/GPU的支持和加速，可进行含噪声量子电路仿真模拟。设计并实现了QCDA(Quantum Circuit Design Automation)量子电路辅助设计模块，包括量子初态制备、指令集转换、酉矩阵合成、量子电路优化和映射等功能。算法方面，实现了shor、grover、qae等常见量子算法，可进行因数分解、SAT问题求解等；也实现了QML领域内的QAOA 和 QNN算法，支持图求解最大割问题和MNIST手写数字图片二分类。 QuICT同时也构建了量子算法电路库和针对量子计算机的性能基准测试，通过设计不同的量子电路赛道，来实现针对不同量子机特性的基准测试。
 
-<div align=center><img src="./docs/zh/docs/assets/images/quictv1.drawio.png" width="400" height="400"></div>
+<div align=center><img src="./docs/zh/docs/assets/images/home/quict.png" width="400" height="400"></div>
 
 主要模块
 - QuICT.algorithm: 包含多种常见量子算法，例如shor, grover, QAOA, VQE等。
@@ -29,6 +29,7 @@ QuICT (Quantum Computer of Institute of Computing Technology)是一个开源量�
 ### 预先准备
 - PYTHON VERSION >= 3.8
 - GPU环境要求
+    - Cuda Toolkit: [Installing CUDA](https://developer.nvidia.com/cuda-toolkit-archive)
     - Cupy: [Installing Cupy](https://docs.cupy.dev/en/stable/install.html)
         ```sh
         nvcc -V     # 获得cuda版本号

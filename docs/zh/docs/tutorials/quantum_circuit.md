@@ -46,7 +46,7 @@ cg | circuit([2, 3, 4])
 
 ### 动态量子电路
 
-QuICT 构建了 Trigger 类，来支持量子电路的动态构建。与普通量子门不同的是，Trigger 类支持根据当前状态下的量子比特测量结果，运行不同的量子电路。
+QuICT 构建了 Trigger 类，来支持量子电路的动态构建。与普通量子门不同的是， Trigger 类支持根据当前状态下的量子比特测量结果，运行不同的量子电路。
 
 ``` python
 from QuICT.core import Circuit
@@ -113,7 +113,7 @@ circuit.matrix()
 
 ## 量子电路可视化
 
-QuICT 支持量子电路可视化，可以通过 Circuit.draw() 实现。
+QuICT 支持量子电路可视化，可以通过 `Circuit.draw()` 实现。
 
 ``` python
 circuit.draw()

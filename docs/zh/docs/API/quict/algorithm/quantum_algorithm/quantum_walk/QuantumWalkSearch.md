@@ -1,0 +1,1 @@
+::: QuICT.algorithm.quantum_algorithm.quantum_walk.QuantumWalkSearch

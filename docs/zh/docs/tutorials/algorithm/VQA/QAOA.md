@@ -1,6 +1,10 @@
 # 量子近似优化算法（QAOA）
 
-本教程旨在介绍如何使用经典机器学习库Pytorch和QuICT中内置的量子近似优化算法模块（Quantum Approximate Optimization Algorithm, QAOA）进行通用的组合优化问题的求解，并以最大割问题（Max-Cut Problem）为例具体阐述QAOA。
+!!! note
+
+    本教程额外依赖 quict-ml 库
+
+本教程旨在介绍如何使用经典机器学习库 Pytorch 和 QuICT 中内置的量子近似优化算法模块（Quantum Approximate Optimization Algorithm, QAOA）进行通用的组合优化问题的求解，并以最大割问题（Max-Cut Problem）为例具体阐述 QAOA 。
 
 ## 组合优化问题
 
@@ -10,13 +14,13 @@ $$C(f^*)=max\left \{C(f)|f \in F\right \}$$
 
 $f^*$ 即为该问题的最优解。
 
-## 使用QAOA求解组合优化问题
+## 使用 QAOA 求解组合优化问题
 
-实际应用中的大多数组合优化问题都是NP完全甚至NP困难问题，求解最优解非常困难，因此转而求解近似最优解是一种更高效的替代方案。QAOA就是一种用于求解组合优化问题近似最优解的多项式时间量子算法。
+实际应用中的大多数组合优化问题都是NP完全甚至NP困难问题，求解最优解非常困难，因此转而求解近似最优解是一种更高效的替代方案。 QAOA 就是一种用于求解组合优化问题近似最优解的多项式时间量子算法。
 
 ### 编码组合优化问题
 
-为了在量子比特系统上求解组合优化问题，需要对其进行编码，为此，我们将换一种方式对组合优化问题进行描述：将目标函数 $C$ 拆分为 $m$ 个子句，每个子句都可以由 $n$ 个量子比特组成的量子比特串 $z$ 进行描述，即每个子句都是对部分量子比特的一个限制条件，对于第 $i$ 个子句 $C_i$：
+为了在量子比特系统上求解组合优化问题，需要对其进行编码，为此，我们将换一种方式对组合优化问题进行描述：将目标函数 $C$ 拆分为 $m$ 个子句，每个子句都可以由 $n$ 个量子比特组成的量子比特串 $z$ 进行描述，即每个子句都是对部分量子比特的一个限制条件，对于第 $i$ 个子句 $C_i$ ：
 
 $$
 C_i(z)=
@@ -69,7 +73,7 @@ $$H_B=\sum_{i=1}^{n}X_i$$
 
 $$|s⟩=|+⟩^{\otimes n}$$
 
-QAOA使用 $|s⟩$ 作为算法的初态。之后根据哈密顿量 $H_B$ 和 $H_C$ 定义酉变换：
+QAOA 使用 $|s⟩$ 作为算法的初态。之后根据哈密顿量 $H_B$ 和 $H_C$ 定义酉变换：
 
 $$U_B(\beta)=e^{-i\beta H_B}$$
 
@@ -91,7 +95,7 @@ $$M_p=\mathop{\arg\max}\limits_{\overrightarrow{\gamma}, \overrightarrow{\beta}}
 
 $$\lim_{p \to \infty}M_p=C(z_{opt})$$
 
-## QuICT实现QAOA求解最大割问题
+## QuICT 实现 QAOA 求解最大割问题
 
 ### 1. 创建最大割问题的图
 
@@ -154,19 +158,19 @@ H.pauli_str
  [-1.0, 'Z2', 'Z4']]
 ```
 
-### 3. 构建含参的QAOA电路
+### 3. 构建含参的 QAOA 电路
 
 为了求解最大割问题，需要找到量子态 $\left | \psi \right \rangle$ ，使上一节中哈密顿量的期望 $\left \langle \psi \right | H \left | \psi \right \rangle$ 最大
 
-在QuICT中，可以直接调用`QAOANet`根据哈密顿量初始化QAOA量子神经网络实例：
+在 QuICT 中，可以直接调用 `QAOANet` 根据哈密顿量初始化 QAOA 量子神经网络实例：
 
 ```python
 qaoa_net_sample = QAOANet(n_qubits=n, p=1, hamiltonian=H)
 ```
 
-`QAOANet`继承自`torch.nn.Module`，定义了待训练的参数；前向传播函数`forward()`，用于计算运行量子电路后得到的输出态 $\left | \psi \right \rangle$ ；以及损失函数`loss_func()`，用于计算负期望 $-\left \langle \psi \right | H \left | \psi \right \rangle$。
+`QAOANet` 继承自 `torch.nn.Module` ，定义了待训练的参数；前向传播函数 `forward()` ，用于计算运行量子电路后得到的输出态 $\left | \psi \right \rangle$ ；以及损失函数 `loss_func()` ，用于计算负期望 $-\left \langle \psi \right | H \left | \psi \right \rangle$ 。
 
-另外，可以通过`construct_circuit()`函数获取构建的QAOA电路：
+另外，可以通过 `construct_circuit()` 函数获取构建的 QAOA 电路：
 
 ```python
 qaoa_cir_sample = qaoa_net_sample.construct_circuit()
@@ -177,7 +181,7 @@ qaoa_cir_sample.draw()
 ![Max-Cut Circuit](../../../assets/images/tutorials/algorithm/VQA/QAOA/maxcut_circuit.png)
 </figure>
 
-### 4. 利用Pytorch的经典优化器进行训练
+### 4. 利用 Pytorch 的经典优化器进行训练
 
 初始化训练相关的参数：
 
@@ -190,7 +194,7 @@ SEED = 17       # 随机数种子
 set_seed(SEED)  # 设置全局随机种子
 ```
 
-初始化QAOA网络和经典优化器，并开始迭代训练：
+初始化 QAOA 网络和经典优化器，并开始迭代训练：
 
 ```python
 qaoa_net = QAOANet(n_qubits=n, p=p, hamiltonian=H)
@@ -233,7 +237,7 @@ plt.show()
 ![Max-Cut Prob](../../../assets/images/tutorials/algorithm/VQA/QAOA/maxcut_prob.png){:width="500px"}
 </figure>
 
-测量中出现概率最高的比特串最有可能是此Max-Cut问题的最优解：
+测量中出现概率最高的比特串最有可能是此 Max-Cut 问题的最优解：
 
 ```python
 solution = prob.index(max(prob))
@@ -245,7 +249,7 @@ solution_bit
 '10100'
 ```
 
-这个比特串中取值为 $0$ 的量子比特意味着其对应的顶点属于集合 $S_0$，取值为1的对应顶点属于集合 $S_1$。
+这个比特串中取值为 $0$ 的量子比特意味着其对应的顶点属于集合 $S_0$，取值为1的对应顶点属于集合 $S_1$ 。
 
 最后，利用内置函数对属于不同集合的顶点分别涂色，并画出图 $G$ 的最大割结果图：
 

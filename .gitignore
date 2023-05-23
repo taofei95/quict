@@ -31,9 +31,6 @@ unit_test/**/*.jpg
 .history
 /QAOA_model*
 /del
-/data/
-.log/
-/demo/
-/QNN_MNIST*
-/docs_
 /docs/zh/nohup.out
+nohup.out
+/demo

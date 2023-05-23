@@ -1,7 +1,7 @@
-site_name: QuICT(开发版)
+site_name: QuICT(开源版)
 
 nav:
-- 概览: home.md
+- 概览: index.md
 - 安装: installation.md
 - 功能模块:
   - 量子比特: functions/qubit.md
@@ -33,14 +33,133 @@ nav:
       - Shor算法: tutorials/algorithm/quantum_algorithm/shor.md
       - 量子振幅估计: tutorials/algorithm/quantum_algorithm/amplitude_estimate.md
       - 量子游走: tutorials/algorithm/quantum_algorithm/quantum_walk.md
-    - 变分量子算法:
+    - 变分量子算法 (quict-ml):
       - 变分量子本征求解器: tutorials/algorithm/VQA/VQE.md
       - 量子近似优化算法: tutorials/algorithm/VQA/QAOA.md
-      - 量子神经网络: tutorials/algorithm/VQA/QNN.md
+    - 量子神经网络 (quict-ml): tutorials/algorithm/QNN.md
 - API:
-  - Algorithm:
-    - Quantum Machine Learning:
-      - QAOA: API_qaoa.md
+  - QuICT.core:
+    - qubit:
+      - Qubit: API/quict/core/qubit/Qubit.md
+      - Qureg: API/quict/core/qubit/Qureg.md
+    - gate: 
+      - BasicGate: API/quict/core/gate/BasicGate.md
+      - CompositeGate: API/quict/core/gate/CompositeGate.md
+      - MultiControlToffoli: API/quict/core/gate/MultiControlToffoli.md
+      - UniformlyControlGate: API/quict/core/gate/UniformlyControlGate.md
+      - gate_builder: API/quict/core/gate/gate_builder.md
+    - circuit:
+      - CircuitBased: API/quict/core/circuit/CircuitBased.md
+      - Circuit: API/quict/core/circuit/circuit.md
+      - DagCircuit: API/quict/core/circuit/DagCircuit.md
+    - operator:
+      - Operator: API/quict/core/operator/Operator.md
+      - CheckPoint: API/quict/core/operator/CheckPoint.md
+      - NoiseGate: API/quict/core/operator/NoiseGate.md
+      - Trigger: API/quict/core/operator/Trigger.md
+    - layout:
+      - Layout: API/quict/core/layout/Layout.md
+      - SupremacyLayout: API/quict/core/layout/SupremacyLayout.md
+    - noise:
+      - NoiseModel: API/quict/core/noise/NoiseModel.md
+      - NoiseError: API/quict/core/noise/NoiseError.md
+      - ReadoutError: API/quict/core/noise/ReadoutError.md
+  - QuICT.algorithm:
+    - quantum_algorithm:
+      - amplitude_estimate:
+        - QAE: API/quict/algorithm/quantum_algorithm/amplitude_estimate/QAE.md
+        - Utility: API/quict/algorithm/quantum_algorithm/amplitude_estimate/Utility.md
+      - cnf:
+        - CNFSATOracle: API/quict/algorithm/quantum_algorithm/cnf/CNFSATOracle.md
+      - grover:
+        - Grover: API/quict/algorithm/quantum_algorithm/grover/Grover.md
+        - PartialGrover: API/quict/algorithm/quantum_algorithm/grover/PartialGrover.md
+        - GroverWithPriorKnowledge: API/quict/algorithm/quantum_algorithm/grover/GroverWithPriorKnowledge.md
+      - quantum_walk:
+        - Graph: API/quict/algorithm/quantum_algorithm/quantum_walk/Graph.md
+        - QuantumWalk: API/quict/algorithm/quantum_algorithm/quantum_walk/QuantumWalk.md
+        - QuantumWalkSearch: API/quict/algorithm/quantum_algorithm/quantum_walk/QuantumWalkSearch.md
+      - shor:
+        - ShorFactor: API/quict/algorithm/quantum_algorithm/shor/ShorFactor.md
+    - weight_decision:
+      - WeightDecision: API/quict/algorithm/weight_decision/WeightDecision.md
+    - tools:
+      - GraphDrawer: API/quict/algorithm/tools/GraphDrawer.md
+  - QuICT.qcda:
+    - QCDA: API/quict/qcda/QCDA.md
+    - mapping:
+      - Sabre: API/quict/qcda/mapping/Sabre.md
+      - MCTS:
+        - MCTSTreeNode: API/quict/qcda/mapping/MCTS/MCTSTreeNode.md
+        - MCTSTree: API/quict/qcda/mapping/MCTS/MCTSTree.md
+        - MCTSMapping: API/quict/qcda/mapping/MCTS/MCTSMapping.md
+    - optimization:
+      - clifford_rz_optimization:
+        - DAG: API/quict/qcda/optimization/clifford_rz_optimization/DAG.md
+        - SymbolicPhase: API/quict/qcda/optimization/clifford_rz_optimization/SymbolicPhase.md
+        - PhasePolynomial: API/quict/qcda/optimization/clifford_rz_optimization/PhasePolynomial.md
+        - Template: API/quict/qcda/optimization/clifford_rz_optimization/template.md
+        - CliffordRzOptimization: API/quict/qcda/optimization/clifford_rz_optimization/CliffordRzOptimization.md
+      - cnot_local_force:
+        - CnotForceBfs: API/quict/qcda/optimization/cnot_local_force/CnotForceBfs.md
+        - CnotForceDepthBfs: API/quict/qcda/optimization/cnot_local_force/CnotForceDepthBfs.md
+        - CnotLocalForceBfs: API/quict/qcda/optimization/cnot_local_force/CnotLocalForceBfs.md
+        - CnotLocalForceDepthBfs: API/quict/qcda/optimization/cnot_local_force/CnotLocalForceDepthBfs.md
+        - CnotStoreForceBfs: API/quict/qcda/optimization/cnot_local_force/CnotStoreForceBfs.md
+        - CnotStoreForceDepthBfs: API/quict/qcda/optimization/cnot_local_force/CnotStoreForceDepthBfs.md
+      - cnot_ancilla:
+        - CnotAncilla: API/quict/qcda/optimization/CnotAncilla.md
+      - cnot_without_ancilla:
+        - Graph: API/quict/qcda/optimization/cnot_without_ancilla/Graph.md
+        - BlockLDUDecompose: API/quict/qcda/optimization/cnot_without_ancilla/BlockLDUDecompose.md
+        - EdgeColoring: API/quict/qcda/optimization/cnot_without_ancilla/EdgeColoring.md
+        - CnotWithoutAncilla: API/quict/qcda/optimization/cnot_without_ancilla/CnotWithoutAncilla.md
+      - commutative_optimization:
+        - CommutativeOptimization: API/quict/qcda/optimization/CommutativeOptimization.md
+      - symbolic_clifford_optimization:
+        - SymbolicCliffordOptimization: API/quict/qcda/optimization/SymbolicCliffordOptimization.md
+      - template_optimization:
+        - template_optimization: API/quict/qcda/optimization/template_optimization/TemplateOptimization.md
+        - template_searching:
+          - TemplateSearching: API/quict/qcda/optimization/template_optimization/template_searching/TemplateSearching.md
+        - template_matching:
+          - BackwardMatch: API/quict/qcda/optimization/template_optimization/template_matching/BackwardMatch.md
+          - ForwardMatch: API/quict/qcda/optimization/template_optimization/template_matching/ForwardMatch.md
+          - MatchingDAGCircuit: API/quict/qcda/optimization/template_optimization/template_matching/MatchingDAGCircuit.md
+          - TemplateSubstitution: API/quict/qcda/optimization/template_optimization/template_matching/TemplateSubstitution.md
+          - TemplateMatching: API/quict/qcda/optimization/template_optimization/template_matching/BackwardMatch.md
+    - synthesis:
+      - clifford:
+        - Clifford: API/quict/qcda/synthesis/clifford/Clifford.md
+      - gate_transform:
+        - InstructionSet: API/quict/qcda/synthesis/gate_transform/InstructionSet.md
+        - GateTransform: API/quict/qcda/synthesis/gate_transform/GateTransform.md
+      - quantum_state_preparation:
+        - SchmidtDecompose: API/quict/qcda/synthesis/quantum_state_preparation/SchmidtDecompose.md
+        - QuantumStatePreparation: API/quict/qcda/synthesis/quantum_state_preparation/QuantumStatePreparation.md
+      - unitary_decomposition:
+        - CartanKAKDecomposition: API/quict/qcda/synthesis/unitary_decomposition/CartanKAKDecomposition.md
+        - CartanKAKDiagonalDecomposition: API/quict/qcda/synthesis/unitary_decomposition/CartanKAKDiagonalDecomposition.md
+        - ControlledUnitaryDecomposition: API/quict/qcda/synthesis/unitary_decomposition/ControlledUnitaryDecomposition.md
+        - UniformlyRyRevision: API/quict/qcda/synthesis/unitary_decomposition/UniformlyRyRevision.md
+        - UnitaryDecomposition: API/quict/qcda/synthesis/unitary_decomposition/UnitaryDecomposition.md
+  - QuICT.simulation:
+    - Simulator: API/quict/simulation/Simulator.md
+    - DensityMatrixSimulator: API/quict/simulation/DensityMatrixSimulator.md
+    - StateVectorSimulator: API/quict/simulation/StateVectorSimulator.md
+    - UnitarySimulator: API/quict/simulation/UnitarySimulator.md
+  - QuICT.ops:
+    - CPUCalculator: API/quict/ops/CPUCalculator.md
+    - GPUCalculator: API/quict/ops/GPUCalculator.md
+  - QuICT.tools:
+    - circuit_library:
+      - CircuitLib: API/quict/tools/circuit_library/CircuitLib.md
+      - CircuitLibDB: API/quict/tools/circuit_library/CircuitLibDB.md
+      - BenchmarkCircuitBuilder: API/quict/tools/circuit_library/BenchmarkCircuitBuilder.md
+    - logger:
+      - Logger: API/quict/tools/logger/Logger.md
+  - QuICT.benchmark:
+    - Benchmark: API/quict/benchmark/Benchmark.md
 - 基准测试:
   - 简介: QuICTbenchmark/QuICTbenchmark.md
   - 模拟基准测试: QuICTbenchmark/simulation_benchmark.md
@@ -56,8 +175,8 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.top
-    - navigation.sections
-    - navigation.expand
+    # - navigation.sections
+    # - navigation.expand
     - navigation.indexes
     - search.highlight
     - toc.follow
@@ -98,10 +217,14 @@ extra:
 repo_name: QuICT
 repo_url: https://e.gitee.com/quictucas/repos/quictucas/quict/sources
 edit_uri: ""
-copyright: Copyright &copy; ICT
+copyright: Copyright &copy; 2022 ICT and its contributors
 plugins:
   - glightbox
   - tags
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
   - search:
       lang:
         - en
