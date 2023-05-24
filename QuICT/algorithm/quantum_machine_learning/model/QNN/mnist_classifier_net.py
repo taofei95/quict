@@ -29,6 +29,7 @@ class QuantumNet(Model):
         self._data_qubits.remove(readout)
         self._layers = layers
         self._qnn_builder = QNNLayer(n_qubits, readout, layers)
+        # self._qnn_builder = CRADL(n_qubits, n_qubits - 2, readout, layers)
         self._model_circuit = self._qnn_builder.init_circuit(params=params)
         self._params = self._qnn_builder.params
         self._hamiltonian = (
@@ -48,7 +49,7 @@ class QuantumNet(Model):
             data_circuit | circuit(self._data_qubits)
             self._model_circuit | circuit(list(range(self._n_qubits)))
             state = self._simulator.run(circuit)
-            circuit_list.append(circuit)
+            circuit_list.append(self._model_circuit)
             state_list.append(state)
         if train:
             # BP get expectations and d(exp) / d(params)

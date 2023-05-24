@@ -23,12 +23,12 @@ class MultiControlRotation(object):
         n_ctrl = len(control)
         if n_ctrl == 0:
             gates = CompositeGate()
-            self.gate_dict[self.gate_type](self.param) & target | gates
+            self.gate_dict[self.gate_type](self.param) | gates(target)
             return gates
         if n_ctrl == 1:
             cgate = self.cgate_dict[self.gate_type](self.param)
             gates = CompositeGate()
-            cgate & [control[0], target] | gates
+            cgate | gates([control[0], target])
             return gates
         if n_ctrl >= 2:
             theta = self.param / 2
@@ -38,9 +38,9 @@ class MultiControlRotation(object):
             mcr = MultiControlRotation(self.gate_type, theta)
 
             gates = CompositeGate()
-            cgate1 & [control[-1], target] | gates
-            mct(n_ctrl - 1) & control | gates
-            cgate2 & [control[-1], target] | gates
-            mct(n_ctrl - 1) & control | gates
+            cgate1 | gates([control[-1], target])
+            mct(n_ctrl - 1) | gates(control)
+            cgate2 | gates([control[-1], target])
+            mct(n_ctrl - 1) | gates(control)
             mcr(control[:-1], target) | gates
             return gates

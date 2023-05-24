@@ -84,9 +84,12 @@ bin_test_X = binary_img(nocon_test_X, threshold)
 
 def encoding_img(X, encoding):
     data_circuits = []
-    for x in X:
-        data_circuit = encoding(x)
+    for i in tqdm.tqdm(range(len(X))):
+        data_circuit = encoding(X[i])
         data_circuits.append(data_circuit)
+    # for x in X:
+    #     data_circuit = encoding(x)
+    #     data_circuits.append(data_circuit)
 
     return data_circuits
 
@@ -98,6 +101,7 @@ SEED = 17  # 随机数种子
 
 set_seed(SEED)
 
+encoding = FRQI(2)
 # encoding = Qubit(16)
 # train_X = encoding_img(bin_train_X, encoding)
 # test_X = encoding_img(bin_test_X, encoding)
@@ -126,8 +130,6 @@ now_time = time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime(time.time()))
 model_path = "/home/zoker/quict/QNN2.0_MNIST_" + now_time + "/"
 tb = torch.utils.tensorboard.SummaryWriter(log_dir=model_path + "logs")
 
-encoding = FRQI(2)
-# encoding = Qubit(16)
 
 # train epoch
 for ep in range(EPOCH):
