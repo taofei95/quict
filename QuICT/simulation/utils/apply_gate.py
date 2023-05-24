@@ -211,7 +211,7 @@ class GateSimulator:
                 is_control=True if matrix_type == MatrixType.control else False
             )
         elif matrix_type == MatrixType.swap:
-            self._algorithm.swap_matrix(state_vector, control_idx, target_idx)
+            self._algorithm.swap_matrix(state_vector, matrix, control_idx, target_idx)
         elif matrix_type == MatrixType.reverse:
             self._algorithm.reverse_matrix(state_vector, matrix, control_idx, target_idx)
         else:

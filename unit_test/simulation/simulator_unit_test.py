@@ -1,7 +1,6 @@
 import os
 import unittest
 import numpy as np
-from copy import deepcopy
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *

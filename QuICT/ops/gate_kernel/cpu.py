@@ -139,10 +139,22 @@ def _diagonal_matrix(
 
 def swap_matrix(
     vec: np.ndarray,
+    mat: np.ndarray,
     control_args: np.ndarray,
     target_args: np.ndarray,
 ):
-    # Step 1: Get swap indexes for vector
+    # Step 1: Deal with mat_bit == vec_bit
+    valid_params = np.array([mat[-2, -3], mat[-3, -2]]) if mat.size > 4 else np.array([mat[0, 1], mat[1, 0]])
+    vec_bit = int(np.log2(vec.shape[0]))
+    mat_bit = int(np.log2(mat.shape[0]))
+    if vec_bit == mat_bit:
+        temp_value = vec[-2]
+        vec[-2] = vec[-3] * valid_params[0]
+        vec[-3] = temp_value * valid_params[1]
+
+        return
+
+    # Step 2: Get swap indexes for vector
     based_index = 0
     for carg in control_args:
         based_index += 1 << carg
@@ -154,25 +166,17 @@ def swap_matrix(
         swap_idxes[0] += 1 << target_args[0]
         swap_idxes[1] += 1 << target_args[1]
 
-    # Step 2: Deal with mat_bit == vec_bit
-    vec_bit = int(np.log2(vec.shape[0]))
-    if vec_bit == len(control_args) + len(target_args):
-        temp_value = vec[swap_idxes[0]]
-        vec[swap_idxes[0]] = vec[swap_idxes[1]]
-        vec[swap_idxes[1]] = temp_value
-
-        return
-
     # Step 3: swap matrix * vec
     mat_args = np.append(control_args, target_args)
     sorted_args = mat_args.copy()
     sorted_args = np.sort(sorted_args)
-    _swap_matrix(vec, vec_bit, swap_idxes, sorted_args)
+    _swap_matrix(vec, valid_params, vec_bit, swap_idxes, sorted_args)
 
 
 @njit()
 def _swap_matrix(
     vec: np.ndarray,
+    mat: np.ndarray,
     vec_bit: int,
     indexes: np.ndarray,
     sorted_args: np.ndarray
@@ -187,8 +191,8 @@ def _swap_matrix(
 
         current_sidx = indexes + i
         temp_value = vec[current_sidx[0]]
-        vec[current_sidx[0]] = vec[current_sidx[1]]
-        vec[current_sidx[1]] = temp_value
+        vec[current_sidx[0]] = vec[current_sidx[1]] * mat[0]
+        vec[current_sidx[1]] = temp_value * mat[1]
 
 
 def reverse_matrix(
