@@ -73,7 +73,7 @@ class StateVectorSimulator:
     def run(
         self,
         circuit: Circuit,
-        state_vector: np.ndarray = None,
+        quantum_state: np.ndarray = None,
         quantum_machine_model: Union[NoiseModel, VirtualQuantumMachine] = None,
         use_previous: bool = False
     ) -> np.ndarray:
@@ -81,7 +81,8 @@ class StateVectorSimulator:
 
         Args:
             circuit (Circuit): The quantum circuits.
-            state_vector (ndarray): The initial state vector.
+            quantum_state (ndarray): The initial quantum state vector.
+            quantum_machine_model (Union[NoiseModel, VirtualQuantumMachine]): The model of quantum machine
             use_previous (bool, optional): Using the previous state vector. Defaults to False.
 
         Returns:
@@ -97,10 +98,10 @@ class StateVectorSimulator:
         # Initial Quantum Circuit and State Vector
         self.initial_circuit(circuit)
         self._original_state_vector = None
-        if state_vector is not None:
-            self._vector = self._gate_calculator.normalized_state_vector(state_vector, self._qubits)
+        if quantum_state is not None:
+            self._vector = self._gate_calculator.normalized_state_vector(quantum_state, self._qubits)
             if self._quantum_machine is not None:
-                self._original_state_vector = state_vector.copy()
+                self._original_state_vector = quantum_state.copy()
         elif not use_previous:
             self.initial_state_vector()
 
