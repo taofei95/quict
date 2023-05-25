@@ -1,14 +1,14 @@
 from typing import Union
 import numpy as np
 
-from QuICT.core.circuit.circuit import Circuit
+from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate
 from QuICT.core.noise import NoiseModel
 from QuICT.core.operator import NoiseGate
 from QuICT.core.virtual_machine import VirtualQuantumMachine
-from QuICT.core.utils import GateType, matrix_product_to_circuit
+from QuICT.core.utils import GateType, matrix_product_to_circuit, CircuitMatrix
 from QuICT.simulation.utils import GateSimulator
-from QuICT.tools.exception.core import TypeError, ValueError
+from QuICT.tools.exception.core import TypeError
 from QuICT.tools.exception.simulation import SampleBeforeRunError
 
 
@@ -30,6 +30,7 @@ class DensityMatrixSimulator:
                 fast simulate time.]
         """
         self._gate_calculator = GateSimulator(device, precision)
+        self._circuit_matrix_helper = CircuitMatrix(device, precision)
         self._accumulated_mode = accumulated_mode
         self._density_matrix = None
         self._quantum_machine = None
@@ -79,18 +80,17 @@ class DensityMatrixSimulator:
 
         return self._density_matrix
 
-    def _run(self, noised_circuit):
+    def _run(self, noised_circuit: Circuit):
         # Start simulator
-        circuit = Circuit(self._qubits)
-        for gate in noised_circuit.gates:
+        combined_gates = []
+        for gate in noised_circuit.flatten_gates(True):
             # Store continuous BasicGates into cgate
             if isinstance(gate, BasicGate) and gate.type != GateType.measure:
-                gate | circuit
+                combined_gates.append(gate)
                 continue
 
-            if circuit.size() > 0:
-                self.apply_gates(circuit)
-                circuit._gates = []
+            self.apply_gates(combined_gates)
+            combined_gates = []
 
             if gate.type == GateType.measure:
                 self.apply_measure(gate.targ)
@@ -99,10 +99,9 @@ class DensityMatrixSimulator:
             else:
                 raise TypeError("DensityMatrixSimulator.run.circuit", "[BasicGate, NoiseGate]", type(gate))
 
-        if circuit.size() > 0:
-            self.apply_gates(circuit)
+        self.apply_gates(combined_gates)
 
-    def apply_gates(self, circuit: Circuit):
+    def apply_gates(self, combined_gates: list):
         """ Simulating Circuit with BasicGates
 
         dm = M*dm(M.conj)^T
@@ -110,7 +109,10 @@ class DensityMatrixSimulator:
         Args:
             cgate (CompositeGate): The CompositeGate.
         """
-        cir_matrix = circuit.matrix(self._gate_calculator.device)
+        if len(combined_gates) == 0:
+            return
+
+        cir_matrix = self._circuit_matrix_helper.get_unitary_matrix(combined_gates, self._qubits)
         self._density_matrix = self._gate_calculator.dot(
             self._gate_calculator.dot(cir_matrix, self._density_matrix),
             cir_matrix.conj().T

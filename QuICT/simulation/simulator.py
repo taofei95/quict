@@ -17,20 +17,7 @@ from QuICT.tools.exception.simulation import SimulatorOptionsUnmatchedError
 
 
 class Simulator:
-    """ The high-level simulation class, including all QuICT simulator mode.
-
-    Args:
-        device (str): The device of the simulator. One of [CPU, GPU]
-        backend (str): The backend for the simulator. One of [unitary, state_vector, density_matrix]
-        shots (int): The running times; must be a positive integer, default to 1.
-        precision (str): The precision of simulator, one of [single, double], default to double.
-        circuit_record (bool): whether record circuit's qasm in output, default to False.
-        amplitude_record (bool): whether record the amplitude of qubits, default to False.
-        **options (dict): other optional parameters for the simulator.
-            state_vector: [gpu_device_id] (only for gpu)
-            density_matrix: [accumulated_mode]
-            unitary: None
-    """
+    """ The high-level simulation class, including all QuICT simulator mode. """
 
     __DEVICE = ["CPU", "GPU"]
     __BACKEND = ["unitary", "state_vector", "density_matrix"]
@@ -50,6 +37,19 @@ class Simulator:
         output_path: str = None,
         **options
     ):
+        """
+        Args:
+            device (str): The device of the simulator. One of [CPU, GPU]
+            backend (str): The backend for the simulator. One of [unitary, state_vector, density_matrix]
+            precision (str): The precision of simulator, one of [single, double], default to double.
+            circuit_record (bool): whether record circuit's qasm in output, default to False.
+            amplitude_record (bool): whether record the amplitude of qubits, default to False.
+            output_path (str): The output path for simulation result, default to None.
+            **options (dict): other optional parameters for the simulator.
+                state_vector: [gpu_device_id] (only for gpu)
+                density_matrix: [accumulated_mode]
+                unitary: None
+        """
         assert device in Simulator.__DEVICE, ValueError("Simulator.device", "[CPU, GPU]", device)
         self._device = device
         assert backend in Simulator.__BACKEND, \
@@ -58,13 +58,12 @@ class Simulator:
         assert precision in Simulator.__PRECISION, ValueError("Simulator.precision", "[single, double]", precision)
         self._precision = precision
 
+        self._options = options
         if options:
             if not self._options_validation(options):
                 raise SimulatorOptionsUnmatchedError(
                     f"Unmatched options arguments depending on {self._device} and {self._backend}."
                 )
-
-        self._options = options
 
         # load simulator
         self._simulator = self._load_simulator()
@@ -80,7 +79,6 @@ class Simulator:
 
         default_option_list = Simulator.__OPTIONS_DICT[self._backend]
         option_keys = list(options.keys())
-
         for option_key in option_keys:
             if option_key not in default_option_list:
                 return False
