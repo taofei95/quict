@@ -168,6 +168,13 @@ class GateSimulator:
     def _get_gate_matrix(self, gate: BasicGate):
         gate_name = self._generate_gate_name_for_matrix_stored(gate.type, gate.pargs)
 
+        if gate_name not in self._gate_matrix_info.keys():
+            matrix = self._gate_matrix_generator.get_matrix(gate, self._precision)
+            if self._device == "GPU":
+                matrix = self._array_helper.array(matrix)
+
+            return matrix
+
         if self._device == "CPU":
             return self._gate_matrix_info[gate_name]
         else:

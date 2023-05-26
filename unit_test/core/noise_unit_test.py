@@ -51,7 +51,7 @@ class TestNoise(unittest.TestCase):
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulator(accumulated_mode=True)
-        _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
+        _ = dm_simu.run(TestNoise.circuit, quantum_machine_model=nm)
         count = dm_simu.sample(100)
 
         assert count[0] + count[15] + count[7] + count[8] == 100
@@ -73,7 +73,7 @@ class TestNoise(unittest.TestCase):
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulator()
-        _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
+        _ = dm_simu.run(TestNoise.circuit, quantum_machine_model=nm)
         count = dm_simu.sample(100)
 
         assert count[0] + count[15] + count[7] + count[8] == 100
@@ -95,7 +95,7 @@ class TestNoise(unittest.TestCase):
 
         # Using Density Matrix Simulator to simulate
         dm_simu = DensityMatrixSimulator()
-        _ = dm_simu.run(TestNoise.circuit, noise_model=nm)
+        _ = dm_simu.run(TestNoise.circuit, quantum_machine_model=nm)
         count = dm_simu.sample(100)
 
         assert count[0] + count[15] + count[7] + count[8] == 100
@@ -122,7 +122,7 @@ class TestNoise(unittest.TestCase):
         nm.add_readout_error(double_readout, [1, 3])
 
         dm_simu = DensityMatrixSimulator(accumulated_mode=True)
-        _ = dm_simu.run(self.circuit, noise_model=nm)
+        _ = dm_simu.run(self.circuit, quantum_machine_model=nm)
         count = dm_simu.sample(100)
 
         assert count[0] + count[1] + count[4] + count[5] + \
