@@ -73,7 +73,7 @@ class QuICTBenchmark:
         Get circuit from CircuitLib and Get the circuit after qcda.
 
         Args:
-            quantum_machine_info(VirtualQuantumMachine, optional): (VirtualQuantumMachine, optional): The information about the quantum machine.
+            quantum_machine_info(VirtualQuantumMachine, optional): The information about the quantum machine.
             level (int): Get the type of benchmark circuit group, include different circuits, one of [1, 2, 3],
                 default 1.
             qcda_cir(bool): Auto-Compile the circuit with the given quantum machine info, default True.
@@ -120,7 +120,7 @@ class QuICTBenchmark:
         Args:
             simulator_interface(optional): Interface for the sub-physical machine to be measured, that is a function for
                 realize the output quantum physics machine amplitude of the input circuit, saving circuit and amplitude
-                input and output.for example:
+                input and output for example:
 
                 def sim_interface(circuit):
                     simulation(circuit)
@@ -263,6 +263,7 @@ class QuICTBenchmark:
 
         if self._output_file_type == "txt":
             self._txt_show(entropy_QV_score)
+
         else:
             self._excel_show(entropy_QV_score)
 
