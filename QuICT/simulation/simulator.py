@@ -8,6 +8,7 @@ from typing import Union
 
 from QuICT.core import Circuit
 from QuICT.core.noise import NoiseModel
+from QuICT.core.virtual_machine import VirtualQuantumMachine
 from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.simulation.density_matrix import DensityMatrixSimulator
@@ -100,9 +101,8 @@ class Simulator:
         self,
         circuit: Union[Circuit, np.ndarray],
         shots: int = 1,
-        state_vector: np.ndarray = None,
-        density_matrix: np.ndarray = None,
-        noise_model: NoiseModel = None,
+        quantum_state: np.ndarray = None,
+        quantum_machine_model: Union[NoiseModel, VirtualQuantumMachine] = None,
         use_previous: bool = False
     ):
         """ start simulator with given circuit
@@ -117,29 +117,37 @@ class Simulator:
         Yields:
             [dict]: The Result Dict.
         """
+        # Deal with unitary matrix as input
         if isinstance(circuit, np.ndarray) and self._backend != "unitary":
             raise SimulatorOptionsUnmatchedError(
                 f"The unitary matrix input only allows in the unitary backend, not {self._backend}."
             )
 
-        if (density_matrix is not None or noise_model is not None) and self._backend != "density_matrix":
+        if quantum_machine_model is not None and self._backend == "unitary":
             raise SimulatorOptionsUnmatchedError(
-                "The density matrix and noise model input only allows in the density_matrix backend, " +
+                "The Quantum Machine Model input only allows in the Unitary Simulator backend, " +
                 f"not {self._backend}."
             )
 
-        if state_vector is not None and self._backend == "density_matrix":
-            raise SimulatorOptionsUnmatchedError(
-                "The state vector input is not allowed in the density matrix backend."
-            )
+        if quantum_state is not None:
+            ndim = quantum_state.ndim
+            if ndim == 2 and self._backend != "density_matrix":
+                raise SimulatorOptionsUnmatchedError(
+                    f"The Density Matrix input only allows in the Density Matrix backend, not {self._backend}."
+                )
+
+            if ndim == 1 and self._backend == "density_matrix":
+                raise SimulatorOptionsUnmatchedError(
+                    f"The State Vector input only allows in the Unitary/SV backend, not {self._backend}."
+                )
 
         if isinstance(circuit, Circuit):
             self._result_recorder.record_circuit(circuit)
 
-        if self._backend == "density_matrix":
-            amplitude = self._simulator.run(circuit, density_matrix, noise_model, use_previous)
+        if quantum_machine_model is not None:
+            amplitude = self._simulator.run(circuit, quantum_state, quantum_machine_model, use_previous)
         else:
-            amplitude = self._simulator.run(circuit, state_vector, use_previous=use_previous)
+            amplitude = self._simulator.run(circuit, quantum_state, use_previous=use_previous)
 
         self._result_recorder.record_amplitude(amplitude)
 

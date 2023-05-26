@@ -34,6 +34,7 @@ class UnitarySimulator():
     def run(
         self,
         circuit: Union[np.ndarray, Circuit],
+        quantum_state: np.ndarray = None,
         use_previous: bool = False
     ) -> np.ndarray:
         """ Simulation by given unitary matrix or circuit
@@ -58,7 +59,9 @@ class UnitarySimulator():
 
         # Step 2: Prepare the state vector
         self._original_state_vector = None
-        if not use_previous or self._vector is None:
+        if quantum_state is not None:
+            self._vector = self._gate_calculator.normalized_state_vector(quantum_state, self._qubits_num)
+        elif not use_previous:
             self._vector = self._gate_calculator.get_allzero_state_vector(self._qubits_num)
 
         # Step 3: Simulation with the unitary matrix and qubit's state vector
