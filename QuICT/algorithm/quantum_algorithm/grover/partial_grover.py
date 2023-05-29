@@ -69,7 +69,9 @@ class PartialGrover:
             for idx in index_q:
                 X | circuit(idx)
             H | circuit(index_q[n - 1])
-            MCTOneAux().execute(n + 1) | circuit(index_q + oracle_q[:1])
+            mct_gate = MCTOneAux().execute(n + 1)
+            target_indexes = index_q + oracle_q[:1]
+            mct_gate | circuit(target_indexes[:mct_gate.width()])
             H | circuit(index_q[n - 1])
             for idx in index_q:
                 X | circuit(idx)
@@ -87,7 +89,9 @@ class PartialGrover:
             for idx in local_index_q:
                 X | circuit(idx)
             H | circuit(local_index_q[local_n - 1])
-            MCTOneAux().execute(local_n + 1) | circuit(local_index_q + oracle_q[:1])
+            mct_gate = MCTOneAux().execute(local_n + 1)
+            target_indexes = local_index_q + oracle_q[:1]
+            mct_gate | circuit(target_indexes[:mct_gate.width()])
             H | circuit(local_index_q[local_n - 1])
             for idx in local_index_q:
                 X | circuit(idx)

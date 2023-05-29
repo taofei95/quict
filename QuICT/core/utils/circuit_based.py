@@ -41,21 +41,9 @@ class CircuitBased(object):
 
     def flatten_gates(self, decomposition: bool = False) -> list:
         """ Return the list of BasicGate/Operator. """
-        flatten_gates = []
-        for gate, qidxes, _ in self._gates:
-            gate = gate.copy() & qidxes
-            if hasattr(gate, "flatten_gates"):
-                flatten_gates.extend(gate.flatten_gates(decomposition))
-            else:
-                if decomposition:
-                    cgate = gate.build_gate()
-                    if cgate is not None:
-                        flatten_gates.extend(cgate.gates)
-                        continue
+        flatten_gates = self.gate_decomposition(self_flatten=False, decomposition=decomposition)
 
-                flatten_gates.append(gate)
-
-        return flatten_gates
+        return [gate & qidxes for gate, qidxes, _ in flatten_gates]
 
     def __init__(self, name: str):
         self._name = name
@@ -226,15 +214,21 @@ class CircuitBased(object):
         decomp_gates = []
         for gate, qidxes, size in self._gates:
             if size > 1 or hasattr(gate, "gate_decomposition"):
-                decomp_gates += gate.gate_decomposition(False, decomposition)
+                gate & qidxes
+                decomp_gates += gate.gate_decomposition(False, False)
             else:
-                if decomposition and hasattr(gate, "build_gate"):
-                    cgate = gate.build_gate(qidxes)
-                    if cgate is not None:
-                        decomp_gates += cgate._gates
-                        continue
-
                 decomp_gates.append((gate, qidxes, size))
+                
+        if decomposition:
+            temp_decomp_gates = []
+            for gate, qidxes, size in decomp_gates:
+                cgate = gate.build_gate(qidxes)
+                if cgate is not None:
+                    temp_decomp_gates += cgate._gates
+                else:
+                    temp_decomp_gates.append((gate, qidxes, size))
+
+            decomp_gates = temp_decomp_gates[:]
 
         if not self_flatten:
             return decomp_gates
@@ -249,7 +243,7 @@ class CircuitBased(object):
         for g in self.flatten_gates():
             print(g.type, g.cargs, g.targs, g.pargs)
 
-    def draw(self, method: str = 'matp_auto', filename: str = None):
+    def draw(self, method: str = 'matp_auto', filename: str = None, flatten: bool = False):
         """Draw the figure of circuit.
 
         Args:
@@ -287,6 +281,9 @@ class CircuitBased(object):
         """
         from QuICT.tools.drawer import PhotoDrawer, TextDrawing
         import matplotlib
+
+        if flatten:
+            self.gate_decomposition(decomposition = False)
 
         if method.startswith('matp'):
             if filename is not None:

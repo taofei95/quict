@@ -110,9 +110,6 @@ class CompositeGate(CircuitBased):
         new_gates = []
         for gate, qidxes, size in self._gates:
             new_q = [qidx_mapping[qidx] for qidx in qidxes]
-            if isinstance(gate, CompositeGate):
-                gate & new_q
-
             new_gates.append((gate, new_q, size))
 
         self._qubits = targets
@@ -324,7 +321,7 @@ class CompositeGate(CircuitBased):
             local_qidx_mapping[qidx] = i
 
         local_gates = []
-        flatten_gates = self.gate_decomposition(False)
+        flatten_gates = self.gate_decomposition(self_flatten=False)
         for gate, qidx, _ in flatten_gates:
             related_qidx = [local_qidx_mapping[q] for q in qidx]
             lgate = gate & related_qidx
