@@ -724,7 +724,7 @@ class Unitary(BasicGate):
         except:
             from QuICT.core.gate import CompositeGate
             decomp_gate = CompositeGate()
-            decomp_gate.append(self)
+            decomp_gate.append(self & list(range(self.targets)))
 
             return decomp_gate
 

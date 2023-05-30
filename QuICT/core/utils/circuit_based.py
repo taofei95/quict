@@ -214,11 +214,11 @@ class CircuitBased(object):
         decomp_gates = []
         for gate, qidxes, size in self._gates:
             if size > 1 or hasattr(gate, "gate_decomposition"):
-                gate & qidxes
-                decomp_gates += gate.gate_decomposition(False, False)
+                temp_gate = gate.copy() & qidxes
+                decomp_gates += temp_gate.gate_decomposition(False, False)
             else:
                 decomp_gates.append((gate, qidxes, size))
-                
+
         if decomposition:
             temp_decomp_gates = []
             for gate, qidxes, size in decomp_gates:

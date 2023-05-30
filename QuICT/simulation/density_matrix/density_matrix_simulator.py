@@ -29,7 +29,7 @@ class DensityMatrixSimulator:
                 [Important: set accumulated_mode for True if you need sample result, otherwise, using False for
                 fast simulate time.]
         """
-        self._gate_calculator = GateSimulator(device, precision)
+        self._gate_calculator = GateSimulator(device, precision, enable_gfunc=False)
         self._circuit_matrix_helper = CircuitMatrix(device, precision)
         self._accumulated_mode = accumulated_mode
         self._density_matrix = None
