@@ -109,6 +109,6 @@ if __name__ == "__main__":
     # 含噪声量子电路模拟
     simulator = DensityMatrixSimulator(accumulated_mode=True)
     sv = simulator.run(cir, noise_model=nm)
-    sample_result = simulator.sample(1000)
+    sample_result = simulator.sample(20)
 
     print(sample_result)
