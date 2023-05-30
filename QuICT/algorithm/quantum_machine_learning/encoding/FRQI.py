@@ -5,6 +5,8 @@ from sympy.logic.boolalg import to_dnf
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
+import matplotlib.pyplot as plt
+
 
 class FRQI:
     """FRQI encoding for encoding classical image data into quantum circuits."""
@@ -34,19 +36,21 @@ class FRQI:
 
         return circuit
 
-    def _img_preprocess(self, img):
-        img = img.flatten()
+    def _img_preprocess(self, img, flatten=True):
         if ((img < 1.0) & (img > 0.0)).any():
             img *= self._grayscale - 1
         img = img.astype(np.int64)
         assert (
             np.unique(img).shape[0] <= self._grayscale
             and np.max(img) <= self._grayscale
+            and img.shape[0] == img.shape[1]
         )
-        self._N = img.shape[0]
+        self._N = img.shape[0] * img.shape[1]
         self._n_pos_qubits = int(np.log2(self._N))
         assert 1 << self._n_pos_qubits == self._N
         self._n_qubits = self._n_pos_qubits + self._n_color_qubits
+        if flatten:
+            img = img.flatten()
         return img
 
     def _construct_frqi_circuit(self, img):
