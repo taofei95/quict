@@ -1,1 +1,1 @@
-from .mnist_classifier_net import QuantumNet
+from .quantum_net import QuantumNet

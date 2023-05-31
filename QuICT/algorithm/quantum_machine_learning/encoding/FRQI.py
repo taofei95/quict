@@ -65,7 +65,7 @@ class FRQI:
             gates = mcr(
                 control=list(range(self._n_pos_qubits)), target=self._n_pos_qubits
             )
-            gates | frqi_circuit
+            gates | frqi_circuit(list(range(self._n_qubits)))
         return frqi_circuit
 
     def _construct_qic_circuit(self, img, gid=0, drop_zerokey=False):
