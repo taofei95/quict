@@ -338,12 +338,9 @@ class TestCircuit(unittest.TestCase):
         noise = NoiseGate(Z, noise=amp_err)
         noise | cir([5])
 
-        cir.draw()
-        assert True
-
         assert cir.width() == 15
         assert cir.size() == 61
-        assert cir.depth() == 17
+        assert cir.depth() == 19
         assert len(cir.qubits) == 15
         assert cir.count_1qubit_gate() == 35
         assert cir.count_2qubit_gate() == 22

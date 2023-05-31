@@ -257,24 +257,6 @@ class CompositeGate(CircuitBased):
     ####################################################################
     ############            CompositeGate Utils             ############
     ####################################################################
-    def depth(self, depth_per_qubits: bool = False) -> int:
-        """ the depth of the CompositeGate.
-
-        Returns:
-            int: the depth
-        """
-        depth = np.zeros(self.width(), dtype=int)
-        for gate, targs, _ in self._gates:
-            targs = [self.qubits.index(targ) for targ in targs]
-            if isinstance(gate, CompositeGate):
-                gdepth = gate.depth(True)
-                for i, targ in enumerate(targs):
-                    depth[targ] += gdepth[i]
-            else:
-                depth[targs] = np.max(depth[targs]) + 1
-
-        return np.max(depth) if not depth_per_qubits else depth
-
     def inverse(self) -> CompositeGate:
         """ the inverse of CompositeGate
 
@@ -328,27 +310,3 @@ class CompositeGate(CircuitBased):
             local_gates.append(lgate)
 
         return local_gates
-
-    def qasm_gates_only(self, creg: int, cbits: int, target_qubits: list = None):
-        qasm_string = ""
-        if target_qubits is not None:
-            qidx_mapping = {}
-            for i, q in enumerate(self.qubits):
-                qidx_mapping[q] = target_qubits[i]
-
-        for gate, targs, _ in self._gates:
-            if target_qubits is not None:
-                targs = [qidx_mapping[targ] for targ in targs]
-
-            if isinstance(gate, CompositeGate):
-                qasm_string += gate.qasm_gates_only(creg, cbits, targs)
-                continue
-
-            if gate.qasm_name == "measure":
-                qasm_string += f"measure q[{targs}] -> c[{cbits}];\n"
-                cbits += 1
-                cbits = cbits % creg
-            else:
-                qasm_string += gate.qasm(targs)
-
-        return qasm_string

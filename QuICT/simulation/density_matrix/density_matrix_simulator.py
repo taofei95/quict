@@ -23,7 +23,7 @@ class DensityMatrixSimulator:
         """
         Args:
             device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
-            precision (str, optional): The precision for the density matrix, one of [single, double]. Defaults to "double".
+            precision (str, optional): The precision, one of [single, double]. Defaults to "double".
             accumulated_mode (bool): If True, calculated density matrix with Kraus Operators in NoiseGate.
                 if True, p = \\sum Ki p Ki^T.conj(). Default to be False.
                 [Important: set accumulated_mode for True if you need sample result, otherwise, using False for

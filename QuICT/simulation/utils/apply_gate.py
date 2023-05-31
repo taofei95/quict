@@ -16,7 +16,14 @@ class GateSimulator:
     def precision(self):
         return self._precision
 
-    def __init__(self, device, precision: str = "double", gpu_device_id: int = 0, sync: bool = True, enable_gfunc: bool = True):
+    def __init__(
+        self,
+        device,
+        precision: str = "double",
+        gpu_device_id: int = 0,
+        sync: bool = True,
+        enable_gfunc: bool = True
+    ):
         if device not in ["CPU", "GPU"]:
             raise ValueError("Simulation.device", "[CPU, GPU]", device)
 
