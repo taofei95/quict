@@ -270,7 +270,7 @@ class CircuitBased(object):
             filename(str): the output filename without file extensions, default to None.
                 If filename is None, it will using matlibplot.show() except matlibplot.backend
                 is agg, it will output jpg file named circuit's name.
-            get_figure(bool): Whether to return the figure object of matplotlib.
+            flatten(bool): Whether draw the Circuit with CompositeGate or Decomposite it.
 
         Returns:
             If method is 'matp_silent', a matplotlib Figure is returned. Note that that figure is created in matplotlib

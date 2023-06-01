@@ -4,7 +4,19 @@ from QuICT.core.utils import GateType
 
 
 class GateMatrixGenerator:
-    def get_matrix(self, gate, precision: str = None, is_get_target: bool = False):
+    """ Generator the Quantum Gates' Matrix. """
+    def get_matrix(self, gate, precision: str = None, is_get_target: bool = False) -> np.ndarray:
+        """ Return the given BasicGate's matrix.
+
+        Args:
+            gate (BasicGate): The Quantum Gate
+            precision (str, optional): The precision of Quantum Gate. Defaults to None.
+            is_get_target (bool, optional): Whether return the completed BasicGate's matrix, or only return the target qubits part.
+                Defaults to False.
+
+        Returns:
+            np.ndarray: The Quantum Gates' matrix.
+        """
         # Step 1: Get based matrix's value
         gate_type = gate.type
         _precision = gate.precision if precision is None else precision
@@ -30,7 +42,16 @@ class GateMatrixGenerator:
 
         return based_matrix
 
-    def based_matrix(self, gate_type, precision):
+    def based_matrix(self, gate_type: GateType, precision: complex):
+        """ Return the no-parameter Quantum Gates' matrix.
+
+        Args:
+            gate_type (GateType): The type of Quantum Gate
+            precision (complex): The precision of Quantum Gate
+
+        Returns:
+            np.ndarray: The Quantum Gate's matrix
+        """
         if gate_type in [GateType.h, GateType.ch]:
             return np.array([
                 [1 / np.sqrt(2), 1 / np.sqrt(2)],
@@ -127,7 +148,17 @@ class GateMatrixGenerator:
         else:
             raise TypeError(gate_type)
 
-    def matrix_with_param(self, gate_type, pargs, precision):
+    def matrix_with_param(self, gate_type: GateType, pargs: list, precision: complex):
+        """ Return the Quantum Gates' matrix, which has parameters.
+
+        Args:
+            gate_type (GateType): The type of Quantum Gate.
+            pargs (List): The Quantum Gate's parameters.
+            precision (complex): The precision of Quantum Gate.
+
+        Returns:
+            np.ndarray: The Quantum Gate's matrix.
+        """
         if gate_type in [GateType.u1, GateType.cu1]:
             return np.array([
                 [1, 0],
@@ -245,11 +276,20 @@ class GateMatrixGenerator:
 
 
 class ComplexGateBuilder:
+    """ The class of all build_gate functions for BasicGate. """
     @classmethod
     def build_gate(cls, gate_type, parg, gate_matrix=None):
+        """ Gate Decomposition, divided the current gate with a set of small gates
 
+        Args:
+            gate_type (GateType): The type of Quantum Gate.
+            parg (list): The parameters of Quantum Gate.
+            gate_matrix (_type_, optional): The matrix of Quantum Gate, only use for CU3. Defaults to None.
+
+        Returns:
+            List: List of gate_info(gate_type, qubit_index, parameters)
+        """
         if gate_type == GateType.cu3:
-            # TODO: currently not correct for cu3 decomposition
             cgate = cls.build_unitary(gate_matrix)
         elif gate_type == GateType.cu1:
             cgate = cls.build_cu1(parg)
@@ -413,6 +453,7 @@ class ComplexGateBuilder:
 
 
 class InverseGate:
+    """ The class of all Inverse functions for Quantum Gate. """
     __GATE_INVERSE_MAP = {
         GateType.s: GateType.sdg,
         GateType.sdg: GateType.s,
@@ -430,6 +471,15 @@ class InverseGate:
 
     @classmethod
     def get_inverse_gate(cls, gate_type: GateType, pargs: list) -> tuple:
+        """ Get Inverse Quantum Gate Information.
+
+        Args:
+            gate_type (GateType): The type of Quantum Gate.
+            pargs (list): The parameters of Quantum Gate.
+
+        Returns:
+            tuple: The inverse gate info.
+        """
         if len(pargs) == 0:
             if gate_type in cls.__GATE_INVERSE_MAP.keys():
                 inverse_args = cls.__GATE_INVERSE_MAP[gate_type]

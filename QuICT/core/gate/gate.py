@@ -836,9 +836,9 @@ def gate_builder(gate_type, precision: str = "double", params: list = [], random
     """ Build the target Quantum Gate.
 
     Args:
-        gate_type (_type_): The gate's type
-        precision (str, optional): The gate's precision. Defaults to "double".
-        params (list, optional): The gate's parameters. Defaults to [].
+        gate_type (GateType): The gate's type.  \n
+        precision (str, optional): The gate's precision. Defaults to "double".  \n
+        params (list, optional): The gate's parameters. Defaults to [].  \n
         random_params (bool, optional): Whether using random parameters. Defaults to False.
 
     Returns:

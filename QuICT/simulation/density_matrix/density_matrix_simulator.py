@@ -72,7 +72,7 @@ class DensityMatrixSimulator:
         # Initial Density Matrix
         if quantum_state is not None:
             self._gate_calculator.validate_density_matrix(quantum_state)
-            self._density_matrix = self._gate_calculator.normalized_matrix(quantum_state, self._qubits)
+            self._density_matrix = self._gate_calculator.normalized_matrix(quantum_state.copy(), self._qubits)
         elif (self._density_matrix is None or not use_previous):
             self._density_matrix = self._gate_calculator.get_allzero_density_matrix(self._qubits)
 

@@ -99,7 +99,7 @@ class StateVectorSimulator:
         self.initial_circuit(circuit)
         self._original_state_vector = None
         if quantum_state is not None:
-            self._vector = self._gate_calculator.normalized_state_vector(quantum_state, self._qubits)
+            self._vector = self._gate_calculator.normalized_state_vector(quantum_state.copy(), self._qubits)
             if self._quantum_machine is not None:
                 self._original_state_vector = quantum_state.copy()
         elif not use_previous:

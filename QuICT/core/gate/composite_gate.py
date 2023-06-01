@@ -240,6 +240,11 @@ class CompositeGate(CircuitBased):
         self._gates.insert(insert_idx, (gate, gate_args, gate_size))
 
     def _append_gate(self, gate: BasicGate):
+        """ Add a BasicGate into the current CompositeGate
+
+        Args:
+            gate (BasicGate): The BasicGate need to added
+        """
         if self._pointer is not None:
             gate_args = gate.controls + gate.targets
             assert len(self._pointer) == gate_args, \
@@ -271,6 +276,7 @@ class CompositeGate(CircuitBased):
         return _gates
 
     def copy(self) -> CompositeGate:
+        """ Copy current CompositeGate. """
         _gates = CompositeGate()
         _gates.name = self.name
         _gates._qubits = self.qubits
@@ -306,7 +312,7 @@ class CompositeGate(CircuitBased):
         flatten_gates = self.gate_decomposition(self_flatten=False)
         for gate, qidx, _ in flatten_gates:
             related_qidx = [local_qidx_mapping[q] for q in qidx]
-            lgate = gate & related_qidx
+            lgate = gate.copy() & related_qidx
             local_gates.append(lgate)
 
         return local_gates
