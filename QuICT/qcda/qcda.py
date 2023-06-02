@@ -142,7 +142,6 @@ class QCDA(object):
         for process in qm_process:
             logger.info(f"QCDA Now processing {process.__class__.__name__}.")
             circuit = process.execute(circuit)
-            circuit.gate_decomposition()
 
         return circuit
 

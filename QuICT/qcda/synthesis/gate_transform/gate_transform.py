@@ -37,17 +37,13 @@ class GateTransform(object):
         Returns:
             CompositeGate: the equivalent compositeGate with goal instruction set
         """
-        gates = CompositeGate()
-        if isinstance(circuit, CompositeGate):
-            gates.extend(circuit)
-        elif isinstance(circuit, Circuit):
-            gates.extend(circuit.to_compositegate())
-        else:
-            raise TypeError("Invalid input for GateTransform")
+        assert isinstance(circuit, (Circuit, CompositeGate)), TypeError("Invalid input for GateTransform")
+        gates = circuit if isinstance(circuit, CompositeGate) else circuit.to_compositegate()
 
         gates.gate_decomposition()
         gates = self.two_qubit_transform(gates)
         gates = self.one_qubit_transform(gates)
+
         return gates
 
     def one_qubit_transform(self, gates: CompositeGate):

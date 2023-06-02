@@ -80,13 +80,14 @@ class TestCompositeGate(unittest.TestCase):
         qft.count_gate_by_gatetype(GateType.h) == 5
         assert qft.size() == 15
         assert qft.depth() == 9
-        
+
         iqft = IQFT(TestCompositeGate.qubits)
         qft.count_gate_by_gatetype(GateType.h) == 5
         assert iqft.size() == 15
         assert iqft.depth() == 9
-        
+
         assert qft.inverse() != qft
+
 
 if __name__ == "__main__":
     unittest.main()

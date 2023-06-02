@@ -4,8 +4,14 @@ from QuICT.core.gate import H, CU1, CompositeGate
 
 
 class QFT(CompositeGate):
+    """ Implement a QFT Gates. """
     def __init__(self, targets: int, name: str = None):
-        assert targets >= 2, "QFT Gate need at least two targets."
+        """
+        Args:
+            targets (int): The qubits' number.
+            name (str, optional): The name of QFT gates. Defaults to None.
+        """
+        assert targets >= 2, "QFT Gate need at least two targets qubits."
         super().__init__(name)
         self.qft_build(targets)
 
@@ -26,7 +32,13 @@ class QFT(CompositeGate):
 
 
 class IQFT(CompositeGate):
+    """ Implement an IQFT Gates. """
     def __init__(self, targets: int, name: str = None):
+        """
+        Args:
+            targets (int): The qubits' number.
+            name (str, optional): The name of QFT gates. Defaults to None.
+        """
         assert targets >= 2, "QFT Gate need at least two targets."
         super().__init__(name)
         self.iqft_build(targets)
