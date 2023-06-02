@@ -58,7 +58,7 @@ def auto_qcda_with_qm():
     qcda = QCDA()
     circuit_phy = qcda.auto_compile(circuit, vqm)
     print("The suitable Quantum Circuit for the given Quantum Machine.")
-    circuit_phy.draw('command')
+    circuit_phy.draw('command', flatten=True)
 
 
 if __name__ == '__main__':

@@ -293,3 +293,25 @@ class Layout:
             sub_layout.add_edge(index_mapping[u], index_mapping[v], directional=False)
 
         return sub_layout
+
+    def linear_layout(self, directional=DIRECTIONAL_DEFAULT, error_rate: list = []):
+        """ Get Linearly Topology.
+
+        Args:
+            directional (_type_, optional): Whether the edge is directional. Defaults to DIRECTIONAL_DEFAULT.
+            error_rate (list, optional): Error rate for each edges, default 1.0. Defaults to [].
+
+        Returns:
+            Layout: The layout of linearly topology
+        """
+        if len(error_rate) == 0:
+            error_rate = [1.0] * (self._qubit_number - 1)
+
+        assert len(error_rate) == (self._qubit_number - 1)
+        for i in range(self._qubit_number - 1):
+            self.add_edge(i, i + 1, directional, error_rate[i])
+
+        return self
+
+    def grid_layout(self, unreachable_nodes: list = [], directional: bool = DIRECTIONAL_DEFAULT, error_rate: list = []):
+        pass
