@@ -1,5 +1,6 @@
+from abc import abstractmethod, ABC
+from collections import deque
 from functools import reduce
-from math import log
 
 import numpy as np
 
@@ -16,7 +17,13 @@ except ImportError:
 from QuICT.core.utils import GateType
 
 
-class StaticCircuitCost(object):
+class CircuitCost(ABC):
+    @abstractmethod
+    def evaluate(self, circuit: Circuit):
+        pass
+
+
+class StaticCircuitCost(CircuitCost):
     """
     Static cost of quantum circuit.
     """
@@ -32,7 +39,7 @@ class StaticCircuitCost(object):
 
     def __init__(self, cost_dict=None):
         if cost_dict is None:
-            self.cost_dict = self.NISQ_GATE_COST
+            cost_dict = self.NISQ_GATE_COST
         self.cost_dict = cost_dict
 
     def __getitem__(self, gate_type):
@@ -53,17 +60,20 @@ class StaticCircuitCost(object):
         else:
             return 0
 
-    def cost(self, circuit):
+    def evaluate(self, circuit: Circuit):
         """
-        Calculate cost of a circuit based on static gate cost.
+        Evaluate cost of a circuit.
+
+        Args:
+            circuit(Circuit): Circuit to evaluate
+
+        Returns:
+            int: Cost of the circuit
         """
-        if isinstance(circuit, Iterable):
-            return sum(self[n.gate.type] for n in circuit)
-        else:
-            return sum(self[n.gate.type] for n in circuit.gates)
+        return sum(self[n.type] for n in circuit.gates)
 
 
-class CircuitCost(object):
+class FidelityCircuitCost(CircuitCost):
     """
     Measure of gate cost in quantum circuit.
     """
@@ -131,13 +141,15 @@ class CircuitCost(object):
         backend.qubit_fidelity = qubit_fidelity
         backend.gate_fidelity = gate_fidelity
 
-        return CircuitCost(backend)
+        return FidelityCircuitCost(backend)
+
 
     def _gate_fidelity(self, gate: BasicGate):
         qubits = tuple(gate.cargs + gate.targs)
         if gate.type not in self.backend.instruction_set.one_qubit_gates and \
                 gate.type != self.backend.instruction_set.two_qubit_gate:
-            assert False, f'Gate type {gate.type} not in instruction set'
+            return 1
+            # assert False, f'Gate type {gate.type} not in instruction set'
         if gate.controls + gate.targets == 1:
             if isinstance(self.backend.qubits[qubits[0]].gate_fidelity, dict):
                 gate_f = self.backend.qubits[qubits[0]].gate_fidelity.get(gate.type, 1.)
@@ -146,7 +158,9 @@ class CircuitCost(object):
 
         else:
             if self.backend.layout and not self.backend.layout.check_edge(*qubits):
-                assert False, f'Qubits {qubits} not connected'
+                return -1
+            if qubits[1] not in self.backend.qubits.coupling_strength[qubits[0]]:
+                return -1
 
             gate_f = self.backend.qubits.coupling_strength[qubits[0]][qubits[1]]
 
@@ -161,6 +175,27 @@ class CircuitCost(object):
             tot_time += self.backend.qubits[q].T2
             cnt += 1
         return tot_time / cnt
+
+    def _get_shortest_path(self, u, v):
+        prev = {u: -1}
+        que = deque([u])
+        while len(que) > 0 and v not in prev:
+            cur = que.popleft()
+            for nxt in self.backend.coupling_strength[cur].keys():
+                if nxt not in prev:
+                    prev[nxt] = cur
+                    que.append(nxt)
+                if nxt == v:
+                    break
+
+        if v not in prev:
+            return []
+
+        ret = []
+        while v != u:
+            ret.append([prev[v], v])
+            v = prev[v]
+        return ret[::-1]
 
     def evaluate_fidelity(self, circuit: Circuit):
         """
@@ -177,6 +212,16 @@ class CircuitCost(object):
 
         for g in circuit.gates:
             gate_f = self._gate_fidelity(g)
+            if gate_f < 0:
+                # qubits not connected in topo
+                path = self._get_shortest_path(*(g.cargs + g.targs))
+                for u, v in path:
+                    cs = self.backend.coupling_strength[u][v]
+                    # FIXME consider SWAP == 6 CNOT ?
+                    qubit_f[u] *= cs
+                    qubit_f[v] *= cs
+                continue
+
             for q in g.cargs + g.targs:
                 qubit_f[q] *= gate_f
                 qubit_gate_count[q] += 1

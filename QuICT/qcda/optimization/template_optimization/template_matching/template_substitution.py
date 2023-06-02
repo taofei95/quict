@@ -2,7 +2,10 @@ from functools import cached_property
 from itertools import chain
 from typing import List
 
+import numpy as np
+
 from QuICT.core.utils import GateType
+from QuICT.qcda.utility.circuit_cost import CircuitCost
 
 try:
     from collections.abc import Iterable
@@ -79,10 +82,13 @@ class CircuitCostMeasure(object):
             int: Cost of the circuit
         """
 
-        if isinstance(circuit, Iterable):
-            return sum(self[n.gate.type] for n in circuit)
+        if isinstance(circuit, Circuit):
+            return sum(self[n.type] for n in circuit.gates)
         else:
-            return sum(self[n.gate.type] for n in circuit.gates)
+            return sum(self[n.gate.type] for n in circuit)
+
+    def evaluate(self, circuit: Circuit):
+        return self.cost(circuit)
 
 
 class Substitution:
@@ -93,7 +99,7 @@ class Substitution:
                  circuit: MatchingDAGCircuit,
                  template: MatchingDAGCircuit,
                  match: Match,
-                 measure: CircuitCostMeasure):
+                 measure: CircuitCost):
         """
         Args:
             circuit(MatchingDAGCircuit): the circuit to match
@@ -112,11 +118,15 @@ class Substitution:
         Returns:
             int: Cost reduced if when substitution is done.
         """
-        old_nodes = self.match.template_nodes
-        new_nodes = set(range(self.template.size)) - old_nodes
-        old_cost = sum(self.measure[self.template.get_node(n).type] for n in old_nodes)
-        new_cost = sum(self.measure[self.template.get_node(n).type] for n in new_nodes)
-        return old_cost - new_cost
+        # old_nodes = self.match.template_nodes
+        # new_nodes = set(range(self.template.size)) - old_nodes
+        # old_cost = sum(self.measure[self.template.get_node(n).type] for n in old_nodes)
+        # new_cost = sum(self.measure[self.template.get_node(n).type] for n in new_nodes)
+
+        circ_old = self.matching
+        circ_new = self.substitution
+
+        return self.measure.evaluate(circ_old) - self.measure.evaluate(circ_new)
 
     @cached_property
     def pred(self):
@@ -150,7 +160,17 @@ class Substitution:
         assert isinstance(other, Substitution)
         return -1 if self.match.circuit_nodes & other.pred_set else 1
 
-    def get_substitution(self):
+    @cached_property
+    def matching(self):
+        circ = Circuit(self.circuit.width)
+        for node_id, _ in self.match.match:
+            node = self.template.get_node(node_id)
+            qubits = list([self.match.qubit_mapping[i] for i in node.qargs])
+            node.gate.copy() | circ(qubits)
+        return circ
+
+    @cached_property
+    def substitution(self):
         """
         Get the substitution of circuit for the matching.
         """
@@ -164,6 +184,7 @@ class Substitution:
             node: MatchingDAGNode = self.template.get_node(node_id)
             qubits = list([self.match.qubit_mapping[i] for i in node.qargs])
             node.gate.inverse().copy() | circ(qubits)
+
         return circ
 
 
@@ -194,7 +215,7 @@ class TemplateSubstitution:
                        circuit: MatchingDAGCircuit,
                        template: MatchingDAGCircuit,
                        match_list: List[Match],
-                       measure: CircuitCostMeasure):
+                       measure: CircuitCost):
         """
         Greedily calculate a maximal and compatible sub list for found matches.
         """
@@ -232,7 +253,7 @@ class TemplateSubstitution:
                 circuit: MatchingDAGCircuit,
                 template: MatchingDAGCircuit,
                 match_list: List[Match],
-                measure: CircuitCostMeasure):
+                measure: CircuitCost):
 
         sub_list = cls._calc_sub_list(circuit, template, match_list, measure)
 
@@ -246,7 +267,7 @@ class TemplateSubstitution:
                 node: MatchingDAGNode = circuit.get_node(node_id)
                 new_circ.append(node.gate.copy())
 
-            for temp_gate in sub.get_substitution().gates:
+            for temp_gate in sub.substitution.gates:
                 new_circ.append(temp_gate)
 
             visited_nodes.update(sub.pred)

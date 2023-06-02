@@ -75,9 +75,11 @@ def test_random_circuit():
     for n_gates in range(20, 101, 20):
         circ = Circuit(n_qubits)
         circ.random_append(n_gates, typelist=gates)
-        TO = TemplateOptimization(template_typelist=sample(template_list, n_templates))
+        TO = TemplateOptimization()
+        # TO = TemplateOptimization(template_typelist=sample(template_list, n_templates))
         circ_optim = TO.execute(circ)
 
+        print(circ.size(), circ_optim.size())
         mat_1 = circ.matrix()
         mat_2 = circ_optim.matrix()
         assert np.allclose(mat_1, mat_2)

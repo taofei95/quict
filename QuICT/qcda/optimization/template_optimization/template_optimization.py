@@ -9,6 +9,7 @@ from QuICT.qcda.optimization.template_optimization.template_matching.template_su
 from QuICT.qcda.utility import OutputAligner
 
 from .template_matching.template_substitution import CircuitCostMeasure
+from ...utility.circuit_cost import StaticCircuitCost, CircuitCost
 
 
 class TemplateOptimization(object):
@@ -30,6 +31,7 @@ class TemplateOptimization(object):
             qubit_fixing_num=1,
             prune_step=3,
             prune_survivor_num=1,
+            cost_measure=None,
     ):
         """
         Execute template optimization algorithm.
@@ -60,6 +62,7 @@ class TemplateOptimization(object):
             qubit_fixing_num(int): heuristic parameter for qubit exploring
             prune_step(int): heuristic parameter for backward match
             prune_survivor_num(int): heuristic parameter for backward match
+            cost_measure(CircuitCost): cost measure for template substitution, by default is StaticCircuitCost()
         """
 
         if template_list is None:
@@ -73,7 +76,11 @@ class TemplateOptimization(object):
         self.template_list = template_list
         self.heuristics_qubits_param = [qubit_fixing_num]
         self.heuristics_backward_param = [prune_step, prune_survivor_num]
-        self.cost_measure = CircuitCostMeasure(target_device='nisq')
+
+        if cost_measure is None:
+            cost_measure = StaticCircuitCost()
+        self.cost_measure = cost_measure
+
 
     def __repr__(self):
         return f'TemplateOptimization(' \
