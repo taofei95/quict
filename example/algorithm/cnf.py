@@ -14,9 +14,10 @@ print(solutions)
 # Get CNF Circuit
 cnf = CNFSATOracle(StateVectorSimulator())
 circ = cnf.circuit([variable_number, clause_number, CNF_data], 3, 1, output_cgate=False)
-print(circ)
-circ.draw(method="matp_file")
+circ.draw(method="command", flatten=True)
 
 # Solve CNF
-sample_result = cnf.run([variable_number, clause_number, CNF_data], 3, 1, 100)
+sim = StateVectorSimulator()
+sv = sim.run(circ)
+sample_result = sim.sample(100)
 print(sample_result)

@@ -51,13 +51,13 @@ def circuit_build():
     cgate | cir([1, 2, 3])
 
     print(cir.qasm())
-    cir.draw(filename="circuit_build")
+    cir.draw(method="matp_auto", filename="circuit_build")
 
 
 def random_build():
     circuit = Circuit(5)
     circuit.random_append(30)
-    circuit.draw(filename="random")
+    circuit.draw(method="command")
 
 
 def supremacy_build():
@@ -68,7 +68,17 @@ def supremacy_build():
         pattern="ABCDCDAB"  # Indicate the circuit cycle
     )
 
-    circuit.draw(filename="supremacy")
+    circuit.draw(method="command")
+
+
+def sub_circuit():
+    cir = Circuit(5)
+    cir.random_append(30, random_params=True)
+    print("The original Quantum Circuit.")
+    cir.draw(method="command")
+    sub_cir = cir.sub_circuit(start=5, max_size=20, qubit_limit=[0, 1, 2, 3, 4])
+    print("The partial Quantum Circuit.")
+    sub_cir.draw(method="command")
 
 
 def load_circuit_from_qasm():
@@ -88,4 +98,4 @@ def load_circuit_from_qasm():
 
 
 if __name__ == "__main__":
-    circuit_build()
+    sub_circuit()
