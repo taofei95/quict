@@ -20,4 +20,4 @@ if __name__ == "__main__":
 
     GT = GateTransform(instruction_set=USTCSet)
     new_circuit = GT.execute(circuit)
-    new_circuit.draw(method="command") #, flatten=True)
+    new_circuit.draw(method="command", flatten=True)

@@ -11,8 +11,8 @@ class GateMatrixGenerator:
         Args:
             gate (BasicGate): The Quantum Gate
             precision (str, optional): The precision of Quantum Gate. Defaults to None.
-            is_get_target (bool, optional): Whether return the completed BasicGate's matrix, or only return the target qubits part.
-                Defaults to False.
+            is_get_target (bool, optional): Whether return the completed BasicGate's matrix, or only return the target
+            qubits part. Defaults to False.
 
         Returns:
             np.ndarray: The Quantum Gates' matrix.

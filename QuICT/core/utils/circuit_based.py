@@ -39,7 +39,7 @@ class CircuitBased(object):
         return self._gates
 
     def flatten_gates(self, decomposition: bool = False) -> list:
-        """ Get the list of Quantum Gates with decompose the CompositeGate. 
+        """ Get the list of Quantum Gates with decompose the CompositeGate.
 
         Args:
             decomposition (bool, optional): Whether call build_gate for Quantum Gates. Defaults to False.
