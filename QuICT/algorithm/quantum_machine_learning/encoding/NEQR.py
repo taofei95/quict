@@ -14,7 +14,7 @@ class NEQR(FRQI):
         assert 1 << self._n_color_qubits == grayscale
 
     def __call__(self, img, use_qic=True):
-        img = self._img_preprocess(img, flatten=False)
+        img = self._img_preprocess(img, flatten=True)
 
         # step 1: |0> -> |H>
         circuit = Circuit(self._n_qubits)
@@ -31,48 +31,9 @@ class NEQR(FRQI):
                 )
                 sub_circuit | neqr_circuit(list(range(self._n_qubits)))
         else:
-            neqr_circuit = self._construct_neqr_circuit(img)
+            neqr_circuit = self._construct_circuit(img, rotate=False)
         neqr_circuit | circuit(list(range(self._n_qubits)))
         return circuit
-
-    def _construct_neqr_circuit(self, img):
-        neqr_circuit = Circuit(self._n_qubits)
-        mct = MultiControlToffoli()
-        n = int(self._n_pos_qubits / 2)
-        q_state = [1] * self._n_pos_qubits
-        for y in range(img.shape[0]):
-            bin_y = bin(y)[2:].zfill(n)
-            # [pos-y] control qubits
-            for qid in range(n):
-                if (bin_y[qid] == "0" and q_state[qid + n] != 0) or (
-                    bin_y[qid] == "1" and q_state[qid + n] != 1
-                ):
-                    X | neqr_circuit(qid + n)
-                    q_state[qid + n] = 1 - q_state[qid + n]
-
-            for x in range(img.shape[1]):
-                if img[y, x] == 0:
-                    continue
-                bin_x = bin(x)[2:].zfill(n)
-                bin_color = bin(img[y, x])[2:].zfill(self._n_color_qubits)
-                # [pos-x] control qubits
-                for qid in range(n):
-                    if (bin_x[qid] == "0" and q_state[qid] != 0) or (
-                        bin_x[qid] == "1" and q_state[qid] != 1
-                    ):
-                        X | neqr_circuit(qid)
-                        q_state[qid] = 1 - q_state[qid]
-                # [color] target qubits
-                for qid in range(self._n_color_qubits):
-                    if bin_color[qid] == "1":
-                        mct_qids = list(range(self._n_pos_qubits)) + [
-                            self._n_pos_qubits + qid
-                        ]
-                        mct(self._n_pos_qubits) | neqr_circuit(mct_qids)
-        for qid in range(self._n_pos_qubits):
-            if q_state[qid] == 0:
-                X | neqr_circuit(qid)
-        return neqr_circuit
 
     def _get_groups(self, img):
         img_dict = self._get_img_dict(img, bin_key=True)
@@ -91,7 +52,7 @@ if __name__ == "__main__":
 
     np.set_printoptions(threshold=np.inf)
 
-    neqr = NEQR(256)
+    neqr = NEQR(2)
     # img = np.array(
     #     [
     #         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -105,14 +66,15 @@ if __name__ == "__main__":
     #     ]
     # )
     # neqr = NEQR(256)
-    img = np.array([[0, 100], [200, 255]])
+    # img = np.array([[0, 100], [200, 255]])
+    img = np.array([[1, 0, 1, 0], [1, 0, 0, 1], [0, 0, 1, 0], [1, 1, 0, 0,]])
     circuit = neqr(img, use_qic=False)
     # circuit.gate_decomposition(decomposition=False)
     # circuit.draw(filename="neqr")
     simulator = StateVectorSimulator(device="GPU")
     start = time.time()
     sv = simulator.run(circuit)
-    print(time.time() - start)
+    print(sv)
     circuit.gate_decomposition(decomposition=False)
     circuit.draw(filename="neqr")
     # mct = MultiControlToffoli()
