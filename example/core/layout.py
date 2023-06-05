@@ -5,7 +5,7 @@ from QuICT.core import Layout
 
 def build_layout():
     # Build a linearly layout with 5 qubits
-    layout = Layout(qubit_number=5, name="linearly")
+    layout = Layout(qubit_number=5)
     layout.add_edge(0, 1, directional=False, error_rate=1.0)
     layout.add_edge(1, 2, directional=False, error_rate=1.0)
     layout.add_edge(2, 3, directional=False, error_rate=1.0)
@@ -14,6 +14,22 @@ def build_layout():
 
     # Save layout to file
     layout.write_file()
+
+
+def build_linear_or_grid_layout():
+    # Build a linearly layout with 5 qubits
+    layout = Layout(qubit_number=5, name="linearly")
+    layout.linear_layout(directional=False, error_rate=[0.99] * 4)
+    print(layout)
+
+    # Build a grid layout with 3*3 qubits
+    layout = Layout(qubit_number=9, name="grid")
+    layout.grid_layout()
+    print(layout)
+
+    layout = Layout(qubit_number=8, name="grid2*4")
+    layout.grid_layout(width=4)
+    print(layout)
 
 
 def load_layout():
@@ -29,4 +45,4 @@ def load_layout():
 
 
 if __name__ == "__main__":
-    load_layout()
+    build_layout()

@@ -74,7 +74,7 @@ class GateSimulator:
         return state_vector
 
     ####################################################################
-    ############          State Vector Generator            ############
+    ############         Density Matrix Generator           ############
     ####################################################################
     def get_allzero_density_matrix(self, qubits: int):
         density_matrix = self._array_helper.zeros((1 << qubits, 1 << qubits), dtype=self._dtype)

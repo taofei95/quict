@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 from itertools import combinations
+from math import log2
 
 import json
 import warnings
@@ -313,5 +314,37 @@ class Layout:
 
         return self
 
-    def grid_layout(self, unreachable_nodes: list = [], directional: bool = DIRECTIONAL_DEFAULT, error_rate: list = []):
-        pass
+    def grid_layout(
+        self,
+        width: int = None,
+        unreachable_nodes: list = [],
+        directional: bool = DIRECTIONAL_DEFAULT,
+        error_rate: list = []
+    ):
+        if len(error_rate) == 0:
+            error_rate = [1.0] * (self._qubit_number - 1)
+
+        exist_unreachable_nodes = len(unreachable_nodes) != 0
+        grid_width = int(log2(self._qubit_number)) if width is None else width
+        for s in range(0, self._qubit_number - 1):
+            horizontal_exist, vertical_exist = True, True
+            # horizontal line draw
+            u, hv, vv = s, s + 1, s + grid_width
+            if exist_unreachable_nodes:
+                if u in unreachable_nodes:
+                    continue
+
+                if hv in unreachable_nodes:
+                    horizontal_exist = False
+
+                if vv in unreachable_nodes:
+                    vertical_exist = False
+
+            if hv % grid_width != 0 and horizontal_exist:
+                self.add_edge(u, hv, directional, error_rate[u])
+
+            # vertical line draw
+            if vv < self._qubit_number and vertical_exist:
+                self.add_edge(u, vv, directional, error_rate[u])
+
+        return self
