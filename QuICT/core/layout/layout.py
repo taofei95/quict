@@ -176,7 +176,7 @@ class Layout:
         # Reset cache
         self._directionalized = None
 
-    def check_edge(self, u, v):
+    def check_edge(self, u, v) -> bool:
         """Check whether layout contain u->v
 
         Args:
@@ -188,6 +188,31 @@ class Layout:
         return ((u, v) in self._edges) or (
             (v, u) in self._edges and not self._edges[(v, u)].directional
         )
+
+    def valid_circuit(self, circuit) -> bool:
+        """ Valid the given Circuit/CompositeGate is valid with current Layout.
+
+        Args:
+            circuit (Union[Circuit, CompositeGate]): The given Circuit/CompositeGate
+
+        Returns:
+            bool: Whether is valid for current layout.
+        """
+        if circuit.width() > self._qubit_number:
+            return False
+
+        for gate, qidxes, size in circuit.fast_gates:
+            if size > 1:
+                if not self.valid_circuit(gate):
+                    return False
+
+            if len(qidxes) > 2:
+                return False
+            elif len(qidxes) == 2:
+                if not self.check_edge(qidxes[0], qidxes[1]):
+                    return False
+
+        return True
 
     def to_json(self) -> str:
         """Serialize current layout into json string."""
@@ -335,19 +360,18 @@ class Layout:
             unreachable_nodes (list, optional): The nodes which are not work. Defaults to [].
             directional (bool, optional): Whether the edge is directional. Defaults to DIRECTIONAL_DEFAULT.
             error_rate (list, optional): Error rate for each edges, default 1.0. Defaults to [].
+                WARNING: The error rate is for each valid edges from top to bottom, left to right. Please make sure
+                you know exactly every edges' position and rate.
 
         Returns:
             Layout: The layout with grid topology
         """
         grid_layout = Layout(qubit_number)
-        if len(error_rate) == 0:
-            error_rate = [1.0] * (qubit_number - 1)
-
         exist_unreachable_nodes = len(unreachable_nodes) != 0
         grid_width = int(log2(qubit_number)) if width is None else width
+        edge_idx = 0
         for s in range(0, qubit_number - 1):
             horizontal_exist, vertical_exist = True, True
-            # horizontal line draw
             u, hv, vv = s, s + 1, s + grid_width
             if exist_unreachable_nodes:
                 if u in unreachable_nodes:
@@ -359,12 +383,16 @@ class Layout:
                 if vv in unreachable_nodes:
                     vertical_exist = False
 
+            curr_error = error_rate[edge_idx] if len(error_rate) != 0 else 1.0
+            # horizontal line draw
             if hv % grid_width != 0 and horizontal_exist:
-                grid_layout.add_edge(u, hv, directional, error_rate[u])
+                grid_layout.add_edge(u, hv, directional, curr_error)
+                edge_idx += 1
 
             # vertical line draw
             if vv < qubit_number and vertical_exist:
-                grid_layout.add_edge(u, vv, directional, error_rate[u])
+                grid_layout.add_edge(u, vv, directional, curr_error)
+                edge_idx += 1
 
         return grid_layout
 
@@ -384,16 +412,16 @@ class Layout:
             unreachable_nodes (list, optional): The nodes which are not work. Defaults to [].
             directional (bool, optional): Whether the edge is directional. Defaults to DIRECTIONAL_DEFAULT.
             error_rate (list, optional): Error rate for each edges, default 1.0. Defaults to [].
+                WARNING: The error rate is for each valid edges from top to bottom, left to right. Please make sure
+                you know exactly every edges' position and rate.
 
         Returns:
             Layout: The layout with rhombus topology
         """
         rhombus_layout = Layout(qubit_number)
-        if len(error_rate) == 0:
-            error_rate = [1.0] * (qubit_number - 1)
-
         exist_unreachable_nodes = len(unreachable_nodes) != 0
         grid_width = int(log2(qubit_number)) if width is None else width
+        edge_idx = 0
         for s in range(0, qubit_number - grid_width + 1):
             vertical_exist, rhombus_exist = True, True
             # horizontal line draw
@@ -408,11 +436,15 @@ class Layout:
                 if rv in unreachable_nodes:
                     rhombus_exist = False
 
-            if lv < qubit_number and vertical_exist:
-                rhombus_layout.add_edge(u, lv, directional, error_rate[u])
-
+            curr_error = error_rate[edge_idx] if len(error_rate) != 0 else 1.0
             # vertical line draw
+            if lv < qubit_number and vertical_exist:
+                rhombus_layout.add_edge(u, lv, directional, curr_error)
+                edge_idx += 1
+
+            # rhombus line draw
             if rv < qubit_number and u // grid_width + 1 == rv // grid_width and rhombus_exist:
-                rhombus_layout.add_edge(u, rv, directional, error_rate[u])
+                rhombus_layout.add_edge(u, rv, directional, curr_error)
+                edge_idx += 1
 
         return rhombus_layout

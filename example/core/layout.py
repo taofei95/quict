@@ -1,6 +1,6 @@
 import os
 
-from QuICT.core import Layout
+from QuICT.core import Layout, Circuit
 
 
 def build_layout():
@@ -15,6 +15,10 @@ def build_layout():
     # Save layout to file
     layout.write_file()
 
+    # Valid a Circuit
+    cir = Circuit(3)
+    cir.random_append(5)
+    print(layout.valid_circuit(cir))
 
 def build_special_layout():
     # Build a linearly layout with 5 qubits
@@ -30,7 +34,7 @@ def build_special_layout():
     print(layout)
 
     # Build a rhombus layout
-    layout = Layout.rhombus_layout(9, width=2)
+    layout = Layout.rhombus_layout(9, width=3)
     print(layout)
 
 
@@ -47,4 +51,4 @@ def load_layout():
 
 
 if __name__ == "__main__":
-    build_special_layout()
+    build_layout()
