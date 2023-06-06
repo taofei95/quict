@@ -296,9 +296,6 @@ class CircuitBased(object):
         from QuICT.tools.drawer import PhotoDrawer, TextDrawing
         import matplotlib
 
-        if flatten:
-            self.gate_decomposition(decomposition=False)
-
         if method.startswith('matp'):
             if filename is not None:
                 if '.' not in filename:
@@ -323,7 +320,7 @@ class CircuitBased(object):
                 )
 
             silent = (not show_inline) and (not save_file)
-            photo_drawer.run(circuit=self, filename=filename, save_file=save_file)
+            photo_drawer.run(circuit=self, filename=filename, save_file=save_file, flatten=flatten)
 
             if show_inline:
                 from IPython.display import display
@@ -332,7 +329,8 @@ class CircuitBased(object):
                 return photo_drawer.figure
 
         elif method == 'command':
-            text_drawer = TextDrawing(self._qubits, self.gates)
+            gates = self.flatten_gates() if flatten else self.gates
+            text_drawer = TextDrawing(self._qubits, gates)
             if filename is None:
                 print(text_drawer.single_string())
                 return

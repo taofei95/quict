@@ -148,6 +148,9 @@ class VirtualQuantumMachine:
             t2_coherence_time (list, optional): The t2 coherence time for each qubit. Defaults to None.
             coupling_strength (list, optional): The coupling strength between the qubits. Defaults to None.
             layout (Layout, optional): The description of physical topology of Quantum Machine. Defaults to None.
+            work_frequency (Union[float, list]): The frequency when each qubit works in current Quantum Machine.
+            readout_frequency (Union[float, list]): The frequency when measured qubits in current Quantum Machine.
+            gate_duration (Union[float, list]): The amount of time that a Quantum Gate operators on a Quantum State.
 
         Raises:
             TypeError: The wrong type about input.

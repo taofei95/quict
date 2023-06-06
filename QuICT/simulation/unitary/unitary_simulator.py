@@ -8,12 +8,7 @@ from QuICT.tools.exception.simulation import SampleBeforeRunError
 
 
 class UnitarySimulator():
-    """ Algorithms to calculate the unitary matrix of a quantum circuit, and simulate.
-
-    Args:
-        device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
-        precision (str, optional): The precision for the unitary matrix, one of [single, double]. Defaults to "double".
-    """
+    """ Algorithms to calculate the unitary matrix of a quantum circuit, and simulate. """
     @property
     def vector(self):
         return self._vector
@@ -23,6 +18,11 @@ class UnitarySimulator():
         device: str = "CPU",
         precision: str = "double"
     ):
+        """
+        Args:
+            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
+            precision (str, optional): The precision for the unitary matrix. Defaults to "double".
+        """
         assert device in ["CPU", "GPU"], ValueError("UnitarySimulation.device", "[CPU, GPU]", device)
         self._device = device
         assert precision in ["single", "double"], \
@@ -73,7 +73,7 @@ class UnitarySimulator():
         return self._vector
 
     def sample(self, shots: int = 1, target_qubits: list = None) -> list:
-        """Sample the measured result from current state vector, please first run simulator.run().
+        """ Sample the measured result from current state vector, please first run simulator.run().
 
         **WARNING**: Please make sure the target qubits are not been measured before simulator.sample().
 
