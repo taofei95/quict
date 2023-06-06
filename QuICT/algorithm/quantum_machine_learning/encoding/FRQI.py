@@ -5,8 +5,6 @@ from sympy.logic.boolalg import to_dnf
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
-import matplotlib.pyplot as plt
-
 
 class FRQI:
     """FRQI encoding for encoding classical image data into quantum circuits."""
@@ -204,26 +202,3 @@ class FRQI:
                 boolen_expressions += " | "
         min_expression = to_dnf(boolen_expressions, simplify=True, force=True)
         return min_expression
-
-
-if __name__ == "__main__":
-    from QuICT.simulation.state_vector import StateVectorSimulator
-    import time
-
-    frqi = FRQI(2)
-    img = np.array([[1, 0, 1, 0], [1, 0, 0, 1], [0, 0, 1, 0], [1, 1, 0, 0,]])
-    # img = np.ones((8, 8))
-    # img[:, 0] = 0
-    # print(img)
-    circuit = frqi(img, use_qic=False)
-
-    simulator = StateVectorSimulator(device="GPU")
-    start = time.time()
-    sv = simulator.run(circuit)
-    print(sv)
-    # circuit.gate_decomposition(decomposition=False)
-    # mct = MultiControlToffoli()
-    # circuit = Circuit(5)
-    # mct(3) | circuit([0, 1, 2, 3])
-    # circuit.gate_decomposition(decomposition=False)
-    # circuit.draw(filename="frqi")
