@@ -19,15 +19,7 @@ from QuICT.tools.exception.simulation import SampleBeforeRunError
 
 
 class StateVectorSimulator:
-    """
-    The simulator for qubits' vector state.
-
-    Args:
-        circuit (Circuit): The quantum circuit.
-        precision (str): The precision for the state vector, one of [single, double]. Defaults to "double".
-        gpu_device_id (int): The GPU device ID.
-        sync (bool): Sync mode or Async mode.
-    """
+    """ The simulator for qubits' vector state. """
     @property
     def circuit(self):
         return self._circuit
@@ -51,6 +43,14 @@ class StateVectorSimulator:
         gpu_device_id: int = 0,
         sync: bool = True
     ):
+        """
+        Args:
+            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
+            precision (str, optional): The precision for the state vector, one of [single, double].
+                Defaults to "double".
+            gpu_device_id (int, optional): The GPU device ID. Defaults to 0.
+            sync (bool, optional): Sync mode or Async mode. Defaults to True.
+        """
         self._gate_calculator = GateSimulator(device, precision, gpu_device_id, sync)
         self._quantum_machine = None
 

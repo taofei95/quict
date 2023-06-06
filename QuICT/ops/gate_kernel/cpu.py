@@ -276,9 +276,6 @@ def measure_gate_apply(
         index (int): The index of target qubit
         vec (np.array): The state vector of qubits
 
-    Raises:
-        TypeError: The state vector should be np.ndarray.
-
     Returns:
         bool: The measured result 0 or 1.
     """
@@ -307,6 +304,12 @@ def reset_gate_apply(
     index: int,
     vec: np.array
 ):
+    """ Reset the state vector for target qubit
+
+    Args:
+        index (int): The index of target qubit
+        vec (np.array): The state vector of qubits
+    """
     target_index = 1 << index
     vec_idx_0 = [idx for idx in range(len(vec)) if not idx & target_index]
     vec_idx_0 = np.array(vec_idx_0, dtype=np.int32)
