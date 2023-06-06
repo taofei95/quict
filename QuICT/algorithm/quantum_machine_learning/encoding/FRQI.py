@@ -1,7 +1,6 @@
 import numpy as np
 from sympy import symbols
-from sympy.logic.boolalg import to_dnf, to_cnf, simplify_logic
-from sympy import sympify
+from sympy.logic.boolalg import to_dnf
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
@@ -18,6 +17,7 @@ class FRQI:
         self._n_qubits = None
         self._n_pos_qubits = None
         self._n_color_qubits = 1
+        self._q_state = None
 
     def __call__(self, img, use_qic=True):
         img = self._img_preprocess(img, flatten=True)
@@ -48,6 +48,7 @@ class FRQI:
         self._N = img.shape[0] * img.shape[1]
         self._n_pos_qubits = int(np.log2(self._N))
         assert 1 << self._n_pos_qubits == self._N
+        self._q_state = [0] * self._n_pos_qubits
         self._n_qubits = self._n_pos_qubits + self._n_color_qubits
         if flatten:
             img = img.flatten()
@@ -55,17 +56,16 @@ class FRQI:
 
     def _construct_circuit(self, img: np.ndarray, rotate: bool):
         circuit = Circuit(self._n_qubits)
-        q_state = [1] * self._n_pos_qubits
         if not rotate:
             mc_gate = MultiControlToffoli()
         for i in range(self._N):
             bin_pos = bin(i)[2:].zfill(self._n_pos_qubits)
             for qid in range(self._n_pos_qubits):
-                if (bin_pos[qid] == "0" and q_state[qid] != 0) or (
-                    bin_pos[qid] == "1" and q_state[qid] != 1
+                if (bin_pos[qid] == "0" and self._q_state[qid] == 0) or (
+                    bin_pos[qid] == "1" and self._q_state[qid] == 1
                 ):
                     X | circuit(qid)
-                    q_state[qid] = 1 - q_state[qid]
+                    self._q_state[qid] = 1 - self._q_state[qid]
             if rotate:
                 mc_gate = MultiControlRotation(
                     GateType.ry, float(img[i] / (self._grayscale - 1) * np.pi)
@@ -83,7 +83,7 @@ class FRQI:
                         ]
                         mc_gate(self._n_pos_qubits) & mct_qids | circuit
         for qid in range(self._n_pos_qubits):
-            if q_state[qid] == 0:
+            if self._q_state[qid] == 1:
                 X | circuit(qid)
         return circuit
 
@@ -92,36 +92,39 @@ class FRQI:
         img_dict = self._get_img_dict(img, bin_val=True)
         for key in img_dict.keys():
             theta = float(key / (self._grayscale - 1) * np.pi) if rotate else None
-            dnf_circuit = self._construct_dnf_circuit(img_dict[key], gid, theta)
+            min_dnf = self._get_min_expression(img_dict[key])
+            dnf_circuit = self._construct_dnf_circuit(min_dnf, gid, theta)
             dnf_circuit | qic_circuit(list(range(self._n_qubits)))
+        for qid in range(self._n_pos_qubits):
+            if self._q_state[qid] == 1:
+                X | qic_circuit(qid)
         return qic_circuit
 
-    def _construct_dnf_circuit(self, pixels, gid: int = 0, theta: float = None):
+    def _construct_dnf_circuit(self, min_dnf, gid: int = 0, theta: float = None):
         dnf_circuit = Circuit(self._n_qubits)
-        min_expression = self._get_min_expression(pixels)
-        cnf_list = self._split_dnf(min_expression)
+        cnf_list = self._split_dnf(min_dnf)
         if cnf_list == ["True"]:
             if theta is None:
                 X | dnf_circuit(gid + self._n_pos_qubits)
             else:
                 Ry(theta) | dnf_circuit(gid + self._n_pos_qubits)
             return dnf_circuit
-        appeared_qids = {"+": set(), "-": set()}
-        q_state = [0] * self._n_pos_qubits
         for i in range(len(cnf_list)):
-            print(cnf_list[i])
-            cnf_circuit, appeared_qids, q_state = self._construct_cnf_circuit(
-                cnf_list[i], appeared_qids, q_state, gid=gid, theta=theta,
-            )
-            cnf_circuit | dnf_circuit(list(range(self._n_qubits)))
-
-        for qid in range(self._n_pos_qubits):
-            if q_state[qid] == -1:
-                X | dnf_circuit(qid)
+            if i > 0:
+                uniqueness_dnf = self._get_uniqueness_dnf(cnf_list[:i], cnf_list[i])
+                uniqueness_dnf_circuit = self._construct_dnf_circuit(
+                    uniqueness_dnf, gid, theta
+                )
+                uniqueness_dnf_circuit | dnf_circuit(list(range(self._n_qubits)))
+            else:
+                cnf_circuit = self._construct_cnf_circuit(
+                    cnf_list[i], gid=gid, theta=theta,
+                )
+                cnf_circuit | dnf_circuit(list(range(self._n_qubits)))
 
         return dnf_circuit
 
-    def _construct_cnf_circuit(self, cnf, appeared_qids, q_state, gid=0, theta=None):
+    def _construct_cnf_circuit(self, cnf, gid=0, theta=None):
         cnf_circuit = Circuit(self._n_qubits)
         mc_gate = (
             MultiControlToffoli()
@@ -130,41 +133,30 @@ class FRQI:
         )
         items = self._split_cnf(cnf)
         qids = self._get_cnf_qid(items)
-        controls = []
-
-        not_appeared_qids = (
-            (appeared_qids["+"] | appeared_qids["-"])
-            - set(qids)
-            - (appeared_qids["+"] & appeared_qids["-"])
-        )
-
-        for qid in not_appeared_qids:
-            assert abs(q_state[qid]) > 0
-            X | cnf_circuit(qid)
-            q_state[qid] = -q_state[qid]
-            controls.append(qid)
 
         for item, qid in zip(items, qids):
-            if item[0] == "~":
-                appeared_qids["-"].add(qid)
-                if q_state[qid] != -1:
-                    X | cnf_circuit(qid)
-                q_state[qid] = -1
-            else:
-                appeared_qids["+"].add(qid)
-                if q_state[qid] == -1:
-                    X | cnf_circuit(qid)
-                q_state[qid] = 1
-            controls.append(qid)
+            if (item[0] == "~" and self._q_state[qid] == 0) or (
+                item[0] != "~" and self._q_state[qid] != 0
+            ):
+                X | cnf_circuit(qid)
+                self._q_state[qid] = 1 - self._q_state[qid]
 
         c_gate = (
-            mc_gate(len(controls))
+            mc_gate(len(qids))
             if theta is None
-            else mc_gate(controls, gid + self._n_pos_qubits)
+            else mc_gate(qids, gid + self._n_pos_qubits)
         )
-        c_gate | cnf_circuit(controls + [gid + self._n_pos_qubits])
+        c_gate | cnf_circuit(qids + [gid + self._n_pos_qubits])
 
-        return cnf_circuit, appeared_qids, q_state
+        return cnf_circuit
+
+    def _get_uniqueness_dnf(self, pre_cnf_list, current_cnf):
+        uniqueness_dnf = ""
+        for cnf in pre_cnf_list:
+            uniqueness_dnf += "~(" + cnf + ") & "
+        uniqueness_dnf += "(" + current_cnf + ")"
+        uniqueness_dnf = to_dnf(uniqueness_dnf, simplify=True, force=True)
+        return uniqueness_dnf
 
     def _get_cnf_qid(self, cnf_items):
         idx_list = []
@@ -223,12 +215,12 @@ if __name__ == "__main__":
     # img = np.ones((8, 8))
     # img[:, 0] = 0
     # print(img)
-    circuit = frqi(img, use_qic=True)
+    circuit = frqi(img, use_qic=False)
 
     simulator = StateVectorSimulator(device="GPU")
     start = time.time()
     sv = simulator.run(circuit)
-    # print(sv)
+    print(sv)
     # circuit.gate_decomposition(decomposition=False)
     # mct = MultiControlToffoli()
     # circuit = Circuit(5)
