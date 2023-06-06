@@ -16,19 +16,21 @@ def build_layout():
     layout.write_file()
 
 
-def build_linear_or_grid_layout():
+def build_special_layout():
     # Build a linearly layout with 5 qubits
-    layout = Layout(qubit_number=5, name="linearly")
-    layout.linear_layout(directional=False, error_rate=[0.99] * 4)
+    layout = Layout.linear_layout(qubit_number=5, directional=False, error_rate=[0.99] * 4)
     print(layout)
 
     # Build a grid layout with 3*3 qubits
-    layout = Layout(qubit_number=9, name="grid")
-    layout.grid_layout()
+    layout = Layout.grid_layout(qubit_number=9)
     print(layout)
 
-    layout = Layout(qubit_number=8, name="grid2*4")
-    layout.grid_layout(width=4)
+    # Build a grid layout with 2*4 qubits
+    layout = Layout.grid_layout(qubit_number=9, width=4)
+    print(layout)
+
+    # Build a rhombus layout
+    layout = Layout.rhombus_layout(9, width=2)
     print(layout)
 
 
@@ -45,4 +47,4 @@ def load_layout():
 
 
 if __name__ == "__main__":
-    build_layout()
+    build_special_layout()

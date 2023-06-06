@@ -7,7 +7,7 @@ from QuICT.core.virtual_machine import VirtualQuantumMachine, InstructionSet
 
 qubit_number = 6
 iset = InstructionSet(GateType.cz, [GateType.u3])
-layout = Layout(qubit_number).linear_layout()
+layout = Layout.linear_layout(qubit_number)
 qubit_fidelity = [(0.989, 0.965), (0.950, 0.859), (0.975, 0.951), (0.958, 0.923), (0.984, 0.967), (0.914, 0.845)]
 gate_fidelity = [0.9993, 0.9990, 0.9990, 0.9991, 0.9992, 0.9992]
 coupling_strength = [(0, 1, 0.9909), (1, 2, 0.9881), (2, 3, 0.9707), (3, 4, 0.9834), (4, 5, 0.9858)]

@@ -79,9 +79,6 @@ class LayoutEdge:
 class Layout:
     """Implement a topology in a physical device
 
-    Attributes:
-        qubit_number(int): the number of qubits
-        name(string): the name of the topology
     """
 
     DIRECTIONAL_DEFAULT = False
@@ -107,6 +104,11 @@ class Layout:
         return self._qubit_number
 
     def __init__(self, qubit_number: int, name: str = "unknown"):
+        """
+        Args:
+            qubit_number(int): the number of qubits
+            name(string): the name of the topology
+        """
         self._qubit_number = qubit_number
         self._name = name
         self._edges: Dict[Tuple[int, int], LayoutEdge] = {}
@@ -295,38 +297,55 @@ class Layout:
 
         return sub_layout
 
-    def linear_layout(self, directional=DIRECTIONAL_DEFAULT, error_rate: list = []):
+    @staticmethod
+    def linear_layout(qubit_number: int, directional: bool = DIRECTIONAL_DEFAULT, error_rate: list = []):
         """ Get Linearly Topology.
 
         Args:
+            qubit_number(int): the number of qubits
             directional (_type_, optional): Whether the edge is directional. Defaults to DIRECTIONAL_DEFAULT.
             error_rate (list, optional): Error rate for each edges, default 1.0. Defaults to [].
 
         Returns:
-            Layout: The layout of linearly topology
+            Layout: The layout with linearly topology
         """
+        linear_layout = Layout(qubit_number)
         if len(error_rate) == 0:
-            error_rate = [1.0] * (self._qubit_number - 1)
+            error_rate = [1.0] * (qubit_number - 1)
 
-        assert len(error_rate) == (self._qubit_number - 1)
-        for i in range(self._qubit_number - 1):
-            self.add_edge(i, i + 1, directional, error_rate[i])
+        assert len(error_rate) == (qubit_number - 1)
+        for i in range(qubit_number - 1):
+            linear_layout.add_edge(i, i + 1, directional, error_rate[i])
 
-        return self
+        return linear_layout
 
+    @staticmethod
     def grid_layout(
-        self,
+        qubit_number: int,
         width: int = None,
         unreachable_nodes: list = [],
         directional: bool = DIRECTIONAL_DEFAULT,
         error_rate: list = []
     ):
+        """ Get Grid Structure Topology.
+
+        Args:
+            qubit_number(int): the number of qubits
+            width (int, optional): The width of grid layout. Defaults to None.
+            unreachable_nodes (list, optional): The nodes which are not work. Defaults to [].
+            directional (bool, optional): Whether the edge is directional. Defaults to DIRECTIONAL_DEFAULT.
+            error_rate (list, optional): Error rate for each edges, default 1.0. Defaults to [].
+
+        Returns:
+            Layout: The layout with grid topology
+        """
+        grid_layout = Layout(qubit_number)
         if len(error_rate) == 0:
-            error_rate = [1.0] * (self._qubit_number - 1)
+            error_rate = [1.0] * (qubit_number - 1)
 
         exist_unreachable_nodes = len(unreachable_nodes) != 0
-        grid_width = int(log2(self._qubit_number)) if width is None else width
-        for s in range(0, self._qubit_number - 1):
+        grid_width = int(log2(qubit_number)) if width is None else width
+        for s in range(0, qubit_number - 1):
             horizontal_exist, vertical_exist = True, True
             # horizontal line draw
             u, hv, vv = s, s + 1, s + grid_width
@@ -341,10 +360,59 @@ class Layout:
                     vertical_exist = False
 
             if hv % grid_width != 0 and horizontal_exist:
-                self.add_edge(u, hv, directional, error_rate[u])
+                grid_layout.add_edge(u, hv, directional, error_rate[u])
 
             # vertical line draw
-            if vv < self._qubit_number and vertical_exist:
-                self.add_edge(u, vv, directional, error_rate[u])
+            if vv < qubit_number and vertical_exist:
+                grid_layout.add_edge(u, vv, directional, error_rate[u])
 
-        return self
+        return grid_layout
+
+    @staticmethod
+    def rhombus_layout(
+        qubit_number: int,
+        width: int = None,
+        unreachable_nodes: list = [],
+        directional: bool = DIRECTIONAL_DEFAULT,
+        error_rate: list = []
+    ):
+        """ Get Rhombus Structure Topology.
+
+        Args:
+            qubit_number(int): the number of qubits
+            width (int, optional): The width of grid layout. Defaults to None.
+            unreachable_nodes (list, optional): The nodes which are not work. Defaults to [].
+            directional (bool, optional): Whether the edge is directional. Defaults to DIRECTIONAL_DEFAULT.
+            error_rate (list, optional): Error rate for each edges, default 1.0. Defaults to [].
+
+        Returns:
+            Layout: The layout with rhombus topology
+        """
+        rhombus_layout = Layout(qubit_number)
+        if len(error_rate) == 0:
+            error_rate = [1.0] * (qubit_number - 1)
+
+        exist_unreachable_nodes = len(unreachable_nodes) != 0
+        grid_width = int(log2(qubit_number)) if width is None else width
+        for s in range(0, qubit_number - grid_width + 1):
+            vertical_exist, rhombus_exist = True, True
+            # horizontal line draw
+            u, lv, rv = s, s + grid_width, s + grid_width + (-1) ** (s // grid_width)
+            if exist_unreachable_nodes:
+                if u in unreachable_nodes:
+                    continue
+
+                if lv in unreachable_nodes:
+                    vertical_exist = False
+
+                if rv in unreachable_nodes:
+                    rhombus_exist = False
+
+            if lv < qubit_number and vertical_exist:
+                rhombus_layout.add_edge(u, lv, directional, error_rate[u])
+
+            # vertical line draw
+            if rv < qubit_number and u // grid_width + 1 == rv // grid_width and rhombus_exist:
+                rhombus_layout.add_edge(u, rv, directional, error_rate[u])
+
+        return rhombus_layout
