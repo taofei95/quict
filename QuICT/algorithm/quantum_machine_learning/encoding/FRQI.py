@@ -27,7 +27,7 @@ class FRQI:
 
         # step 2: |H> -> |I>
         if use_qic:
-            frqi_circuit = self._construct_qic_circuit(img)
+            frqi_circuit = self._construct_qic_circuit(img, rotate=True)
         else:
             frqi_circuit = self._construct_circuit(img, rotate=True)
         frqi_circuit | circuit(list(range(self._n_qubits)))
@@ -57,6 +57,8 @@ class FRQI:
         if not rotate:
             mc_gate = MultiControlToffoli()
         for i in range(self._N):
+            if img[i] == 0:
+                continue
             bin_pos = bin(i)[2:].zfill(self._n_pos_qubits)
             for qid in range(self._n_pos_qubits):
                 if (bin_pos[qid] == "0" and self._q_state[qid] == 0) or (
@@ -79,17 +81,17 @@ class FRQI:
                         mct_qids = list(range(self._n_pos_qubits)) + [
                             self._n_pos_qubits + qid
                         ]
-                        mc_gate(self._n_pos_qubits) & mct_qids | circuit
+                        mc_gate(self._n_pos_qubits) | circuit(mct_qids)
         for qid in range(self._n_pos_qubits):
             if self._q_state[qid] == 1:
                 X | circuit(qid)
         return circuit
 
-    def _construct_qic_circuit(self, img, gid: int = 0, rotate: bool = False):
+    def _construct_qic_circuit(self, img, rotate: bool, gid: int = 0):
         qic_circuit = Circuit(self._n_qubits)
         img_dict = self._get_img_dict(img, bin_val=True)
         for key in img_dict.keys():
-            theta = float(key / (self._grayscale - 1) * np.pi) if rotate else None
+            theta = float(key) / (self._grayscale - 1) * np.pi if rotate else None
             min_dnf = self._get_min_expression(img_dict[key])
             dnf_circuit = self._construct_dnf_circuit(min_dnf, gid, theta)
             dnf_circuit | qic_circuit(list(range(self._n_qubits)))

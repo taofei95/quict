@@ -27,7 +27,7 @@ class NEQR(FRQI):
             groups = self._get_groups(img)
             for i in range(self._n_color_qubits):
                 sub_circuit = self._construct_qic_circuit(
-                    groups[i], gid=i, drop_zerokey=True
+                    groups[i], rotate=False, gid=i
                 )
                 sub_circuit | neqr_circuit(list(range(self._n_qubits)))
         else:
