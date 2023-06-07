@@ -1,4 +1,4 @@
-""" Generate The Virtual Quantum Machine Model for Origin Quantum's KF-C6-130 Chip. """
+""" Generate The Virtual Quantum Machine Model for Quantum Computing's CTEK OneD12. """
 
 from QuICT.core.utils import GateType
 from QuICT.core.layout import Layout
@@ -21,7 +21,7 @@ readout_frequency = [4.9650, 4.4430, 4.9160, 4.3520, 5.0960, 4.1970, 5.0270, 4.2
 T1_times = [35.2, 46.9, 37.2, 35, 42, 35.1, 30.7, 19.2, 46.8, 31.1, 36.5, 49.5]
 T2_times = [4, 3.1, 3.7, 2.9, 10.5, 2.2, 8.6, 2.6, 9.6, 2, 2.3, 2.5]
 
-OriginalKFC6130 = VirtualQuantumMachine(
+CTEKOneD12 = VirtualQuantumMachine(
     qubits=qubit_number,
     instruction_set=iset,
     qubit_fidelity=qubit_fidelity,

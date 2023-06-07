@@ -266,6 +266,16 @@ class GateSimulator:
             start, interval = self._gate_matrix_info[gate_name]
             return self._gates_matrix[start:start + interval]
 
+    def _get_gate_param_grad(self, gate: BasicGate):
+        gtype = gate.type
+        gpargs = gate.pargs
+        grad_list = self._gate_matrix_generator.grad_for_param(gtype, gpargs, self._precision)
+
+        if self._device == "GPU":
+            grad_list = [self._array_helper.array(grad) for grad in grad_list]
+
+        return grad_list
+
     ####################################################################
     ############           Gate Kernel Functions            ############
     ####################################################################

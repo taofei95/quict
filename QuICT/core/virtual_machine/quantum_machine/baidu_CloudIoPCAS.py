@@ -1,4 +1,4 @@
-""" Generate The Virtual Quantum Machine Model for Origin Quantum's KF-C6-131 Chip. """
+""" Generate The Virtual Quantum Machine Model for Baidu's CloudIoPCAS. """
 
 from QuICT.core.utils import GateType
 from QuICT.core.layout import Layout
@@ -6,7 +6,7 @@ from QuICT.core.virtual_machine import VirtualQuantumMachine, InstructionSet
 
 
 qubit_number = 10
-# iset = InstructionSet(GateType.cz, [GateType.u3])
+iset = InstructionSet(GateType.cz, [GateType.u3])   # TODO: change late, not find baidu's instruction set currently
 layout = Layout.linear_layout(qubit_number)
 qubit_fidelity = [
     (0.989, 0.927), (0.985, 0.909), (0.988, 0.923), (0.956, 0.915), (0.974, 0.831),
@@ -22,9 +22,9 @@ readout_frequency = [6.663, 6.646, 6.627, 6.608, 6.593, 6.570, 6.554, 6.531, 6.5
 T1_times = [43.7, 52.9, 21.6, 39.7, 14.8, 32.0, 28.8, 26.0, 24.1, 24.7]
 T2_times = [11.1, 2.2, 4.3, 3.7, 4.6, 1.4, 5.2, 1.4, 3.0, 1.3]
 
-OriginalKFC6131 = VirtualQuantumMachine(
+BaiduCloudIoPCAS = VirtualQuantumMachine(
     qubits=qubit_number,
-    # instruction_set=iset,
+    instruction_set=iset,
     qubit_fidelity=qubit_fidelity,
     gate_fidelity=gate_fidelity,
     coupling_strength=coupling_strength,

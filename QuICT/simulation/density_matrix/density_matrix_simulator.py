@@ -60,6 +60,7 @@ class DensityMatrixSimulator:
             np.ndarray: the density matrix after simulating
         """
         # Deal with the Physical Machine Model
+        self._quantum_machine = None
         if quantum_machine_model is not None:
             noise_model = quantum_machine_model if isinstance(quantum_machine_model, NoiseModel) else \
                 NoiseModel(quantum_machine_info=quantum_machine_model)
