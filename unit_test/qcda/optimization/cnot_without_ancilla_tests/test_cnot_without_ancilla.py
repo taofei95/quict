@@ -166,12 +166,12 @@ def test_cnot_without_ancillae():
     gates = CWA.execute(circuit1)
     test_mat1 = np.eye(n, dtype=bool)
     test_mat2 = np.eye(n, dtype=bool)
-    for gate in circuit1.gates:
+    for gate in circuit1.flatten_gates():
         gate: BasicGate
         c = gate.carg
         t = gate.targ
         test_mat1[t, :] ^= test_mat1[c, :]
-    for gate in gates.gates:
+    for gate in gates.flatten_gates():
         gate: BasicGate
         c = gate.carg
         t = gate.targ

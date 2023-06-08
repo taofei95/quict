@@ -151,7 +151,7 @@ class CliffordBidirectionalSynthesizer(object):
             gates = CompositeGate(gates=gates.gates)
         assert isinstance(gates, CompositeGate),\
             TypeError('Invalid input(Circuit/CompositeGate)')
-        for gate in gates.gates:
+        for gate in gates.flatten_gates():
             assert gate.is_clifford(), TypeError('Only Clifford gates here')
 
         def gates_next(gates: CompositeGate, left: CompositeGate, right: CompositeGate):
@@ -178,7 +178,7 @@ class CliffordBidirectionalSynthesizer(object):
                         right_min = right
                         qubit_min = qubit
                 gates_left.extend(left_min)
-                gates_right.extend(right_min.inverse(), reverse=True)
+                gates_right.extend(right_min.inverse())
                 gates = gates_next(gates, left_min, right_min)
                 not_disentangled.remove(qubit_min)
         else:
@@ -186,7 +186,7 @@ class CliffordBidirectionalSynthesizer(object):
                 qubit = random.choice(not_disentangled)
                 _, left, right = self._minimum_over_pauli(gates, width, qubit, not_disentangled)
                 gates_left.extend(left)
-                gates_right.extend(right.inverse(), reverse=True)
+                gates_right.extend(right.inverse())
                 gates = gates_next(gates, left, right)
                 not_disentangled.remove(qubit)
 
@@ -268,7 +268,7 @@ class CliffordBidirectionalSynthesizer(object):
         o2 = copy.deepcopy(p2)
 
         # Compute C P C^-1 and C P' C^-1
-        for gate in gates.inverse():
+        for gate in gates.inverse().flatten_gates():
             o1.conjugate_act(gate)
             o2.conjugate_act(gate)
 

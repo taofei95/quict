@@ -53,7 +53,7 @@ class SymbolicCliffordOptimization(object):
         """
         width = gates.width()
         if isinstance(gates, Circuit):
-            gates = CompositeGate(gates=gates.gates)
+            gates = gates.to_compositegate()
         assert isinstance(gates, CompositeGate),\
             TypeError('Invalid input(Circuit/CompositeGate)')
         for gate in gates.flatten_gates():

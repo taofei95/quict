@@ -493,7 +493,6 @@ class GateMatrixGenerator:
             TypeError(gate_type)
 
 
-
 class ComplexGateBuilder:
     """ The class of all build_gate functions for BasicGate. """
     @classmethod
