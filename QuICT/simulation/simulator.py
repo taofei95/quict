@@ -108,10 +108,10 @@ class Simulator:
         """ start simulator with given circuit
 
         Args:
-            circuit Union[Circuit, np.ndarray]: The quantum circuits or unitary matrix.
-            state_vector (ndarray): The initial state vector.
-            density_matrix (ndarray): The initial density matrix.
-            noise_model (NoiseModel, optional): The NoiseModel only for density_matrix simulator. Defaults to None.
+            circuit Union[Circuit, np.ndarray]: The quantum Circuit or Unitary Matrix.
+            shots (int): The sample times for current Circuit.
+            quantum_state (ndarray): The initial Quantum State Vector/Density Matrix.
+            quantum_machine_model (Union[NoiseModel, VirtualQuantumMachine]): The model of quantum machine
             use_previous (bool, optional): Using the previous state vector. Defaults to False.
 
         Yields:

@@ -60,6 +60,7 @@ class DensityMatrixSimulator:
             np.ndarray: the density matrix after simulating
         """
         # Deal with the Physical Machine Model
+        self._quantum_machine = None
         if quantum_machine_model is not None:
             noise_model = quantum_machine_model if isinstance(quantum_machine_model, NoiseModel) else \
                 NoiseModel(quantum_machine_info=quantum_machine_model)
@@ -154,6 +155,15 @@ class DensityMatrixSimulator:
         self._origin_circuit.qubits[index].measured = _1
 
     def sample(self, shots: int, target_qubits: list = None) -> list:
+        """ Sample the current circuit and return the sample result of measured, please call simulator.run() before.
+
+        Args:
+            shots (int): The sample times.
+            target_qubits (list, optional): The indexes of qubits which want to be sample. Defaults to None.
+
+        Returns:
+            list: The list of counts of measured result.
+        """
         assert (self._density_matrix is not None), \
             SampleBeforeRunError("DensityMatrixSimulator sample without run any circuit.")
         if self._accumulated_mode or self._quantum_machine is None:

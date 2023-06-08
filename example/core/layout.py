@@ -1,11 +1,11 @@
 import os
 
-from QuICT.core import Layout
+from QuICT.core import Layout, Circuit
 
 
 def build_layout():
     # Build a linearly layout with 5 qubits
-    layout = Layout(qubit_number=5, name="linearly")
+    layout = Layout(qubit_number=5)
     layout.add_edge(0, 1, directional=False, error_rate=1.0)
     layout.add_edge(1, 2, directional=False, error_rate=1.0)
     layout.add_edge(2, 3, directional=False, error_rate=1.0)
@@ -14,6 +14,28 @@ def build_layout():
 
     # Save layout to file
     layout.write_file()
+
+    # Valid a Circuit
+    cir = Circuit(3)
+    cir.random_append(5)
+    print(layout.valid_circuit(cir))
+
+def build_special_layout():
+    # Build a linearly layout with 5 qubits
+    layout = Layout.linear_layout(qubit_number=5, directional=False, error_rate=[0.99] * 4)
+    print(layout)
+
+    # Build a grid layout with 3*3 qubits
+    layout = Layout.grid_layout(qubit_number=9)
+    print(layout)
+
+    # Build a grid layout with 2*4 qubits
+    layout = Layout.grid_layout(qubit_number=9, width=4)
+    print(layout)
+
+    # Build a rhombus layout
+    layout = Layout.rhombus_layout(9, width=3)
+    print(layout)
 
 
 def load_layout():
@@ -29,4 +51,4 @@ def load_layout():
 
 
 if __name__ == "__main__":
-    load_layout()
+    build_layout()

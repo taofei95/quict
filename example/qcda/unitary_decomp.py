@@ -12,4 +12,4 @@ if __name__ == '__main__':
 
     circuit = Circuit(3)
     circuit.extend(compositeGate)
-    circuit.draw(filename="unitary_decomposition")
+    circuit.draw(method="command", flatten=True)

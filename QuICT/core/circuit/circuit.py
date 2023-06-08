@@ -119,7 +119,7 @@ class Circuit(CircuitBased):
 
             Note that if not assigned the target qubits, it will depending on the Qureg to match the Quantum Circuit.
         For the Qureg which not in the target Quantum Circuit, they will be treated as new extra qubits add into the
-        target Quantum Circuit. 
+        target Quantum Circuit.
 
         Example:
             circuit_a = Circuit(3) \\
@@ -425,7 +425,7 @@ class Circuit(CircuitBased):
 
         Args:
             rand_size(int): the number of the gate added to the circuit. \n
-            typelist(list<GateType>): the type of gate, default contains. 
+            typelist(list<GateType>): the type of gate, default contains.
                 Rx, Ry, Rz, Cx, Cy, Cz, CRz, Ch, Rxx, Ryy, Rzz and FSim \n
             random_params(bool): whether using random parameters for all quantum gates with parameters. \n
             probabilities: The probability of append for each gates.
@@ -536,7 +536,7 @@ class Circuit(CircuitBased):
             device (str, optional): The device type for generate circuit's matrix, one of [CPU, GPU]. Defaults to "CPU".
 
         Return:
-            ndarray: The combined unitary matrix of current Quantum Circuit. 
+            ndarray: The combined unitary matrix of current Quantum Circuit.
         """
         assert device in ["CPU", "GPU"]
         circuit_matrix = CircuitMatrix(device, self._precision)

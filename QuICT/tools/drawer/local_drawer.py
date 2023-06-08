@@ -201,9 +201,10 @@ class PhotoDrawer(object):
         pass
 
     @staticmethod
-    def resolution_layers(circuit):
+    def resolution_layers(circuit, flatten):
         layers = [circuit_layer()]
-        for gate in circuit.gates:
+        gates = circuit.flatten_gates() if flatten else circuit.gates
+        for gate in gates:
             for i in range(len(layers) - 1, -2, -1):
                 if isinstance(gate, CompositeGate) and gate.size() == 0:
                     continue
@@ -633,7 +634,7 @@ class PhotoDrawer(object):
                          zorder=PORDER_TEXT)
             self.draw_line([offset_x + 0.5, y], [now['max_x'], y], zorder=PORDER_REGLINE)
 
-    def run(self, circuit, filename=None, show_depth=False, save_file=False):
+    def run(self, circuit, filename=None, show_depth=False, save_file=False, flatten=False):
         global cir_len
         cir_len = max(circuit._qubits) + 1 if isinstance(circuit, CompositeGate) else circuit.width()
         name_dict = collections.OrderedDict()
@@ -654,7 +655,7 @@ class PhotoDrawer(object):
             anchors[i] = Anchor(-i)
         offset_x = 0.18 * (max_name - 7) - 0.5
 
-        layers = self.resolution_layers(circuit)
+        layers = self.resolution_layers(circuit, flatten)
         layer_position = []
         position = 0
         for layer in layers:

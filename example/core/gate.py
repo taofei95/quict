@@ -9,7 +9,7 @@ def build_BasicGate():
     my_gate_cu1 = gate_builder(
         gate_type=GateType.cu1,
         precision="double",
-        params=[1/2],
+        params=[1 / 2],
         random_params=False
     )
     print(my_gate_cu1)

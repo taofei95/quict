@@ -2,7 +2,7 @@ from numpy.random import random
 from typing import Union, List
 from collections import defaultdict
 
-from .noise_error import QuantumNoiseError, NoiseChannel, BitflipError
+from .noise_error import QuantumNoiseError, NoiseChannel, BitflipError, PhaseBitflipError, PhaseflipError
 from .readout_error import ReadoutError
 from QuICT.core import Circuit
 from QuICT.core.gate import BasicGate, GateType, GATEINFO_MAP, Unitary
@@ -65,16 +65,33 @@ class NoiseModel:
             for gate_type in target_gate_type:
                 current_fidelity = gate_fidelity if isinstance(gate_fidelity, float) else gate_fidelity[gate_type]
                 if current_fidelity != 1.0:
-                    self.add(BitflipError(current_fidelity), gate_type.name, idx)
+                    self.add(self._build_random_noise(current_fidelity), gate_type.name, idx)
 
         # Deal with bi-qubits gate fidelity (coupling strength)
         coupling_strength = qureg._original_coupling_strength
         if coupling_strength is not None:
             bi_qubits_gate = iset.gates[-1]
             for start, end, val in coupling_strength:
-                noise_error = BitflipError(val)
-                noise_error = noise_error.tensor(noise_error)
+                noise_error = self._build_random_noise(val, 2)
                 self.add(noise_error, bi_qubits_gate.name, [start, end])
+
+    def _build_random_noise(self, fidelity: float, qubit_number: int = 1):
+        random_noise = None
+        for idx in range(qubit_number):
+            prob = random()
+            if prob <= 0.45:
+                noise = BitflipError(fidelity)
+            elif prob <= 0.9:
+                noise = PhaseflipError(fidelity)
+            else:
+                noise = PhaseBitflipError(fidelity)
+
+            if idx == 0:
+                random_noise = noise
+            else:
+                random_noise = random_noise.tensor(noise)
+
+        return random_noise
 
     def __str__(self):
         nm_str = f"{self._name}:\nBasic Gates: {self._error_by_gate.keys()}\nNoise Errors:\n"
