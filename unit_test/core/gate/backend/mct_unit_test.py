@@ -52,7 +52,10 @@ def test_MCT_Linear_Simulation_One_functional():
             # print("%d bits control = %d" % (n - 2, control_bits))
             MCT = MCTLinearOneDirtyAux()
             gates = MCT.execute(n)
-            gates | circuit(controls_idx + target_idx + aux_idx)
+            if n < 5:
+                gates | circuit(controls_idx + target_idx)
+            else:
+                gates | circuit(controls_idx + target_idx + aux_idx)
             Measure | circuit
             simulator.run(circuit)
             if (
@@ -65,14 +68,17 @@ def test_MCT_Linear_Simulation_One_functional():
 
 
 def test_MCT_Linear_Simulation_One_unitary():
-    for n in range(3, 5):
+    for n in range(3, 6):
         circuit = Circuit(n)
         aux_idx = [0]
         controls_idx = [i for i in range(1, n - 1)]
         target_idx = [n - 1]
         MCT = MCTLinearOneDirtyAux()
         gates = MCT.execute(n)
-        gates | circuit(controls_idx + target_idx + aux_idx)
+        if n < 5:
+            gates | circuit(controls_idx + target_idx)
+        else:
+            gates | circuit(controls_idx + target_idx + aux_idx)
         unitary = circuit.matrix()
         mat_mct = np.eye(1 << n - 1)
         mat_mct[(1 << n - 1) - 2:, (1 << n - 1) - 2:] = X.matrix.real

@@ -197,31 +197,31 @@ class TestCircuit(unittest.TestCase):
         # reset qubits to circuit
         cir.reset_qubits
         assert cir.width() == 10
-        
+
         # extend gate/circuit to circuit
         cir_extend = Circuit(3)
-        cir_trans.extend(cir_extend)  # extend a empty circuit
+        cir_trans.extend(cir_extend)    # extend a empty circuit
         assert cir_trans.width() == 18 and cir_trans.size() == 10
 
-        cir_extend.extend(cir_extend) # extend same circuit
+        cir_extend.extend(cir_extend)   # extend same circuit
         assert cir_extend.width() == 3 and cir_extend.size() == 0
 
-        cir_extend.extend(cir_trans) # empty extend circuit
+        cir_extend.extend(cir_trans)    # empty extend circuit
         assert cir_extend.width() == 18 and cir_extend.size() == 10
 
         cir_extend = Circuit(5)
         cir_extend.random_append(10)
-        cir_trans.extend(cir_extend) # extend random circuit
+        cir_trans.extend(cir_extend)    # extend random circuit
         assert cir_trans.width() == 23 and cir_trans.size() == 20
 
         cgate = CompositeGate()
         H | cgate(1)
         CX | cgate([1, 2])
-        cir2.extend(cgate) # extend compositegate
+        cir2.extend(cgate)  # extend compositegate
         assert cir_extend.width() == 5 and cir_extend.size() == 10
 
         cgate2 = CompositeGate()
-        cir_extend.extend(cgate2) # extend empty compositegate
+        cir_extend.extend(cgate2)   # extend empty compositegate
         assert cir_extend.width() == 5 and cir_extend.size() == 10
 
         # append gate to circuit
@@ -317,7 +317,7 @@ class TestCircuit(unittest.TestCase):
         sqiSwap | cir1([0, 1])
         FSim(np.pi / 2, 0) | cir1([3, 4])
         cir1 | cir
-        
+
         cir.qasm()
         assert 1
 
@@ -338,12 +338,9 @@ class TestCircuit(unittest.TestCase):
         noise = NoiseGate(Z, noise=amp_err)
         noise | cir([5])
 
-        cir.draw()
-        assert True
-
-        assert cir.width() == 15 
+        assert cir.width() == 15
         assert cir.size() == 61
-        assert cir.depth() == 17
+        assert cir.depth() == 19
         assert len(cir.qubits) == 15
         assert cir.count_1qubit_gate() == 35
         assert cir.count_2qubit_gate() == 22

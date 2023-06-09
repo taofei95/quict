@@ -244,7 +244,7 @@ class CommutativeOptimization(object):
         for gate in gates:
             gate: BasicGate
             # IDGate
-            if gate.type == GateType.id:
+            if gate.type in [GateType.id, GateType.measure, GateType.reset, GateType.barrier]:
                 continue
 
             # GlobalPhaseGate

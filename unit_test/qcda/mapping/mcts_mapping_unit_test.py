@@ -36,7 +36,7 @@ def _quick_sort(arr: List[int], begin: int, end: int, swaps: List[Tuple[int, int
 
 def _wrap_to_circ(circuit_like: CircuitLike, width: int) -> Circuit:
     circ = Circuit(width)
-    circ.extend(circuit_like)
+    circuit_like | circ(list(range(width)))
     return circ
 
 
@@ -77,14 +77,13 @@ def test_mapping():
             mapper = MCTSMapping(layout=layout)
             mapped_circ = mapper.execute(circ)
             phy2logic = mapper.phy2logic
-            mapped_circ = _wrap_to_circ(mapped_circ, q)
 
             check_circ_mapped(mapped_circ, layout)
 
             swaps = []
             _quick_sort(arr=phy2logic, begin=0, end=q, swaps=swaps)
-            remapped_circ = mapped_circ
+            remapped_circ = _wrap_to_circ(mapped_circ, q)
             for pos in swaps:
-                s = Swap & list(pos)
-                remapped_circ.gates.append(s)
+                Swap | remapped_circ(list(pos))
+
             check_circ_eq(circ, remapped_circ)

@@ -12,7 +12,7 @@ class TestOperator(unittest.TestCase):
         # Build Circuit and CompositeGate
         cir = Circuit(5)
         QFT(5) | cir
-        
+
         cgate = CompositeGate("x")
         X | cgate(0)
         X | cgate(1)
@@ -66,7 +66,7 @@ class TestOperator(unittest.TestCase):
 
     def test_noise(self):
         from QuICT.core.noise import (
-        BitflipError, DampingError, DepolarizingError, PauliError, PhaseflipError, PhaseBitflipError
+            BitflipError, DampingError, DepolarizingError, PauliError, PhaseflipError, PhaseBitflipError
         )
 
         cir = Circuit(4)
@@ -95,6 +95,7 @@ class TestOperator(unittest.TestCase):
 
         assert cir.gates[0].noise_matrix != cir.gates[1].noise_matrix
         assert cir.size() == 6
+
 
 if __name__ == "__main__":
     unittest.main()
