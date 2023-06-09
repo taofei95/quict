@@ -338,39 +338,47 @@ class Circuit(CircuitBased):
         self._gates.insert(insert_idx, (gate, gate_args, gate_size))
 
     def pop(self, index: int = -1):
-        """ Pop the target index BasicGate/Operator.
+        """ Pop the BasicGate/Operator/CompositeGate from current Quantum Circuit.
 
         Args:
             index (int, optional): The target index. Defaults to 0.
         """
         if index < 0:
-            index = self.size() + index
+            index = self.gate_length() + index
 
-        assert index > 0 and index < self.size()
-        curr_idx, cidx = 0, 0
-        for _, _, size in self._gates:
-            if curr_idx + size > index:
-                break
-            else:
-                curr_idx += size
-                cidx += 1
+        assert index >= 0 and index < self.gate_length()
+        gate, qidx, _ = self._gates.pop(index)
 
-        tgate, tgate_qidx, tgate_size = self._gates[cidx]
-        if isinstance(tgate, CompositeGate):
-            target_gate = tgate.pop(index - curr_idx)
-            tgate_size -= 1
-            if tgate_size == 0:
-                del self._gates[cidx]
-            else:
-                self._gates[cidx] = (tgate, tgate_qidx, tgate_size)
+        return gate.copy() & qidx
+
+    def adjust(self, index: int, reassigned_qubits: Union[int, list, Qubit, Qureg], is_adjust_value: bool = False):
+        """ Adjust the placement for target CompositeGate/BasicGate/Operator.
+
+        Args:
+            index (int): The target Quantum Gate.
+            reassigned_qubits (Union[int, list, Qubit, Qureg]): The new assigned qubits of target Quantum Gate
+        """
+        if index < 0:
+            index = self.gate_length() + index
+        assert index >= 0 and index < self.gate_length()
+        origin_gate, origin_qidx, origin_size = self._gates[index]
+
+        if is_adjust_value:
+            assert isinstance(reassigned_qubits, (int, list))
+            new_qubits = [v + reassigned_qubits for v in origin_qidx] if isinstance(reassigned_qubits, int) else \
+                [v + reassigned_qubits[idx] for idx, v in enumerate(origin_qidx)]
         else:
-            target_gate = tgate
-            del self._gates[cidx]
+            if isinstance(reassigned_qubits, (int, list)):
+                new_qubits = list(reassigned_qubits)
 
-        return target_gate
+            if isinstance(reassigned_qubits, (Qubit, Qureg)):
+                new_qubits = self.qubits.index(reassigned_qubits)
 
-    def adjust(self, gates, adjust_qindex):
-        pass
+            for q_idx in new_qubits:
+                assert q_idx >= 0 and q_idx < self.width() and isinstance(q_idx, int)
+
+        assert len(origin_qidx) == len(new_qubits)
+        self._gates[index] = (origin_gate, new_qubits, origin_size)
 
     def _add_gate(self, gate: BasicGate):
         """ add a quantum gate into circuit.

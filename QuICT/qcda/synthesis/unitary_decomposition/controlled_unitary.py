@@ -79,8 +79,8 @@ class ControlledUnitaryDecomposition(object):
             recursive_basis=recursive_basis,
             keep_left_diagonal=keep_left_diagonal,
         )
-        gates._gates = [(gate, [i + 1 for i in qidx], size) for gate, qidx, size in gates._gates]
-        gates._qubits = [q + 1 for q in gates._qubits]
+        for i in range(gates.gate_length()):
+            gates.adjust(i, 1, True)
 
         return gates, shift
 
@@ -119,8 +119,8 @@ class ControlledUnitaryDecomposition(object):
 
         # diag(w, w)
         if recursive_basis == 2:
-            forwarded_d_gate: BasicGate = v_gates._gates.pop(0)
-            forwarded_mat = forwarded_d_gate[0].matrix
+            forwarded_d_gate: BasicGate = v_gates.pop(0)
+            forwarded_mat = forwarded_d_gate.matrix
             for i in range(0, w.shape[0], 4):
                 for k in range(4):
                     w[i + k, :] *= forwarded_mat[k, k]

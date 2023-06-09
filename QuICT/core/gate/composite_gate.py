@@ -121,6 +121,27 @@ class CompositeGate(CircuitBased):
             if idx not in self._qubits:
                 self._qubits.append(idx)
 
+    def _update_qubits_after_remove(self, indexes: list):
+        """ Update qubits if remove any gate in current CompositeGate.
+
+        Args:
+            indexes (list): The original qubit indexes from removed Quantum Gate.
+        """
+        for idx in indexes:
+            if not self._exist_qubits(idx):
+                self._qubits.remove(idx)
+
+    def _exist_qubits(self, idx: int) -> bool:
+        """ Whether exist Quantum Gate with the given qubit indexes. """
+        if idx not in self._qubits:
+            return False
+
+        for _, qidx, _ in self._gates:
+            if idx in qidx:
+                return True
+
+        return False
+
     ####################################################################
     ############            CompositeGate Build             ############
     ####################################################################
@@ -238,6 +259,46 @@ class CompositeGate(CircuitBased):
 
         self._update_qubit_limit(gate_args)
         self._gates.insert(insert_idx, (gate, gate_args, gate_size))
+
+    def pop(self, index: int = -1):
+        """ Pop the BasicGate/Operator/CompositeGate from current Quantum Circuit.
+
+        Args:
+            index (int, optional): The target index. Defaults to 0.
+        """
+        if index < 0:
+            index = self.gate_length() + index
+
+        assert index >= 0 and index < self.gate_length()
+        gate, qidx, _ = self._gates.pop(index)
+        self._update_qubits_after_remove(qidx)
+
+        return gate.copy() & qidx
+
+    def adjust(self, index: int, reassigned_qubits: Union[int, list], is_adjust_value: bool = False):
+        """ Adjust the placement for target CompositeGate/BasicGate/Operator.
+
+        Args:
+            index (int): The target Quantum Gate.
+            reassigned_qubits (Union[int, list]): The new assigned qubits of target Quantum Gate
+            is_adjust_vale (bool): Whether the reassigned_qubits means the new qubit indexes or the adjustment
+                value from original indexes.
+        """
+        if index < 0:
+            index = self.gate_length() + index
+        assert index >= 0 and index < self.gate_length()
+        origin_gate, origin_qidx, origin_size = self._gates[index]
+
+        if is_adjust_value:
+            new_qubits = [v + reassigned_qubits for v in origin_qidx] if isinstance(reassigned_qubits, int) else \
+                [v + reassigned_qubits[idx] for idx, v in enumerate(origin_qidx)]
+        else:
+            new_qubits = list(reassigned_qubits)
+
+        assert len(origin_qidx) == len(new_qubits)
+        self._gates[index] = (origin_gate, new_qubits, origin_size)
+        self._update_qubit_limit(new_qubits)
+        self._update_qubits_after_remove(origin_qidx)
 
     def _append_gate(self, gate: BasicGate):
         """ Add a BasicGate into the current CompositeGate
