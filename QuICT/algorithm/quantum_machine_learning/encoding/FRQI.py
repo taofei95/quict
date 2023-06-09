@@ -70,10 +70,7 @@ class FRQI:
                 mc_gate = MultiControlRotation(
                     GateType.ry, float(img[i] / (self._grayscale - 1) * np.pi)
                 )
-                gates = mc_gate(
-                    control=list(range(self._n_pos_qubits)), target=self._n_pos_qubits
-                )
-                gates | circuit(list(range(self._n_qubits)))
+                mc_gate(self._n_pos_qubits) | circuit(list(range(self._n_qubits)))
             else:
                 bin_color = bin(img[i])[2:].zfill(self._n_color_qubits)
                 for qid in range(self._n_color_qubits):
@@ -141,13 +138,7 @@ class FRQI:
                 X | cnf_circuit(qid)
                 self._q_state[qid] = 1 - self._q_state[qid]
 
-        c_gate = (
-            mc_gate(len(qids))
-            if theta is None
-            else mc_gate(qids, gid + self._n_pos_qubits)
-        )
-        c_gate | cnf_circuit(qids + [gid + self._n_pos_qubits])
-
+        mc_gate(len(qids)) | cnf_circuit(qids + [gid + self._n_pos_qubits])
         return cnf_circuit
 
     def _get_uniqueness_dnf(self, pre_cnf_list, current_cnf):
