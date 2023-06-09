@@ -65,14 +65,14 @@ class NoiseModel:
             for gate_type in target_gate_type:
                 current_fidelity = gate_fidelity if isinstance(gate_fidelity, float) else gate_fidelity[gate_type]
                 if current_fidelity != 1.0:
-                    self.add(self._build_random_noise(current_fidelity), gate_type.name, idx)
+                    self.add(self._build_random_noise(1 - current_fidelity), gate_type.name, idx)
 
         # Deal with bi-qubits gate fidelity (coupling strength)
         coupling_strength = qureg._original_coupling_strength
         if coupling_strength is not None:
             bi_qubits_gate = iset.gates[-1]
             for start, end, val in coupling_strength:
-                noise_error = self._build_random_noise(val, 2)
+                noise_error = self._build_random_noise(1 - val, 2)
                 self.add(noise_error, bi_qubits_gate.name, [start, end])
 
     def _build_random_noise(self, fidelity: float, qubit_number: int = 1):
@@ -276,7 +276,7 @@ class NoiseModel:
         """
         qubit_num = circuit.width()
         noised_circuit = Circuit(qubit_num)
-        for gate in circuit.gates:
+        for gate in circuit.flatten_gates():
             if isinstance(gate, BasicGate):
                 gate_str = gate.type.name
                 if gate_str not in self._error_by_gate.keys():
@@ -289,7 +289,7 @@ class NoiseModel:
                 for noise, qubits in noise_list:
                     if qubits == -1 or (set(qubits) & set(gate_args)) == set(gate_args):    # noise's qubit matched
                         if accumulated_mode or noise.type == NoiseChannel.damping:
-                            NoiseGate(gate, noise) & gate_args | noised_circuit
+                            NoiseGate(gate, noise) | noised_circuit(gate_args)
                             append_origin_gate = False
                         else:
                             prob = random()

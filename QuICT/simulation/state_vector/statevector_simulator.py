@@ -262,6 +262,7 @@ class StateVectorSimulator:
                 if self._original_state_vector is None else self._original_state_vector.copy()
             noised_circuit = self._quantum_machine.transpile(self._origin_circuit)
             self._pipeline = noised_circuit.fast_gates
+            self._gate_calculator.gate_matrix_combined(noised_circuit)
             self._run()
 
         return state_list

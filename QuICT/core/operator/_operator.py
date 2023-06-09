@@ -13,8 +13,12 @@ class Operator:
         self._name = name
 
     @property
+    def qubits(self):
+        return self._qubit_number
+
+    @property
     def targets(self):
-        return self._targets
+        return self._qubit_number
 
     @property
     def targ(self):
@@ -49,7 +53,7 @@ class Operator:
             name (str): The name of current trigger, Default to None.
         """
         assert targets >= 0 and isinstance(targets, int), f"targets must be a positive integer, not {type(targets)}"
-        self._targets = targets
+        self._qubit_number = targets
         self._targs = []
         self.cargs = []
         self._name = name
@@ -61,10 +65,10 @@ class Operator:
             targets (Union[List[int], int]): The indexes of target qubits.
         """
         if isinstance(targets, int):
-            assert targets >= 0 and self.targets == 1
+            assert targets >= 0 and self.qubits == 1
             self._targs = [targets]
         elif isinstance(targets, list):
-            assert len(targets) == self._targets
+            assert len(targets) == self.qubits
             for q in targets:
                 assert q >= 0 and isinstance(q, int), f"targets must be a positive integer, not {q}"
 
