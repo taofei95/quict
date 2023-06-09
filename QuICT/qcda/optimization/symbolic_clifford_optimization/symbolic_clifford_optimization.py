@@ -170,8 +170,9 @@ class SymbolicCliffordOptimization(object):
                 continue
             if gate.type == GateType.sdg:
                 pauli.combine_one_gate(GateType.z, gate.targ)
-                pauli.conjugate_act(gate.inverse())
-                compute.append(gate.inverse())
+                gate_inv = gate.inverse() & gate.targ
+                pauli.conjugate_act(gate_inv)
+                compute.append(gate_inv)
                 continue
 
         return compute, pauli

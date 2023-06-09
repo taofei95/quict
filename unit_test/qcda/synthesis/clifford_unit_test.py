@@ -44,8 +44,9 @@ def test_unidirectional():
     CUS = CliffordUnidirectionalSynthesizer(strategy='greedy')
     # CUS = CliffordUnidirectionalSynthesizer(strategy='random')
     circ_syn = CUS.execute(circuit)
+    gates_syn = CompositeGate(gates=circ_syn.gates)
     gates_remain = gates.inverse()
-    gates_remain.extend(circ_syn.to_compositegate())
+    gates_remain.extend(gates_syn)
     # np.set_printoptions(precision=3, suppress=True)
     assert np.allclose(gates_remain.matrix(), gates_remain.matrix()[0][0] * np.eye(2 ** n))
 
@@ -90,7 +91,8 @@ def test_bidirectional():
         chunksize=64
     )
     circ_syn = CBS.execute(circuit)
+    gates_syn = CompositeGate(gates=circ_syn.gates)
     gates_remain = gates.inverse()
-    gates_remain.extend(circ_syn.to_compositegate())
+    gates_remain.extend(gates_syn)
     # np.set_printoptions(precision=3, suppress=True)
     assert np.allclose(gates_remain.matrix(), gates_remain.matrix()[0][0] * np.eye(2 ** n))
