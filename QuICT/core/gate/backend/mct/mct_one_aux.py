@@ -28,9 +28,11 @@ class MCTOneAux(object):
         qubit_list = list(range(n + 1))
         if n == 3:
             CCX | gates(qubit_list[:3])
+            ID | gates(qubit_list[3])
             return gates
         elif n == 2:
             CX | gates(qubit_list[:2])
+            ID | gates(qubit_list[2])
             return gates
         k = n // 2 + n % 2
 
