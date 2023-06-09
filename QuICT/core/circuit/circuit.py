@@ -337,6 +337,41 @@ class Circuit(CircuitBased):
 
         self._gates.insert(insert_idx, (gate, gate_args, gate_size))
 
+    def pop(self, index: int = -1):
+        """ Pop the target index BasicGate/Operator.
+
+        Args:
+            index (int, optional): The target index. Defaults to 0.
+        """
+        if index < 0:
+            index = self.size() + index
+
+        assert index > 0 and index < self.size()
+        curr_idx, cidx = 0, 0
+        for _, _, size in self._gates:
+            if curr_idx + size > index:
+                break
+            else:
+                curr_idx += size
+                cidx += 1
+
+        tgate, tgate_qidx, tgate_size = self._gates[cidx]
+        if isinstance(tgate, CompositeGate):
+            target_gate = tgate.pop(index - curr_idx)
+            tgate_size -= 1
+            if tgate_size == 0:
+                del self._gates[cidx]
+            else:
+                self._gates[cidx] = (tgate, tgate_qidx, tgate_size)
+        else:
+            target_gate = tgate
+            del self._gates[cidx]
+
+        return target_gate
+
+    def adjust(self, gates, adjust_qindex):
+        pass
+
     def _add_gate(self, gate: BasicGate):
         """ add a quantum gate into circuit.
 
@@ -382,7 +417,7 @@ class Circuit(CircuitBased):
             return
 
         if self._pointer is not None:
-            if len(self._pointer) != op.targets:
+            if len(self._pointer) != op.qubits:
                 raise CircuitAppendError("Failure to add Trigger into Circuit, as un-matched qureg.")
 
             op_qidxes = self._pointer[:]
@@ -419,7 +454,8 @@ class Circuit(CircuitBased):
         rand_size: int = 10,
         typelist: list = None,
         random_params: bool = False,
-        probabilities: list = None
+        probabilities: list = None,
+        seed: int = None
     ):
         """ add some random gate to the circuit, not include Unitary, Permutation and Permutation_FX Gate.
 
@@ -428,8 +464,12 @@ class Circuit(CircuitBased):
             typelist(list<GateType>): the type of gate, default contains.
                 Rx, Ry, Rz, Cx, Cy, Cz, CRz, Ch, Rxx, Ryy, Rzz and FSim \n
             random_params(bool): whether using random parameters for all quantum gates with parameters. \n
-            probabilities: The probability of append for each gates.
+            probabilities(list): The probability of append for each gates. \n
+            seed(int): The random seed for fixed Quantum Circuit.
         """
+        if seed is not None:
+            np.random.seed(seed)
+            random.seed(seed)
         if typelist is None:
             typelist = [
                 GateType.rx, GateType.ry, GateType.rz,

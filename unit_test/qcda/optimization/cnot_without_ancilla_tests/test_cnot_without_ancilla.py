@@ -158,7 +158,7 @@ def test_matrix_run():
             level_set.add(t)
 
 
-def test_cnot_without_ancillae():
+def test_cnot_without_ancilla():
     n = random.randint(2, 200)
     circuit1 = Circuit(n)
     circuit1.random_append(30 * n, typelist=[GateType.cx])
@@ -166,12 +166,12 @@ def test_cnot_without_ancillae():
     gates = CWA.execute(circuit1)
     test_mat1 = np.eye(n, dtype=bool)
     test_mat2 = np.eye(n, dtype=bool)
-    for gate in circuit1.gates:
+    for gate in circuit1.flatten_gates():
         gate: BasicGate
         c = gate.carg
         t = gate.targ
         test_mat1[t, :] ^= test_mat1[c, :]
-    for gate in gates.gates:
+    for gate in gates.flatten_gates():
         gate: BasicGate
         c = gate.carg
         t = gate.targ

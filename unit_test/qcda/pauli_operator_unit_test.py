@@ -29,7 +29,7 @@ def test_conjugate_action():
             clifford_gate = gate_builder(clifford) & 0
             p.conjugate_act(clifford_gate)
 
-            pauli_gate = gate_builder(pauli, 0)
+            pauli_gate = gate_builder(pauli) & 0
             gates = CompositeGate()
             if clifford == GateType.s:
                 clifford_inverse_gate = gate_builder(GateType.sdg) & 0
@@ -117,9 +117,9 @@ def test_swap():
         for pauli_1 in pauli_list:
             p = PauliOperator([pauli_0, pauli_1])
             cx_gate = gate_builder(GateType.cx) & [0, 1]
-            p.conjugate_act(cx_gate)
+            p.conjugate_act(cx_gate & [0, 1])
             p.conjugate_act(cx_gate & [1, 0])
-            p.conjugate_act(cx_gate)
+            p.conjugate_act(cx_gate & [0, 1])
             assert p.operator[0] == pauli_1 and p.operator[1] == pauli_0
 
 
@@ -134,7 +134,7 @@ def test_disentangler_fixed():
     pauli_z = PauliOperator(z_op)
     target = random.randint(0, 16)
     disentangler = PauliOperator.disentangler(pauli_x, pauli_z, target)
-    for gate in disentangler:
+    for gate in disentangler.flatten_gates():
         pauli_x.conjugate_act(gate)
         pauli_z.conjugate_act(gate)
     assert pauli_x.phase == 1 and pauli_z.phase == 1
@@ -151,7 +151,7 @@ def test_disentangler_random():
             pauli_x, pauli_z = PauliOperator.random_anti_commutative_pair(n)
             target = random.randint(0, n - 1)
             disentangler = PauliOperator.disentangler(pauli_x, pauli_z, target)
-            for gate in disentangler:
+            for gate in disentangler.flatten_gates():
                 pauli_x.conjugate_act(gate)
                 pauli_z.conjugate_act(gate)
             assert pauli_x.phase == 1 and pauli_z.phase == 1

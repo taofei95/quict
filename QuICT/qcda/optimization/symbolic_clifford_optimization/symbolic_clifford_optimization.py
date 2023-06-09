@@ -53,7 +53,7 @@ class SymbolicCliffordOptimization(object):
         """
         width = gates.width()
         if isinstance(gates, Circuit):
-            gates = CompositeGate(gates=gates.gates)
+            gates = gates.to_compositegate()
         assert isinstance(gates, CompositeGate),\
             TypeError('Invalid input(Circuit/CompositeGate)')
         for gate in gates.flatten_gates():
@@ -170,8 +170,9 @@ class SymbolicCliffordOptimization(object):
                 continue
             if gate.type == GateType.sdg:
                 pauli.combine_one_gate(GateType.z, gate.targ)
-                pauli.conjugate_act(gate.inverse())
-                compute.append(gate.inverse())
+                gate_inv = gate.inverse() & gate.targ
+                pauli.conjugate_act(gate_inv)
+                compute.append(gate_inv)
                 continue
 
         return compute, pauli

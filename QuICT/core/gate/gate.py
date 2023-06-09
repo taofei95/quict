@@ -380,7 +380,12 @@ class BasicGate(object):
         if inverse_gargs is None:
             return self
 
-        return gate_builder(inverse_gargs, params=inverse_pargs)
+        inverse_gate = gate_builder(inverse_gargs, params=inverse_pargs)
+        gate_args = self.cargs + self.targs
+        if len(gate_args) > 0:
+            inverse_gate & gate_args
+
+        return inverse_gate
 
     def build_gate(self, qidxes: list = None):
         """ Gate Decomposition, which divided the current gate with a set of small gates. """
@@ -570,7 +575,7 @@ class BasicGate(object):
         """
         gate = BasicGate(
             self.controls, self.targets, self.params, self.type,
-            self.matrix_type, self.pargs, self.precision
+            self.matrix_type, self.pargs[:], self.precision
         )
 
         if len(self.targs) > 0:

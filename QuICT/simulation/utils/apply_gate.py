@@ -365,6 +365,9 @@ class GateSimulator:
 
             return
 
+        if gate_type == GateType.unitary:
+            matrix = matrix.ravel()
+
         # [H, Hy, SX, SY, SW, U2, U3, Rx, Ry] 2-bits [CH, ] 2-bits[Rzx, targets, unitary]
         if matrix_type == MatrixType.normal:
             self.apply_normal_matrix(matrix, args_num, cargs, targs, state_vector, qubits)
@@ -508,9 +511,16 @@ class GateSimulator:
                 targs[0], matrix, state_vector, qubits, self._sync
             )
         elif args_num == 2:   # only consider 1 control qubit + 1 target qubit
-            self._algorithm.reverse_ctargs(
-                cargs[0], targs[0], matrix, state_vector, qubits, self._sync
-            )
+            if len(cargs) == 1:
+                self._algorithm.reverse_ctargs(
+                    cargs[0], targs[0], matrix, state_vector, qubits, self._sync
+                )
+            elif len(targs) == 2:
+                self._algorithm.reverse_targs(
+                    targs, matrix, state_vector, qubits, self._sync
+                )
+            else:
+                raise GateQubitAssignedError("Quantum gate cannot only have control qubits.")
         else:   # CCX
             self._algorithm.reverse_more(
                 cargs, targs[0], state_vector, qubits, self._sync
