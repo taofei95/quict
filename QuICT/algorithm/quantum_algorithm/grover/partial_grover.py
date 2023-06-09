@@ -32,6 +32,7 @@ class PartialGrover:
 
     def __init__(self, simulator) -> None:
         self.simulator = simulator
+        self.mct_generator = MCTOneAux()
 
     def circuit(self, n, n_block, n_ancilla, oracle, measure=True):
         """ partial grover search with one target
@@ -69,9 +70,7 @@ class PartialGrover:
             for idx in index_q:
                 X | circuit(idx)
             H | circuit(index_q[n - 1])
-            mct_gate = MCTOneAux().execute(n + 1)
-            target_indexes = index_q + oracle_q[:1]
-            mct_gate | circuit(target_indexes[:mct_gate.width()])
+            self.mct_generator.execute(n + 1) | circuit(index_q + oracle_q[:1])
             H | circuit(index_q[n - 1])
             for idx in index_q:
                 X | circuit(idx)
@@ -89,9 +88,7 @@ class PartialGrover:
             for idx in local_index_q:
                 X | circuit(idx)
             H | circuit(local_index_q[local_n - 1])
-            mct_gate = MCTOneAux().execute(local_n + 1)
-            target_indexes = local_index_q + oracle_q[:1]
-            mct_gate | circuit(target_indexes[:mct_gate.width()])
+            self.mct_generator.execute(local_n + 1) | circuit(local_index_q + oracle_q[:1])
             H | circuit(local_index_q[local_n - 1])
             for idx in local_index_q:
                 X | circuit(idx)
@@ -108,7 +105,7 @@ class PartialGrover:
             CH | circuit([ancillia_q[0], idx])
         for idx in index_q:
             CX | circuit([ancillia_q[0], idx])
-        MCTOneAux().execute(n + 2) | circuit([ancillia_q[0]] + index_q + oracle_q[:1])
+        self.mct_generator.execute(n + 2) | circuit([ancillia_q[0]] + index_q + oracle_q[:1])
         for idx in index_q:
             CX | circuit([ancillia_q[0], idx])
         for idx in index_q:
