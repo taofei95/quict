@@ -230,7 +230,7 @@ class FidelityCircuitCost(CircuitCost):
             if qubit_gate_count[q]:
                 # avg_time = self._qubit_avg_relax_time(q)
                 # qubit_f[q] *= np.exp(-1 * qubit_gate_count[q] / avg_time)
-                qubit_f[q] *= self.backend.qubits[q].fidelity
+                qubit_f[q] *= np.average(self.backend.qubits[q].fidelity)
         circ_f = np.prod(qubit_f)
 
         return circ_f
