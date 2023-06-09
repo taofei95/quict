@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 from QuICT.algorithm.quantum_machine_learning.ansatz_library import Thouless
-from QuICT.algorithm.quantum_machine_learning.utils import GpuSimulator, Hamiltonian
+from QuICT.algorithm.quantum_machine_learning.utils_v1 import GpuSimulator, Hamiltonian
 
 
 class HartreeFockVQENet(torch.nn.Module):

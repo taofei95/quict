@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 from QuICT.core.gate import CompositeGate, Rz, sqiSwap, X
-from QuICT.algorithm.quantum_machine_learning.utils import Ansatz, Rz_tensor, sqiSwap_tensor, X_tensor
+from QuICT.algorithm.quantum_machine_learning.utils_v1 import Ansatz, Rz_tensor, sqiSwap_tensor, X_tensor
 
 
 class Thouless:
