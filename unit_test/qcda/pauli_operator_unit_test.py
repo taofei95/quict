@@ -117,9 +117,9 @@ def test_swap():
         for pauli_1 in pauli_list:
             p = PauliOperator([pauli_0, pauli_1])
             cx_gate = gate_builder(GateType.cx) & [0, 1]
-            p.conjugate_act(cx_gate)
+            p.conjugate_act(cx_gate & [0, 1])
             p.conjugate_act(cx_gate & [1, 0])
-            p.conjugate_act(cx_gate)
+            p.conjugate_act(cx_gate & [0, 1])
             assert p.operator[0] == pauli_1 and p.operator[1] == pauli_0
 
 
