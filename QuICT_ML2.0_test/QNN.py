@@ -84,9 +84,12 @@ bin_test_X = binary_img(nocon_test_X, threshold)
 
 def encoding_img(X, encoding):
     data_circuits = []
-    for x in X:
-        data_circuit = encoding.encoding(x)
+    for i in tqdm.tqdm(range(len(X))):
+        data_circuit = encoding(X[i])
         data_circuits.append(data_circuit)
+    # for x in X:
+    #     data_circuit = encoding(x)
+    #     data_circuits.append(data_circuit)
 
     return data_circuits
 
@@ -98,11 +101,14 @@ SEED = 17  # 随机数种子
 
 set_seed(SEED)
 
+# encoding = FRQI(2)
 encoding = Qubit(16)
-train_X = encoding_img(bin_train_X, encoding)
-test_X = encoding_img(bin_test_X, encoding)
-train_Y = nocon_train_Y
-test_Y = nocon_test_Y
+train_X = encoding_img(bin_train_X[:200], encoding)
+test_X = encoding_img(bin_test_X[:200], encoding)
+# train_X = bin_train_X
+# test_X = bin_test_X
+train_Y = nocon_train_Y[:200]
+test_Y = nocon_test_Y[:200]
 
 train_dataset = Dataset(train_X, train_Y)
 test_dataset = Dataset(test_X, test_Y)
@@ -113,15 +119,17 @@ test_loader = DataLoader(
     dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True
 )
 
-loss_fun = Hinge()
+loss_fun = HingeLoss()
 optimizer = numpy_ml.neural_nets.optimizers.Adam(lr=LR)
 net = QuantumNet(n_qubits=17, readout=16)
+# net = QuantumNet(n_qubits=6, readout=5)
 
 import torch.utils.tensorboard
 
 now_time = time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime(time.time()))
 model_path = "/home/zoker/quict/QNN2.0_MNIST_" + now_time + "/"
 tb = torch.utils.tensorboard.SummaryWriter(log_dir=model_path + "logs")
+
 
 # train epoch
 for ep in range(EPOCH):
@@ -130,6 +138,7 @@ for ep in range(EPOCH):
     )
     # train iteration
     for it, (x_train, y_train) in enumerate(loader):
+        # x_train = [encoding(x) for x in x_train]
         loss, correct = net.run_step(x_train, y_train, optimizer, loss_fun)
         accuracy = correct / len(y_train)
         loader.set_postfix(
@@ -150,7 +159,7 @@ for ep in range(EPOCH):
     total_correct = 0
     for it, (x_test, y_test) in enumerate(loader_val):
         loss_val, correct_val = net.run_step(
-            x_train, y_train, optimizer, loss_fun, train=False
+            x_test, y_test, optimizer, loss_fun, train=False
         )
         loss_val_list.append(loss_val)
         total_correct += correct_val

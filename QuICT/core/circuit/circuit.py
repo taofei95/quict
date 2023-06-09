@@ -30,6 +30,9 @@ from QuICT.tools import Logger
 from QuICT.tools.exception.core import *
 
 
+logger = Logger("circuit")
+
+
 class Circuit(CircuitBased):
     """ Implement a quantum circuit
 
@@ -88,7 +91,7 @@ class Circuit(CircuitBased):
         self._ancillae_qubits = []
         self._topology = None
         self._checkpoints = []
-        self._logger = Logger("circuit")
+        self._logger = logger
 
         if isinstance(wires, Qureg):
             self._qubits = wires

@@ -10,7 +10,7 @@ class Qubit:
     def __init__(self, data_qubits: int):
         self._data_qubits = data_qubits
 
-    def encoding(self, img):
+    def __call__(self, img):
         img = img.flatten()
         assert img.shape[0] == self._data_qubits
         circuit = Circuit(self._data_qubits)
