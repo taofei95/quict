@@ -82,6 +82,7 @@ class FRQI:
         for qid in range(self._n_pos_qubits):
             if self._q_state[qid] == 1:
                 X | circuit(qid)
+                self._q_state[qid] = 1 - self._q_state[qid]
         return circuit
 
     def _construct_qic_circuit(self, img, rotate: bool, gid: int = 0):
@@ -95,6 +96,7 @@ class FRQI:
         for qid in range(self._n_pos_qubits):
             if self._q_state[qid] == 1:
                 X | qic_circuit(qid)
+                self._q_state[qid] = 1 - self._q_state[qid]
         return qic_circuit
 
     def _construct_dnf_circuit(self, min_dnf, gid: int = 0, theta: float = None):
