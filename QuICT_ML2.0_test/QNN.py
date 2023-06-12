@@ -14,6 +14,8 @@ from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 from QuICT.algorithm.quantum_machine_learning.model.QNN import QuantumNet
 from QuICT.algorithm.quantum_machine_learning.data import *
 
+RESIZE = (8, 8)
+
 train_data = datasets.MNIST(root="./data/", train=True, download=True)
 test_data = datasets.MNIST(root="./data/", train=False, download=True)
 train_X = train_data.data
@@ -45,8 +47,8 @@ def downscale(X, resize):
     return X
 
 
-resized_train_X = downscale(train_X, (4, 4))
-resized_test_X = downscale(test_X, (4, 4))
+resized_train_X = downscale(train_X, RESIZE)
+resized_test_X = downscale(test_X, RESIZE)
 plt.imshow(resized_train_X[200], cmap="gray")
 
 
@@ -65,8 +67,8 @@ def remove_conflict(X, Y, resize):
     return X, Y
 
 
-nocon_train_X, nocon_train_Y = remove_conflict(resized_train_X, train_Y, (4, 4))
-nocon_test_X, nocon_test_Y = remove_conflict(resized_test_X, test_Y, (4, 4))
+nocon_train_X, nocon_train_Y = remove_conflict(resized_train_X, train_Y, RESIZE)
+nocon_test_X, nocon_test_Y = remove_conflict(resized_test_X, test_Y, RESIZE)
 print("Remaining training examples: ", len(nocon_train_Y))
 print("Remaining testing examples: ", len(nocon_test_Y))
 
@@ -101,14 +103,14 @@ SEED = 17  # 随机数种子
 
 set_seed(SEED)
 
-# encoding = FRQI(2)
-encoding = Qubit(16)
-train_X = encoding_img(bin_train_X[:200], encoding)
-test_X = encoding_img(bin_test_X[:200], encoding)
-# train_X = bin_train_X
-# test_X = bin_test_X
-train_Y = nocon_train_Y[:200]
-test_Y = nocon_test_Y[:200]
+encoding = NEQR(2)
+# encoding = Qubit(16)
+# train_X = encoding_img(bin_train_X, encoding)
+# test_X = encoding_img(bin_test_X, encoding)
+train_X = bin_train_X
+test_X = bin_test_X
+train_Y = nocon_train_Y
+test_Y = nocon_test_Y
 
 train_dataset = Dataset(train_X, train_Y)
 test_dataset = Dataset(test_X, test_Y)
@@ -121,13 +123,14 @@ test_loader = DataLoader(
 
 loss_fun = HingeLoss()
 optimizer = numpy_ml.neural_nets.optimizers.Adam(lr=LR)
-net = QuantumNet(n_qubits=17, readout=16)
-# net = QuantumNet(n_qubits=6, readout=5)
+# net = QuantumNet(n_qubits=17, readout=16)
+n_qubits = int(np.log2(RESIZE[0] * RESIZE[1]) + 2)
+net = QuantumNet(n_qubits=n_qubits, readout=n_qubits - 1)
 
 import torch.utils.tensorboard
 
 now_time = time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime(time.time()))
-model_path = "/home/zoker/quict/QNN2.0_MNIST_" + now_time + "/"
+model_path = "D:/ICT/dev_qml/quict/QNN2.0_MNIST_" + now_time + "/"
 tb = torch.utils.tensorboard.SummaryWriter(log_dir=model_path + "logs")
 
 
@@ -138,7 +141,7 @@ for ep in range(EPOCH):
     )
     # train iteration
     for it, (x_train, y_train) in enumerate(loader):
-        # x_train = [encoding(x) for x in x_train]
+        x_train = [encoding(x, use_qic=False) for x in x_train]
         loss, correct = net.run_step(x_train, y_train, optimizer, loss_fun)
         accuracy = correct / len(y_train)
         loader.set_postfix(
@@ -158,6 +161,7 @@ for ep in range(EPOCH):
     loss_val_list = []
     total_correct = 0
     for it, (x_test, y_test) in enumerate(loader_val):
+        x_test = [encoding(x, use_qic=False) for x in x_test]
         loss_val, correct_val = net.run_step(
             x_test, y_test, optimizer, loss_fun, train=False
         )
