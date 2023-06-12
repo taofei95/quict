@@ -23,6 +23,33 @@ qr1 = Qureg(5)          # 构建 5 qubit 的 Qureg
 qr2 = Qureg([qubit])    # 构建包含 qubit 的 Qureg
 ```
 
+## 物理仿真参数
+在真实量子机中，量子比特有一些关键参数，包括：
+- 相干时间 T1
+- 退相干时间 T2
+- 比特测量保真度 F0/F1
+- 态制备保真度
+- 单/双比特门保真度
+- 工作频率
+- 测量频率
+
+在QuICT 中设置相关量子比特参数 （可以在VQM中进行更全面的量子机仿真）
+``` python
+from QuICT.core.utils import GateType
+qubit = Qubit()
+qubit.fidelity = (0.995, 0.989)         # Set Measured Fidelity(F0, F1) for qubit
+qubit.preparation_fidelity = 0.976      # Set preparation fidelity for qubit
+qubit.gate_fidelity = {GateType.rx: 0.991, GateType.ry: 0.992, GateType.rz: 0.989}      # Set Gate fidelity, you can use simple float for average single-qubit Gate fidelity. qubit.gate_fidelity = 0.991
+qubit.T1 = 4.68     # Set T1 time for qubit
+qubit.work_frequency = 5.68     # Set working frequency for qubit   
+
+# Set Coupling Strength for Qureg (bi-qubits Quantum Gate Fidelity)
+qureg = Qureg(3)
+coupling_strength = [(0, 1, 0.893), (1, 2, 0.993)]  # (start_qubit, end_qubit, fidelity)
+qureg.set_coupling_strength(coupling_strength)
+```
+
+
 ## 量子比特测量
 
 我们可以通过检查一个比特来确定它处于 $0$ 态还是 $1$ 态。例如，计算机读取其内存内容时始终执行此操作。但值得注意的是，我们不能通过检查量子比特来确定它的量子态，即 $\alpha$ 和 $\beta$ 的值。相反，量子力学告诉我们，我们只能获得有关量子态的有限信息。

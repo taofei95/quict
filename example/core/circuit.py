@@ -125,4 +125,4 @@ def load_circuit_from_qasm():
 
 
 if __name__ == "__main__":
-    circuit_adjust()
+    circuit_build()

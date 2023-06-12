@@ -151,6 +151,9 @@ class Qubit(object):
                 back to its ground state from an excited state. Default to None.
             T2 (float, μs): the transverse coherence time, which refers to the time it takes for the qubit to lose its
                 coherence when subjected to unwanted phase or amplitude fluctuations. Default to None.
+            work_frequency (Union[float, list]): The working frequency in current Qubit.
+            readout_frequency (Union[float, list]): The frequency when measured qubit in current Qubit.
+            gate_duration (Union[float, list]): The amount of time that a Quantum Gate operators on a Qubit.
         """
         self._id = unique_id_generator()
         self.fidelity = fidelity
@@ -460,7 +463,7 @@ class Qureg(list):
         for idx, qubit in enumerate(self):
             qubit.preparation_fidelity = fidelity[idx]
 
-    def set_gate_fidelity(self, gate_fidelity: Union[float, dict, list]):
+    def set_gate_fidelity(self, gate_fidelity: Union[float, list]):
         """ Set the Single-Qubit Gate Fidelity for each qubits
 
         Args:

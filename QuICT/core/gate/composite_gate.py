@@ -323,6 +323,18 @@ class CompositeGate(CircuitBased):
     ####################################################################
     ############            CompositeGate Utils             ############
     ####################################################################
+    def depth(self) -> int:
+        """ the depth of the circuit.
+
+        Returns:
+            int: the depth
+        """
+        depth = np.zeros(max(self.qubits) + 1, dtype=int)
+        for _, targs, _ in self.gate_decomposition(False, False):
+            depth[targs] = np.max(depth[targs]) + 1
+
+        return np.max(depth)
+
     def inverse(self) -> CompositeGate:
         """ the inverse of CompositeGate
 
