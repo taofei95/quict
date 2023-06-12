@@ -1,4 +1,4 @@
-from QuICT.core.gate import CompositeGate, H, CX, gate_builder, GateType, QFT
+from QuICT.core.gate import CompositeGate, H, CX, gate_builder, GateType, QFT, Rx
 from QuICT.core.gate import MultiControlToffoli
 
 
@@ -17,28 +17,29 @@ def build_BasicGate():
 
 def build_CompositeGate():
     cgate = CompositeGate()
-    with cgate:
-        H & 0
+    H | cgate(0)
+    with cgate:     # Build CompositeGate through Context
         CX & [0, 1]
         CX & [1, 2]
 
-    CX | cgate([2, 3])
-    print(cgate.qasm())
+    # Add another compositeGate into it
+    qft_gate = QFT(3)
+    qft_gate | cgate
 
+    cgate.draw("command")
 
-def build_QFT():
-    # Build 5-qubits QFT Gates
-    n = 5
-    qft_gate = QFT(n)
-    qft_gate.draw(method="command")
+    # Adjust CompositeGate
+    lgate = cgate.pop()     # Pop the last CompositeGate
+    cgate.adjust(2, [0, 2])
+    cgate.draw("command")
 
 
 def build_MCT_gate():
     # Build 5 qubits MCT gate with one ancillary qubit
-    mct = MultiControlToffoli(aux_usage='one_clean_aux')
-    mct1_gate = mct(5)
+    mct = MultiControlToffoli(aux_usage='no_aux')
+    mct1_gate = mct(3)
     mct1_gate.draw(method='command', flatten=True)
 
 
 if __name__ == "__main__":
-    build_MCT_gate()
+    build_CompositeGate()

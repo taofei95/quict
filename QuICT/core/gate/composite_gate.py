@@ -279,7 +279,7 @@ class CompositeGate(CircuitBased):
         """ Adjust the placement for target CompositeGate/BasicGate/Operator.
 
         Args:
-            index (int): The target Quantum Gate.
+            index (int): The target Quantum Gate's index, **Start from 0**.
             reassigned_qubits (Union[int, list]): The new assigned qubits of target Quantum Gate
             is_adjust_vale (bool): Whether the reassigned_qubits means the new qubit indexes or the adjustment
                 value from original indexes.
@@ -293,7 +293,7 @@ class CompositeGate(CircuitBased):
             new_qubits = [v + reassigned_qubits for v in origin_qidx] if isinstance(reassigned_qubits, int) else \
                 [v + reassigned_qubits[idx] for idx, v in enumerate(origin_qidx)]
         else:
-            new_qubits = list(reassigned_qubits)
+            new_qubits = [reassigned_qubits] if isinstance(reassigned_qubits, int) else reassigned_qubits
 
         assert len(origin_qidx) == len(new_qubits)
         self._gates[index] = (origin_gate, new_qubits, origin_size)

@@ -20,6 +20,7 @@ def build_layout():
     cir.random_append(5)
     print(layout.valid_circuit(cir))
 
+
 def build_special_layout():
     # Build a linearly layout with 5 qubits
     layout = Layout.linear_layout(qubit_number=5, directional=False, error_rate=[0.99] * 4)
