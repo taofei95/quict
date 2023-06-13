@@ -73,3 +73,21 @@ sim = StateVectorSimulator()
 sv = sim.run(circuit)
 print(int(circuit.qubits))  # 展示所有比特的测量结果
 ```
+
+
+## 量子寄存器 (QuReg)
+量子比特寄存器是用于存储和控制多个量子比特的集合，它的状态可以描述为多个量子比特的叠加态。在 QuICT 中我们使用 Qureg 类来实现量子比特寄存器的功能。
+
+``` python
+from QuICT.core import Qureg
+
+qureg = Qureg(5)    # 5比特的量子比特寄存器
+
+# Set Fidelity and T1 for Qureg
+qureg.set_fidelity([0.5] * 5)
+qureg.set_t1_time([30.1] * 5)
+print(qureg[0])     # show the details about first qubit in current Qureg
+```
+``` python
+qubit id: dfa14db83ac24925a6796f14d6874bba; fidelity: 0.5; QSP_fidelity: 1.0; Gate_fidelity: 1.0; Coherence time: T1: 30.1; T2: 0.0; Work Frequency: 0.0; Readout Frequency: 0.0; Gate Duration: 0.0
+```

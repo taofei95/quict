@@ -513,13 +513,14 @@ class Circuit(CircuitBased):
 
             self._gates.append((r_gate, random_assigned_qubits, 1))
 
-    def supremacy_append(self, repeat: int = 1, pattern: str = "ABCDCDAB"):
+    def supremacy_append(self, repeat: int = 1, pattern: str = "ABCDCDAB", random_parameters: bool = False):
         """
         Add a supremacy circuit to the circuit
 
         Args:
             repeat(int): the number of two-qubit gates' sequence
             pattern(str): indicate the two-qubit gates' sequence
+            random_parameters(bool): whether using random parameters for FSim Gate, or not.
         """
         qubits = len(self.qubits)
         supremacy_layout = SupremacyLayout(qubits)
@@ -544,7 +545,7 @@ class Circuit(CircuitBased):
             for e in edges:
                 gate_params = [np.pi / 2, np.pi / 6]
                 gate_args = [int(e[0]), int(e[1])]
-                fgate = gate_builder(GateType.fsim, params=gate_params)
+                fgate = gate_builder(GateType.fsim, params=gate_params, random_params=random_parameters)
 
                 self._gates.append((fgate, gate_args, 1))
 

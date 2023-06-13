@@ -78,7 +78,7 @@ def circuit_adjust():
     # Adjust Quantum Gate in current Circuit
     cir.adjust(-1, 3)   # Re-assign the last Quantum Gate into the fourth Qubit
     cir.adjust(6, 1, True)  # Re-assign the sixth Quantum Gate with +1 Qubit indexes.
-    cir.draw("command")
+    cir.draw("command", flatten=True)
 
 
 def random_build():
