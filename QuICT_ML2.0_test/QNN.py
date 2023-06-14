@@ -6,7 +6,7 @@ import sys
 import numpy_ml
 import time
 
-sys.path.append("/home/zoker/quict")
+# sys.path.append("/home/zoker/quict")
 
 from QuICT.algorithm.quantum_machine_learning.encoding import *
 from QuICT.algorithm.quantum_machine_learning.utils.loss import *

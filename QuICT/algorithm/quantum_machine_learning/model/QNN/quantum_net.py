@@ -86,4 +86,3 @@ class QuantumNet(Model):
 
     def update(self):
         self._model_circuit.update(self._params)
-

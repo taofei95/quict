@@ -57,7 +57,7 @@ class FRQI:
         if not rotate:
             mc_gate = MultiControlToffoli()
         for i in range(self._N):
-            if img[i] == 0:
+            if img[i] < 1e-12:
                 continue
             bin_pos = bin(i)[2:].zfill(self._n_pos_qubits)
             for qid in range(self._n_pos_qubits):
@@ -166,7 +166,7 @@ class FRQI:
     def _get_img_dict(self, img, bin_key=False, bin_val=False):
         img_dict = dict()
         for i in range(self._N):
-            if img[i] == 0:
+            if img[i] < 1e-12:
                 continue
             key = (
                 bin(img[i])[2:].zfill(self._n_color_qubits) if bin_key else str(img[i])
