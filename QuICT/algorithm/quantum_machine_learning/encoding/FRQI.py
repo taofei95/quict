@@ -35,7 +35,7 @@ class FRQI:
         return circuit
 
     def _img_preprocess(self, img, flatten=True):
-        if ((img < 1.0) & (img > 0.0)).any():
+        if ((img <= 1.0) & (img > 0.0)).any():
             img *= self._grayscale - 1
         img = img.astype(np.int64)
         assert (
@@ -197,3 +197,11 @@ class FRQI:
                 boolen_expressions += " | "
         min_expression = to_dnf(boolen_expressions, simplify=True, force=True)
         return min_expression
+
+
+if __name__ == "__main__":
+    frqi = FRQI(2)
+    img = np.array([[0, 1], [0, 1,]])
+    circuit = frqi(img, use_qic=False)
+    circuit.gate_decomposition(decomposition=False)
+    circuit.draw(filename="frqi")

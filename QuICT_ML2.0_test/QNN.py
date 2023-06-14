@@ -14,7 +14,7 @@ from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 from QuICT.algorithm.quantum_machine_learning.model.QNN import QuantumNet
 from QuICT.algorithm.quantum_machine_learning.data import *
 
-RESIZE = (8, 8)
+RESIZE = (4, 4)
 
 train_data = datasets.MNIST(root="./data/", train=True, download=True)
 test_data = datasets.MNIST(root="./data/", train=False, download=True)
@@ -96,14 +96,14 @@ def encoding_img(X, encoding):
     return data_circuits
 
 
-EPOCH = 3  # 训练总轮数
+EPOCH = 10  # 训练总轮数
 BATCH_SIZE = 32  # 一次迭代使用的样本数
 LR = 0.001  # 梯度下降的学习率
 SEED = 17  # 随机数种子
 
 set_seed(SEED)
 
-encoding = NEQR(2)
+encoding = FRQI(2)
 # encoding = Qubit(16)
 # train_X = encoding_img(bin_train_X, encoding)
 # test_X = encoding_img(bin_test_X, encoding)
@@ -125,12 +125,12 @@ loss_fun = HingeLoss()
 optimizer = numpy_ml.neural_nets.optimizers.Adam(lr=LR)
 # net = QuantumNet(n_qubits=17, readout=16)
 n_qubits = int(np.log2(RESIZE[0] * RESIZE[1]) + 2)
-net = QuantumNet(n_qubits=n_qubits, readout=n_qubits - 1)
+net = QuantumNet(n_qubits=n_qubits, readout=n_qubits - 1, device="CPU")
 
 import torch.utils.tensorboard
 
 now_time = time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime(time.time()))
-model_path = "D:/ICT/dev_qml/quict/QNN2.0_MNIST_" + now_time + "/"
+model_path = "/home/zoker/quict/QNN2.0_MNIST_" + now_time + "/"
 tb = torch.utils.tensorboard.SummaryWriter(log_dir=model_path + "logs")
 
 
@@ -179,15 +179,3 @@ for ep in range(EPOCH):
     tb.add_scalar("validation/loss", avg_loss, ep)
     tb.add_scalar("validation/accuracy", avg_acc, ep)
     print("Validation Average Loss: {}, Accuracy: {}".format(avg_loss, avg_acc))
-
-"""
-Training epoch 1: 100%|██████████████████████████████████████████████████████████████████| 323/323 [07:14<00:00,  1.35s/it, accuracy=0.688, it=322, loss=0.792]
-Validating epoch 1: 100%|███████████████████████████████████████████████████████████████████| 56/56 [00:51<00:00,  1.09it/s, accuracy=0.688, it=55, loss=0.790]
-Validation Average Loss: 0.7902488731873062, Accuracy: 0.6875
-Training epoch 2: 100%|██████████████████████████████████████████████████████████████████| 323/323 [14:11<00:00,  2.64s/it, accuracy=0.875, it=322, loss=0.470]
-Validating epoch 2: 100%|███████████████████████████████████████████████████████████████████| 56/56 [01:37<00:00,  1.74s/it, accuracy=0.875, it=55, loss=0.469]
-Validation Average Loss: 0.46901776041853127, Accuracy: 0.875
-Training epoch 3: 100%|██████████████████████████████████████████████████████████████████| 323/323 [20:37<00:00,  3.83s/it, accuracy=0.938, it=322, loss=0.326]
-Validating epoch 3: 100%|███████████████████████████████████████████████████████████████████| 56/56 [02:20<00:00,  2.51s/it, accuracy=0.938, it=55, loss=0.326]
-Validation Average Loss: 0.32613962477589203, Accuracy: 0.9375
-"""

@@ -1,4 +1,3 @@
-
 import numpy as np
 from mindquantum.core.circuit import Circuit, controlled
 from mindquantum.core.gates import H, ZZ, RX, X, RY
@@ -7,7 +6,7 @@ from mindquantum.framework import MQAnsatzOnlyLayer
 from mindquantum.simulator import Simulator
 
 
-class FRQI:
+class HIQFRQI:
     def __init__(self, grayscale: int = 2):
         self._grayscale = grayscale
         self._N = None
@@ -71,7 +70,12 @@ class FRQI:
 
 
 if __name__ == "__main__":
-    frqi = FRQI(2)
-    img = np.array([[1, 0, 1, 0], [1, 0, 0, 1], [0, 0, 1, 0], [1, 1, 0, 0,]])
-    circuit = frqi(img)
-    circuit.svg()
+    # frqi = HIQFRQI(2)
+    # img = np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0]])
+    # circuit = frqi(img)
+    # circuit.svg()
+    circuit = Circuit()
+    mc_gate = RY(np.pi).on(0, [1, 2, 3, 4])
+    circuit += mc_gate
+    np.set_printoptions(precision=2, threshold=np.inf, suppress=True)
+    print(circuit.matrix().real)
