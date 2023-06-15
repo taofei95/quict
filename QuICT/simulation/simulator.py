@@ -8,6 +8,7 @@ from typing import Union
 
 from QuICT.core import Circuit
 from QuICT.core.noise import NoiseModel
+from QuICT.core.virtual_machine import VirtualQuantumMachine
 from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.simulation.unitary import UnitarySimulator
 from QuICT.simulation.density_matrix import DensityMatrixSimulator
@@ -18,20 +19,7 @@ from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import Hamiltoni
 
 
 class Simulator:
-    """ The high-level simulation class, including all QuICT simulator mode.
-
-    Args:
-        device (str): The device of the simulator. One of [CPU, GPU]
-        backend (str): The backend for the simulator. One of [unitary, state_vector, density_matrix]
-        shots (int): The running times; must be a positive integer, default to 1.
-        precision (str): The precision of simulator, one of [single, double], default to double.
-        circuit_record (bool): whether record circuit's qasm in output, default to False.
-        amplitude_record (bool): whether record the amplitude of qubits, default to False.
-        **options (dict): other optional parameters for the simulator.
-            state_vector: [gpu_device_id] (only for gpu)
-            density_matrix: [accumulated_mode]
-            unitary: None
-    """
+    """ The high-level simulation class, including all QuICT simulator mode. """
 
     __DEVICE = ["CPU", "GPU"]
     __BACKEND = ["unitary", "state_vector", "density_matrix"]
@@ -51,6 +39,19 @@ class Simulator:
         output_path: str = None,
         **options
     ):
+        """
+        Args:
+            device (str): The device of the simulator. One of [CPU, GPU]
+            backend (str): The backend for the simulator. One of [unitary, state_vector, density_matrix]
+            precision (str): The precision of simulator, one of [single, double], default to double.
+            circuit_record (bool): whether record circuit's qasm in output, default to False.
+            amplitude_record (bool): whether record the amplitude of qubits, default to False.
+            output_path (str): The output path for simulation result, default to None.
+            **options (dict): other optional parameters for the simulator.
+                state_vector: [gpu_device_id] (only for gpu)
+                density_matrix: [accumulated_mode]
+                unitary: None
+        """
         assert device in Simulator.__DEVICE, ValueError("Simulator.device", "[CPU, GPU]", device)
         self._device = device
         assert backend in Simulator.__BACKEND, \
@@ -59,13 +60,12 @@ class Simulator:
         assert precision in Simulator.__PRECISION, ValueError("Simulator.precision", "[single, double]", precision)
         self._precision = precision
 
+        self._options = options
         if options:
             if not self._options_validation(options):
                 raise SimulatorOptionsUnmatchedError(
                     f"Unmatched options arguments depending on {self._device} and {self._backend}."
                 )
-
-        self._options = options
 
         # load simulator
         self._simulator = self._load_simulator()
@@ -81,7 +81,6 @@ class Simulator:
 
         default_option_list = Simulator.__OPTIONS_DICT[self._backend]
         option_keys = list(options.keys())
-
         for option_key in option_keys:
             if option_key not in default_option_list:
                 return False
@@ -103,46 +102,53 @@ class Simulator:
         self,
         circuit: Union[Circuit, np.ndarray],
         shots: int = 1,
-        state_vector: np.ndarray = None,
-        density_matrix: np.ndarray = None,
-        noise_model: NoiseModel = None,
+        quantum_state: np.ndarray = None,
+        quantum_machine_model: Union[NoiseModel, VirtualQuantumMachine] = None,
         use_previous: bool = False
     ):
         """ start simulator with given circuit
 
         Args:
-            circuit Union[Circuit, np.ndarray]: The quantum circuits or unitary matrix.
-            state_vector (ndarray): The initial state vector.
-            density_matrix (ndarray): The initial density matrix.
-            noise_model (NoiseModel, optional): The NoiseModel only for density_matrix simulator. Defaults to None.
+            circuit Union[Circuit, np.ndarray]: The quantum Circuit or Unitary Matrix.
+            shots (int): The sample times for current Circuit.
+            quantum_state (ndarray): The initial Quantum State Vector/Density Matrix.
+            quantum_machine_model (Union[NoiseModel, VirtualQuantumMachine]): The model of quantum machine
             use_previous (bool, optional): Using the previous state vector. Defaults to False.
 
         Yields:
             [dict]: The Result Dict.
         """
+        # Deal with unitary matrix as input
         if isinstance(circuit, np.ndarray) and self._backend != "unitary":
             raise SimulatorOptionsUnmatchedError(
                 f"The unitary matrix input only allows in the unitary backend, not {self._backend}."
             )
 
-        if (density_matrix is not None or noise_model is not None) and self._backend != "density_matrix":
+        if quantum_machine_model is not None and self._backend == "unitary":
             raise SimulatorOptionsUnmatchedError(
-                "The density matrix and noise model input only allows in the density_matrix backend, " +
+                "The Quantum Machine Model input only allows in the Unitary Simulator backend, " +
                 f"not {self._backend}."
             )
 
-        if state_vector is not None and self._backend == "density_matrix":
-            raise SimulatorOptionsUnmatchedError(
-                "The state vector input is not allowed in the density matrix backend."
-            )
+        if quantum_state is not None:
+            ndim = quantum_state.ndim
+            if ndim == 2 and self._backend != "density_matrix":
+                raise SimulatorOptionsUnmatchedError(
+                    f"The Density Matrix input only allows in the Density Matrix backend, not {self._backend}."
+                )
+
+            if ndim == 1 and self._backend == "density_matrix":
+                raise SimulatorOptionsUnmatchedError(
+                    f"The State Vector input only allows in the Unitary/SV backend, not {self._backend}."
+                )
 
         if isinstance(circuit, Circuit):
             self._result_recorder.record_circuit(circuit)
 
-        if self._backend == "density_matrix":
-            amplitude = self._simulator.run(circuit, density_matrix, noise_model, use_previous)
+        if quantum_machine_model is not None:
+            amplitude = self._simulator.run(circuit, quantum_state, quantum_machine_model, use_previous)
         else:
-            amplitude = self._simulator.run(circuit, state_vector, use_previous)
+            amplitude = self._simulator.run(circuit, quantum_state, use_previous=use_previous)
 
         self._result_recorder.record_amplitude(amplitude)
 

@@ -29,18 +29,16 @@ def _cos_estimate(
         raise ValueError("custom grover operator not supported")
     good_count = 0
     circ = Circuit(n + n_ancilla + 1)
-    state_preparation.A(n) | circ(list(range(n + n_ancilla)))
+    qidxes_with_ancilla = [n + n_ancilla] + list(range(n + n_ancilla - 1))
+    based_qidxes = list(range(n + n_ancilla - 1))
+    state_preparation.A(n) | circ(based_qidxes)
     Ry(asin(1 / 4) * 2) | circ(n + n_ancilla)
     for _ in range(m):
-        oracle.S_chi(n, controlled=True) | circ(
-            [n + n_ancilla] + list(range(n + n_ancilla))
-        )  # assert default control bit on 0
-        state_preparation.A_dagger(n) | circ(list(range(n + n_ancilla)))
+        oracle.S_chi(n, controlled=True) | circ(qidxes_with_ancilla)  # assert default control bit on 0
+        state_preparation.A_dagger(n) | circ(based_qidxes)
         Ry(-asin(1 / 4) * 2) | circ([n + n_ancilla])
-        state_preparation.S_0(n + 1) | circ(
-            [n + n_ancilla] + list(range(n + n_ancilla))
-        )
-        state_preparation.A(n) | circ(list(range(n + n_ancilla)))
+        state_preparation.S_0(n + 1) | circ(qidxes_with_ancilla + [n + n_ancilla - 1])
+        state_preparation.A(n) | circ(based_qidxes)
         Ry(asin(1 / 4) * 2) | circ([n + n_ancilla])
     simulator.run(circ)
     sample_result = simulator.sample(N_shot)

@@ -20,8 +20,8 @@
 Circuit 提供了多种方法来将门添加到量子电路中
 
 - 可以使用运算符 or (|) 将量子门、组合量子门甚至量子电路添加到量子电路中
-- 可以使用 circuit.append(gate) 或 circuit.extend(gates) 添加单个门和多个量子门
-- 如果需要构建随机量子电路，可以通过 circuit.random_append(rand_size) 来实现
+- 可以使用 circuit.append(gate) 或 circuit.extend(CompositeGate) 添加单个门和多个量子门
+- 如果需要构建随机量子电路，可以通过 circuit.random_append() 来实现
 
 !!! tip
     其他详细信息，请阅读 quict/example 中的示例和文档中的教程。
@@ -38,19 +38,57 @@ H | circuit(0)                      # append H gate to all qubits
 for i in range(4):
     CX | circuit([i, i+1])          # append CX gate
 
-# append random gates and Supremace circuit
+# Add CompositeGate
+qft_gate = QFT(5)
+qft_gate | circuit([0, 1, 2, 3, 4])
+
+# append random gates
 circuit.random_append(rand_size=10)
-circuit.supremacy_append(repeat=4, pattern="ABCDCDAB")
 ```
 
 
-## 量子电路可视化
+## 量子电路的基础属性和辅助功能
+``` python
+circuit.size()      # 电路内量子门个数
+circuit.depth()     # 电路深度
+circuit.width()     # 电路宽度
 
-QuICT 中有两种可视化量子电路的方法，一种是用 OpenQASM 风格翻译 Circuit ，另一种是将量子电路转化为对应的 png 图片。
+circuit.qubits          # 返回量子电路中的量子寄存器
+circuit.ancilla_qubits  # 返回量子电路中辅助比特的位置
+
+circuit.gates           # 返回电路内的所有量子门，包括组合量子门
+circuit.fast_gates      # 返回电路内的所有量子门的信息，包含量子门，作用位，以及对应门数
+circuit.flatten_gates() # 分解所有电路内的组合量子门，之后返回所有基础量子门
+
+circuit.count_1qubit_gate()         # 返回电路中单比特量子门的个数
+circuit.count_2qubit_gate()         # 返回电路中双比特量子门的个数
+circuit.count_gate_by_gatetype(GateType.cx)    # 返回电路中给定量子门种类的个数
+
+circuit.to_compositegate()  # 将当前电路转换为组合量子门
+circuit.inverse()           # 返回反转量子电路，即此电路的量子门为当前电路的所有量子的反转门
+circuit.matrix()            # 返回当前电路的酉矩阵
+circuit.sub_circuit()       # 提取部分电路
+```
+
+
+## 量子电路可视化和QASM格式转换
+
+QuICT 支持量子电路和 OpenQASM 格式的相互转换，既可以将量子电路保存为 OpenQASM 格式的文件，也支持从现有 OpenQASM 文件中导入电路。
+``` python
+from QuICT.tools.interface import OPENQASMInterface
+# Save to QASM file
+circuit.qasm("example.qasm")
+
+# load qasm
+file_path = "/path/to/QASM"
+qasm_circuit = OPENQASMInterface.load_file(file_path).circuit
+```
+
+QuICT 中有两种可视化量子电路的方法，一种是在命令行界面显示量子电路，另一种是将量子电路转化为对应的 png 图片。
 
 ```python 
-# qasm
-circuit.qasm()
+# draw the flatten Quantum Circuit in CLI
+circuit.draw(method='command', flatten=True)
 
 # draw the circuit's graph
 circuit.draw(method='matp_auto', filename="QuICT")

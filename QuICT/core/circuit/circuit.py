@@ -30,28 +30,19 @@ from QuICT.tools import Logger
 from QuICT.tools.exception.core import *
 
 
-logger = Logger("circuit")
+_logger = Logger("Circuit")
 
 
 class Circuit(CircuitBased):
-    """ Implement a quantum circuit
-
-    Circuit is the core part of the framework.
-
-    Attributes:
-        wires(Union[Qureg, int]): the number of qubits for the circuit.
-        name(str): the name of the circuit.
-        topology(list<tuple<int, int>>):
-            The topology of the circuit. When the topology list is empty, it will be seemed as fully connected.
-        fidelity(float): the fidelity of the circuit
-        ancilla_qubits(list<int>): The indexes of ancilla qubits for current circuit.
-    """
+    """ Implement a Quantum Circuit. Circuit is the core part of the framework. """
     @property
     def qubits(self) -> Qureg:
+        """ Return the Qureg of current Circuit. """
         return self._qubits
 
     @property
     def ancilla_qubits(self) -> List[int]:
+        """ Return the list of ancilla qubits indexes. """
         return self._ancillae_qubits
 
     @ancilla_qubits.setter
@@ -66,6 +57,7 @@ class Circuit(CircuitBased):
 
     @property
     def topology(self) -> Layout:
+        """ Return the Topology of current Circuit. """
         return self._topology
 
     @topology.setter
@@ -84,6 +76,13 @@ class Circuit(CircuitBased):
         topology: Layout = None,
         ancilla_qubits: List[int] = None
     ):
+        """
+        Args:
+            wires(Union[Qureg, int]): the number of qubits for the circuit.
+            name(str): the name of the circuit.
+            topology(Layout): The topology of the circuit. If it is empty, it will be seemed as fully connected. \n
+            ancilla_qubits(list<int>): The indexes of ancilla qubits for current circuit.
+        """
         if name is None:
             name = "circuit_" + unique_id_generator()
 
@@ -91,7 +90,7 @@ class Circuit(CircuitBased):
         self._ancillae_qubits = []
         self._topology = None
         self._checkpoints = []
-        self._logger = logger
+        self._logger = _logger
 
         if isinstance(wires, Qureg):
             self._qubits = wires
@@ -111,20 +110,24 @@ class Circuit(CircuitBased):
         """ release the memory """
         self._gates = None
         self._qubits = None
+        self._ancillae_qubits = None
+        self._logger = None
         self._topology = None
 
     def __or__(self, targets):
-        """deal the operator '|'
+        """ Deal the operator '|', Use the syntax "circuit | circuit" to add a Quantum Circuit into the other one.
 
-        Use the syntax "circuit | circuit"
-        to add the gate of circuit into the circuit/qureg/qubit
+            Note that if not assigned the target qubits, it will depending on the Qureg to match the Quantum Circuit.
+        For the Qureg which not in the target Quantum Circuit, they will be treated as new extra qubits add into the
+        target Quantum Circuit.
 
-        Note that the order of qubits is that control bits first
-        and target bits followed.
+        Example:
+            circuit_a = Circuit(3) \\
+            circuit_a | circuit([1, 3, 4])   Add a 3-qubits Quantum Circuit into "circuit" with qubit index [1, 3, 4]
 
         Args:
-            targets: the targets the gate acts on, it can have following form,
-                1) Circuit
+            targets(Circuit): the targets Quantum Circuit acts on.
+
         Raise:
             TypeError: the type of targets is wrong
         """
@@ -136,7 +139,7 @@ class Circuit(CircuitBased):
     ############         Circuit Qubits Operators           ############
     ####################################################################
     def __call__(self, indexes: object):
-        """ get a smaller qureg from this circuit
+        """ assigned a smaller qureg for this circuit
 
         Args:
             indexes: the indexes passed in, it can have follow form:
@@ -144,8 +147,10 @@ class Circuit(CircuitBased):
                 2) list<int>
                 3) Qubit
                 4) Qureg
+
         Returns:
             Qureg: the qureg correspond to the indexes
+
         Exceptions:
             TypeError: the type of indexes is error.
         """
@@ -170,16 +175,17 @@ class Circuit(CircuitBased):
 
         Args:
             item(int/slice): slice passed in.
+
         Return:
             Qubit/Qureg: the result or slice
         """
         return self.qubits[item]
 
     def add_qubit(self, qubits: Union[Qureg, Qubit, int], is_ancillary_qubit: bool = False):
-        """ add additional qubits in circuit.
+        """ add the extra qubits in circuit.
 
         Args:
-            qubits Union[Qureg, Qubit, int]: The new qubits, if it is int, means the number of new qubits.
+            qubits Union[Qureg, Qubit, int]: The new qubits, if it is int, means the number of new qubits. \n
             is_ancillae_qubit (bool, optional): whether the given qubits is ancillae, default to False.
         """
         assert isinstance(qubits, (Qureg, Qubit, int)), \
@@ -197,14 +203,22 @@ class Circuit(CircuitBased):
         # self._logger.debug(f"Quantum Circuit {self._name} add {len(qubits)} qubits.")
 
     def reset_qubits(self):
-        """ Reset all qubits in current circuit. """
+        """ Reset all qubits in current Quantum Circuit, clean the measured result for each qubit. """
         self._qubits.reset_qubits()
         self._logger.debug(f"Reset qubits' measured result in the Quantum Circuit {self._name}.")
 
     ####################################################################
     ############          Circuit Gates Operators           ############
     ####################################################################
-    def find_position(self, cp_child: CheckPointChild):
+    def find_position(self, cp_child: CheckPointChild) -> int:
+        """ Return the CheckPoint position.
+
+        Args:
+            cp_child (CheckPointChild): The given CheckPointChild uses to locate the CheckPoint position.
+
+        Returns:
+            int: The gate's position
+        """
         position = -1
         if cp_child is None:
             return position
@@ -323,6 +337,51 @@ class Circuit(CircuitBased):
 
         self._gates.insert(insert_idx, (gate, gate_args, gate_size))
 
+    def pop(self, index: int = -1):
+        """ Pop the BasicGate/Operator/CompositeGate from current Quantum Circuit.
+
+        Args:
+            index (int, optional): The target index. Defaults to 0.
+        """
+        if index < 0:
+            index = self.gate_length() + index
+
+        assert index >= 0 and index < self.gate_length()
+        gate, qidx, _ = self._gates.pop(index)
+
+        return gate.copy() & qidx
+
+    def adjust(self, index: int, reassigned_qubits: Union[int, list, Qubit, Qureg], is_adjust_value: bool = False):
+        """ Adjust the placement for target CompositeGate/BasicGate/Operator.
+
+        Args:
+            index (int): The target Quantum Gate's index, **Start from 0**.
+            reassigned_qubits (Union[int, list, Qubit, Qureg]): The new assigned qubits of target Quantum Gate
+            is_adjust_vale (bool): Whether the reassigned_qubits means the new qubit indexes or the adjustment
+                value from original indexes.
+        """
+        if index < 0:
+            index = self.gate_length() + index
+        assert index >= 0 and index < self.gate_length()
+        origin_gate, origin_qidx, origin_size = self._gates[index]
+
+        if is_adjust_value:
+            assert isinstance(reassigned_qubits, (int, list))
+            new_qubits = [v + reassigned_qubits for v in origin_qidx] if isinstance(reassigned_qubits, int) else \
+                [v + reassigned_qubits[idx] for idx, v in enumerate(origin_qidx)]
+        else:
+            if isinstance(reassigned_qubits, int):
+                new_qubits = [reassigned_qubits]
+
+            if isinstance(reassigned_qubits, (Qubit, Qureg)):
+                new_qubits = self.qubits.index(reassigned_qubits)
+
+            for q_idx in new_qubits:
+                assert q_idx >= 0 and q_idx < self.width() and isinstance(q_idx, int)
+
+        assert len(origin_qidx) == len(new_qubits)
+        self._gates[index] = (origin_gate, new_qubits, origin_size)
+
     def _add_gate(self, gate: BasicGate):
         """ add a quantum gate into circuit.
 
@@ -371,7 +430,7 @@ class Circuit(CircuitBased):
             return
 
         if self._pointer is not None:
-            if len(self._pointer) != op.targets:
+            if len(self._pointer) != op.qubits:
                 raise CircuitAppendError("Failure to add Trigger into Circuit, as un-matched qureg.")
 
             op_qidxes = self._pointer[:]
@@ -408,17 +467,22 @@ class Circuit(CircuitBased):
         rand_size: int = 10,
         typelist: list = None,
         random_params: bool = False,
-        probabilities: list = None
+        probabilities: list = None,
+        seed: int = None
     ):
         """ add some random gate to the circuit, not include Unitary, Permutation and Permutation_FX Gate.
 
         Args:
-            rand_size(int): the number of the gate added to the circuit
-            typelist(list<GateType>): the type of gate, default contains
-                Rx, Ry, Rz, Cx, Cy, Cz, CRz, Ch, Rxx, Ryy, Rzz and FSim
-            random_params(bool): whether using random parameters for all quantum gates with parameters.
-            probabilities: The probability of append for each gates
+            rand_size(int): the number of the gate added to the circuit. \n
+            typelist(list<GateType>): the type of gate, default contains.
+                Rx, Ry, Rz, Cx, Cy, Cz, CRz, Ch, Rxx, Ryy, Rzz and FSim \n
+            random_params(bool): whether using random parameters for all quantum gates with parameters. \n
+            probabilities(list): The probability of append for each gates. \n
+            seed(int): The random seed for fixed Quantum Circuit.
         """
+        if seed is not None:
+            np.random.seed(seed)
+            random.seed(seed)
         if typelist is None:
             typelist = [
                 GateType.rx, GateType.ry, GateType.rz,
@@ -452,13 +516,14 @@ class Circuit(CircuitBased):
 
             self._gates.append((r_gate, random_assigned_qubits, 1))
 
-    def supremacy_append(self, repeat: int = 1, pattern: str = "ABCDCDAB"):
+    def supremacy_append(self, repeat: int = 1, pattern: str = "ABCDCDAB", random_parameters: bool = False):
         """
         Add a supremacy circuit to the circuit
 
         Args:
             repeat(int): the number of two-qubit gates' sequence
             pattern(str): indicate the two-qubit gates' sequence
+            random_parameters(bool): whether using random parameters for FSim Gate, or not.
         """
         qubits = len(self.qubits)
         supremacy_layout = SupremacyLayout(qubits)
@@ -483,7 +548,7 @@ class Circuit(CircuitBased):
             for e in edges:
                 gate_params = [np.pi / 2, np.pi / 6]
                 gate_args = [int(e[0]), int(e[1])]
-                fgate = gate_builder(GateType.fsim, params=gate_params)
+                fgate = gate_builder(GateType.fsim, params=gate_params, random_params=random_parameters)
 
                 self._gates.append((fgate, gate_args, 1))
 
@@ -493,7 +558,7 @@ class Circuit(CircuitBased):
     ############                Circuit Utils               ############
     ####################################################################
     def to_compositegate(self) -> CompositeGate:
-        """ Get CompositeGate from current Circuit. """
+        """ Transfer Current Circuit to CompositeGate. """
         _cgate = CompositeGate()
         for gate in self.gates:
             gate | _cgate
@@ -501,10 +566,10 @@ class Circuit(CircuitBased):
         return _cgate
 
     def inverse(self) -> Circuit:
-        """ the inverse of Circuit
+        """ the inverse of all Quantum Gates in current Circuit.
 
         Returns:
-            Circuit: the inverse of the gateSet
+            Circuit: the Quantum Circuit with the inverse of the gateSet
         """
         _cir = Circuit(self.width())
         inverse_gates = []
@@ -523,6 +588,9 @@ class Circuit(CircuitBased):
 
         Args:
             device (str, optional): The device type for generate circuit's matrix, one of [CPU, GPU]. Defaults to "CPU".
+
+        Return:
+            ndarray: The combined unitary matrix of current Quantum Circuit.
         """
         assert device in ["CPU", "GPU"]
         circuit_matrix = CircuitMatrix(device, self._precision)
@@ -536,14 +604,15 @@ class Circuit(CircuitBased):
         qubit_limit: Union[int, List[int], Qureg] = [],
         gate_limit: List[GateType] = []
     ):
-        """ Get a sub circuit from current circuit with target gate and qubit limitation. Operators will be ignore.
+        """ Get a sub-part circuit from the current Quantum Circuit with target GateSet and Qureg limitation.
 
         Args:
-            start(int): the start gate's index, default 0
-            max_size(int): max size of the sub circuit, default -1 without limit
+            start(int): the start gate's index, default 0.  \n
+            max_size(int): max size of the sub circuit, default -1 without limit.   \n
             qubit_limit(int/list<int>/Qubit/Qureg): the required qubits' indexes, if [], accept all qubits.
-                default to be [].
+                default to be [].   \n
             gate_limit(List[GateType]): list of required gate's type, if [], accept all quantum gate. default to be [].
+
         Return:
             Circuit: the sub circuit
         """

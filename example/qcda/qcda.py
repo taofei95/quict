@@ -52,11 +52,13 @@ def auto_qcda_with_qm():
 
     circuit = Circuit(5)
     circuit.random_append(20, typelist=typelist, random_params=True)
+    print("The original Quantum Circuit.")
     circuit.draw("command")
 
     qcda = QCDA()
     circuit_phy = qcda.auto_compile(circuit, vqm)
-    circuit_phy.draw('command')
+    print("The suitable Quantum Circuit for the given Quantum Machine.")
+    circuit_phy.draw('command', flatten=True)
 
 
 if __name__ == '__main__':

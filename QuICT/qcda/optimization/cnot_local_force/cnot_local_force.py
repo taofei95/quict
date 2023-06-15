@@ -44,7 +44,8 @@ class CnotLocalForceBfs(object):
                 break
             last_length = new_length
         circuit_opt = Circuit(width)
-        circuit_opt.extend(gates)
+        for g in gates:
+            circuit_opt.append(g)
         return circuit_opt
 
     def traverse(self, input: list, width, store):

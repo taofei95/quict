@@ -19,7 +19,7 @@ def build_qubit():
     print(q)
 
 
-def build_qreg():
+def build_qureg():
     qubit_number = 5
     qubit_list = [Qubit() for _ in range(5)]
 
@@ -43,5 +43,4 @@ def build_qreg():
 
 
 if __name__ == "__main__":
-    build_qubit()
-    build_qreg()
+    build_qureg()

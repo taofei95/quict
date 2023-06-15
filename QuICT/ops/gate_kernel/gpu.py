@@ -18,6 +18,7 @@ __outward_functions = [
     "swap_targ",
     "reverse_targ",
     "reverse_ctargs",
+    "reverse_targs",
     "swap_targs",
     "reverse_more",
     "diagonal_more",
@@ -112,6 +113,62 @@ Diagonal_Multiply_targs_double_kernel = cp.RawKernel(r'''
         vec[_3] = vec[_3]*mat[15];
     }
     ''', 'Diagonal4x4Multiply')
+
+
+RDiagonal_Multiply_targs_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void RDiagonal4x4Multiply(int high, int low, const complex<float>* mat, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset1 = 1 << low;
+        const int offset2 = 1 << high;
+        const int mask1 = offset1 - 1;
+        const int mask2 = offset2 - 1;
+
+        int gw = label >> low << (low + 1);
+        int _0 = (gw >> high << (high + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+
+        int _1 = _0 + offset1;
+        int _2 = _0 + offset2;
+        int _3 = _1 + offset2;
+
+        complex<float> temp_0 = vec[_0];
+        complex<float> temp_1 = vec[_1];
+        vec[_0] = vec[_3]*mat[3];
+        vec[_1] = vec[_2]*mat[6];
+        vec[_2] = temp_1*mat[9];
+        vec[_3] = temp_0*mat[12];
+    }
+    ''', 'RDiagonal4x4Multiply')
+
+
+RDiagonal_Multiply_targs_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void RDiagonal4x4Multiply(int high, int low, const complex<double>* mat, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset1 = 1 << low;
+        const int offset2 = 1 << high;
+        const int mask1 = offset1 - 1;
+        const int mask2 = offset2 - 1;
+
+        int gw = label >> low << (low + 1);
+        int _0 = (gw >> high << (high + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+
+        int _1 = _0 + offset1;
+        int _2 = _0 + offset2;
+        int _3 = _1 + offset2;
+
+        complex<double> temp_0 = vec[_0];
+        complex<double> temp_1 = vec[_1];
+        vec[_0] = vec[_3]*mat[3];
+        vec[_1] = vec[_2]*mat[6];
+        vec[_2] = temp_1*mat[9];
+        vec[_3] = temp_0*mat[12];
+    }
+    ''', 'RDiagonal4x4Multiply')
 
 
 Based_InnerProduct_targ_single_kernel = cp.RawKernel(r'''
@@ -1407,6 +1464,40 @@ def reverse_targ(t_index, mat, vec, vec_bit, sync: bool = False):
             (block_num,),
             (thread_per_block,),
             (t_index, mat, vec)
+        )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+
+def reverse_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
+    """
+    Reverse matrix (4x4) dot vector
+        [[0, 0, 0, a],    *   vec
+         [0, 0, b, 0],
+         [0, c, 0, 0],
+         [d, 0, 0, 0]]
+    """
+    task_number = 1 << (vec_bit - 2)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    if t_indexes[0] > t_indexes[1]:
+        high, low = t_indexes[0], t_indexes[1]
+    else:
+        high, low = t_indexes[1], t_indexes[0]
+
+    if vec.dtype == np.complex64:
+        RDiagonal_Multiply_targs_single_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (high, low, mat, vec)
+        )
+    else:
+        RDiagonal_Multiply_targs_double_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (high, low, mat, vec)
         )
 
     if sync:

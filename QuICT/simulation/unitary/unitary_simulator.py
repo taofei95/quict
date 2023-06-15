@@ -8,12 +8,7 @@ from QuICT.tools.exception.simulation import SampleBeforeRunError
 
 
 class UnitarySimulator():
-    """ Algorithms to calculate the unitary matrix of a quantum circuit, and simulate.
-
-    Args:
-        device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
-        precision (str, optional): The precision for the unitary matrix, one of [single, double]. Defaults to "double".
-    """
+    """ Algorithms to calculate the unitary matrix of a quantum circuit, and simulate. """
     @property
     def vector(self):
         return self._vector
@@ -23,6 +18,11 @@ class UnitarySimulator():
         device: str = "CPU",
         precision: str = "double"
     ):
+        """
+        Args:
+            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
+            precision (str, optional): The precision for the unitary matrix. Defaults to "double".
+        """
         assert device in ["CPU", "GPU"], ValueError("UnitarySimulation.device", "[CPU, GPU]", device)
         self._device = device
         assert precision in ["single", "double"], \
@@ -30,19 +30,18 @@ class UnitarySimulator():
         self._precision = precision
         self._gate_calculator = GateSimulator(self._device, self._precision)
         self._vector = None
-        self._circuit = None
 
     def run(
         self,
         circuit: Union[np.ndarray, Circuit],
-        state_vector: np.ndarray = None,
+        quantum_state: np.ndarray = None,
         use_previous: bool = False
     ) -> np.ndarray:
         """ Simulation by given unitary matrix or circuit
 
         Args:
             circuit (Union[np.ndarray, Circuit]): The unitary matrix or the circuit for simulation
-            state_vector (ndarray): The initial state vector.
+            quantum_state (ndarray): The initial quantum state vector.
             use_previous (bool, optional): whether using previous state vector. Defaults to False.
 
         Returns:
@@ -59,9 +58,10 @@ class UnitarySimulator():
             self._unitary_matrix = self._gate_calculator.normalized_matrix(circuit, self._qubits_num)
 
         # Step 2: Prepare the state vector
-        if state_vector is not None:
-            self._vector = self._gate_calculator.normalized_state_vector(state_vector, self._qubits_num)
-        elif not use_previous or self._vector is None:
+        self._original_state_vector = None
+        if quantum_state is not None:
+            self._vector = self._gate_calculator.normalized_state_vector(quantum_state.copy(), self._qubits_num)
+        elif not use_previous:
             self._vector = self._gate_calculator.get_allzero_state_vector(self._qubits_num)
 
         # Step 3: Simulation with the unitary matrix and qubit's state vector
@@ -72,27 +72,37 @@ class UnitarySimulator():
 
         return self._vector
 
-    def sample(self, shots: int):
-        """_summary_
+    def sample(self, shots: int = 1, target_qubits: list = None) -> list:
+        """ Sample the measured result from current state vector, please first run simulator.run().
+
+        **WARNING**: Please make sure the target qubits are not been measured before simulator.sample().
 
         Args:
-            shots (int): _description_
+            shots (int): The sample times for current state vector.
+            target_qubits (List[int]): The indexes of qubits which want to be measured. If it is None, there
+            will measured all qubits in previous circuits.
 
         Returns:
-            _type_: _description_
+            List[int]: The measured result list with length equal to 2 ** len(target_qubits)
         """
         assert (self._vector is not None), \
-            SampleBeforeRunError("UnitarySimulation sample without run any circuit.")
-
+            SampleBeforeRunError("UnitarySimulation sample without run any circuit/matrix.")
+        target_qubits = target_qubits if target_qubits is not None else list(range(self._qubits_num))
+        state_list = [0] * (1 << len(target_qubits))
         original_sv = self._vector.copy()
-        counts = [0] * (1 << self._qubits_num)
         for _ in range(shots):
-            measured_result = 0
-            for i in range(self._qubits_num - 1, -1, -1):
-                measured_result <<= 1
-                measured_result += self._gate_calculator.apply_measure_gate(i, self._vector, self._qubits_num)
-
-            counts[measured_result] += 1
+            final_state = self._get_measured_result(target_qubits)
+            state_list[final_state] += 1
             self._vector = original_sv.copy()
 
-        return counts
+        return state_list
+
+    def _get_measured_result(self, target_qubits: list):
+        final_state = 0
+        for m_id in target_qubits:
+            index = self._qubits_num - 1 - m_id
+            measured = self._gate_calculator.apply_measure_gate(index, self._vector, self._qubits_num)
+            final_state <<= 1
+            final_state += measured
+
+        return final_state

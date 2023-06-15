@@ -58,6 +58,6 @@ class Trigger(Operator):
         _trigger = Trigger(self.targets, self._state_gate_mapping, self.name)
 
         if len(self.targs) > 0:
-            _trigger.targs = self.targs
+            _trigger.targs = self.targs[:]
 
         return _trigger

@@ -33,25 +33,6 @@ class CliffordRzOptimization(object):
         'light': [1, 3, 2, 3, 1, 2, 4, 3, 2],
     }
 
-    def parameterize_all(self, gates: DAG):
-        """
-        Convert all applicable Rz gates into T/Tdg/S/Sdg/Z in the circuit.
-
-        Args:
-            gates(DAG): DAG of the circuit
-        """
-        for node in gates.topological_sort():
-            if node.gate_type in [GateType.s, GateType.t, GateType.sdg, GateType.tdg, GateType.z]:
-                gate_, phase_ = CommutativeOptimization.parameterize(node.get_gate())
-                node.gate_type = gate_.type
-                node.params = gate_.pargs
-                gates.global_phase += phase_
-
-        if not isinstance(gates.global_phase, SymbolicPhase):
-            gates.global_phase %= 2 * np.pi
-        else:
-            gates.global_phase = np.mod(gates.global_phase, 2 * np.pi)
-
     @cached_property
     def hadamard_templates(self):
         return generate_hadamard_gate_templates()
@@ -76,6 +57,25 @@ class CliffordRzOptimization(object):
     def gate_reducing_rewrite_template(self):
         return generate_gate_reducing_rewrite_template()
 
+    def parameterize_all(self, gates: DAG):
+        """
+        Convert all applicable Rz gates into T/Tdg/S/Sdg/Z in the circuit.
+
+        Args:
+            gates(DAG): DAG of the circuit
+        """
+        for node in gates.topological_sort():
+            if node.gate_type in [GateType.s, GateType.t, GateType.sdg, GateType.tdg, GateType.z]:
+                gate_, phase_ = CommutativeOptimization.parameterize(node.get_gate())
+                node.gate_type = gate_.type
+                node.params = gate_.pargs.copy()
+                gates.global_phase += phase_
+
+        if not isinstance(gates.global_phase, SymbolicPhase):
+            gates.global_phase %= 2 * np.pi
+        else:
+            gates.global_phase = np.mod(gates.global_phase, 2 * np.pi)
+
     def deparameterize_all(self, gates: DAG):
         """
         Convert all applicable T/Tdg/S/Sdg/Z into Rz in the circuit.
@@ -89,7 +89,7 @@ class CliffordRzOptimization(object):
                 if len(compo_gate_.gates) > 1:
                     continue
                 node.gate_type = compo_gate_[0].type
-                node.params = compo_gate_[0].pargs
+                node.params = compo_gate_[0].pargs.copy()
                 gates.global_phase += phase_
 
         if not isinstance(gates.global_phase, SymbolicPhase):
