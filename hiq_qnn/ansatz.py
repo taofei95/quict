@@ -6,7 +6,7 @@ from mindquantum.framework import MQAnsatzOnlyLayer
 from mindquantum.simulator import Simulator
 
 
-class Ansatz:
+class HIQAnsatz:
     def __init__(self, n_qubits: int, color_qubit: int = None, readout: int = None):
         self._n_qubits = n_qubits
         readout = n_qubits - 1 if readout is None else readout

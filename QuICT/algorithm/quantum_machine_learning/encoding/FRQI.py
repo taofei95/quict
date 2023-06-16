@@ -23,7 +23,7 @@ class FRQI:
         # step 1: |0> -> |H>
         circuit = Circuit(self._n_qubits)
         for qid in range(self._n_pos_qubits):
-            H | circuit(qid)
+            H | circuit(self._n_pos_qubits - qid)
 
         # step 2: |H> -> |I>
         if use_qic:
@@ -64,13 +64,14 @@ class FRQI:
                 if (bin_pos[qid] == "0" and self._q_state[qid] == 0) or (
                     bin_pos[qid] == "1" and self._q_state[qid] == 1
                 ):
-                    X | circuit(qid)
+                    X | circuit(self._n_pos_qubits - qid)
                     self._q_state[qid] = 1 - self._q_state[qid]
             if rotate:
                 mc_gate = MultiControlRotation(
                     GateType.ry, float(img[i] / (self._grayscale - 1) * np.pi)
                 )
-                mc_gate(self._n_pos_qubits) | circuit(list(range(self._n_qubits)))
+                # mc_gate(self._n_pos_qubits) | circuit(list(range(self._n_qubits)))
+                mc_gate(self._n_pos_qubits) | circuit(list(range(1, self._n_qubits)) + [0])
             else:
                 bin_color = bin(img[i])[2:].zfill(self._n_color_qubits)
                 for qid in range(self._n_color_qubits):
@@ -81,7 +82,7 @@ class FRQI:
                         mc_gate(self._n_pos_qubits) | circuit(mct_qids)
         for qid in range(self._n_pos_qubits):
             if self._q_state[qid] == 1:
-                X | circuit(qid)
+                X | circuit(self._n_pos_qubits - qid)
                 self._q_state[qid] = 1 - self._q_state[qid]
         return circuit
 

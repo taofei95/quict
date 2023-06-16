@@ -256,7 +256,7 @@ class GateSimulator:
         if gate_name not in self._gate_matrix_info.keys():
             matrix = self._gate_matrix_generator.get_matrix(gate, self._precision)
             if self._device == "GPU":
-                matrix = self._array_helper.array(matrix)
+                matrix = self._array_helper.array(matrix.flatten())
 
             return matrix
 

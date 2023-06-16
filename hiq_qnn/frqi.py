@@ -7,30 +7,28 @@ from mindquantum.simulator import Simulator
 
 
 class HIQFRQI:
-    def __init__(self, grayscale: int = 2):
-        self._grayscale = grayscale
-        self._N = None
-        self._n_qubits = None
-        self._n_pos_qubits = None
-        self._n_color_qubits = 1
-        self._q_state = None
+    def __init__(self, num_pixels):
+        self._num_pixels = num_pixels
 
-    def __call__(self, img):
-        img = self._img_preprocess(img, flatten=True)
-
-        # step 1: |0> -> |H>
+    def __call__(self):
+        num_pos_qubit = int(np.log2(self._num_pixels))
         circuit = Circuit()
-        for qid in range(self._n_pos_qubits):
-            circuit += H.on(qid)
-
-        # step 2: |H> -> |I>
-        frqi_circuit = self._construct_circuit(img, rotate=True)
-        circuit += frqi_circuit
+        circuit.un(H, list(range(num_pos_qubit)))
+        for t, pos in enumerate(range(2 ** num_pos_qubit)):
+            for k, c in enumerate("{0:0b}".format(pos).zfill(num_pos_qubit)):
+                if c == "0":
+                    circuit.x(k)
+            circuit.ry(
+                {f"ry{t}": np.pi}, num_pos_qubit, [i for i in range(num_pos_qubit)]
+            )
+            for k, c in enumerate("{0:0b}".format(pos).zfill(num_pos_qubit)):
+                if c == "0":
+                    circuit.x(k)
 
         return circuit
 
     def _img_preprocess(self, img, flatten=True):
-        if ((img < 1.0) & (img > 0.0)).any():
+        if ((img <= 1.0) & (img > 0.0)).any():
             img *= self._grayscale - 1
         img = img.astype(np.int64)
         assert (
@@ -46,27 +44,6 @@ class HIQFRQI:
         if flatten:
             img = img.flatten()
         return img
-
-    def _construct_circuit(self, img: np.ndarray, rotate: bool):
-        circuit = Circuit()
-        for i in range(self._N):
-            if img[i] == 0:
-                continue
-            bin_pos = bin(i)[2:].zfill(self._n_pos_qubits)
-            for qid in range(self._n_pos_qubits):
-                if (bin_pos[qid] == "0" and self._q_state[qid] == 0) or (
-                    bin_pos[qid] == "1" and self._q_state[qid] == 1
-                ):
-                    circuit += X.on(qid)
-                    self._q_state[qid] = 1 - self._q_state[qid]
-            theta = float(img[i] / (self._grayscale - 1) * np.pi)
-            mc_gate = RY(theta).on(self._n_pos_qubits, list(range(self._n_pos_qubits)))
-            circuit += mc_gate
-
-        for qid in range(self._n_pos_qubits):
-            if self._q_state[qid] == 1:
-                circuit += X.on(qid)
-        return circuit
 
 
 if __name__ == "__main__":
