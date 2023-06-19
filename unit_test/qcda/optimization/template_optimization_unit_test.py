@@ -2,6 +2,8 @@ from random import sample
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.core.virtual_machine.quantum_machine import OriginalKFC6130
+from QuICT.qcda.utility.circuit_cost import FidelityCircuitCost
 from QuICT.tools.circuit_library import CircuitLib
 from QuICT.qcda.optimization.template_optimization.template_matching import (
     ForwardMatch, MatchingDAGCircuit)
@@ -69,17 +71,31 @@ def test_random_circuit():
              GateType.sdg, GateType.tdg]
 
     n_qubits = 4
-    template_list = CircuitLib().get_template_circuit()
-    n_templates = 10
 
     for n_gates in range(20, 101, 20):
         circ = Circuit(n_qubits)
         circ.random_append(n_gates, typelist=gates)
         TO = TemplateOptimization()
-        # TO = TemplateOptimization(template_typelist=sample(template_list, n_templates))
         circ_optim = TO.execute(circ)
 
-        print(circ.size(), circ_optim.size())
+        mat_1 = circ.matrix()
+        mat_2 = circ_optim.matrix()
+        assert np.allclose(mat_1, mat_2)
+
+
+def test_fidelity_circuit_cost():
+    gates = [GateType.x, GateType.cx, GateType.ccx, GateType.h, GateType.s, GateType.t,
+             GateType.sdg, GateType.tdg]
+
+    n_qubits = 4
+    circ_cost = FidelityCircuitCost(OriginalKFC6130)
+
+    for n_gates in range(20, 101, 20):
+        circ = Circuit(n_qubits)
+        circ.random_append(n_gates, typelist=gates)
+        TO = TemplateOptimization(cost_measure=circ_cost)
+        circ_optim = TO.execute(circ)
+
         mat_1 = circ.matrix()
         mat_2 = circ_optim.matrix()
         assert np.allclose(mat_1, mat_2)

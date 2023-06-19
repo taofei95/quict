@@ -8,7 +8,6 @@ from QuICT.qcda.optimization.template_optimization.template_matching.template_su
     TemplateSubstitution
 from QuICT.qcda.utility import OutputAligner
 
-from .template_matching.template_substitution import CircuitCostMeasure
 from ...utility.circuit_cost import StaticCircuitCost, CircuitCost
 
 
