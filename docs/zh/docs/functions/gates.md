@@ -222,31 +222,3 @@ q_3: |0>─────┤ cx ├───────────────�
 q_4: |0>───┤ u1(-1) ├───┤ u1(-1) ├───────────
            └────────┘   └────────┘           
 ```
-
-
-## 量子指令集 （Instruction Set）
-对于每一个量子机来说，都会有一组由若干单比特量子门和一个双比特量子门组成的指令集，用来控制和操作量子态，从而实现所需要的量子计算。量子指令集的设计和实现对于量子计算机来说是非常重要的，它关系到量子计算应用的速度、精度、效果和可重复性。
-
-在 QuICT 中，我们构建了一个 InstructionSet 类用来存储一组量子指令集，除了对自定义指令集的支持以外，针对当前行业内常见的量子指令集，QuICT已内置了相应的实现，例如USTCSet、GoogleSet、IBMQSet等。另一方面，QuICT也实现了诸多量子门转换算法，支持将任意量子门电路转换为当前指令集电路，即只含有指令集内量子门的电路。这部分在QCDA中会有更详细的展示。
-
-``` python
-from QuICT.core.utils import GateType
-from QuICT.core.virtual_machine import InstructionSet
-from QuICT.core.virtual_machine.special_set import USTCSet
-
-
-single_qubit_gates = [GateType.h, GateType.rx, GateType.ry, GateType.rz]
-double_qubit_gate = GateType.cx
-
-iset = InstructionSet(
-    two_qubit_gate=double_qubit_gate,
-    one_qubit_gates=single_qubit_gates,
-    one_qubit_rule=None
-)
-print(iset.gates)
-print(USTCSet.gates)
-```
-``` python
-[<GateType.h: 'H gate'>, <GateType.rx: 'Rx gate'>, <GateType.ry: 'Ry gate'>, <GateType.rz: 'Rz gate'>, <GateType.cx: 'controlled-X gate'>]
-[<GateType.rx: 'Rx gate'>, <GateType.ry: 'Ry gate'>, <GateType.rz: 'Rz gate'>, <GateType.h: 'H gate'>, <GateType.x: 'Pauli-X gate'>, <GateType.cx: 'controlled-X gate'>]
-```

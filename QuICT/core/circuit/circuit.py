@@ -372,9 +372,10 @@ class Circuit(CircuitBased):
         else:
             if isinstance(reassigned_qubits, int):
                 new_qubits = [reassigned_qubits]
-
-            if isinstance(reassigned_qubits, (Qubit, Qureg)):
+            elif isinstance(reassigned_qubits, (Qubit, Qureg)):
                 new_qubits = self.qubits.index(reassigned_qubits)
+            else:
+                new_qubits = reassigned_qubits
 
             for q_idx in new_qubits:
                 assert q_idx >= 0 and q_idx < self.width() and isinstance(q_idx, int)
