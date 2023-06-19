@@ -54,6 +54,33 @@ def circuit_build():
     cir.draw(method="matp_auto", filename="circuit_build")
 
 
+def circuit_adjust():
+    cir = Circuit(4)
+
+    # Add Gate into Circuit
+    H | cir(0)
+    X | cir     # Add X Gates to all qubits
+    U1(np.pi / 2) | cir(1)
+    CX | cir([1, 2])
+    Rzz(np.pi / 2) | cir([1, 2])
+    Barrier | cir(2)
+    iSwap_dagger | cir([0, 1])
+    print(f"Original Quantum Circuit's Size: {cir.size()}.")
+
+    # Pop the last gate from Circuit
+    lgate = cir.pop()
+    print(lgate)
+    print(f"The Quantum Circuit's Size after first pop: {cir.size()}.")
+    igate = cir.pop(0)  # pop the first gate from circuit
+    print(igate)
+    print(f"The Quantum Circuit's Size after second pop: {cir.size()}.")
+
+    # Adjust Quantum Gate in current Circuit
+    cir.adjust(-1, 3)   # Re-assign the last Quantum Gate into the fourth Qubit
+    cir.adjust(6, 1, True)  # Re-assign the sixth Quantum Gate with +1 Qubit indexes.
+    cir.draw("command", flatten=True)
+
+
 def random_build():
     circuit = Circuit(5)
     circuit.random_append(30)
@@ -98,4 +125,4 @@ def load_circuit_from_qasm():
 
 
 if __name__ == "__main__":
-    sub_circuit()
+    circuit_build()

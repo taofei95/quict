@@ -73,6 +73,9 @@ class CircuitBased(object):
 
         return tsize
 
+    def gate_length(self) -> int:
+        return len(self._gates)
+
     def width(self):
         """ The number of qubits in Circuit.
 

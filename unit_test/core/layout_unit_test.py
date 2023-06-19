@@ -65,5 +65,29 @@ def test_store():
             assert another_layout.check_edge(edge.u, edge.v)
 
 
+def test_special_build():
+    # linear layout build 0 - 1 - 2 - 3 - 4
+    lin_layout = Layout.linear_layout(qubit_number=5)
+    assert lin_layout.check_edge(0, 1) and not lin_layout.check_edge(2, 4)
+
+    # grid layout 
+    #   0 - 1 - 2
+    #   |   |   |
+    #   3 - 4 - 5
+    #   |   |   |
+    #   6 - 7 - 8
+    gird_layout = Layout.grid_layout(9, width=3)
+    assert gird_layout.check_edge(4, 7) and not gird_layout.check_edge(1, 5)
+
+    # rhombus layout
+    #    0     1     2
+    #  /   \ /   \  /
+    # 3     4     5
+    #  \   / \   /  \
+    #    6     7     8
+    rhombus_layout = Layout.rhombus_layout(9, width=3)
+    assert rhombus_layout.check_edge(0, 4) and not rhombus_layout.check_edge(7, 8)
+
+
 if __name__ == "__main__":
     pytest.main()
