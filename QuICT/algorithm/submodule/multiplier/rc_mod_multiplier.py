@@ -67,7 +67,7 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
         multi_prime = (multiple * pow(2, self._ancilla_size - 1, modulus)) % modulus
 
         ##### Multiplication stage #####        
-        self.phi_MAC_mod(
+        self.__phi_MAC_mod(
             in_reg_size = self._register_size,
             out_reg_size = self._register_size + self._ancilla_size,
             modulus = modulus,
@@ -133,21 +133,21 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
 
         # # modulus and 2 have to be co-prime
         comp_mod = pow(2, self._ancilla_size)
+        uncompute_addend_list = []
         for i in range(self._register_size):
             uncompute_addend = ((multi_prime * pow(2, i, modulus)) % modulus) * pow(modulus, -1, comp_mod)
-            ctl_idx = self._input_qubit_list[self._register_size - 1 - i]
-            RCFourierAdderWired(
-                qreg_size = self._ancilla_size,
-                addend = - uncompute_addend,
-                controlled = True,
-                in_fourier = True,
-                out_fourier = True
-            ) | self([ctl_idx] + self._ancilla_qubit_list)
+            uncompute_addend_list.append(-uncompute_addend)
+
+        self.__phi_MAC_list(
+            in_reg_size = self._register_size,
+            out_reg_size = self._ancilla_size,
+            addend_list = uncompute_addend_list
+        ) | self(self._input_qubit_list + self._ancilla_qubit_list)
 
         return
 
 
-    def phi_MAC_mod(
+    def __phi_MAC_mod(
         self, 
         in_reg_size: int,
         out_reg_size: int,
@@ -169,7 +169,7 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
             t' = t (mod N) and t' < nN, "n" is "input_reg_size"
         """
 
-        phi_mac_gate = CompositeGate(name = "mac")
+        phi_mac_gate = CompositeGate()
         accumulator_reg = [j for j in range(in_reg_size, in_reg_size + out_reg_size)]
 
         # start with (X * 2^0) mod N
@@ -191,6 +191,36 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
 
         return phi_mac_gate
     
+    def __phi_MAC_list(
+        self,
+        in_reg_size: int,
+        out_reg_size: int,
+        addend_list: List[int]
+    ) -> CompositeGate:
+        """
+            another multiplication accumulator, the addends controlled by each qubit
+            in in_reg is given by the addend list.
+        """
+        assert len(addend_list) == in_reg_size
+
+        phi_mac_gate = CompositeGate()
+        accumulator_reg = [j for j in range(in_reg_size, in_reg_size + out_reg_size)]
+
+        for i in range(in_reg_size):
+            # apply each adder gate controlled by bits on the input register
+            # from the lowest to the highest bit
+            ctl_idx = in_reg_size - 1 - i
+            RCFourierAdderWired(
+                qreg_size = out_reg_size,
+                addend = addend_list[i],
+                controlled = True,
+                in_fourier = True,
+                out_fourier = True
+            ) | phi_mac_gate([ctl_idx] + accumulator_reg)
+            # update addend
+        
+        return phi_mac_gate
+            
     
 
 class RCModMultiplier(CompositeGate):
