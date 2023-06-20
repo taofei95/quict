@@ -5,7 +5,6 @@
 # @File    : composite_gate_unit_test
 import unittest
 
-from QuICT.core import Circuit
 from QuICT.core.gate import *
 
 
@@ -98,18 +97,17 @@ class TestCompositeGate(unittest.TestCase):
                         depth[target_pgate_indexes[1]] = new_depth
                         depth[target_pgate_indexes[2]] = new_depth
 
+            assert cgate.size() == size
             assert cgate.depth() == np.max(depth)
             assert cgate.count_1qubit_gate() == count_gate1
             assert cgate.count_2qubit_gate() == count_gate2
 
-            qft = QFT(TestCompositeGate.qubits)
+            qft = QFT(5)
             qft.count_gate_by_gatetype(GateType.h) == 5
-            size += qft.size()
 
-            iqft = IQFT(TestCompositeGate.qubits)
+            iqft = IQFT(5)
             iqft.count_gate_by_gatetype(GateType.h) == 5
-            size += qft.size()
-            assert cgate.size() == size
+            assert qft.size() + iqft.size() == 30
 
     def test_compositegate_matrix(self):
         test_gate = CompositeGate()
@@ -123,12 +121,6 @@ class TestCompositeGate(unittest.TestCase):
         assert matrix.shape == (1 << 3, 1 << 3)
 
     def test_compositegate_merge(self):
-        for _ in range(10):
-            cgate = CompositeGate()
-            gate_type_choice = np.random.randint(0, len(self.default_1_qubits_gate))
-            target_gate = gate_builder(self.default_1_qubits_gate[gate_type_choice], random_params=True)
-            target_gate | cgate(target_gate_indexes)
-
         # composite gate | composite gate
         cgate1 = CompositeGate()
         X | cgate1(0)
@@ -158,7 +150,7 @@ class TestCompositeGate(unittest.TestCase):
 
         # insert gate to circuit
         cgate.insert(H & 0, 0)
-        cgate.insert(H & 0, 1)
+        cgate.insert(cgate, 1)
         cgate.insert(CU3(1, 0, 1) & [1, 2], 2)
         assert cgate.fast_gates[0][0].type == GateType.h
 
@@ -169,20 +161,19 @@ class TestCompositeGate(unittest.TestCase):
         # Adjust gate
         cgate.adjust(-1, [3])
         cgate.adjust(-1, [1], True)
-        assert cgate.gates[-1].targ == 4
 
         # extend gate/circuit
         cgate = CompositeGate()
-        CX | cgate([1, 2])
-        cgate.extend(cgate)
+        CX | cgate([1, 0])
+        cgate1 = CompositeGate()
+        CH | cgate1([0, 1])
+        cgate.extend(cgate1)
         assert cgate.width() == 2 and cgate.size() == 2
-        cgate.extend(cgate)
-        assert cgate.width() == 2 and cgate.size() == 4
 
         # inverse cgate
-        # cgate_inverse = cgate.inverse()
-        # cgate_inverse | cgate([0, 1])
-        # assert np.allclose(cgate.matrix(), np.identity(1 << 2, dtype=np.complex128))
+        cgate_inverse = cgate.inverse()
+        cgate_inverse | cgate(list(range(5)))
+        assert np.allclose(cgate.matrix(), np.identity(1 << 2, dtype=np.complex128))
 
 if __name__ == "__main__":
     unittest.main()
