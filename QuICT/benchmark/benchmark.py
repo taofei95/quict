@@ -5,7 +5,7 @@ import prettytable as pt
 import numpy as np
 from collections import defaultdict
 from matplotlib import pyplot as plt
-from QuICT.benchmark.bench import BenchLib
+from QuICT.benchmark.benchlib import BenchLib
 from QuICT.core.gate.gate import *
 
 from QuICT.qcda.qcda import QCDA
