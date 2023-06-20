@@ -1,1 +1,1 @@
-from .benchmark import QuICTBenchmark
+from .benchmark import QuantumMachinebenchmark
