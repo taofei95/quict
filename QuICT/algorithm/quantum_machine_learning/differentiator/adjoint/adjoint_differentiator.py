@@ -83,15 +83,16 @@ class AdjointDifferentiator:
             state_vector.copy(), self._qubits
         )
         # Calculate d(L)/d(|psi_t>)
-        self._grad_vector = self._initial_grad_vector(
+        self._grad_vector = 2.0 * self._initial_grad_vector(
             state_vector.copy(), self._qubits, expectation_op
         )
         # expectation
         expectation = (
-            (state_vector.conj() @ self._grad_vector).real
+            (state_vector.conj() @ (self._grad_vector / 2.0)).real
             if self._device == "CPU"
-            else (state_vector.conj() @ self._grad_vector).real.get()
+            else (state_vector.conj() @ (self._grad_vector / 2.0)).real.get()
         )
+
         for idx in range(len(self._bp_pipeline)):
             if self._remain_training_gates == 0:
                 return variables, expectation
