@@ -52,7 +52,7 @@ class QuantumMachinebenchmark:
             (List[Circuit]): Return the list of output circuit order by output_type.
         """
         # obey instruction set in vqm to build random circuit
-        # TODO: not here, using self._get_random_cir(level)
+        # TODO: not here, using self._get_random_cir(level, layout), need consider mapping
         # TODO: level combined with len_g and pro_s, e.g. level 1: 2 - 6, pro_s = 0.9; level 2: 6 - 10, pro_s = 0.8; level 3: 10 - 15, pro_s = 0.7
         def random_cir(level, pro_s, len_g):
             cir_list = []
