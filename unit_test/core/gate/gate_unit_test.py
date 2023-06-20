@@ -77,7 +77,7 @@ class TestGate(unittest.TestCase):
             GateType.u1, GateType.rx, GateType.ry, GateType.phase, GateType.gphase,
             GateType.cu1, GateType.rxx, GateType.ryy, GateType.rzz, GateType.rzx,
             GateType.rz, GateType.crz, GateType.ccrz, GateType.fsim, GateType.s,
-            GateType.sdg, GateType.sx, GateType.sy, GateType.sw, GateType.t, GateType.tdg
+            GateType.sdg, GateType.sy, GateType.sw, GateType.t, GateType.tdg
         ]
         # normal gates
         for _ in range(10):

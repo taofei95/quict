@@ -146,7 +146,7 @@ class TestCompositeGate(unittest.TestCase):
         assert cgate2.size() == 21
 
     def test_circuit_modify(self):
-        cgate = CompositeGate(5)
+        cgate = CompositeGate()
 
         # insert gate to circuit
         cgate.insert(H & 0, 0)
@@ -161,6 +161,7 @@ class TestCompositeGate(unittest.TestCase):
         # Adjust gate
         cgate.adjust(-1, [3])
         cgate.adjust(-1, [1], True)
+        assert cgate.fast_gates[-1][1] == [4]
 
         # extend gate/circuit
         cgate = CompositeGate()
