@@ -30,7 +30,7 @@ class QuantumNet(Model):
         self._data_qubits = list(range(n_qubits))
         self._data_qubits.remove(readout)
         # self._qnn_builder = QNNLayer(n_qubits, readout, layers)
-        self._qnn_builder = CRADL(n_qubits, 1, readout, 1)
+        self._qnn_builder = CRADL(n_qubits, n_qubits - 2, readout, 8)
         self._model_circuit = self._qnn_builder.init_circuit(params=params)
         self._params = self._qnn_builder.params
         self._hamiltonian = (

@@ -29,12 +29,12 @@ class CRADL(Ansatz):
     def init_circuit(self, params: Union[Variable, np.ndarray] = None):
         n_data_qubits = len(self._data_qubits)
         params = (
-            np.random.randn(self._layers, n_data_qubits * 4)
+            np.random.randn(self._layers, n_data_qubits * 2)
             if params is None
             else params
         )
         params = Variable(pargs=params) if isinstance(params, np.ndarray) else params
-        if params.shape == (self._layers, n_data_qubits * 4):
+        if params.shape == (self._layers, n_data_qubits * 2):
             self._params = params
         else:
             raise ValueError
@@ -42,17 +42,14 @@ class CRADL(Ansatz):
         circuit = Circuit(self._n_qubits)
         for l in range(self._layers):
             for i in range(self._n_qubits - 2):
-                Rxx(params[l][2 * i]) | circuit([self._data_qubits[i], self._readout])
-                Rxx(params[l][2 * i + 1]) | circuit(
-                    [self._data_qubits[i], self._color_qubit]
-                )
+                Rxx(params[l][i]) | circuit([self._data_qubits[i], self._readout])
+                Rxx(params[l][i]) | circuit([self._data_qubits[i], self._color_qubit])
             for i in range(self._n_qubits - 2):
-                Rzz(params[l][n_data_qubits * 2 + 2 * i]) | circuit(
+                Rzz(params[l][n_data_qubits + i]) | circuit(
                     [self._data_qubits[i], self._readout]
                 )
-                Rzz(params[l][n_data_qubits * 2 + 2 * i + 1]) | circuit(
+                Rzz(params[l][n_data_qubits + i]) | circuit(
                     [self._data_qubits[i], self._color_qubit]
                 )
 
         return circuit
-
