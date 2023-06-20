@@ -2,7 +2,7 @@ import numpy as np
 
 from typing import List
 
-from QuICT.core.gate import BasicGate, Swap, CX
+from QuICT.core.gate import BasicGate, Swap, CX, CU3
 from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.algorithm.submodule.adder import RCFourierAdderWired
 from QuICT.algorithm.submodule.qft import ry_QFT
@@ -191,21 +191,40 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
         """
         assert len(addend_list) == in_reg_size, f"addend list length: {len(addend_list)} not agree with register size: {in_reg_size}"
 
+        total_size = in_reg_size + out_reg_size
+
         phi_mac_gate = CompositeGate()
         accumulator_reg = [j for j in range(in_reg_size, in_reg_size + out_reg_size)]
 
-        for i in range(in_reg_size):
-            # apply each adder gate controlled by bits on the input register
-            # from the lowest to the highest bit
-            ctl_idx = in_reg_size - 1 - i
-            RCFourierAdderWired(
-                qreg_size = out_reg_size,
-                addend = addend_list[i],
-                controlled = True,
-                in_fourier = True,
-                out_fourier = True
-            ) | phi_mac_gate([ctl_idx] + accumulator_reg)
-            # update addend
+        # When input reg size is less than output reg size, can further optimize the depth
+        # by paralleling all the CRys that are commute with each other.
+        if in_reg_size <= out_reg_size:
+            for i in range(out_reg_size):
+                j_bound = min(i+1, in_reg_size)
+                for j in range(j_bound):
+                    theta = np.pi * addend_list[j] / (2**(i - j))
+                    ctl_idx = in_reg_size - 1 - j
+                    target_idx = total_size - 1 - i + j
+                    CU3(theta, 0, 0) | phi_mac_gate([ctl_idx, target_idx])
+
+                for j in range(in_reg_size - j_bound):
+                    theta = np.pi * addend_list[j + j_bound] / (2**(out_reg_size - 1 - j))
+                    ctl_idx = in_reg_size - 1 - j_bound - j
+                    target_idx = in_reg_size + j
+                    CU3(theta, 0, 0) | phi_mac_gate([ctl_idx, target_idx])
+        # general cases, no depth optimization
+        else:
+            for i in range(in_reg_size):
+                # apply each adder gate controlled by bits on the input register
+                # from the lowest to the highest bit
+                ctl_idx = in_reg_size - 1 - i
+                RCFourierAdderWired(
+                    qreg_size = out_reg_size,
+                    addend = addend_list[i],
+                    controlled = True,
+                    in_fourier = True,
+                    out_fourier = True
+                ) | phi_mac_gate([ctl_idx] + accumulator_reg)
         
         return phi_mac_gate
             
