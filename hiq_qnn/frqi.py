@@ -13,17 +13,17 @@ class HIQFRQI:
     def __call__(self):
         num_pos_qubit = int(np.log2(self._num_pixels))
         circuit = Circuit()
-        circuit.un(H, list(range(num_pos_qubit)))
+        circuit.un(H, list(range(1, num_pos_qubit + 1)))
         for t, pos in enumerate(range(2 ** num_pos_qubit)):
             for k, c in enumerate("{0:0b}".format(pos).zfill(num_pos_qubit)):
                 if c == "0":
-                    circuit.x(k)
+                    circuit.x(num_pos_qubit - k)
             circuit.ry(
-                {f"ry{t}": np.pi}, num_pos_qubit, [i for i in range(num_pos_qubit)]
+                {f"ry{t}": np.pi}, 0, [num_pos_qubit - i for i in range(num_pos_qubit)]
             )
             for k, c in enumerate("{0:0b}".format(pos).zfill(num_pos_qubit)):
                 if c == "0":
-                    circuit.x(k)
+                    circuit.x(num_pos_qubit - k)
 
         return circuit
 
