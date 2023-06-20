@@ -37,6 +37,7 @@ class QuantumMachinebenchmark:
         level: int = 1,
         enable_qcda_for_alg_cir: bool = False
     ):
+        # TODO: comments update
         """
         Get circuit from CircuitLib and Get the circuit after qcda.
 
@@ -51,9 +52,11 @@ class QuantumMachinebenchmark:
             (List[Circuit]): Return the list of output circuit order by output_type.
         """
         # obey instruction set in vqm to build random circuit
+        # TODO: not here, using self._get_random_cir(level)
+        # TODO: level combined with len_g and pro_s, e.g. level 1: 2 - 6, pro_s = 0.9; level 2: 6 - 10, pro_s = 0.8; level 3: 10 - 15, pro_s = 0.7
         def random_cir(level, pro_s, len_g):
             cir_list = []
-            Ins_set = quantum_machine_info.instruction_set
+            Ins_set = quantum_machine_info.instruction_set  # TODO: low-case
             q_number = quantum_machine_info.qubit_number
             cir = Circuit(q_number)
             len_s, len_d = len(Ins_set.one_qubit_gates), len([Ins_set.two_qubit_gate])
@@ -63,7 +66,7 @@ class QuantumMachinebenchmark:
                 cir_new.random_append(q_number * gates, Ins_set.gates, probabilities=prob)
                 cgate1 = cir_new.to_compositegate()
                 cgate2 = cgate1.inverse()
-                cgate1 | cir
+                cgate1 | cir        # TODO: Remove this, repeated add in cir
                 cgate2 | cir
                 cir.name = "+".join(["random", "random", f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"])
                 cir_list.append(cir)
@@ -71,10 +74,11 @@ class QuantumMachinebenchmark:
             return cir_list
 
         # Step 1: get circuits from circuitlib
-        circuit_list =  []
+        # TODO: list of Special defined Circuit-benchmark data structure
+        circuit_list = []
 
         # random circuits
-        rand_cir = random_cir(level=1, pro_s=0.8, len_g=10)
+        rand_cir = random_cir(level=1, pro_s=0.8, len_g=10)     # TODO: self._get_random_cir(level); replace line 80, 97, 110
         circuit_list.extend(rand_cir)
 
         # benchmark circuits
@@ -82,13 +86,14 @@ class QuantumMachinebenchmark:
         for field in based_fields_list:
             circuits = CircuitLib().get_benchmark_circuit(str(field), qubits_interval=[int(quantum_machine_info.qubit_number / 2)])
             for cir in circuits:
-                cgate1 = cir.to_compositegate()
+                cgate1 = cir.to_compositegate() # TODO: can use inverse_cgate = cir.to_compositegate().inverse()
                 cgate2 = cgate1.inverse()
-                cgate1 | cir
+                cgate1 | cir    # TODO: remove this
                 cgate2 | cir
                 cir.name = "+".join(["benchmark", field, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"])
                 circuit_list.append(cir)
 
+        # TODO: circuit_list.extend(self._add_algorithm_circuit(level, enable_qcda)); replace line 102-107 and line 114-119
         if level >= 2:
             # random circuits
             rand_cir = random_cir(level=2, pro_s=0.5, len_g=20)
@@ -116,16 +121,19 @@ class QuantumMachinebenchmark:
 
         # Step 2: Whether alg circuit goes through QCDA or not
         if enable_qcda_for_alg_cir is True:
+            # TODO: only for Algorithm Circuit here, not all circuit_list, should do it in self._get_algorithm_circuit
             for circuit in circuit_list:
                 qcda = QCDA()
                 type, classify = circuit.name.split("+")[:-1][0], circuit.name.split("+")[:-1][1]
                 if type == "algorithm":
                     circuit_qcda = qcda.auto_compile(circuit, quantum_machine_info)
                     circuit.name = "+".join([type, classify, f"w{circuit_qcda.width()}_s{circuit_qcda.size()}_d{circuit_qcda.depth()}", f"level{level}"])
+            # TODO: Not change in circuit_list here
             return circuit_list
         else:
             return circuit_list
 
+    # TODO: mv simulator_interface to the first position, most important
     def run(
         self,
         quantum_machine_info,
@@ -156,33 +164,41 @@ class QuantumMachinebenchmark:
         # Step1 : get circuits from circuitlib
         circuits_list = self.get_circuits(quantum_machine_info, level, enable_qcda_for_alg_cir)
 
-        # Step 2: physical machine simulation
-        amp_results_list = []
+        # Step 2: physical machine simulation and evaluate
+        amp_results_list = [] # TODO: No need this anymore
+        # TODO: list of data structure, circuit.machine_amplitude = sim_result, replace line 174-175
         for circuit in circuits_list:
             sim_result = simulator_interface(circuit)
             amp_results_list.append(sim_result)
+            # TODO: evaluate here
+            # TODO: fidelity or other = self.evaluate(circuit)
+            # circuit.fidelity = fidelity
 
+        # TODO: remove this
         benchlib = BenchLib(circuits_list)
         benchlib.machine_amp = amp_results_list
-        print(benchlib.fidelity)
-        # Step 3: evaluate all circuits
-        # self.evaluate()
+        print(benchlib.fidelity)    
+        
+        # TODO: Step 3: show result
+        # self.show_result(circuits_list)
 
-    # def evaluate(self):
-    #     """ Evaluate all circuits in circuit list group by fields. """
-    #     qv_list, fidelity_list = [], []
-    #     for i in range(len(benchlib.field)):
-    #         # Quantum volumn
-    #         cir_attribute = re.findall(r"\d+", self.benchlib.circuits[i].name)
-    #         QV = min(int(cir_attribute[0]), int(cir_attribute[2]))
-    #         qv_list.append(QV)
-    #         # fidelity
-    #         if self.benchlib.field[i] != 'algorithm':
-    #             fidelity_list.append(self.benchlib.machine_amp[i][0])
-    #         else:
-    #             index = self.benchlib.simulation_amp()[i]
-    #             fidelity_list.append(self.benchlib.machine_amp[i][index])
+    # TODO: use it, self.evaluate(circuits: Union[List[BenchLib], BenchLib]) -> update given circuits, no return
+    def evaluate(self):
+        """ Evaluate all circuits in circuit list group by fields. """
+        qv_list, fidelity_list = [], []
+        for i in range(len(benchlib.field)):
+            # Quantum volumn
+            cir_attribute = re.findall(r"\d+", self.benchlib.circuits[i].name)
+            QV = min(int(cir_attribute[0]), int(cir_attribute[2]))
+            qv_list.append(QV)
+            # fidelity
+            if self.benchlib.field[i] != 'algorithm':
+                fidelity_list.append(self.benchlib.machine_amp[i][0])
+            else:
+                index = self.benchlib.simulation_amp()[i]
+                fidelity_list.append(self.benchlib.machine_amp[i][index])
 
+    # TODO: self.show_result(circuits)
     def show_result(self, entropy_QV_score, eigenvalue_QV_score, valid_circuits_list):
         """ show benchmark result. """
         if not os.path.exists(self._output_path):

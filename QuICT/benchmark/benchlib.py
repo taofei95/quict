@@ -4,6 +4,11 @@ import re
 from QuICT.core.circuit.circuit import Circuit
 
 
+# TODO: Not all circuit in one class, one class for one circuit
+# circuit, machine amp
+# property: circuit, machine_amplitude, field, level, simulation_amplitude_symbol?, fidelity, QV, ...
+# only machine_amplitude, fidelity, QV, other score has setter
+# function: self.is_valid(self) -> bool
 class BenchLib:
     """ A data structure for storing benchmark information. """
     @property
@@ -60,6 +65,7 @@ class BenchLib:
         return simulation_amp
 
     @property
+    # TODO: no calculate fidelity in benchlib, save fidelity or other
     def fidelity(self) -> list:
         """ Return the fidelity of each circuit. """
         qv_list, fidelity_list, evaluate_list = [], [], []
