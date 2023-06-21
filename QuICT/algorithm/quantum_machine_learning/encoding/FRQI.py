@@ -17,7 +17,7 @@ class FRQI:
         self._n_color_qubits = 1
         self._q_state = None
 
-    def __call__(self, img, use_qic=True):
+    def __call__(self, img, use_qic=False):
         img = self._img_preprocess(img, flatten=True)
 
         # step 1: |0> -> |H>
@@ -30,7 +30,7 @@ class FRQI:
             frqi_circuit = self._construct_qic_circuit(img, rotate=True)
         else:
             frqi_circuit = self._construct_circuit(img, rotate=True)
-        frqi_circuit | circuit(list(range(self._n_qubits)))
+        frqi_circuit | circuit
 
         return circuit
 
@@ -53,7 +53,7 @@ class FRQI:
         return img
 
     def _construct_circuit(self, img: np.ndarray, rotate: bool):
-        circuit = Circuit(self._n_qubits)
+        circuit = CompositeGate(self._n_qubits)
         if not rotate:
             mc_gate = MultiControlToffoli()
         for i in range(self._N):
@@ -86,13 +86,13 @@ class FRQI:
         return circuit
 
     def _construct_qic_circuit(self, img, rotate: bool, gid: int = 0):
-        qic_circuit = Circuit(self._n_qubits)
+        qic_circuit = CompositeGate(self._n_qubits)
         img_dict = self._get_img_dict(img, bin_val=True)
         for key in img_dict.keys():
             theta = float(key) / (self._grayscale - 1) * np.pi if rotate else None
             min_dnf = self._get_min_expression(img_dict[key])
             dnf_circuit = self._construct_dnf_circuit(min_dnf, gid, theta)
-            dnf_circuit | qic_circuit(list(range(self._n_qubits)))
+            dnf_circuit | qic_circuit
         for qid in range(self._n_pos_qubits):
             if self._q_state[qid] == 1:
                 X | qic_circuit(qid)
@@ -100,7 +100,7 @@ class FRQI:
         return qic_circuit
 
     def _construct_dnf_circuit(self, min_dnf, gid: int = 0, theta: float = None):
-        dnf_circuit = Circuit(self._n_qubits)
+        dnf_circuit = CompositeGate(self._n_qubits)
         cnf_list = self._split_dnf(min_dnf)
         if cnf_list == ["True"]:
             if theta is None:
@@ -114,17 +114,17 @@ class FRQI:
                 uniqueness_dnf_circuit = self._construct_dnf_circuit(
                     uniqueness_dnf, gid, theta
                 )
-                uniqueness_dnf_circuit | dnf_circuit(list(range(self._n_qubits)))
+                uniqueness_dnf_circuit | dnf_circuit
             else:
                 cnf_circuit = self._construct_cnf_circuit(
                     cnf_list[i], gid=gid, theta=theta,
                 )
-                cnf_circuit | dnf_circuit(list(range(self._n_qubits)))
+                cnf_circuit | dnf_circuit
 
         return dnf_circuit
 
     def _construct_cnf_circuit(self, cnf, gid=0, theta=None):
-        cnf_circuit = Circuit(self._n_qubits)
+        cnf_circuit = CompositeGate(self._n_qubits)
         mc_gate = (
             MultiControlToffoli()
             if theta is None
@@ -197,11 +197,3 @@ class FRQI:
                 boolen_expressions += " | "
         min_expression = to_dnf(boolen_expressions, simplify=True, force=True)
         return min_expression
-
-
-if __name__ == "__main__":
-    frqi = FRQI(2)
-    img = np.array([[0, 1], [0, 1,]])
-    circuit = frqi(img, use_qic=False)
-    circuit.gate_decomposition(decomposition=False)
-    circuit.draw(filename="frqi")
