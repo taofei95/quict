@@ -330,7 +330,6 @@ class GateSimulator:
             matrix = self._get_gate_matrix(gate) if fp else self._get_gate_param_grad(gate, parg_id)
         else:
             matrix = gate.matrix
-        matrix = self._get_gate_matrix(gate) if gate.type != GateType.unitary else gate.matrix
         control_idx = np.array(cargs, dtype=np.int64)
         target_idx = np.array(targs, dtype=np.int64)
 
