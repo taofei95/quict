@@ -2,7 +2,7 @@ import numpy as np
 
 from typing import List
 
-from QuICT.core.gate import BasicGate, Swap, CX, CU3
+from QuICT.core.gate import X, CX, CU3, Swap, CSwap
 from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.algorithm.submodule.adder import RCFourierAdderWired
 from QuICT.algorithm.submodule.qft import ry_QFT
@@ -11,7 +11,7 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
     """
         An out-of-place modular multiplier using Fourier-basis arithmetic and 
         Montgomery Reduction. Uses in total "2n + logn + 1" qubits which includes 
-        "logn + 1" ancilla qubits.
+        "logn + 1" clean ancilla qubits.
 
         Based on paper "High Performance Quantum Modular Multipliers" 
         by Rich Rines, Isaac Chuang: https://arxiv.org/abs/1801.01081
@@ -28,19 +28,20 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
         """
             Construct the out-of-place modular multiplier that does:
 
-            |z(n)>|b(n)>|0(logn+1)> ------> |z(n)>|b + M*z mod N(n)>|0(logn+1)>
+            |z(n)>|0(n)>|0(logn+1)> ------> |z(n)>|M*z mod N(n)>|0(logn+1)>
 
             the (logn + 1) 0s are ancilla qubits.
 
             Args:
-                modulus (int): 
+                modulus (int): modulus in the modular multiplication.
 
-                multiple (int): 
+                multiple (int): multiple in the modular multiplication.
 
                 qreg_size (int): the number of qubits to hold the input register and 
                 store the result, two sizes are the same.
 
-                inverse_multiple (bool): if True, will calculate "M^(-1)*z mod N".
+                inverse_multiple (bool): if True, will calculate "M^(-1)*z mod N". 
+                Requires M to be coprime with modulus N.
 
         """
         assert int(np.ceil(np.log2(modulus+1))) <= qreg_size, "Not enough register size for modulus"
@@ -231,7 +232,159 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
     
 
 class RCModMultiplier(CompositeGate):
-    pass
+    """
+        An in-place modular multiplier using Fourier-basis arithmetic and 
+        Montgomery Reduction. Uses in total "2n + logn + 1" qubits which includes 
+        "n + logn + 1" clean ancilla qubits.
+
+        Based on paper "High Performance Quantum Modular Multipliers" 
+        by Rich Rines, Isaac Chuang: https://arxiv.org/abs/1801.01081
+    """
+
+    def __init__(
+        self, 
+        modulus: int,
+        multiple: int,
+        qreg_size: int,
+        name: str = None
+    ):
+        """
+            Construct the in-place modular multiplier that does:
+
+            |z(n)>|0(n + logn + 1)> ----> |Mz mod N(n)>|0(n + logn + 1)>
+
+            Args:
+                modulus (int): modulus in the modular multiplication.
+
+                multiple (int): multiple in the modular multiplication.
+
+                qreg_size (int): the number of qubits to hold the input register and 
+                store the result.
+
+            NOTE: currently the quantum data inside |z(n)> has to be smaller than modulus
+            for the circuit to properly set all the ancilla qubits back to 0s. This is due to
+            the use of out-of-place modular multiplier with inversed multiple. When running the
+            circuit backwards, it cannot cancel z >= modulus (it is because when running forward 
+            the gate obviously cannot generate value greater than modulus on any register by design).
+        """
+        self._modulus  = modulus
+        self._multiple = multiple
+        
+        self._register_size = qreg_size
+        self._ancilla_n     = qreg_size
+        self._ancilla_mp1   = int(np.ceil(np.log2(qreg_size))) + 1
+
+        self._total_size = self._register_size + self._ancilla_n + self._ancilla_mp1
+
+        self._register_list = [i for i in range(qreg_size)]
+        self._ancilla_n_list = [i for i in range(qreg_size, 2 * qreg_size)]
+        self._ancilla_mp1_list = [i for i in range(2 * qreg_size, self._total_size)]
+
+        super().__init__(name)
+
+        # *multiple % modulus, forward
+        RCOutOfPlaceModMultiplier(
+            modulus = modulus,
+            multiple = multiple,
+            qreg_size = qreg_size,
+            inverse_multiple = False
+        ) | self
+        
+        # replace input with output and prepare for uncompute 
+        for i in range(self._register_size):
+            Swap | self([self._register_list[i], self._ancilla_n_list[i]])
+        
+        # *multiple^(-1) % modulus, backwards
+        RCOutOfPlaceModMultiplier(
+            modulus = modulus,
+            multiple = multiple,
+            qreg_size = qreg_size,
+            inverse_multiple = True
+        ).inverse() | self
+
+        return
+
 
 class RCModMultiplierCtl(CompositeGate):
-    pass
+    """
+        A controlled in-place modular multiplier using Fourier-basis arithmetic and 
+        Montgomery Reduction. Uses in total "2n + logn + 1" qubits which includes 
+        "n + logn + 1" clean ancilla qubits.
+
+        Based on paper "High Performance Quantum Modular Multipliers" 
+        by Rich Rines, Isaac Chuang: https://arxiv.org/abs/1801.01081
+    """
+
+    def __init__(
+        self, 
+        modulus: int,
+        multiple: int,
+        qreg_size: int,
+        name: str = None
+    ):
+        """
+            Construct the in-place modular multiplier that does:
+
+            |c(1)>|z(n)>|0(n + logn + 1)> ----> |c(1)>|c * (Mz mod N) (n)>|0(n + logn + 1)>
+
+            Args:
+                modulus (int): modulus in the modular multiplication.
+
+                multiple (int): multiple in the modular multiplication.
+
+                qreg_size (int): the number of qubits to hold the input register and 
+                store the result.
+
+            NOTE: For the same reason as the simple in-place modular multiplication,
+            The ancilla qubits can be properly set back to 0s only when z < modulus.
+        """
+        self._modulus  = modulus
+        self._multiple = multiple
+        
+        self._register_size = qreg_size
+        self._ancilla_n     = qreg_size
+        self._ancilla_mp1   = int(np.ceil(np.log2(qreg_size))) + 1
+
+        self._total_size = 1 + self._register_size + self._ancilla_n + self._ancilla_mp1
+
+        self._control_list = [0]
+        self._register_list = [i for i in range(1, qreg_size + 1)]
+        self._ancilla_n_list = [i for i in range(qreg_size + 1, 2 * qreg_size + 1)]
+        self._ancilla_mp1_list = [i for i in range(2 * qreg_size + 1, self._total_size)]
+
+        super().__init__(name)
+
+        # 0-ctl cswap two registers
+        X | self(self._control_list)
+        for i in range(self._register_size):
+            CSwap | self(self._control_list + [self._register_list[i], self._ancilla_n_list[i]])
+        X | self(self._control_list)
+
+        # *multiple % modulus, forward
+        RCOutOfPlaceModMultiplier(
+            modulus = modulus,
+            multiple = multiple,
+            qreg_size = qreg_size,
+            inverse_multiple = False
+        ) | self(self._register_list + self._ancilla_n_list + self._ancilla_mp1_list)
+
+        # replace input with output and prepare for uncompute (conditioned)
+        for i in range(self._register_size):
+            CSwap | self(self._control_list + [self._register_list[i], self._ancilla_n_list[i]])
+        
+        RCOutOfPlaceModMultiplier(
+            modulus = modulus,
+            multiple = multiple,
+            qreg_size = qreg_size,
+            inverse_multiple = True
+        ).inverse() | self(self._register_list + self._ancilla_n_list + self._ancilla_mp1_list)
+
+        # 0-ctl cswap two registers
+        X | self(self._control_list)
+        for i in range(self._register_size):
+            CSwap | self(self._control_list + [self._register_list[i], self._ancilla_n_list[i]])
+        X | self(self._control_list)
+
+        return
+
+    
