@@ -12,43 +12,35 @@ from QuICT.core.circuit.circuit import Circuit
 class BenchLib:
     """ A data structure for storing benchmark information. """
     @property
-    def circuits(self) -> list:
+    def circuit(self) -> Circuit:
         """ Return the circuits of QuantumMachinebenchmark. """
-        return self._circuits
+        return self._circuit
 
-    @circuits.setter
-    def circuits(self, circuits:list):
-        self._circuits = circuits
+    @circuit.setter
+    def circuit(self, circuit:Circuit):
+        self._circuit = circuit
 
     @property
-    def machine_amp(self) -> list:
+    def machine_amp(self) -> np.array:
         """ Return the quantum machine sample result of circuits. """
         return self._machine_amp
 
     @machine_amp.setter
-    def machine_amp(self, machine_amp:list):
+    def machine_amp(self, machine_amp:np.array):
         self._machine_amp = machine_amp
 
     @property
-    def field(self) -> list:
+    def field(self) -> str:
         """ Return the field of circuits. """
-        field_list = []
-        for circuit in self._circuits:
-            name_split = circuit.name.split("+")[:-1]
-            if name_split[0] != "random":
-                field_list.append(name_split[0])
-            else:
-                field_list.append(name_split[1])
-        return field_list
+        cir_field = self._circuit.name.split("+")[:-1][1]
+
+        return cir_field
 
     @property
     def level(self) -> list:
         """ Return the level of circuits. """
-        level_list = []
-        for circuit in self._circuits:
-            name_split = int(circuit.name[-1])
-            level_list.append(name_split)
-        return level_list
+        cir_level = int(self._circuit.name[-1])
+        return cir_level
 
     @property
     def simulation_amp(self) -> list:
@@ -65,35 +57,49 @@ class BenchLib:
         return simulation_amp
 
     @property
-    # TODO: no calculate fidelity in benchlib, save fidelity or other
-    def fidelity(self) -> list:
-        """ Return the fidelity of each circuit. """
-        qv_list, fidelity_list, evaluate_list = [], [], []
-        machine_amp, simulation_amp = self.machine_amp.copy(), self.simulation_amp.copy()
-        for i in range(len(self.field)):
-            # quantum volumn
-            cir_attribute = re.findall(r"\d+", self.circuits[i].name)
-            QV = min(int(cir_attribute[0]), int(cir_attribute[2]))
-            qv_list.append(QV)
-            # fidelity
-            if self.field[i] != 'algorithm':
-                fidelity_list.append(machine_amp[0][0])
-                machine_amp.remove(machine_amp[0])
-            else:
-                index = int(simulation_amp[0])
-                fidelity_list.append(machine_amp[0][index])
-                simulation_amp.remove(simulation_amp[0])
-                machine_amp.remove(machine_amp[0])
-        level_list = self.level
-        for i in range(len(qv_list)):
-            evaluate_list.append(qv_list[i] * fidelity_list[i] * level_list[i])
+    def Quantum_volume(self) -> list:
+        """ Return the quantum volume of circuit. """
+        cir_attribute = re.findall(r"\d+", self._circuit.name)
+        QV = min(int(cir_attribute[0]), int(cir_attribute[2]))
 
-        return evaluate_list
+        return QV
+
+    @property
+    def fidelity(self) -> str:
+        """ Return the fidelity of circuit. """
+        return self._fidelity
+
+    @fidelity.setter
+    def fidelity(self, fidelity:str):
+        self._fidelity = fidelity
+
+        # qv_list, fidelity_list, evaluate_list = [], [], []
+        # machine_amp, simulation_amp = self.machine_amp.copy(), self.simulation_amp.copy()
+        # for i in range(len(self.field)):
+        #     # quantum volumn
+        #     cir_attribute = re.findall(r"\d+", self.circuits[i].name)
+        #     QV = min(int(cir_attribute[0]), int(cir_attribute[2]))
+        #     qv_list.append(QV)
+        #     # fidelity
+        #     if self.field[i] != 'algorithm':
+        #         fidelity_list.append(machine_amp[0][0])
+        #         machine_amp.remove(machine_amp[0])
+        #     else:
+        #         index = int(simulation_amp[0])
+        #         fidelity_list.append(machine_amp[0][index])
+        #         simulation_amp.remove(simulation_amp[0])
+        #         machine_amp.remove(machine_amp[0])
+        # level_list = self.level
+        # for i in range(len(qv_list)):
+        #     evaluate_list.append(qv_list[i] * fidelity_list[i] * level_list[i])
+
+        # return evaluate_list
 
     def __init__(
         self,
-        circuits:list = None,
+        circuit = None,
         machine_amp:list = None,
+        fidelity:str = None
     ):
         """
         Args:
@@ -103,13 +109,13 @@ class BenchLib:
             machine_amp (List[np.array], optional): The list of the quantum machine amplitude of the input circuit. Defaults to None.
             fidelity (List[float], optional): The fidelity of each circuit.
         """
-        self._circuits = circuits
+        self._circuit = circuit
         self._machine_amp = machine_amp
 
-        if circuits is not None:
-            assert isinstance(circuits, list)
-            for cir in circuits:
-                assert isinstance(cir, Circuit)
-            self.circuits = circuits
+        if circuit is not None:
+            assert isinstance(circuit, Circuit)
+            self.circuit = circuit
         if machine_amp is not None:
             self.machine_amp = machine_amp
+        if fidelity is not None:
+            self.fidelity = fidelity
