@@ -220,7 +220,6 @@ class BasicGate(object):
         self._matrix = None
         self._target_matrix = None
         self._qasm_name = str(type_.name)
-        self.assigned_qubits = []   # list of qubits' id
         self._is_matrix_update = False
         self._is_original = is_original_gate
 
@@ -584,9 +583,6 @@ class BasicGate(object):
         if self.controls > 0 and len(self.cargs) > 0:
             gate.cargs = self.cargs[:]
 
-        if self.assigned_qubits:
-            gate.assigned_qubits = self.assigned_qubits[:]
-
         return gate
 
     def permit_element(self, element):
@@ -728,6 +724,7 @@ class Unitary(BasicGate):
             decomp_gate = ComplexGateBuilder.build_unitary(self._matrix)
         except:
             from QuICT.core.gate import CompositeGate
+
             decomp_gate = CompositeGate()
             decomp_gate.append(self & list(range(self.targets)))
 
@@ -749,9 +746,6 @@ class Unitary(BasicGate):
 
         if len(self.targs) > 0:
             _gate.targs = self.targs[:]
-
-        if self.assigned_qubits:
-            _gate.assigned_qubits = self.assigned_qubits[:]
 
         return _gate
 
@@ -835,6 +829,48 @@ class PermFx(Perm):
                 pargs.append(idx)
 
         super().__init__(0, targets, parameters, GateType.perm_fx, MatrixType.normal, pargs)
+
+
+class MultiControlGate(BasicGate):
+    def __init__(self, controls: int, gate_type: GateType, precision: str = "double", params: list = []):
+        assert controls >= 0, ValueError("MultiControlGate.controls", ">= 0", controls)
+        self._multi_controls = controls
+        if gate_type not in GATEINFO_MAP.keys():
+            raise TypeError("MultiControlGate.gate_type", "only support for QuICT Gate", gate_type)
+
+        gate_info = list(GATEINFO_MAP[gate_type])
+        gate_info[0] += controls
+        super().__init__(*gate_info, params, precision)
+
+    def inverse(self):
+        """ the inverse of the quantum gate, if there is no inverse gate, return itself.
+
+        Return:
+            BasicGate: the inverse of the gate
+        """
+        inverse_gargs, inverse_pargs = InverseGate.get_inverse_gate(self.type, self.pargs)
+
+        # Deal with inverse_gargs
+        if inverse_gargs is None:
+            return self
+
+        inverse_gate = MultiControlGate(self._multi_controls, inverse_gargs, self.precision, params=inverse_pargs)
+        gate_args = self.cargs + self.targs
+        if len(gate_args) > 0:
+            inverse_gate & gate_args
+
+        return inverse_gate
+
+    def build_gate(self):
+        pass
+
+    def copy(self):
+        _gate = MultiControlGate(self._multi_controls, self.type, self.precision, self.pargs)
+        gate_args = self.cargs + self.targs
+        if len(gate_args) > 0:
+            _gate & gate_args
+
+        return _gate
 
 
 def gate_builder(gate_type, precision: str = "double", params: list = [], random_params: bool = False) -> BasicGate:

@@ -397,8 +397,7 @@ class Circuit(CircuitBased):
             qubit_index = self._pointer[:]
         else:
             gate_qargs = gate.cargs + gate.targs
-            gate_aqubits = gate.assigned_qubits
-            if len(gate_qargs) == 0 and len(gate_aqubits) == 0:
+            if len(gate_qargs) == 0:
                 if gate.is_single():
                     self._add_gate_to_all_qubits(gate)
                     return
@@ -407,8 +406,7 @@ class Circuit(CircuitBased):
                 else:
                     raise GateQubitAssignedError(f"{gate.type} need qubit indexes to add into Composite Gate.")
             else:
-                qubit_index = gate_qargs if len(gate_qargs) > 0 else \
-                    [self.qubits.index(aq) for aq in gate.assigned_qubits]
+                qubit_index = gate_qargs
 
         self._gates.append((gate, qubit_index, 1))
 
