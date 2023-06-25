@@ -200,7 +200,7 @@ class Circuit(CircuitBased):
         if is_ancillary_qubit:
             self._ancillae_qubits += list(range(self.width() - len(qubits), self.width()))
 
-        self._logger.debug(f"Quantum Circuit {self._name} add {len(qubits)} qubits.")
+        # self._logger.debug(f"Quantum Circuit {self._name} add {len(qubits)} qubits.")
 
     def reset_qubits(self):
         """ Reset all qubits in current Quantum Circuit, clean the measured result for each qubit. """
@@ -417,7 +417,10 @@ class Circuit(CircuitBased):
             gate (BasicGate): The quantum gate.
         """
         for idx in range(self.width()):
-            self._gates.append((gate, [idx], 1))
+            if gate.variables > 0:
+                self._gates.append((gate.copy(), [idx], 1))
+            else:
+                self._gates.append((gate, [idx], 1))
 
     def _add_operator(self, op: Operator):
         """ Add operator. """

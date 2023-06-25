@@ -4,7 +4,7 @@ from typing import Union
 import numpy as np
 
 from QuICT.core.utils import (
-    matrix_product_to_circuit, GateType, MatrixType,
+    Variable, matrix_product_to_circuit, GateType, MatrixType,
     CGATE_LIST, GATE_ARGS_MAP, PAULI_GATE_SET, CLIFFORD_GATE_SET, GATEINFO_MAP
 )
 from QuICT.tools.exception.core import (
@@ -88,6 +88,14 @@ class BasicGate(object):
             self._is_matrix_update = False
 
         return self._target_matrix
+    
+    @property
+    def grad_matrix(self):
+        if self._grad_matrix is None or self._is_matrix_update:
+            self._grad_matrix = GateMatrixGenerator().get_matrix(self, is_get_grad=True)
+            self._is_matrix_update = False
+
+        return self._grad_matrix
 
     ################    Quantum Gate's Target Qubits    ################
     @property
@@ -140,6 +148,10 @@ class BasicGate(object):
     @property
     def params(self) -> int:
         return self._params
+    
+    @property
+    def variables(self) -> int:
+        return self._variables
 
     @property
     def parg(self):
@@ -200,6 +212,7 @@ class BasicGate(object):
         self._controls = controls
         self._cargs = []    # list of int
 
+        self._variables = 0
         self._params = params
         self._pargs = []
         if self._params > 0:
@@ -219,6 +232,7 @@ class BasicGate(object):
         self._precision = precision
         self._matrix = None
         self._target_matrix = None
+        self._grad_matrix = None
         self._qasm_name = str(type_.name)
         self._is_matrix_update = False
         self._is_original = is_original_gate
@@ -355,7 +369,13 @@ class BasicGate(object):
 
         qasm_string = self.qasm_name
         if self.params > 0:
-            params = [str(parg) for parg in self.pargs]
+            params = []
+            for parg in self.pargs:
+                if isinstance(parg, Variable):
+                    params.append(str(parg.pargs))
+                else:
+                    params.append(str(parg))
+            
             params_string = "(" + ", ".join(params) + ")"
 
             qasm_string += params_string
@@ -572,9 +592,13 @@ class BasicGate(object):
         Returns:
             gate(BasicGate): a copy of this gate
         """
+        if self.variables == 0:
+            pargs = self.pargs
+        else:
+            pargs = self.pargs[:]
         gate = BasicGate(
             self.controls, self.targets, self.params, self.type,
-            self.matrix_type, self.pargs[:], self.precision
+            self.matrix_type, pargs, self.precision
         )
 
         if len(self.targs) > 0:
@@ -600,8 +624,12 @@ class BasicGate(object):
             element = [element]
 
         for el in element:
-            if not isinstance(el, (int, float, complex, np.complex64)):
-                raise TypeError("basicGate.targs", "int/float/complex", type(el))
+            if not isinstance(el, (int, float, complex, np.complex64, Variable)):
+                raise TypeError("basicGate.pargs", "int/float/complex/Variable", type(el))
+            if isinstance(el, Variable):
+                self._variables += 1
+                if not isinstance(el.pargs, (int, float, complex, np.complex64)):
+                    raise TypeError("basicGate.pargs", "int/float/complex/Variable", type(el.pargs))
 
 
 class Unitary(BasicGate):
@@ -792,7 +820,11 @@ class Perm(BasicGate):
     def _build_matrix(self):
         matrix_ = np.zeros((1 << self.targets, 1 << self.targets), dtype=self.precision)
         for idx, p in enumerate(self.pargs):
-            matrix_[idx, p] = 1
+            if isinstance(p, Variable):
+                matrix_[idx, p.pargs] = 1
+            else:
+                matrix_[idx, p] = 1
+
 
         return matrix_
 
@@ -922,6 +954,7 @@ CZ = BasicGate(*GATEINFO_MAP[GateType.cz], is_original_gate=True)
 CX = BasicGate(*GATEINFO_MAP[GateType.cx], is_original_gate=True)
 CY = BasicGate(*GATEINFO_MAP[GateType.cy], is_original_gate=True)
 CH = BasicGate(*GATEINFO_MAP[GateType.ch], is_original_gate=True)
+CRy = BasicGate(*GATEINFO_MAP[GateType.cry], is_original_gate=True)
 CRz = BasicGate(*GATEINFO_MAP[GateType.crz], is_original_gate=True)
 CU1 = BasicGate(*GATEINFO_MAP[GateType.cu1], is_original_gate=True)
 CU3 = BasicGate(*GATEINFO_MAP[GateType.cu3], is_original_gate=True)
