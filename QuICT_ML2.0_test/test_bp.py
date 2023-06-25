@@ -98,12 +98,33 @@ def test_fp_bp(n_qubit, pargs):
     loss.backward()
     print(params.grad)
 
-    print("--------------Adjoint-----------------")
+    print("--------------Adjoint-GPU-----------------")
 
     simulator = StateVectorSimulator(device="GPU")
     sv = simulator.run(circuit, init_state.copy())
 
     differ = Differentiator(device="GPU")
+    h = Hamiltonian([[1, "Z0"]])
+    variables, _ = differ.run(circuit, variables, sv, h)
+    print(variables.grads)
+    
+    print("--------------Adjoint-CPU-----------------")
+
+    variables = Variable(np.array(pargs))
+    circuit = Circuit(n_qubit)
+    H | circuit
+    Rx(variables[0]) | circuit(2)
+    Rx(2 * variables[1]) | circuit(1)
+    Rx(variables[2]) | circuit(0)
+    Rx(variables[3] / 3 - 1) | circuit(3)
+    Rx(variables[4] ** 2) | circuit(1)
+    Rzx(variables[1]) | circuit([2, 1])
+    Rxx(variables[1]) | circuit([0, 1])
+    
+    simulator = StateVectorSimulator(device="CPU")
+    sv = simulator.run(circuit, init_state.copy())
+
+    differ = Differentiator(device="CPU")
     h = Hamiltonian([[1, "Z0"]])
     variables, _ = differ.run(circuit, variables, sv, h)
     print(variables.grads)
