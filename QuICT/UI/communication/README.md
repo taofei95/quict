@@ -23,7 +23,7 @@ npm run lint
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
 
-
+branch ui_communication_new_core
 ```
 cd /home/wangzhanyu/quict/QuICT/UI/communication
 conda run -n zhanyu2 --no-capture-output gunicorn -w 1 --threads 100 -b '0.0.0.0:8080' server:app
