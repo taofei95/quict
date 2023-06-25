@@ -396,35 +396,35 @@ def optimize_qasm(uid, qasm_text, topology, set, optimize, mapping):
         v = int(uv[1])
         circuit_topology.add_edge(u, v)
 
-    if set['name'] not in ['FullSet', 'CustomerSet']:
-        circuit_set = eval(set['name'])
-    else:
-        gate_set2 = []
-        gate_set1 = []
-        for gate_str in set['gates']:
-            t_gate = eval(gate_str['name'])()
-            if t_gate._controls + t_gate._targets==1:
-                gate_set1.append(t_gate._type)
-            else :
-                # gate_set2.append(t_gate._type)
-                gate_set2 = t_gate._type
-        circuit_set = InstructionSet(gate_set2, gate_set1)
-        circuit_set.register_one_qubit_rule(xyx_rule)
+    # if set['name'] not in ['FullSet', 'CustomerSet']:
+    #     circuit_set = eval(set['name'])
+    # else:
+    #     gate_set2 = []
+    #     gate_set1 = []
+    #     for gate_str in set['gates']:
+    #         t_gate = eval(gate_str['name'])()
+    #         if t_gate._controls + t_gate._targets==1:
+    #             gate_set1.append(t_gate._type)
+    #         else :
+    #             # gate_set2.append(t_gate._type)
+    #             gate_set2 = t_gate._type
+    #     circuit_set = InstructionSet(gate_set2, gate_set1)
+    #     circuit_set.register_one_qubit_rule(xyx_rule)
     
 
     emit(
         'info',  {'uuid': uid, 'info': f"Compiling circuit..."}, namespace="/api/pty")
 
     qcda = QCDA()
-    if set['name'] not in ['FullSet']:
-        qcda.add_default_synthesis(circuit_set)
+    # if set['name'] not in ['FullSet']:
+    #     qcda.add_default_synthesis(circuit_set)
     if optimize:
         qcda.add_default_optimization()
     if mapping:
         qcda.add_default_mapping(circuit_topology)
 
-    if set['name'] not in ['FullSet']:
-        qcda.add_default_synthesis(circuit_set)
+    # if set['name'] not in ['FullSet']:
+    #     qcda.add_default_synthesis(circuit_set)
     circuit_phy = qcda.compile(circuit)
     
     logger.info(f"circuit_phy.qasm() {circuit_phy.qasm()}")
