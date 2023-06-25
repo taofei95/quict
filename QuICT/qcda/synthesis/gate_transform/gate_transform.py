@@ -13,12 +13,14 @@ from QuICT.qcda.utility import OutputAligner
 
 
 class GateTransform(object):
-    def __init__(self, instruction_set=USTCSet):
+    def __init__(self, instruction_set=USTCSet, keep_phase=False):
         """
         Args:
             instruction_set(InstructionSet): the goal instruction set
+            keep_phase(bool): whether to keep the global phase as a GPhase gate in the output
         """
         self.instruction_set = instruction_set
+        self.keep_phase = keep_phase
 
     @OutputAligner()
     def execute(self, circuit):
@@ -34,29 +36,23 @@ class GateTransform(object):
         Returns:
             CompositeGate: the equivalent compositeGate with goal instruction set
         """
-        compositeGate = CompositeGate()
+        gates = CompositeGate()
         if isinstance(circuit, CompositeGate):
-            compositeGate.extend(circuit)
+            gates.extend(circuit)
         elif isinstance(circuit, Circuit):
-            compositeGate.extend(circuit.gates)
+            gates.extend(circuit.gates)
         else:
             raise TypeError("Invalid input for GateTransform")
 
-        # transform 2-qubits gate
-        compositeGateStep1 = CompositeGate()
-        for gate in compositeGate:
-            if gate.targets + gate.controls > 2:
-                raise Exception("gate_transform only support 2-qubit and 1-qubit gate now.")
-            if gate.type != self.instruction_set.two_qubit_gate and gate.targets + gate.controls == 2:
-                rule = self.instruction_set.select_transform_rule(gate.type)
-                compositeGateStep1.extend(rule(gate))
-            else:
-                compositeGateStep1.append(gate)
+        gates.gate_decomposition()
+        gates = self.two_qubit_transform(gates)
+        gates = self.one_qubit_transform(gates)
+        return gates
 
-        # transform 1-qubit gate
-        compositeGateStep2 = CompositeGate()
-        unitaries = [np.identity(2, dtype=np.complex128) for _ in range(circuit.width())]
-        for gate in compositeGateStep1:
+    def one_qubit_transform(self, gates):
+        gates_tran = CompositeGate()
+        unitaries = [np.identity(2, dtype=np.complex128) for _ in range(gates.width())]
+        for gate in gates:
             if gate.targets + gate.controls == 2:
                 targs = gate.cargs + gate.targs
                 for targ in targs:
@@ -65,28 +61,47 @@ class GateTransform(object):
                         local_matrix = np.eye(2)
                     else:
                         local_matrix = gates_transformed.matrix(local=True)
-                    phase = np.angle(np.dot(unitaries[targ], np.linalg.inv(local_matrix))[0][0])
-                    if (
-                        not np.isclose(np.mod(phase, 2 * np.pi), 0) and
-                        not np.isclose(np.mod(phase, 2 * np.pi), 2 * np.pi)
-                    ):
-                        gates_transformed.append(GPhase(phase) & targ)
-                    compositeGateStep2.extend(gates_transformed)
+                    if self.keep_phase:
+                        phase = np.angle(np.dot(unitaries[targ], np.linalg.inv(local_matrix))[0][0])
+                        if (
+                            not np.isclose(np.mod(phase, 2 * np.pi), 0) and
+                            not np.isclose(np.mod(phase, 2 * np.pi), 2 * np.pi)
+                        ):
+                            gates_transformed.append(GPhase(phase) & targ)
+                    gates_tran.extend(gates_transformed)
                     unitaries[targ] = np.identity(2, dtype=np.complex128)
-                compositeGateStep2.append(gate)
+                gates_tran.append(gate)
             else:
                 unitaries[gate.targ] = np.dot(gate.matrix, unitaries[gate.targ])
-        for i in range(circuit.width()):
+        for i in range(gates.width()):
             gates_transformed = self.instruction_set.one_qubit_rule(Unitary(unitaries[i]) & i)
             if gates_transformed.width() == 0:
                 local_matrix = np.eye(2)
             else:
                 local_matrix = gates_transformed.matrix(local=True)
-            phase = np.angle(np.dot(unitaries[i], np.linalg.inv(local_matrix))[0][0])
-            if (
-                not np.isclose(np.mod(phase, 2 * np.pi), 0) and
-                not np.isclose(np.mod(phase, 2 * np.pi), 2 * np.pi)
-            ):
-                gates_transformed.append(GPhase(phase) & i)
-            compositeGateStep2.extend(gates_transformed)
-        return compositeGateStep2
+            if self.keep_phase:
+                phase = np.angle(np.dot(unitaries[i], np.linalg.inv(local_matrix))[0][0])
+                if (
+                    not np.isclose(np.mod(phase, 2 * np.pi), 0) and
+                    not np.isclose(np.mod(phase, 2 * np.pi), 2 * np.pi)
+                ):
+                    gates_transformed.append(GPhase(phase) & i)
+            gates_tran.extend(gates_transformed)
+        return gates_tran
+
+    def two_qubit_transform(self, gates):
+        gates_tran = CompositeGate()
+        for gate in gates:
+            if gate.targets + gate.controls > 2:
+                raise Exception("gate_transform only support 2-qubit and 1-qubit gate now.")
+            if gate.type != self.instruction_set.two_qubit_gate and gate.targets + gate.controls == 2:
+                rule = self.instruction_set.select_transform_rule(gate.type)
+                if self.keep_phase:
+                    gates_tran.extend(rule(gate))
+                else:
+                    for g in rule(gate):
+                        if g.type != GateType.gphase:
+                            gates_tran.append(g)
+            else:
+                gates_tran.append(gate)
+        return gates_tran

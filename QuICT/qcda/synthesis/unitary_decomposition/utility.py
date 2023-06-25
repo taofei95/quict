@@ -6,10 +6,8 @@ from QuICT.core.gate import *
 
 
 def add_factor_shift_into_phase(gates: CompositeGate, shift: complex) -> CompositeGate:
-    phase = np.log(shift) / 1j
-    phase_gate = GPhase.copy()
-    phase_gate.pargs = [phase]
-    phase_gate.targs = [0]
+    phase = np.angle(shift)
+    phase_gate = GPhase(phase) & 0
     gates.append(phase_gate)
     return gates
 
@@ -34,18 +32,10 @@ def quantum_shannon_decompose(
     eig_values, v = np.linalg.eig(s)
     v_dagger = v.conj().T
     d = np.sqrt(np.diag(eig_values))
-
-    # u1 @ u2_dagger == v @ d_square @ v_dagger
-
     w = d @ v_dagger @ u2
 
     return v, d, w
 
 
 def shift_ratio(mat1: np.ndarray, mat2: np.ndarray) -> complex:
-    mat_size = mat1.shape[0]
-    shift = 1.0 + 0.0j
-    for j in range(mat_size):
-        if not np.isclose(0, mat2[0, j]):
-            shift = mat1[0, j] / mat2[0, j]
-    return shift
+    return mat1.dot(np.linalg.inv(mat2))[0, 0]

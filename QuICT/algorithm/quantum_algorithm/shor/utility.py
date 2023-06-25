@@ -1,10 +1,14 @@
-import logging
 import numpy as np
 
 from functools import reduce
 from math import gcd
 from QuICT.core.gate import X
-from QuICT.simulation.state_vector import CircuitSimulator
+from QuICT.simulation.state_vector import StateVectorSimulator
+
+from QuICT.tools import Logger
+from QuICT.tools.exception.core import *
+
+logger = Logger("Shor-util")
 
 
 def ex_gcd(a, b, arr):
@@ -62,7 +66,7 @@ def set(qreg, N):
     n = len(qreg)
     m = len(str)
     if m > n:
-        logging.warning(
+        logger.warning(
             f"When set qureg as N={N}, N exceeds the length of qureg n={n}, thus is truncated"
         )
 
@@ -122,7 +126,7 @@ def miller_rabin(num):
     return True
 
 
-MAX_ROUND = 3
+MAX_ROUND = 2
 
 
 def reinforced_order_finding_constructor(order_finding):
@@ -133,7 +137,7 @@ def reinforced_order_finding_constructor(order_finding):
             i += 1
             r = order_finding(a, N, eps, simulator)
             if r != 0 and (a ** r) % N == 1:
-                logging.info("\tsuccess!")
+                logger.info("\tsuccess!")
                 r_list.append(r)
         if len(r_list) == 0:
             return 0
@@ -149,7 +153,7 @@ def run_twice_order_finding_constructor(order_finding):
         N: int,
         demo: str = None,
         eps: float = 1 / 10,
-        simulator=CircuitSimulator(),
+        simulator=StateVectorSimulator(),
     ):
         r1 = order_finding(a, N, eps, simulator)
         r2 = order_finding(a, N, eps, simulator)
@@ -167,7 +171,7 @@ def run_twice_order_finding_constructor(order_finding):
         else:
             r = 0
             msg = "\torder_finding failed"
-        logging.info(msg)
+        logger.info(msg)
         return r
 
     return run

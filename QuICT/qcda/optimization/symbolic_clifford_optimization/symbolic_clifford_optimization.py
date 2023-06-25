@@ -8,10 +8,13 @@ import random
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import CompositeGate, GateType, H, CX, CY, CZ, X, S, Z, S_dagger
-from QuICT.qcda.optimization.commutative_optimization import CommutativeOptimization
-from QuICT.qcda.synthesis.gate_transform.transform_rule import cy2cx_rule, cz2cx_rule
-from QuICT.qcda.utility import PauliOperator, OutputAligner
+from QuICT.core.gate import (CX, CY, CZ, CompositeGate, GateType, H, S,
+                             S_dagger, X, Z)
+from QuICT.qcda.optimization.commutative_optimization import \
+    CommutativeOptimization
+from QuICT.qcda.synthesis.gate_transform.transform_rule import (cy2cx_rule,
+                                                                cz2cx_rule)
+from QuICT.qcda.utility import OutputAligner, PauliOperator
 
 
 class SymbolicCliffordOptimization(object):
@@ -36,6 +39,9 @@ class SymbolicCliffordOptimization(object):
             TypeError('control_set must be list of qubit')
         self.control_sets = control_sets
 
+    def __repr__(self):
+        return 'SymbolicCliffordOptimization()'
+
     @OutputAligner()
     def execute(self, gates: CompositeGate):
         """
@@ -51,7 +57,10 @@ class SymbolicCliffordOptimization(object):
         assert isinstance(gates, CompositeGate),\
             TypeError('Invalid input(Circuit/CompositeGate)')
         for gate in gates:
-            assert gate.is_clifford(), ValueError('Only Clifford CompositeGate')
+            # FIXME log output here
+            if not gate.is_clifford():
+                return gates
+
         if self.control_sets is None:
             self.control_sets = list(itertools.combinations(range(width), 2))
 

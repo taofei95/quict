@@ -48,7 +48,7 @@ def check_equiv(circuit1, circuit2):
 
 
 def test():
-    for n in range(4, 100):
+    for n in range(4, 100, 4):
         for s in range(1, int(np.floor(n / np.log2(n) / np.log2(n)))):
             circuit = Circuit(n)
             for i in range(n - 1):

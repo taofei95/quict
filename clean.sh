@@ -16,15 +16,15 @@ prj_root="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 prj_build_dir="$prj_root/build"
 
-OS=$(uname -a)
-
-PYTHON3=$(command -v python3)
-
 [ -d $prj_build_dir ] && echo "rm -rf $prj_build_dir" && rm -rf "$prj_build_dir"
 
-egg_dir="$prj_root/QuICT.egg-info"
+egg_dir="$prj_root/quict.egg-info"
 
 [[ -d $egg_dir ]] && echo "rm -rf $egg_dir" && rm -rf $egg_dir
+
+dist_dir="$prj_root/dist"
+
+[[ -d $dist_dir ]] && echo "rm -rf $dist_dir" && rm -rf $dist_dir
 
 echo "Remove all built .so files"
 

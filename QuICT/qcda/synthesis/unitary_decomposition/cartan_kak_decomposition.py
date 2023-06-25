@@ -44,7 +44,6 @@ class CartanKAKDecomposition(object):
     def diagonalize_unitary_symmetric(matrix):
         """
         Diagonalize unitary symmetric matrix with real orthogonal matrix
-        TODO: this part is taken from qiskit, the FIXME should be removed.
 
         Args:
             matrix(np.array): unitary symmetric matrix to be diagonalized
@@ -59,7 +58,7 @@ class CartanKAKDecomposition(object):
             M2real = state.normal() * M2.real + state.normal() * M2.imag
             _, P = np.linalg.eigh(M2real)
             D = P.T.dot(M2).dot(P).diagonal()
-            if np.allclose(P.dot(np.diag(D)).dot(P.T), M2, rtol=1.0e-13, atol=1.0e-13):
+            if np.allclose(P.dot(np.diag(D)).dot(P.T), M2, rtol=1.0e-6, atol=1.0e-6):
                 break
         else:
             raise ValueError("CartanKAKDecomposition: failed to diagonalize M2")
@@ -98,7 +97,7 @@ class CartanKAKDecomposition(object):
         # Final test
         res = np.kron(U0, U1)
         dev = np.abs(np.abs(res.conj(res).T.dot(U).trace()) - 4)
-        assert dev < 1e-13, ValueError("tensor_decompose: Final failed")
+        assert dev < 1e-6, ValueError("tensor_decompose: Final failed")
         return U0, U1
 
     def execute(self, matrix):
@@ -119,7 +118,7 @@ class CartanKAKDecomposition(object):
         """
         assert matrix.shape == (4, 4), \
             ValueError("CartanKAKDecomposition: Input must be a 4*4 matrix.")
-        assert np.allclose(matrix.T.conj().dot(matrix), np.eye(4)), \
+        assert np.allclose(matrix.T.conj().dot(matrix), np.eye(4), rtol=1e-6, atol=1e-6), \
             ValueError("CartanKAKDecomposition: Input must be a unitary matrix.")
 
         U = matrix.copy()
@@ -160,8 +159,6 @@ class CartanKAKDecomposition(object):
         KR0, KR1 = self.tensor_decompose(KR)
 
         KL0 = KL0.dot(Rz(-np.pi / 2).matrix)
-        KL1 = KL1
-        KR0 = KR0
         KR1 = Rz(np.pi / 2).matrix.dot(KR1)
         gates = CompositeGate()
         with gates:

@@ -136,12 +136,12 @@ class TestCircuit(unittest.TestCase):
             assert gate.precision == np.complex64
 
     def test_circuit_matrix(self):
-        from QuICT.simulation.state_vector import CircuitSimulator
+        from QuICT.simulation.state_vector import StateVectorSimulator
         from QuICT.simulation.unitary import UnitarySimulator
 
         cir = Circuit(TestCircuit.qubits)
         cir.random_append(100)
-        state_vector_cir = CircuitSimulator().run(cir)
+        state_vector_cir = StateVectorSimulator().run(cir)
 
         cir_matrix = cir.matrix()
         state_vector_matrix = UnitarySimulator().run(cir_matrix)

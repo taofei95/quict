@@ -1,0 +1,10 @@
+FROM python:3.9.15-slim-bullseye
+
+WORKDIR /home/quict/
+
+ENV LANG C.UTF-8
+
+RUN apt update && apt install python3-pip -y && \
+    python3 -m pip install quict
+
+CMD ["bash"]

@@ -1,8 +1,9 @@
 from typing import Tuple, Union, List, Dict
 from types import FunctionType
 
-from QuICT.core.gate import CompositeGate, BasicGate
 from ._operator import Operator
+from QuICT.core.gate import CompositeGate, BasicGate
+from QuICT.tools.exception.core import TypeError, ValueError
 
 
 class Trigger(Operator):
@@ -20,7 +21,6 @@ class Trigger(Operator):
             targets (int): The number of target qubits.
             state_gate_mapping: The mapping of state and related composite gates.
                 (Union[Dict[int, CompositeGate], List[CompositeGate], Tuple[CompositeGate], FunctionType])
-            record_measured (bool): whether record the measured state into target qubits. Default to False
 
         Raises:
             TypeError: Error input parameters.
@@ -31,21 +31,24 @@ class Trigger(Operator):
         self._state_gate_mapping = {}
         if isinstance(state_gate_mapping, (list, tuple)):
             for idx, cgate in enumerate(state_gate_mapping):
-                assert isinstance(cgate, (CompositeGate, BasicGate, type(None))), \
-                    "Only accept CompositeGate or BasicGate for state_gate_mapping."
+                assert isinstance(cgate, (CompositeGate, BasicGate, type(None))), TypeError(
+                    "Trigger.state_gate_mapping:list", "list/tuple<CompositeGate, BasicGate>", type(cgate)
+                )
                 self._state_gate_mapping[idx] = cgate
         elif isinstance(state_gate_mapping, dict):
             for key, value in state_gate_mapping.items():
-                assert isinstance(key, int) and isinstance(value, (CompositeGate, BasicGate, type(None)))
+                assert isinstance(key, int) and isinstance(value, (CompositeGate, BasicGate, type(None))), \
+                    TypeError(
+                        "Trigger.state_gate_mapping:dict",
+                        "dict<int, CompositeGate/BasicGate/None>",
+                        f"{type(key)}, {type(value)}")
 
             self._state_gate_mapping = state_gate_mapping
         elif isinstance(state_gate_mapping, FunctionType):
             self._check_function_validation(state_gate_mapping)
             self._state_gate_mapping = state_gate_mapping
         else:
-            raise TypeError(
-                f"The trigger's mapping should be one of [list, dict, Function], not {type(state_gate_mapping)}."
-            )
+            raise TypeError("Trigger.state_gate_mapping", "[list, dict, Function]", {type(state_gate_mapping)})
 
     def mapping(self, state: int) -> CompositeGate:
         """ Return the related composite gate with given qubits' measured state.
@@ -56,7 +59,9 @@ class Trigger(Operator):
         Returns:
             CompositeGate: The related composite gate.
         """
-        assert state >= 0 and state < 2 ** self.targets, f"The state should between 0 and {2**self.targets}."
+        assert state >= 0 and state < 2 ** self.targets, ValueError(
+            "Trigger.mapping.state", f"[0, {2**self.targets}]", state
+        )
 
         if isinstance(self._state_gate_mapping, FunctionType):
             return self._state_gate_mapping(state)
@@ -67,4 +72,8 @@ class Trigger(Operator):
         """ Validation the correctness of given state-composite mapping function. """
         for i in range(2 ** self.targets):
             if not isinstance(state_gate_mapping(i), (CompositeGate, BasicGate, type(None))):
-                raise KeyError("The trigger's mapping should only return CompositeGate for all possible state.")
+                raise TypeError(
+                    "Trigger.state_gate_mapping:callable",
+                    "Return(CompositeGate/BasicGate/None)",
+                    type(state_gate_mapping(i))
+                )

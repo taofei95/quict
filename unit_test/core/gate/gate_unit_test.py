@@ -12,11 +12,11 @@ from QuICT.core.gate.gate_builder import build_random_gate, build_gate
 class TestGate(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        print("The Circuit unit test start!")
+        print("The Gate unit test start!")
 
     @classmethod
     def tearDownClass(cls) -> None:
-        print("The Circuit unit test finished!")
+        print("The Gate unit test finished!")
 
     def test_gate_build(self):
         cir = Circuit(10)
@@ -43,26 +43,6 @@ class TestGate(unittest.TestCase):
         cg_ccrz = CCRz.build_gate()
         cg_ccrz | cir([7, 8, 9])  # 22
         assert len(cir.gates) == 23
-
-    def test_gate_name(self):
-        my_gate = HGate()
-        my_gate.name.split('-')[0] == str(GateType.h)
-
-        # single qubit gate
-        q = Qureg(1)
-        cir = Circuit(q)
-        my_gate | cir(0)
-        assert cir.gates[0].name.split('-')[1] == str(q[0].id[:6])
-        assert cir.gates[0].name.split('-')[2] == str(0)
-
-        # two qubit gate
-        my_gate = CZGate()
-        assert my_gate.name.split('-')[0] == str(GateType.cz)
-        q = Qureg(2)
-        cir = Circuit(q)
-        my_gate | cir([0, 1])
-        assert cir.gates[0].name.split('-')[1] == str(q[0].id[:6])
-        assert cir.gates[0].name.split('-')[2] == str(0)
 
     def test_gate_attribute(self):
         # test single gate

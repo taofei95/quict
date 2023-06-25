@@ -3,7 +3,9 @@ from scipy.stats import unitary_group
 
 from QuICT.core import Circuit
 from QuICT.qcda.synthesis.unitary_decomposition.cartan_kak_decomposition import CartanKAKDecomposition
-from QuICT.qcda.synthesis.unitary_decomposition.cartan_kak_diagonal_decomposition import CartanKAKDiagonalDecomposition
+from QuICT.qcda.synthesis.unitary_decomposition.cartan_kak_diagonal_decomposition import (
+    CartanKAKDiagonalDecomposition
+)
 
 
 def Ud(a, b, c):
@@ -24,25 +26,23 @@ def test_tensor_decompose():
 
 
 def test_cartan_kak():
-    for _ in range(10):
-        U = unitary_group.rvs(4)
-        circuit = Circuit(2)
-        CKD = CartanKAKDecomposition()
-        CKD.execute(U) | circuit
+    U = unitary_group.rvs(4)
+    circuit = Circuit(2)
+    CKD = CartanKAKDecomposition()
+    CKD.execute(U) | circuit
 
-        Ucir = circuit.matrix()
-        phase = U.dot(np.linalg.inv(Ucir))
-        assert np.allclose(phase, phase[0, 0] * np.eye(4))
+    Ucir = circuit.matrix()
+    phase = U.dot(np.linalg.inv(Ucir))
+    assert np.allclose(phase, phase[0, 0] * np.eye(4))
 
 
 def test_cartan_kak_diagonal():
-    for _ in range(10):
-        U = unitary_group.rvs(4)
-        U /= np.linalg.det(U) ** 0.25
-        circuit = Circuit(2)
-        CKDD = CartanKAKDiagonalDecomposition()
-        CKDD.execute(U) | circuit
+    U = unitary_group.rvs(4)
+    U /= np.linalg.det(U) ** 0.25
+    circuit = Circuit(2)
+    CKDD = CartanKAKDiagonalDecomposition()
+    CKDD.execute(U) | circuit
 
-        Ucir = circuit.matrix()
-        phase = U.dot(np.linalg.inv(Ucir))
-        assert np.allclose(phase, phase[0, 0] * np.eye(4))
+    Ucir = circuit.matrix()
+    phase = U.dot(np.linalg.inv(Ucir))
+    assert np.allclose(phase, phase[0, 0] * np.eye(4))

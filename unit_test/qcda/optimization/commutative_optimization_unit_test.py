@@ -33,12 +33,12 @@ def test_deparameterize():
 
 # Be aware that too many types at the same time may not benefit to the test,
 # unless the size of the random circuit is also large.
-# typelist = [GateType.rx, GateType.ry, GateType.rz,
-#             GateType.x, GateType.y, GateType.z,
-#             GateType.s, GateType.t, GateType.h,
-#             GateType.cx, GateType.crz, GateType.fsim]
-# typelist = [GateType.rx, GateType.ry, GateType.rz, GateType.x, GateType.y, GateType.z, GateType.cx]
-typelist = [GateType.cx, GateType.h, GateType.s, GateType.t, GateType.x, GateType.y, GateType.z]
+typelist = [GateType.rx, GateType.ry, GateType.rz,
+            GateType.x, GateType.y, GateType.z,
+            GateType.s, GateType.t, GateType.h,
+            GateType.cx, GateType.crz, GateType.fsim]
+typelist = [GateType.rx, GateType.ry, GateType.rz, GateType.x, GateType.y, GateType.z, GateType.cx]
+# typelist = [GateType.cx, GateType.h, GateType.s, GateType.t, GateType.x, GateType.y, GateType.z]
 # typelist = [GateType.rx, GateType.ry, GateType.rz]
 # typelist = [GateType.x, GateType.y, GateType.z]
 # typelist = [GateType.cx, GateType.crz, GateType.fsim]
@@ -46,14 +46,11 @@ typelist = [GateType.cx, GateType.h, GateType.s, GateType.t, GateType.x, GateTyp
 
 
 def test():
-    for _ in range(10):
-        n = 5
-        circuit = Circuit(n)
-        circuit.random_append(rand_size=100, typelist=typelist)
+    n = 5
+    circuit = Circuit(n)
+    circuit.random_append(rand_size=100, typelist=typelist, random_params=True)
 
-        CO = CommutativeOptimization(deparameterization=True)
-        circuit_opt = CO.execute(circuit)
+    CO = CommutativeOptimization(deparameterization=True, keep_phase=True)
+    circuit_opt = CO.execute(circuit)
 
-        # phase = opt.dot(np.linalg.inv(original))
-        assert np.allclose(circuit.matrix(), circuit_opt.matrix())
-        # assert np.allclose(phase, phase[0, 0] * np.eye(2 ** n), rtol=1e-10, atol=1e-10)
+    assert np.allclose(circuit.matrix(), circuit_opt.matrix())

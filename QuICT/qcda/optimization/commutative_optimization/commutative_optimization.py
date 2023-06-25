@@ -10,7 +10,7 @@ from QuICT.qcda.utility import OutputAligner
 
 # Categories of combination
 elimination = [
-    GateType.h, GateType.x, GateType.y, GateType.z, GateType.cx,
+    GateType.h, GateType.x, GateType.y, GateType.z, GateType.cx, GateType.hy,
     GateType.cy, GateType.cz, GateType.ch, GateType.ccx, GateType.swap
 ]
 addition = [
@@ -97,14 +97,20 @@ class CommutativeOptimization(object):
         (GateType.rz, 15): ([T_dagger], np.pi / 8)
     }
 
-    def __init__(self, parameterization=True, deparameterization=False):
+    def __init__(self, parameterization=True, deparameterization=False, keep_phase=False):
         """
         Args:
             parameterization(bool, optional): whether to use the parameterize() process
             deparameterization(bool, optional): whether to use the deparameterize() process
+            keep_phase(bool): whether to keep the global phase as a GPhase gate in the output
         """
         self.parameterization = parameterization
         self.deparameterization = deparameterization
+        self.keep_phase = keep_phase
+
+    def __repr__(self):
+        return f'CommutativeOptimization(parameterization={self.parameterization}, ' \
+               f'deparameterization={self.deparameterization})'
 
     @classmethod
     def parameterize(cls, gate: BasicGate):
@@ -147,11 +153,11 @@ class CommutativeOptimization(object):
         gates_depara = CompositeGate()
         try:
             parg = np.mod(gate.parg, 4 * np.pi) / (np.pi / 4)
-            if np.isclose(round(parg), parg):
-                g_list, phase = cls.depara_rule[gate.type, round(parg)]
-                for g in g_list:
-                    gates_depara.append(g & gate.targ)
-                return gates_depara, phase
+            assert np.isclose(round(parg), parg)
+            g_list, phase = cls.depara_rule[gate.type, round(parg)]
+            for g in g_list:
+                gates_depara.append(g & gate.targ)
+            return gates_depara, phase
         except Exception:
             gates_depara.append(gate)
             return gates_depara, 0
@@ -182,9 +188,9 @@ class CommutativeOptimization(object):
                 or could not be combined directly to a gate with the same type.
         """
         assert gate_x.type == gate_y.type,\
-            TypeError('Gates to be combined are not of the same type.')
+            TypeError('commu_opt', 'Gates with same type', 'different type.')
         assert gate_x.cargs == gate_y.cargs and gate_x.targs == gate_y.targs,\
-            ValueError('Gates to be combined are not operated on the same qubits in the same way.')
+            ValueError('commu_opt', 'same control and target qubits', 'different qubits.')
 
         if gate_x.type in elimination:
             # IDGates operating on all qubits are the same
@@ -205,9 +211,9 @@ class CommutativeOptimization(object):
             return gate
 
         if gate_x.type in other or gate_x.type in not_calculated:
-            raise ValueError('Gates to be combined could not be combined directly to a gate with the same type.')
+            raise ValueError('commu_opt', 'calculated', 'not')
 
-        raise TypeError('Gate {} of unknown type encountered'.format(gate_x.name))
+        raise TypeError('commu_opt', 'BasicGate', f'{gate_x.type}')
 
     @OutputAligner()
     def execute(self, gates):
@@ -314,7 +320,7 @@ class CommutativeOptimization(object):
                 gates_opt.append(node.gate)
 
         phase_angle = np.mod(phase_angle.real, 2 * np.pi)
-        if not np.isclose(phase_angle, 0) and not np.isclose(phase_angle, 2 * np.pi):
+        if self.keep_phase and not np.isclose(phase_angle, 0) and not np.isclose(phase_angle, 2 * np.pi):
             with gates_opt:
                 GPhase(phase_angle) & 0
 

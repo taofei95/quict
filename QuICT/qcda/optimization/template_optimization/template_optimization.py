@@ -1,116 +1,112 @@
-# This code is part of Qiskit.
-#
-# (C) Copyright IBM 2020.
-#
-# This code is licensed under the Apache License, Version 2.0. You may
-# obtain a copy of this license in the LICENSE.txt file in the root directory
-# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
-#
-# Any modifications or derivative works of this code must retain this
-# copyright notice, and modified files need to carry a notice indicating
-# that they have been altered from the originals.
+from typing import Iterable, List
 
-# Modification Notice: Code revised for QuICT
-
-"""
-Given a template and a circuit: it applies template matching and substitutes
-all compatible maximal matches that reduces the size of the circuit.
-
-**Reference:**
-
-[1] Iten, R., Moyard, R., Metger, T., Sutter, D. and Woerner, S., 2020.
-Exact and practical pattern matching for quantum circuit optimization.
-`arXiv:1909.05270 <https://arxiv.org/abs/1909.05270>`_
-"""
-
-from QuICT.core import *
+from QuICT.core import Circuit
+from QuICT.tools.circuit_library.circuitlib import CircuitLib
+from QuICT.qcda.optimization.template_optimization.template_matching.template_matching import (
+    MatchingDAGCircuit, TemplateMatching)
+from QuICT.qcda.optimization.template_optimization.template_matching.template_substitution import \
+    TemplateSubstitution
 from QuICT.qcda.utility import OutputAligner
-from .template_matching.dagdependency.circuit_to_dagdependency import circuit_to_dagdependency
-from .template_matching.dagdependency.dagdependency_to_circuit import dagdependency_to_circuit
-from .templates import template_nct_2a_1, template_nct_2a_2, template_nct_2a_3
-from .template_matching import TemplateMatching, TemplateSubstitution, MaximalMatches
+
+from .template_matching.template_substitution import CircuitCostMeasure
 
 
 class TemplateOptimization(object):
     """
-    Class for the template optimization pass.
+    Template optimization algorithm.
+
+    [1] Iten, R., Moyard, R., Metger, T., Sutter, D. and Woerner, S., 2020.
+    Exact and practical pattern matching for quantum circuit optimization.
+    `arXiv:1909.05270 <https://arxiv.org/abs/1909.05270>`
     """
-    def __init__(self, template_list=None, heuristics_qubits_param=None, heuristics_backward_param=None):
+
+    def __init__(
+            self,
+            template_max_width=None,
+            template_max_size=2,
+            template_max_depth=None,
+            template_typelist=None,
+            template_list=None,
+            qubit_fixing_num=1,
+            prune_step=3,
+            prune_survivor_num=1,
+    ):
         """
+        Execute template optimization algorithm.
+
+        Specify `template_max_width/template_max_size/template_max_depth/template_typelist`
+        if you want to use templates in CircuitLib limiting size/width/depth/gate types.
+        No limit if set to None. By default all templates of size 2 in CircuitLib are used.
+
+        Specify `template_list` if you want to use customized templates.
+        Setting `template_list` will invalidate
+        `template_max_width/template_max_size/template_max_depth/template_typelist`.
+
+        `qubit_fixing_num`, `prune_step`, `prune_survivor_num` are 3 heuristic parameters
+        used in template matching. Their default values are recommended values.
+            1. `qubit_fixing_num` the number of additional qubits explored when enumerating
+                the qubit mapping (default value is 1).
+            2. `prune_step`, `prune_survivor_num` are parameters for backward matching.
+                Backward match will prune the search tree when depth=k * `prune_step`
+                (k = 1, 2, ...) and at most `prune_survivor_num` maximal matching scenarios
+                will survive (default values are 3, 1).
+
         Args:
-            template_list (list[QuantumCircuit()]): list of the different template circuit to apply.
-            heuristics_backward_param (list[int]): [length, survivor] Those are the parameters for
-                applying heuristics on the backward part of the algorithm. This part of the
-                algorithm creates a tree of matching scenario. This tree grows exponentially. The
-                heuristics evaluates which scenarios have the longest match and keep only those.
-                The length is the interval in the tree for cutting it and surviror is the number
-                of scenarios that are kept. We advice to use l=3 and s=1 to have serious time
-                advantage. We remind that the heuristics implies losing a part of the maximal
-                matches. Check reference for more details.
-            heuristics_qubits_param (list[int]): [length] The heuristics for the qubit choice make
-                guesses from the dag dependency of the circuit in order to limit the number of
-                qubit configurations to explore. The length is the number of successors or not
-                predecessors that will be explored in the dag dependency of the circuit, each
-                qubits of the nodes are added to the set of authorized qubits. We advice to use
-                length=1. Check reference for more details.
+            template_max_width(int): Limit on number of qubits of templates used.
+            template_max_size(int): Limit on number of gates of templates used.
+            template_max_depth(int): Limit on depth of templates used.
+            template_typelist(Iterable[GateType]): Limit on gate types of templates used.
+            template_list(List[Circuit]): List of templates used.
+            qubit_fixing_num(int): heuristic parameter for qubit exploring
+            prune_step(int): heuristic parameter for backward match
+            prune_survivor_num(int): heuristic parameter for backward match
         """
-        # If no template is given; the template are set as x-x, cx-cx, ccx-ccx.
+
         if template_list is None:
-            template_list = [template_nct_2a_1(), template_nct_2a_2(), template_nct_2a_3()]
-        if heuristics_qubits_param is None:
-            heuristics_qubits_param = []
-        if heuristics_backward_param is None:
-            heuristics_backward_param = []
+            template_list = CircuitLib().get_template_circuit(
+                template_max_width,
+                template_max_size,
+                template_max_depth,
+                template_typelist
+            )
+
         self.template_list = template_list
-        self.heuristics_qubits_param = heuristics_qubits_param
-        self.heuristics_backward_param = heuristics_backward_param
+        self.heuristics_qubits_param = [qubit_fixing_num]
+        self.heuristics_backward_param = [prune_step, prune_survivor_num]
+        self.cost_measure = CircuitCostMeasure(target_device='nisq')
+
+    def __repr__(self):
+        return f'TemplateOptimization(' \
+               f'heuristics_qubits_param={self.heuristics_qubits_param}), ' \
+               f'heuristics_backward_param={self.heuristics_backward_param})'
 
     @OutputAligner()
     def execute(self, circuit):
         """
+        Execute template optimization algorithm.
+
         Args:
-            circuit(Circuit): circuit.
+            circuit(Circuit): the circuit to be optimized
 
         Returns:
-            Circuit: optimized circuit.
-
-        Raises:
-            TypeError: If the template has not the right form or
-             if the output circuit acts differently as the input circuit.
+            Circuit: the optimized circuit
         """
-        circuit_dag_dep = circuit_to_dagdependency(circuit)
+
+        circ_dag = MatchingDAGCircuit(circuit)
 
         for template in self.template_list:
-            if not isinstance(template, Circuit):
-                raise TypeError('A template is a Circuit().')
+            template_dag = MatchingDAGCircuit(template)
 
-            template_dag_dep = circuit_to_dagdependency(template)
-
-            if template_dag_dep.num_qubits > circuit_dag_dep.num_qubits:
+            if template_dag.width > circ_dag.width:
                 continue
 
-            template_m = TemplateMatching(circuit_dag_dep,
-                                          template_dag_dep,
-                                          self.heuristics_qubits_param,
-                                          self.heuristics_backward_param)
+            matches = TemplateMatching.execute(
+                circ_dag,
+                template_dag,
+                self.heuristics_qubits_param,
+                self.heuristics_backward_param
+            )
 
-            template_m.run_template_matching()
+            circ_dag = TemplateSubstitution.execute(circ_dag, template_dag, matches, self.cost_measure)
 
-            matches = template_m.match_list
-
-            if matches:
-                maximal = MaximalMatches(matches)
-                maximal.run_maximal_matches()
-                max_matches = maximal.max_match_list
-
-                substitution = TemplateSubstitution(max_matches,
-                                                    template_m.circuit_dag_dep,
-                                                    template_m.template_dag_dep)
-                substitution.run_dag_opt()
-
-                circuit_dag_dep = substitution.dag_dep_optimized
-            else:
-                continue
-
-        circuit = dagdependency_to_circuit(circuit_dag_dep)
-        return circuit
+        return circ_dag.get_circuit()

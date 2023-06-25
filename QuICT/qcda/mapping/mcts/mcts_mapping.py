@@ -1,99 +1,74 @@
+from typing import Union
 
-from typing import List
+from QuICT.core import *
+from QuICT.core.gate import CompositeGate
+from QuICT.core.gate.gate import *
+from QuICT.qcda.utility import OutputAligner
 
-from QuICT.core.circuit import *
-from QuICT.core.exception import *
-from QuICT.core.gate import *
-from QuICT.core.layout import *
-from QuICT.qcda.mapping.utility import *
-from .mcts import *
+from ..common import CircuitInfo, LayoutInfo
+from .mcts_tree import MCTSTree
 
 
-class MCTSMapping(object):
+class MCTSMapping:
     def __init__(
         self,
         layout: Layout,
-        init_mapping: List[int] = None,
-        init_mapping_method: str = "naive",
-        Nsim: int = 2,
-        Nsch: int = 5000,
-        num_of_process: int = 4
-    ):
-        """
-        Args:
-            layout: The physical layout of the NISQ devices.
-            init_mapping: Initial position of logical qubits on physical qubits.
-                The argument is optional. If not given, it will be determined by init_mapping method.
-                A simple Layout instance is shown as follow:
-                    index: logical qubit -> List[index]:physical qubit
-                        4-qubit device init_mapping: [ 3, 2, 0, 1 ]
-                            logical qubit -> physical qubit
-                            0         3
-                            1         2
-                            2         0
-                            3         1
-            init_mapping_method: The method used to dertermine the initial mapping.
-                "naive": Using identity mapping, i.e., [0,1,...,n] as the initial mapping.
-                "anneal": Using simmulated annealing method[1] to generate the initial mapping.
-            Nsim: The repeated times of the simulation module.
-            Nsch: Number of search times in MCTS.
-            num_of_process: Number of threads used in tree parallel MCTS.
-        """
-        self.layout = layout
-        self.init_mapping = init_mapping
-        self.init_mapping_method = init_mapping_method
-        if self.init_mapping is not None:
-            assert isinstance(self.init_mapping, list), Exception("Layout should be a list of integers")
-        else:
-            assert self.init_mapping_method in ["anneal", "naive"], Exception("No such initial mapping method")
-        self.Nsim = Nsim
-        self.Nsch = Nsch
-        self.num_of_process = num_of_process
+        bp_num: int = 20,
+        sim_cnt: int = 50,
+        sim_gate_num: int = 30,
+        gamma: float = 0.7,
+        epsilon: float = 0.001,
+        c: float = 20,
+    ) -> None:
+        self._layout_info = LayoutInfo(layout=layout)
+        self._bp_num = bp_num
+        self._sim_cnt = sim_cnt
+        self._sim_gate_num = sim_gate_num
+        self._c = c
+        self._gamma = gamma
+        self._epsilon = epsilon
+        self.logic2phy = []
+        self.phy2logic = []
 
+    @OutputAligner()
     def execute(
         self,
-        circuit: Circuit
-    ) -> Circuit:
-        """Mapping the logical circuit to a NISQ device.
-        Args:
-            circuit: The input circuit that needs to be mapped to a NISQ device.
-
-        Return:
-            the hardware-compliant circuit after mapping.
-
-        [1]Zhou, X., Li, S., & Feng, Y. (2020). Quantum Circuit Transformation Based on Simulated Annealing and
-        Heuristic Search. IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems, 39, 4683-4694.
-        """
-        num = self.layout.qubit_number
-
-        circuit_dag = DAG(circuit=circuit, mode=Mode.TWO_QUBIT_CIRCUIT)
-        coupling_graph = CouplingGraph(coupling_graph=self.layout)
-
-        if self.init_mapping is None:
-            num_of_qubits = coupling_graph.size
-            if self.init_mapping_method == "anneal":
-                cost_f = Cost(circuit=circuit_dag, coupling_graph=coupling_graph)
-                self.init_mapping = np.random.permutation(num_of_qubits)
-                _, best_mapping = simulated_annealing(
-                    init_mapping=self.init_mapping,
-                    cost=cost_f,
-                    method="nnc",
-                    param={"T_max": 100, "T_min": 1, "alpha": 0.99, "iterations": 1000}
-                )
-                self.init_mapping = list(best_mapping)
-            if self.init_mapping_method == "naive":
-                self.init_mapping = [i for i in range(num_of_qubits)]
-
-        mcts_tree = MCTS(
-            coupling_graph=coupling_graph,
-            Nsim=self.Nsim,
-            selection_times=self.Nsch,
-            num_of_process=self.num_of_process
+        circuit_like: Union[Circuit, CompositeGate],
+    ) -> Union[Circuit, CompositeGate]:
+        cg = CompositeGate()
+        q = circuit_like.width()
+        circuit_info = CircuitInfo(
+            circ=circuit_like, max_gate_num=len(circuit_like.gates)
         )
-        mcts_tree.search(logical_circuit=circuit, init_mapping=self.init_mapping)
+        # Bypass first part
+        circuit_info.eager_exec(
+            logic2phy=list(range(q)),
+            physical_circ=cg,
+            topo_graph=self._layout_info.topo_graph,
+        )
+        # Execute search on remain
+        mcts_tree = MCTSTree(
+            circuit_info=circuit_info,
+            layout_info=self._layout_info,
+            bp_num=self._bp_num,
+            sim_cnt=self._sim_cnt,
+            sim_gate_num=self._sim_gate_num,
+            gamma=self._gamma,
+            epsilon=self._epsilon,
+            c=self._c,
+        )
 
-        gates = mcts_tree.physical_circuit
+        terminated = mcts_tree._root.is_terminated_node()
+        while not terminated:
+            action, part, terminated = mcts_tree.step()
+            with cg:
+                Swap & list(action)
+            cg.extend(part)
+        self.logic2phy, self.phy2logic = (
+            mcts_tree._root.logic2phy,
+            mcts_tree._root.phy2logic,
+        )
+        del mcts_tree
 
-        new_circuit = Circuit(num)
-        new_circuit.extend(gates)
-        return new_circuit
+        result = cg
+        return result

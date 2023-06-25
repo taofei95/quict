@@ -11,8 +11,8 @@ from configparser import ConfigParser
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.utils import GateType
-from QuICT.core.exception import QasmInputException
 from QuICT.lib import Qasm
+from QuICT.tools.exception.core import QASMError
 
 from .basic_interface import BasicInterface
 
@@ -55,12 +55,17 @@ class OPENQASMInterface(BasicInterface):
         "sy": GateType.sy,
         "sw": GateType.sw,
         "p": GateType.phase,
+        "phase": GateType.gphase,
         "swap": GateType.swap,
+        "iswap": GateType.iswap,
+        "iswapdg": GateType.iswapdg,
+        "sqiswap": GateType.sqiswap,
         "rx": GateType.rx,
         "ry": GateType.ry,
         "rz": GateType.rz,
         "id": GateType.id,
         "h": GateType.h,
+        "hy": GateType.hy,
         "cx": GateType.cx,
         "ccx": GateType.ccx,
         "ccz": GateType.ccz,
@@ -72,6 +77,7 @@ class OPENQASMInterface(BasicInterface):
         "rzz": GateType.rzz,
         "rxx": GateType.rxx,
         "ryy": GateType.ryy,
+        "rzx": GateType.rzx,
         "cu1": GateType.cu1,
         "cu3": GateType.cu3,
         "cswap": GateType.cswap,
@@ -97,6 +103,13 @@ class OPENQASMInterface(BasicInterface):
     def load_file(filename: str):
         instance = OPENQASMInterface()
         instance.ast = Qasm(filename).parse()
+        instance.analyse_circuit_from_ast(instance.ast)
+        return instance
+
+    @staticmethod
+    def load_string(qasm: str):
+        instance = OPENQASMInterface()
+        instance.ast = Qasm(data=qasm).parse()
         instance.analyse_circuit_from_ast(instance.ast)
         return instance
 
@@ -171,61 +184,6 @@ class OPENQASMInterface(BasicInterface):
         with open(self.DEFAULT_QUICT_FILE, 'w') as f:
             config_parser.write(f)
 
-    def output_qiskit(self, filename, generator_qasm=False, shots=1024):
-        if not self.valid_qasm or self.qasm is None:
-            if self.circuit is None:
-                return
-            self.qasm = self.circuit.qasm()
-            if self.qasm != 'error':
-                self.valid_qasm = True
-            else:
-                return False
-
-        if self.token is None:
-            self.load_token()
-            if self.token is None:
-                token = input("please input token > ")
-                self.save_token(token)
-
-        if generator_qasm:
-            with open(filename + '.qasm', 'w+') as file:
-                file.write(self.qasm)
-            code = """
-                    from qiskit import QuantumCircuit
-                    from qiskit import IBMQ, execute
-                    from qiskit.providers.ibmq import least_busy
-                    IBMQ.save_account('{}', overwrite=True)
-                    circ = QuantumCircuit.from_qasm_file("{}.qasm")
-                    provider = IBMQ.load_account()
-                    least_busy_device = least_busy(
-                    provider.backends(simulator=False,
-                        filters=lambda x: x.configuration().n_qubits > 4))
-                    job = execute(circ, least_busy_device, shots={})
-                    result = job.result()
-                    print(result.get_counts(circ))
-                """.format(self.token, filename, shots)
-
-            with open(filename + '.py', 'w+') as file:
-                file.write(code)
-        else:
-            code = """
-                from qiskit import QuantumCircuit
-                from qiskit import IBMQ, execute
-                from qiskit.providers.ibmq import least_busy
-                IBMQ.save_account('{}')
-                circ = QuantumCircuit.from_qasm_str({})
-                provider = IBMQ.load_account()
-                least_busy_device = least_busy(
-                provider.backends(simulator=False,
-                    filters=lambda x: x.configuration().n_qubits > 4))
-                job = execute(circ, least_busy_device, shots={})
-                result = job.result()
-                print(result.get_counts(circ))
-            """.format(self.token, '"""' + self.qasm + '"""', shots)
-
-            with open(filename + '.py', 'w+') as file:
-                file.write(code)
-
     def analyse_node(self, node):
         if not self.valid_circuit:
             return
@@ -254,7 +212,7 @@ class OPENQASMInterface(BasicInterface):
             self.analyse_custom(node)
 
         elif node.type == "universal_unitary":
-            QasmInputException("universal_unitary is deprecated", node.line, node.file)
+            QASMError("universal_unitary is deprecated", node.line, node.file)
 
         elif node.type == "cnot":
             self.analyse_cnot(node)
@@ -281,7 +239,7 @@ class OPENQASMInterface(BasicInterface):
             self.analyse_opaque(node)
 
         else:
-            QasmInputException("QASM grammer error", node.line, node.file)
+            QASMError("QASM grammer error", node.line, node.file)
 
     def analyse_gate(self, node):
         self.gates[node.name] = {}
@@ -325,13 +283,13 @@ class OPENQASMInterface(BasicInterface):
                 self.arg_stack.pop()
                 self.bit_stack.pop()
         else:
-            raise QasmInputException("undefined gate:", node.line, node.file)
+            raise QASMError("undefined gate:", node.line, node.file)
 
     def analyse_cnot(self, node):
         id0 = self.get_analyse_id(node.children[0])
         id1 = self.get_analyse_id(node.children[1])
         if not (len(id0) == len(id1) or len(id0) == 1 or len(id1) == 1):
-            raise QasmInputException("the number of bits unmatched:", node.line, node.file)
+            raise QASMError("the number of bits unmatched:", node.line, node.file)
 
         maxidx = max([len(id0), len(id1)])
         for idx in range(maxidx):
@@ -349,7 +307,7 @@ class OPENQASMInterface(BasicInterface):
         id0 = self.get_analyse_id(node.children[0])
         id1 = self.get_analyse_id(node.children[1])
         if len(id0) != len(id1):
-            raise QasmInputException("the number of bits of registers unmatched:", node.line, node.file)
+            raise QASMError("the number of bits of registers unmatched:", node.line, node.file)
 
         for idx, _ in zip(id0, id1):
             m_gate = build_gate(GateType.measure, [idx])
@@ -411,7 +369,7 @@ class OPENQASMInterface(BasicInterface):
         elif self.bit_stack[-1] and node.name in self.bit_stack[-1]:
             reg = self.bit_stack[-1][node.name]
         else:
-            raise QasmInputException("expected qreg or creg name:", node.line, node.file)
+            raise QASMError("expected qreg or creg name:", node.line, node.file)
 
         if node.type == "indexed_id":
             return [reg.index[node.index]]
@@ -421,5 +379,5 @@ class OPENQASMInterface(BasicInterface):
             else:
                 if node.name in self.bit_stack[-1]:
                     return [self.bit_stack[-1][node.name]]
-                raise QasmInputException("expected qreg or creg name:", node.line, node.file)
+                raise QASMError("expected qreg or creg name:", node.line, node.file)
         return None
