@@ -52,6 +52,7 @@ class GateType(Enum):
     reset = "Reset gate"
     barrier = "Barrier gate"
     unitary = "Unitary gate"
+    multi_control = "Multi_Control Gate"
 
     # no qasm represent below
     perm = "Permutation gate"
@@ -151,7 +152,7 @@ GATEINFO_MAP = {
     GateType.hy: (0, 1, 0, GateType.hy, MatrixType.normal),
     GateType.s: (0, 1, 0, GateType.s, MatrixType.control),
     GateType.sdg: (0, 1, 0, GateType.sdg, MatrixType.control),
-    GateType.x: (0, 1, 0, GateType.x, MatrixType.swap),
+    GateType.x: (0, 1, 0, GateType.x, MatrixType.reverse),
     GateType.y: (0, 1, 0, GateType.y, MatrixType.reverse),
     GateType.z: (0, 1, 0, GateType.z, MatrixType.control),
     GateType.sx: (0, 1, 0, GateType.sx, MatrixType.normal),
