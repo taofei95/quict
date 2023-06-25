@@ -369,7 +369,7 @@ class GateSimulator:
             matrix = self._get_gate_matrix(gate) if fp else self._get_gate_param_grad(gate, parg_id)
         else:
             matrix = gate.matrix
-        
+
         # Deal with quantum gate with more than 3 qubits.
         if gate_type == GateType.unitary and args_num >= 3:
             state_vector = self._algorithm.matrix_dot_vector(

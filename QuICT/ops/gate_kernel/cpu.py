@@ -144,13 +144,14 @@ def swap_matrix(
     target_args: np.ndarray,
 ):
     # Step 1: Deal with mat_bit == vec_bit
-    valid_params = np.array([mat[-2, -3], mat[-3, -2]]) if mat.size > 4 else np.array([mat[0, 1], mat[1, 0]])
+    valid_params = np.array([mat[-2, -3], mat[-3, -2]]) if len(target_args) > 1 else np.array([mat[-2, -1], mat[-1, -2]])
     vec_bit = int(np.log2(vec.shape[0]))
     mat_bit = int(np.log2(mat.shape[0]))
     if vec_bit == mat_bit:
-        temp_value = vec[-2]
-        vec[-2] = vec[-3] * valid_params[0]
-        vec[-3] = temp_value * valid_params[1]
+        swap_idxes = [-1, -2] if len(target_args) == 1 else [-2, -3]
+        temp_value = vec[swap_idxes[0]]
+        vec[swap_idxes[0]] = vec[swap_idxes[1]] * valid_params[0]
+        vec[swap_idxes[1]] = temp_value * valid_params[1]
 
         return
 
