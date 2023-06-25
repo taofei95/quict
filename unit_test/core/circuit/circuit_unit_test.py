@@ -51,7 +51,11 @@ class TestCircuit(unittest.TestCase):
                 else:
                     target_gate_list = self.default_3_qubits_gate
                     target_gate_indexes = list(np.random.choice(qubit_range, 3, False))
-                    new_depth = max(depth[target_gate_indexes[0]], depth[target_gate_indexes[1]], depth[target_gate_indexes[2]]) + 1
+                    new_depth = max(
+                        depth[target_gate_indexes[0]],
+                        depth[target_gate_indexes[1]],
+                        depth[target_gate_indexes[2]]
+                    ) + 1
                     depth[target_gate_indexes[0]] = new_depth
                     depth[target_gate_indexes[1]] = new_depth
                     depth[target_gate_indexes[2]] = new_depth
@@ -74,9 +78,15 @@ class TestCircuit(unittest.TestCase):
                 # parameter gate
                 is_add_param_call = np.random.rand()
                 if is_add_param_call > 0.5:
-                    target_pgate = self.default_parameter_gates_for_call_test[np.random.randint(0, len(self.default_parameter_gates_for_call_test))]
+                    target_pgate = self.default_parameter_gates_for_call_test[
+                        np.random.randint(0, len(self.default_parameter_gates_for_call_test))
+                    ]
                     random_params = [np.random.rand() for _ in range(target_pgate.params)]
-                    target_pgate_indexes = list(np.random.choice(qubit_range, target_pgate.controls + target_pgate.targets, False))
+                    target_pgate_indexes = list(np.random.choice(
+                        qubit_range,
+                        target_pgate.controls + target_pgate.targets,
+                        False
+                    ))
                     target_pgate(*random_params) | cir(target_pgate_indexes)
 
                     size += 1
@@ -89,7 +99,11 @@ class TestCircuit(unittest.TestCase):
                         depth[target_pgate_indexes[0]] = new_depth
                         depth[target_pgate_indexes[1]] = new_depth
                     else:
-                        new_depth = max(depth[target_pgate_indexes[0]], depth[target_pgate_indexes[1]], depth[target_pgate_indexes[2]]) + 1
+                        new_depth = max(
+                            depth[target_pgate_indexes[0]],
+                            depth[target_pgate_indexes[1]],
+                            depth[target_pgate_indexes[2]]
+                        ) + 1
                         depth[target_pgate_indexes[0]] = new_depth
                         depth[target_pgate_indexes[1]] = new_depth
                         depth[target_pgate_indexes[2]] = new_depth
