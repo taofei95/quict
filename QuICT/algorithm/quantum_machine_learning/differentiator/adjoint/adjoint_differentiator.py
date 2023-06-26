@@ -114,14 +114,14 @@ class AdjointDifferentiator:
 
     def run_batch(
         self,
-        circuits: list,
+        circuit: Circuit,
         variables: Variable,
         state_vector_list: list,
         expectation_op: Hamiltonian,
     ):
         params_grad_list = []
         expectation_list = []
-        for circuit, state_vector in zip(circuits, state_vector_list):
+        for state_vector in state_vector_list:
             params, expectation = self.run(
                 circuit, variables.copy(), state_vector, expectation_op
             )

@@ -87,13 +87,13 @@ class Differentiator:
 
     def run_batch(
         self,
-        circuits: list,
+        circuit: Circuit,
         variables: Variable,
         state_vector_list: list,
         expectation_op: Hamiltonian,
     ):
         return self._differentiator.run_batch(
-            circuits, variables, state_vector_list, expectation_op
+            circuit, variables, state_vector_list, expectation_op
         )
 
     def get_expectation(
