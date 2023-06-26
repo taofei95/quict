@@ -332,8 +332,8 @@ Controlled_Multiply_ctargs_single_kernel = cp.RawKernel(r'''
 
         int _1 = _0 + offset_t;
 
-        vec[_0] = vec[_0]*mat[10];
-        vec[_1] = vec[_1]*mat[15];
+        vec[_0] = vec[_0]*mat[0];
+        vec[_1] = vec[_1]*mat[3];
     }
     ''', 'Controlled4x4Multiply')
 
@@ -363,8 +363,8 @@ Controlled_Multiply_ctargs_double_kernel = cp.RawKernel(r'''
 
         int _1 = _0 + offset_t;
 
-        vec[_0] = vec[_0]*mat[10];
-        vec[_1] = vec[_1]*mat[15];
+        vec[_0] = vec[_0]*mat[0];
+        vec[_1] = vec[_1]*mat[3];
     }
     ''', 'Controlled4x4Multiply')
 
@@ -453,8 +453,8 @@ Controlled_InnerProduct_ctargs_single_kernel = cp.RawKernel(r'''
         int _1 = _0 + offset_t;
 
         complex<float> temp_0 = vec[_0];
-        vec[_0] = vec[_0]*mat[10] + vec[_1]*mat[11];
-        vec[_1] = temp_0*mat[14] + vec[_1]*mat[15];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[2] + vec[_1]*mat[3];
     }
     ''', 'Controlled4x4InnerProduct')
 
@@ -485,8 +485,8 @@ Controlled_InnerProduct_ctargs_double_kernel = cp.RawKernel(r'''
         int _1 = _0 + offset_t;
 
         complex<double> temp_0 = vec[_0];
-        vec[_0] = vec[_0]*mat[10] + vec[_1]*mat[11];
-        vec[_1] = temp_0*mat[14] + vec[_1]*mat[15];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[2] + vec[_1]*mat[3];
     }
     ''', 'Controlled4x4InnerProduct')
 
@@ -517,8 +517,8 @@ Controlled_MultiplySwap_ctargs_single_kernel = cp.RawKernel(r'''
         int _1 = _0 + offset_t;
 
         complex<float> temp_0 = vec[_0];
-        vec[_0] = vec[_1]*mat[11];
-        vec[_1] = temp_0*mat[14];
+        vec[_0] = vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[2];
     }
     ''', 'Controlled4x4MultiSwap')
 
@@ -549,8 +549,8 @@ Controlled_MultiplySwap_ctargs_double_kernel = cp.RawKernel(r'''
         int _1 = _0 + offset_t;
 
         complex<double> temp_0 = vec[_0];
-        vec[_0] = vec[_1]*mat[11];
-        vec[_1] = temp_0*mat[14];
+        vec[_0] = vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[2];
     }
     ''', 'Controlled4x4MultiSwap')
 
@@ -967,8 +967,8 @@ Controlled_Multiply_more_single_kernel = cp.RawKernel(r'''
 
         int _1 = _0 + offset_t;
 
-        vec[_0] = vec[_0]*mat[54];
-        vec[_1] = vec[_1]*mat[63];
+        vec[_0] = vec[_0]*mat[0];
+        vec[_1] = vec[_1]*mat[3];
     }
     ''', 'Controlled8x8Multiply')
 
@@ -1004,8 +1004,8 @@ Controlled_Multiply_more_double_kernel = cp.RawKernel(r'''
 
         int _1 = _0 + offset_t;
 
-        vec[_0] = vec[_0]*mat[54];
-        vec[_1] = vec[_1]*mat[63];
+        vec[_0] = vec[_0]*mat[0];
+        vec[_1] = vec[_1]*mat[3];
     }
     ''', 'Controlled8x8Multiply')
 
