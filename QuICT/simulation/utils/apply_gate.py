@@ -371,12 +371,20 @@ class GateSimulator:
         """ The algorithm of apply gate into State Vector in GPU."""
         gate_type, matrix_type = gate.type, gate.matrix_type
         args_num = gate.controls + gate.targets
-        if isinstance(gate, MultiControlGate):
-            matrix = self._gate_matrix_generator.get_matrix(gate, self._precision, True)
-        elif gate.type != GateType.unitary:
+        if gate.type != GateType.unitary:
             matrix = self._get_gate_matrix(gate) if fp else self._get_gate_param_grad(gate, parg_id)
         else:
             matrix = gate.matrix
+
+        if isinstance(gate, MultiControlGate):
+            if len(targs) == 1:
+                state_vector = self._algorithm.apply_multi_control_targ_gate(
+                    state_vector, qubits, matrix, cargs, targs[0], self._sync
+                )
+            else:
+                pass
+
+            return
 
         # Deal with quantum gate with more than 3 qubits.
         if gate_type == GateType.unitary and args_num >= 3:
