@@ -67,6 +67,10 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
 
         multi_prime = (multiple * pow(2, self._ancilla_size - 1, modulus)) % modulus
 
+        ##### Preprocess #####
+
+        # ry_QFT(self._register_size + self._ancilla_size) | self(self._output_qubit_list + self._ancilla_qubit_list)
+
         ##### Multiplication stage #####        
         self.__phi_MAC_mod(
             in_reg_size = self._register_size,
@@ -117,16 +121,16 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
             out_fourier = True
         ) | self([ctl_idx] + self._output_qubit_list)
 
-        # correct u_tilde_(m+1)'s highest bit
-        CX | self(correction_block[-2:])
-
         ##### Get modular multiplication result #####
         ry_QFT(
             targets = self._register_size,
             inverse = True
         ) | self(self._output_qubit_list)
 
-        ##### Uncomputation stage #####
+        # correct u_tilde_(m+1)'s highest bit
+        CX | self(correction_block[-2:])
+
+        # ##### Uncomputation stage #####
         ry_QFT(
             targets = self._ancilla_size,
             inverse = False
@@ -354,10 +358,11 @@ class RCModMultiplierCtl(CompositeGate):
 
         super().__init__(name)
 
+        swap_list = [i for i in range(self._total_size - qreg_size, self._total_size) ]
         # 0-ctl cswap two registers
         X | self(self._control_list)
         for i in range(self._register_size):
-            CSwap | self(self._control_list + [self._register_list[i], self._ancilla_n_list[i]])
+            CSwap | self(self._control_list + [self._register_list[i], swap_list[i]])
         X | self(self._control_list)
 
         # *multiple % modulus, forward
@@ -382,7 +387,7 @@ class RCModMultiplierCtl(CompositeGate):
         # 0-ctl cswap two registers
         X | self(self._control_list)
         for i in range(self._register_size):
-            CSwap | self(self._control_list + [self._register_list[i], self._ancilla_n_list[i]])
+            CSwap | self(self._control_list + [self._register_list[i], swap_list[i]])
         X | self(self._control_list)
 
         return
