@@ -2,6 +2,7 @@ import numpy as np
 
 from typing import List
 
+from QuICT.tools.exception.core.gate_exception import *
 from QuICT.core.gate import X, CX, CU3, Swap, CSwap
 from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.algorithm.submodule.adder import RCFourierAdderWired
@@ -44,9 +45,8 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
                 Requires M to be coprime with modulus N.
 
         """
-        assert int(np.ceil(np.log2(modulus+1))) <= qreg_size, "Not enough register size for modulus"
-        
-        # TODO: is gcd(M,N) != 1 condition for all cases or only when M^(-1) is calculated
+        if int(np.ceil(np.log2(modulus+1))) > qreg_size:
+            raise GateParametersAssignedError("Not enough register size for modulus")
 
         self._modulus  = modulus
         self._multiple = multiple
