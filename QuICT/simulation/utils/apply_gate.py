@@ -378,11 +378,13 @@ class GateSimulator:
 
         if isinstance(gate, MultiControlGate):
             if len(targs) == 1:
-                state_vector = self._algorithm.apply_multi_control_targ_gate(
+                self._algorithm.apply_multi_control_targ_gate(
                     state_vector, qubits, matrix, cargs, targs[0], self._sync
                 )
             else:
-                pass
+                self._algorithm.apply_multi_control_targs_gate(
+                    state_vector, qubits, matrix, cargs, targs, self._sync
+                )
 
             return
 
