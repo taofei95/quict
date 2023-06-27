@@ -11,9 +11,12 @@ from QuICT.algorithm.quantum_machine_learning.model import QAOA
 from QuICT.simulation.state_vector import StateVectorSimulator
 
 
+# n = 5
+# nodes = list(range(n))
+# edges = [[0, 1], [1, 2], [2, 3], [3, 4], [0, 3], [2, 4]]
 n = 5
 nodes = list(range(n))
-edges = [[0, 1], [1, 2], [2, 3], [3, 4], [0, 3], [2, 4]]
+edges = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0]]
 
 
 def maxcut_hamiltonian(edges):
@@ -28,7 +31,7 @@ def maxcut_hamiltonian(edges):
 H = maxcut_hamiltonian(edges)
 
 p = 4  # 量子电路层数
-MAX_ITERS = 150  # 最大迭代次数
+MAX_ITERS = 300  # 最大迭代次数
 LR = 0.1  # 梯度下降的学习率
 SEED = 17  # 随机数种子
 SHOTS = 1000

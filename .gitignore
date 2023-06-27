@@ -38,3 +38,4 @@ unit_test/**/*.jpg
 /docs_
 /QNN2.0_MNIST*
 /hiq_qnn/data
+/MaxCut_*
