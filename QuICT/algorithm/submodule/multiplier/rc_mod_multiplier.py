@@ -46,7 +46,9 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
 
         """
         if int(np.ceil(np.log2(modulus+1))) > qreg_size:
-            raise GateParametersAssignedError("Not enough register size for modulus")
+            raise GateParametersAssignedError("Not enough register size for modulus.")
+        if modulus%2 == 0:
+            raise GateParametersAssignedError("Modulus cannot be an even number.")
 
         self._modulus  = modulus
         self._multiple = multiple
@@ -272,6 +274,14 @@ class RCModMultiplier(CompositeGate):
             circuit backwards, it cannot cancel z >= modulus (it is because when running forward 
             the gate obviously cannot generate value greater than modulus on any register by design).
         """
+        
+        if int(np.ceil(np.log2(modulus+1))) > qreg_size:
+            raise GateParametersAssignedError("Not enough register size for modulus.")
+        if modulus%2 == 0:
+            raise GateParametersAssignedError("Modulus cannot be an even number.")
+        if np.gcd(modulus, multiple) != 1:
+            raise GateParametersAssignedError("Modulus and multiple have to be co-prime.")
+
         self._modulus  = modulus
         self._multiple = multiple
         
@@ -343,6 +353,14 @@ class RCModMultiplierCtl(CompositeGate):
             NOTE: For the same reason as the simple in-place modular multiplication,
             The ancilla qubits can be properly set back to 0s only when z < modulus.
         """
+
+        if int(np.ceil(np.log2(modulus+1))) > qreg_size:
+            raise GateParametersAssignedError("Not enough register size for modulus.")
+        if modulus%2 == 0:
+            raise GateParametersAssignedError("Modulus cannot be an even number.")
+        if np.gcd(modulus, multiple) != 1:
+            raise GateParametersAssignedError("Modulus and multiple have to be co-prime.")
+        
         self._modulus  = modulus
         self._multiple = multiple
         
