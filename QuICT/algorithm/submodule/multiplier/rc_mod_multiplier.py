@@ -111,7 +111,7 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
         for i in range(len(correction_block) - 1):
             Swap | self(correction_block[i:i+2])
 
-        # # NOTE: inverse ry_qft before u_tilde correction or after
+        # correct the output
         ctl_idx = correction_block[-1]
         RCFourierAdderWired(
             qreg_size = self._register_size,
@@ -121,22 +121,23 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
             out_fourier = True
         ) | self([ctl_idx] + self._output_qubit_list)
 
+        # correct u_tilde_(m+1)'s highest bit
+        CX | self(correction_block[-2:])
+
         ##### Get modular multiplication result #####
         ry_QFT(
             targets = self._register_size,
             inverse = True
         ) | self(self._output_qubit_list)
 
-        # correct u_tilde_(m+1)'s highest bit
-        CX | self(correction_block[-2:])
-
-        # ##### Uncomputation stage #####
+        ##### Uncomputation stage #####
+        # parallel to the inverse qft above
         ry_QFT(
             targets = self._ancilla_size,
             inverse = False
         ) | self(self._ancilla_qubit_list)
 
-        # # modulus and 2 have to be co-prime
+        # modulus and 2 have to be co-prime
         comp_mod = pow(2, self._ancilla_size)
         uncompute_addend_list = []
         for i in range(self._register_size):
