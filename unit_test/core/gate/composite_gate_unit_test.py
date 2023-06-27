@@ -25,7 +25,6 @@ class TestCompositeGate(unittest.TestCase):
         cls.default_3_qubits_gate = [GateType.ccx, GateType.ccz, GateType.ccrz, GateType.cswap]
         cls.default_parameter_gates_for_call_test = [U1, U2, CU3, FSim, CCRz]
 
-
     @classmethod
     def tearDownClass(cls) -> None:
         print("The Composite Gate unit test finished!")
@@ -54,7 +53,11 @@ class TestCompositeGate(unittest.TestCase):
                 else:
                     target_gate_list = self.default_3_qubits_gate
                     target_gate_indexes = list(np.random.choice(qubit_range, 3, False))
-                    new_depth = max(depth[target_gate_indexes[0]], depth[target_gate_indexes[1]], depth[target_gate_indexes[2]]) + 1
+                    new_depth = max(
+                        depth[target_gate_indexes[0]],
+                        depth[target_gate_indexes[1]],
+                        depth[target_gate_indexes[2]]
+                    ) + 1
                     depth[target_gate_indexes[0]] = new_depth
                     depth[target_gate_indexes[1]] = new_depth
                     depth[target_gate_indexes[2]] = new_depth
@@ -77,9 +80,15 @@ class TestCompositeGate(unittest.TestCase):
                 # parameter gate
                 is_add_param_call = np.random.rand()
                 if is_add_param_call > 0.5:
-                    target_pgate = self.default_parameter_gates_for_call_test[np.random.randint(0, len(self.default_parameter_gates_for_call_test))]
+                    target_pgate = self.default_parameter_gates_for_call_test[
+                        np.random.randint(0, len(self.default_parameter_gates_for_call_test))
+                    ]
                     random_params = [np.random.rand() for _ in range(target_pgate.params)]
-                    target_pgate_indexes = list(np.random.choice(qubit_range, target_pgate.controls + target_pgate.targets, False))
+                    target_pgate_indexes = list(np.random.choice(
+                        qubit_range,
+                        target_pgate.controls + target_pgate.targets,
+                        False
+                    ))
                     target_pgate(*random_params) | cgate(target_pgate_indexes)
 
                     size += 1
@@ -92,7 +101,11 @@ class TestCompositeGate(unittest.TestCase):
                         depth[target_pgate_indexes[0]] = new_depth
                         depth[target_pgate_indexes[1]] = new_depth
                     else:
-                        new_depth = max(depth[target_pgate_indexes[0]], depth[target_pgate_indexes[1]], depth[target_pgate_indexes[2]]) + 1
+                        new_depth = max(
+                            depth[target_pgate_indexes[0]],
+                            depth[target_pgate_indexes[1]],
+                            depth[target_pgate_indexes[2]]
+                        ) + 1
                         depth[target_pgate_indexes[0]] = new_depth
                         depth[target_pgate_indexes[1]] = new_depth
                         depth[target_pgate_indexes[2]] = new_depth
@@ -175,6 +188,7 @@ class TestCompositeGate(unittest.TestCase):
         cgate_inverse = cgate.inverse()
         cgate_inverse | cgate(list(range(5)))
         assert np.allclose(cgate.matrix(), np.identity(1 << 2, dtype=np.complex128))
+
 
 if __name__ == "__main__":
     unittest.main()

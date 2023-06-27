@@ -1,6 +1,6 @@
 import numpy as np
 
-from QuICT.core.gate import BasicGate, GateMatrixGenerator
+from QuICT.core.gate import BasicGate, GateMatrixGenerator, MultiControlGate
 from QuICT.core.utils import GateType, MatrixType, matrix_product_to_circuit
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.tools.exception.core import GateQubitAssignedError, ValueError
@@ -200,6 +200,9 @@ class GateSimulator:
         """
         matrix_list_for_gpu_only = []
         total_matrix_size = 0 if self._gates_matrix is None else self._gates_matrix.size
+        if total_matrix_size >= (1 << 10):
+            return
+
         for gate in circuit.flatten_gates():
             if (
                 not isinstance(gate, BasicGate)
@@ -209,7 +212,8 @@ class GateSimulator:
 
             gate_name = self._generate_gate_name_for_matrix_stored(gate.type, gate.pargs)
             if gate_name not in self._gate_matrix_info.keys():
-                matrix = self._gate_matrix_generator.get_matrix(gate, self._precision)
+                matrix = self._gate_matrix_generator.get_matrix(gate, self._precision, True)
+
                 if self._device == "CPU":
                     self._gate_matrix_info[gate_name] = matrix
                 else:
@@ -254,7 +258,7 @@ class GateSimulator:
         gate_name = self._generate_gate_name_for_matrix_stored(gate.type, gate.pargs)
 
         if gate_name not in self._gate_matrix_info.keys():
-            matrix = self._gate_matrix_generator.get_matrix(gate, self._precision)
+            matrix = self._gate_matrix_generator.get_matrix(gate, self._precision, True)
             if self._device == "GPU":
                 matrix = self._array_helper.array(matrix.flatten())
 
@@ -349,7 +353,8 @@ class GateSimulator:
             self._algorithm.matrix_dot_vector(
                 state_vector,
                 matrix,
-                np.append(target_idx, control_idx)
+                control_idx,
+                target_idx
             )
 
     def _apply_gate_gpu(
@@ -369,7 +374,19 @@ class GateSimulator:
             matrix = self._get_gate_matrix(gate) if fp else self._get_gate_param_grad(gate, parg_id)
         else:
             matrix = gate.matrix
-        
+
+        if isinstance(gate, MultiControlGate):
+            if len(targs) == 1:
+                self._algorithm.apply_multi_control_targ_gate(
+                    state_vector, qubits, matrix, cargs, targs[0], self._sync
+                )
+            else:
+                self._algorithm.apply_multi_control_targs_gate(
+                    state_vector, qubits, matrix, cargs, targs, self._sync
+                )
+
+            return
+
         # Deal with quantum gate with more than 3 qubits.
         if gate_type == GateType.unitary and args_num >= 3:
             state_vector = self._algorithm.matrix_dot_vector(

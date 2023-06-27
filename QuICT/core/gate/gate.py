@@ -97,6 +97,14 @@ class BasicGate(object):
 
         return self._grad_matrix
 
+    @property
+    def grad_matrix(self):
+        if self._grad_matrix is None or self._is_matrix_update:
+            self._grad_matrix = GateMatrixGenerator().get_matrix(self, is_get_grad=True)
+            self._is_matrix_update = False
+
+        return self._grad_matrix
+
     ################    Quantum Gate's Target Qubits    ################
     @property
     def targets(self) -> int:
@@ -149,6 +157,10 @@ class BasicGate(object):
     def params(self) -> int:
         return self._params
     
+    @property
+    def variables(self) -> int:
+        return self._variables
+
     @property
     def variables(self) -> int:
         return self._variables
@@ -375,7 +387,6 @@ class BasicGate(object):
                     params.append(str(parg.pargs))
                 else:
                     params.append(str(parg))
-            
             params_string = "(" + ", ".join(params) + ")"
 
             qasm_string += params_string
@@ -824,7 +835,6 @@ class Perm(BasicGate):
                 matrix_[idx, p.pargs] = 1
             else:
                 matrix_[idx, p] = 1
-
 
         return matrix_
 

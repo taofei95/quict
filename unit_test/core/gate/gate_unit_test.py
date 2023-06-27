@@ -27,7 +27,7 @@ class TestGate(unittest.TestCase):
         print("The Gate unit test finished!")
 
     def test_gate_attribute(self):
-        single_qubit_gate =[
+        single_qubit_gate = [
             H, Hy, S, S_dagger, X, Y, Z, SX, SY, SW, ID, U1, U2, U3,
             Rx, Ry, Rz, T, T_dagger, Phase, GPhase, Measure, Reset, Barrier
         ]
@@ -40,7 +40,7 @@ class TestGate(unittest.TestCase):
         matrix_type_list = [
             single_qubit_gate, single_control_gate, clifford_gate,
             diagonal_matrix_gate, pauli_gate, special_matrix_gate
-            ]
+        ]
 
         for _ in range(10):
             for gate_index in range(len(matrix_type_list)):
