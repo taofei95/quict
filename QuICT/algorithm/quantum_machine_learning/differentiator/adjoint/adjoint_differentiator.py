@@ -79,19 +79,19 @@ class AdjointDifferentiator:
     ):
         self._initial_circuit(circuit)
         assert state_vector is not None
-        self._vector = self._gate_calculator.normalized_state_vector(
-            state_vector.copy(), self._qubits
-        )
+        self._vector = state_vector.copy()
+
         # Calculate d(L)/d(|psi_t>)
-        self._grad_vector = self._initial_grad_vector(
+        self._grad_vector = 2.0 * self._initial_grad_vector(
             state_vector.copy(), self._qubits, expectation_op
         )
         # expectation
         expectation = (
-            (state_vector.conj() @ self._grad_vector).real
+            (state_vector.conj() @ (self._grad_vector / 2.0)).real
             if self._device == "CPU"
-            else (state_vector.conj() @ self._grad_vector).real.get()
+            else (state_vector.conj() @ (self._grad_vector / 2.0)).real.get()
         )
+
         for idx in range(len(self._bp_pipeline)):
             if self._remain_training_gates == 0:
                 return variables, expectation
@@ -114,14 +114,14 @@ class AdjointDifferentiator:
 
     def run_batch(
         self,
-        circuits: list,
+        circuit: Circuit,
         variables: Variable,
         state_vector_list: list,
         expectation_op: Hamiltonian,
     ):
         params_grad_list = []
         expectation_list = []
-        for circuit, state_vector in zip(circuits, state_vector_list):
+        for state_vector in state_vector_list:
             params, expectation = self.run(
                 circuit, variables.copy(), state_vector, expectation_op
             )
@@ -160,25 +160,18 @@ class AdjointDifferentiator:
         self._remain_training_gates = self._training_gates
         self._qubits = int(circuit.width())
         self._circuit = circuit
-        self._bp_circuit = Circuit(self._qubits)
+        self._bp_circuit = circuit.inverse()
         gates = [gate & targs for gate, targs, _ in circuit.fast_gates][::-1]
-        for i in range(len(gates)):
-            inverse_gate = gates[i].inverse()
-            inverse_gate.targs = gates[i].targs
-            inverse_gate.cargs = gates[i].cargs
-            inverse_gate | self._bp_circuit
         self._pipeline = gates
         self._bp_pipeline = self._bp_circuit.fast_gates
         assert len(self._pipeline) == len(self._bp_pipeline)
 
-    # optimize? simulator x
     def _initial_grad_vector(
         self, state_vector, qubits: int, expectation_op: Hamiltonian
     ):
         circuit_list = expectation_op.construct_hamiton_circuit(qubits)
         coefficients = expectation_op.coefficients
-        grad_vector = np.zeros(1 << qubits, dtype=np.complex128)
-        grad_vector = self._gate_calculator.normalized_state_vector(grad_vector, qubits)
+        grad_vector = self._gate_calculator.get_empty_state_vector(qubits)
         for coeff, circuit in zip(coefficients, circuit_list):
             grad_vec = self._simulator.run(circuit, state_vector)
             grad_vector += coeff * grad_vec

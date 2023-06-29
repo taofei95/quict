@@ -1,6 +1,6 @@
 import numpy as np
 
-from QuICT.algorithm.quantum_algorithm.quantum_walk import Graph, QuantumWalk
+from QuICT.algorithm.quantum_algorithm.quantum_walk_v1 import Graph, QuantumWalk
 from QuICT.simulation.state_vector import StateVectorSimulator
 
 

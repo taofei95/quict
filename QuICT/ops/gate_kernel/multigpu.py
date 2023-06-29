@@ -1,7 +1,7 @@
 import cupy as cp
 import numpy as np
 
-from .gate_function import prop_add_double_kernel, prop_add_single_kernel, MeasureGate_prop
+from .gpu import prop_add_double_kernel, prop_add_single_kernel, MeasureGate_prop
 
 
 __outward_functions = [

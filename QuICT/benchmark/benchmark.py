@@ -23,7 +23,11 @@ class QuICTBenchmark:
         output_file_type: str = "txt"
     ):
         """
-        Initial circuit library
+<<<<<<< HEAD
+        Initial benchmarking for QuICT
+=======
+        Initial benchmark for QuICT
+>>>>>>> core_refactoring_v2
 
         Args:
             output_path (str, optional): The path of the Analysis of the results.

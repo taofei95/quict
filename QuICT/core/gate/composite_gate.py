@@ -110,9 +110,6 @@ class CompositeGate(CircuitBased):
         new_gates = []
         for gate, qidxes, size in self._gates:
             new_q = [qidx_mapping[qidx] for qidx in qidxes]
-            if isinstance(gate, CompositeGate):
-                gate & new_q
-
             new_gates.append((gate, new_q, size))
 
         self._qubits = targets
@@ -120,9 +117,30 @@ class CompositeGate(CircuitBased):
 
     def _update_qubit_limit(self, indexes: list):
         for idx in indexes:
-            assert idx >= 0 and isinstance(idx, int)
+            assert idx >= 0 and isinstance(idx, (int, np.int32, np.int64)), idx
             if idx not in self._qubits:
                 self._qubits.append(idx)
+
+    def _update_qubits_after_remove(self, indexes: list):
+        """ Update qubits if remove any gate in current CompositeGate.
+
+        Args:
+            indexes (list): The original qubit indexes from removed Quantum Gate.
+        """
+        for idx in indexes:
+            if not self._exist_qubits(idx):
+                self._qubits.remove(idx)
+
+    def _exist_qubits(self, idx: int) -> bool:
+        """ Whether exist Quantum Gate with the given qubit indexes. """
+        if idx not in self._qubits:
+            return False
+
+        for _, qidx, _ in self._gates:
+            if idx in qidx:
+                return True
+
+        return False
 
     ####################################################################
     ############            CompositeGate Build             ############
@@ -242,7 +260,52 @@ class CompositeGate(CircuitBased):
         self._update_qubit_limit(gate_args)
         self._gates.insert(insert_idx, (gate, gate_args, gate_size))
 
+    def pop(self, index: int = -1):
+        """ Pop the BasicGate/Operator/CompositeGate from current Quantum Circuit.
+
+        Args:
+            index (int, optional): The target index. Defaults to 0.
+        """
+        if index < 0:
+            index = self.gate_length() + index
+
+        assert index >= 0 and index < self.gate_length()
+        gate, qidx, _ = self._gates.pop(index)
+        self._update_qubits_after_remove(qidx)
+
+        return gate.copy() & qidx
+
+    def adjust(self, index: int, reassigned_qubits: Union[int, list], is_adjust_value: bool = False):
+        """ Adjust the placement for target CompositeGate/BasicGate/Operator.
+
+        Args:
+            index (int): The target Quantum Gate's index, **Start from 0**.
+            reassigned_qubits (Union[int, list]): The new assigned qubits of target Quantum Gate
+            is_adjust_value (bool): Whether the reassigned_qubits means the new qubit indexes or the adjustment
+                value from original indexes.
+        """
+        if index < 0:
+            index = self.gate_length() + index
+        assert index >= 0 and index < self.gate_length()
+        origin_gate, origin_qidx, origin_size = self._gates[index]
+
+        if is_adjust_value:
+            new_qubits = [v + reassigned_qubits for v in origin_qidx] if isinstance(reassigned_qubits, int) else \
+                [v + reassigned_qubits[idx] for idx, v in enumerate(origin_qidx)]
+        else:
+            new_qubits = [reassigned_qubits] if isinstance(reassigned_qubits, int) else reassigned_qubits
+
+        assert len(origin_qidx) == len(new_qubits)
+        self._gates[index] = (origin_gate, new_qubits, origin_size)
+        self._update_qubit_limit(new_qubits)
+        self._update_qubits_after_remove(origin_qidx)
+
     def _append_gate(self, gate: BasicGate):
+        """ Add a BasicGate into the current CompositeGate
+
+        Args:
+            gate (BasicGate): The BasicGate need to added
+        """
         if self._pointer is not None:
             gate_args = gate.controls + gate.targets
             assert len(self._pointer) == gate_args, \
@@ -260,23 +323,17 @@ class CompositeGate(CircuitBased):
     ####################################################################
     ############            CompositeGate Utils             ############
     ####################################################################
-    def depth(self, depth_per_qubits: bool = False) -> int:
-        """ the depth of the CompositeGate.
+    def depth(self) -> int:
+        """ the depth of the circuit.
 
         Returns:
             int: the depth
         """
-        depth = np.zeros(self.width(), dtype=int)
-        for gate, targs, _ in self._gates:
-            targs = [self.qubits.index(targ) for targ in targs]
-            if isinstance(gate, CompositeGate):
-                gdepth = gate.depth(True)
-                for i, targ in enumerate(targs):
-                    depth[targ] += gdepth[i]
-            else:
-                depth[targs] = np.max(depth[targs]) + 1
+        depth = np.zeros(max(self.qubits) + 1, dtype=int)
+        for _, targs, _ in self.gate_decomposition(False, False):
+            depth[targs] = np.max(depth[targs]) + 1
 
-        return np.max(depth) if not depth_per_qubits else depth
+        return np.max(depth)
 
     def inverse(self) -> CompositeGate:
         """ the inverse of CompositeGate
@@ -292,6 +349,7 @@ class CompositeGate(CircuitBased):
         return _gates
 
     def copy(self) -> CompositeGate:
+        """ Copy current CompositeGate. """
         _gates = CompositeGate()
         _gates.name = self.name
         _gates._qubits = self.qubits
@@ -324,34 +382,10 @@ class CompositeGate(CircuitBased):
             local_qidx_mapping[qidx] = i
 
         local_gates = []
-        flatten_gates = self.gate_decomposition(False)
+        flatten_gates = self.gate_decomposition(self_flatten=False)
         for gate, qidx, _ in flatten_gates:
             related_qidx = [local_qidx_mapping[q] for q in qidx]
-            lgate = gate & related_qidx
+            lgate = gate.copy() & related_qidx
             local_gates.append(lgate)
 
         return local_gates
-
-    def qasm_gates_only(self, creg: int, cbits: int, target_qubits: list = None):
-        qasm_string = ""
-        if target_qubits is not None:
-            qidx_mapping = {}
-            for i, q in enumerate(self.qubits):
-                qidx_mapping[q] = target_qubits[i]
-
-        for gate, targs, _ in self._gates:
-            if target_qubits is not None:
-                targs = [qidx_mapping[targ] for targ in targs]
-
-            if isinstance(gate, CompositeGate):
-                qasm_string += gate.qasm_gates_only(creg, cbits, targs)
-                continue
-
-            if gate.qasm_name == "measure":
-                qasm_string += f"measure q[{targs}] -> c[{cbits}];\n"
-                cbits += 1
-                cbits = cbits % creg
-            else:
-                qasm_string += gate.qasm(targs)
-
-        return qasm_string

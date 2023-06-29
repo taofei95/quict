@@ -17,7 +17,7 @@ class FRQI:
         self._n_color_qubits = 1
         self._q_state = None
 
-    def __call__(self, img, use_qic=True):
+    def __call__(self, img, use_qic=False):
         img = self._img_preprocess(img, flatten=True)
 
         # step 1: |0> -> |H>
@@ -30,12 +30,12 @@ class FRQI:
             frqi_circuit = self._construct_qic_circuit(img, rotate=True)
         else:
             frqi_circuit = self._construct_circuit(img, rotate=True)
-        frqi_circuit | circuit(list(range(self._n_qubits)))
+        frqi_circuit | circuit
 
         return circuit
 
     def _img_preprocess(self, img, flatten=True):
-        if ((img < 1.0) & (img > 0.0)).any():
+        if ((img <= 1.0) & (img > 0.0)).any():
             img *= self._grayscale - 1
         img = img.astype(np.int64)
         assert (
@@ -53,11 +53,11 @@ class FRQI:
         return img
 
     def _construct_circuit(self, img: np.ndarray, rotate: bool):
-        circuit = Circuit(self._n_qubits)
+        circuit = CompositeGate(self._n_qubits)
         if not rotate:
-            mc_gate = MultiControlToffoli()
+            mc_gate = MultiControlGate(self._n_pos_qubits, GateType.x)
         for i in range(self._N):
-            if img[i] == 0:
+            if img[i] < 1e-12:
                 continue
             bin_pos = bin(i)[2:].zfill(self._n_pos_qubits)
             for qid in range(self._n_pos_qubits):
@@ -67,10 +67,12 @@ class FRQI:
                     X | circuit(qid)
                     self._q_state[qid] = 1 - self._q_state[qid]
             if rotate:
-                mc_gate = MultiControlRotation(
-                    GateType.ry, float(img[i] / (self._grayscale - 1) * np.pi)
+                mc_gate = MultiControlGate(
+                    self._n_pos_qubits,
+                    GateType.ry,
+                    params=[float(img[i] / (self._grayscale - 1) * np.pi)],
                 )
-                mc_gate(self._n_pos_qubits) | circuit(list(range(self._n_qubits)))
+                mc_gate | circuit(list(range(self._n_qubits)))
             else:
                 bin_color = bin(img[i])[2:].zfill(self._n_color_qubits)
                 for qid in range(self._n_color_qubits):
@@ -78,27 +80,29 @@ class FRQI:
                         mct_qids = list(range(self._n_pos_qubits)) + [
                             self._n_pos_qubits + qid
                         ]
-                        mc_gate(self._n_pos_qubits) | circuit(mct_qids)
+                        mc_gate | circuit(mct_qids)
         for qid in range(self._n_pos_qubits):
             if self._q_state[qid] == 1:
                 X | circuit(qid)
+                self._q_state[qid] = 1 - self._q_state[qid]
         return circuit
 
     def _construct_qic_circuit(self, img, rotate: bool, gid: int = 0):
-        qic_circuit = Circuit(self._n_qubits)
+        qic_circuit = CompositeGate(self._n_qubits)
         img_dict = self._get_img_dict(img, bin_val=True)
         for key in img_dict.keys():
             theta = float(key) / (self._grayscale - 1) * np.pi if rotate else None
             min_dnf = self._get_min_expression(img_dict[key])
             dnf_circuit = self._construct_dnf_circuit(min_dnf, gid, theta)
-            dnf_circuit | qic_circuit(list(range(self._n_qubits)))
+            dnf_circuit | qic_circuit
         for qid in range(self._n_pos_qubits):
             if self._q_state[qid] == 1:
                 X | qic_circuit(qid)
+                self._q_state[qid] = 1 - self._q_state[qid]
         return qic_circuit
 
     def _construct_dnf_circuit(self, min_dnf, gid: int = 0, theta: float = None):
-        dnf_circuit = Circuit(self._n_qubits)
+        dnf_circuit = CompositeGate(self._n_qubits)
         cnf_list = self._split_dnf(min_dnf)
         if cnf_list == ["True"]:
             if theta is None:
@@ -112,22 +116,17 @@ class FRQI:
                 uniqueness_dnf_circuit = self._construct_dnf_circuit(
                     uniqueness_dnf, gid, theta
                 )
-                uniqueness_dnf_circuit | dnf_circuit(list(range(self._n_qubits)))
+                uniqueness_dnf_circuit | dnf_circuit
             else:
                 cnf_circuit = self._construct_cnf_circuit(
                     cnf_list[i], gid=gid, theta=theta,
                 )
-                cnf_circuit | dnf_circuit(list(range(self._n_qubits)))
+                cnf_circuit | dnf_circuit
 
         return dnf_circuit
 
     def _construct_cnf_circuit(self, cnf, gid=0, theta=None):
-        cnf_circuit = Circuit(self._n_qubits)
-        mc_gate = (
-            MultiControlToffoli()
-            if theta is None
-            else MultiControlRotation(GateType.ry, theta)
-        )
+        cnf_circuit = CompositeGate(self._n_qubits)
         items = self._split_cnf(cnf)
         qids = self._get_cnf_qid(items)
 
@@ -138,7 +137,12 @@ class FRQI:
                 X | cnf_circuit(qid)
                 self._q_state[qid] = 1 - self._q_state[qid]
 
-        mc_gate(len(qids)) | cnf_circuit(qids + [gid + self._n_pos_qubits])
+        mc_gate = (
+            MultiControlGate(len(qids), GateType.x)
+            if theta is None
+            else MultiControlGate(len(qids), GateType.ry, params=[theta],)
+        )
+        mc_gate | cnf_circuit(qids + [gid + self._n_pos_qubits])
         return cnf_circuit
 
     def _get_uniqueness_dnf(self, pre_cnf_list, current_cnf):
@@ -164,7 +168,7 @@ class FRQI:
     def _get_img_dict(self, img, bin_key=False, bin_val=False):
         img_dict = dict()
         for i in range(self._N):
-            if img[i] == 0:
+            if img[i] < 1e-12:
                 continue
             key = (
                 bin(img[i])[2:].zfill(self._n_color_qubits) if bin_key else str(img[i])

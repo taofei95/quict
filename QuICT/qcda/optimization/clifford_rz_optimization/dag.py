@@ -10,7 +10,7 @@ except ImportError:
 from QuICT.core import *
 from QuICT.core.gate import *
 
-from .symbolic_phase import SymbolicPhase, SymbolicPhaseVariable
+from .symbolic_phase import SymbolicPhase, SymbolicPhaseVariable, SymbolicRz
 
 
 class DAG(Iterable):
@@ -73,6 +73,13 @@ class DAG(Iterable):
             Returns:
                 BasicGate: corresponding gate
             """
+
+            if self.gate_type == GateType.rz and isinstance(self._params[0], SymbolicPhase):
+                val = self._params[0].evaluate()
+                if val == float('inf'):
+                    return SymbolicRz(self._params[0]) & self.qubit_loc
+                else:
+                    return Rz(val) & self.qubit_loc
 
             return gate_builder(self.gate_type, params=self.params) & self.qubit_loc \
                 if self.gate_type is not None else None

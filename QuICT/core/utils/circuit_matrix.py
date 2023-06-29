@@ -36,6 +36,7 @@ def get_gates_order_by_depth(gates: list) -> list:
 
 
 class MatrixGroup:
+    """ Create a group of Matrix with qubit indexes. """
     def __init__(self, matrix, args, blocked_args: set = set([])):
         self.args = set(args)
         self.value = [(matrix, args)]
@@ -53,7 +54,13 @@ class MatrixGroup:
 
 
 class CircuitMatrix:
+    """ Generate Circuit's Matrix. """
     def __init__(self, device: str = "CPU", precision: str = "double"):
+        """
+        Args:
+            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
+            precision (str, optional): The precision for matrix, one of [single, double]. Defaults to "double".
+        """
         self._device = device
         self._precision = precision
         self._dtype = np.complex128 if precision == "double" else np.complex64
@@ -69,6 +76,14 @@ class CircuitMatrix:
             self._array_helper = cp
 
     def get_unitary_matrix(self, gates: list, qubits_num: int) -> np.ndarray:
+        """
+        Args:
+            gates (List[BasicGate]): The list of Quantum Gates in the Circuit.
+            qubits_num (int): The number of qubits
+
+        Returns:
+            np.ndarray: The unitary matrix of the Quantum Circuit.
+        """
         if len(gates) == 0:
             return self._array_helper.identity(1 << qubits_num, dtype=self._dtype)
 
@@ -155,6 +170,17 @@ class CircuitMatrix:
         return is_intersect, is_blocked
 
     def merge_gates(self, u1, u1_args, u2, u2_args):
+        """ Combined two Quantum Gate togather.
+
+        Args:
+            u1 (np.ndarray): The unitary matrix of Gate A.
+            u1_args (list): The qubit indexes of Gate A.
+            u2 (np.ndarray): The unitary matrix of Gate B.
+            u2_args (list): The qubit indexes of Gate B.
+
+        Returns:
+            Tuple(np.ndarray, list): The combined unitary matrix and its qubits indexes.
+        """
         u1_args_set, u2_args_set = set(u1_args), set(u2_args)
         insection_args = u1_args_set & u2_args_set
         if len(insection_args) == 0:

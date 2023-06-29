@@ -30,7 +30,7 @@ class QuantumNet(Model):
         self._data_qubits = list(range(n_qubits))
         self._data_qubits.remove(readout)
         # self._qnn_builder = QNNLayer(n_qubits, readout, layers)
-        self._qnn_builder = CRADL(n_qubits, n_qubits - 2, readout, layers)
+        self._qnn_builder = CRADL(n_qubits, n_qubits - 2, readout, 8)
         self._model_circuit = self._qnn_builder.init_circuit(params=params)
         self._params = self._qnn_builder.params
         self._hamiltonian = (
@@ -42,7 +42,6 @@ class QuantumNet(Model):
     def run_step(
         self, data_circuits, y_true, optimizer, loss_fun: Loss, train: bool = True
     ):
-        circuit_list = []
         state_list = []
         # FP
         for data_circuit in data_circuits:
@@ -50,12 +49,11 @@ class QuantumNet(Model):
             data_circuit | circuit(self._data_qubits)
             self._model_circuit | circuit(list(range(self._n_qubits)))
             state = self._simulator.run(circuit)
-            circuit_list.append(self._model_circuit)
             state_list.append(state)
         if train:
             # BP get expectations and d(exp) / d(params)
             params_grads, poss = self._differentiator.run_batch(
-                circuit_list, self._params.copy(), state_list, self._hamiltonian
+                circuit, self._params.copy(), state_list, self._hamiltonian
             )
         else:
             poss = self._differentiator.get_expectations_batch(
@@ -86,4 +84,3 @@ class QuantumNet(Model):
 
     def update(self):
         self._model_circuit.update(self._params)
-

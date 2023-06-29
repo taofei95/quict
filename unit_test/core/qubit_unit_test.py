@@ -19,6 +19,11 @@ class TestQubit(unittest.TestCase):
         id_list = [qubit.id for qubit in qureg]
         assert len(set(id_list)) == len(id_list)
 
+        qureg.set_fidelity([0.99] * 10)
+        qureg.set_gate_fidelity(0.987)
+        qureg.set_gate_duration(20.31)
+        qureg.set_t2_time([5.48] * 10)
+
         measure_result = 0
         for qubit in qureg:
             measure = random.random() > 0.5

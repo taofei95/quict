@@ -52,6 +52,7 @@ class GateType(Enum):
     reset = "Reset gate"
     barrier = "Barrier gate"
     unitary = "Unitary gate"
+    multi_control = "Multi_Control Gate"
 
     # no qasm represent below
     perm = "Permutation gate"

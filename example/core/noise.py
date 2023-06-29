@@ -101,14 +101,14 @@ if __name__ == "__main__":
     for i in range(3):
         CX | cir([i, i + 1])          # append CX gate
 
-    nm = build_dampling_noise()
+    nm = build_readout_noise()
 
     # 含噪声量子电路
     noised_cir = nm.transpile(cir)
 
     # 含噪声量子电路模拟
     simulator = DensityMatrixSimulator(accumulated_mode=True)
-    sv = simulator.run(cir, noise_model=nm)
-    sample_result = simulator.sample(1000)
+    sv = simulator.run(cir, quantum_machine_model=nm)
+    sample_result = simulator.sample(20)
 
     print(sample_result)

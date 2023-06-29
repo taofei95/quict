@@ -84,21 +84,21 @@ class UniformlyRotation(object):
         if is_first_level:
             if is_left_cnot:
                 gates = CompositeGate()
-                CX & [low, high - 1] | gates
-                gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, False))
-                CX & [low, high - 1] | gates
-                gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, True))
+                CX | gates([low, high - 1])
+                self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, False) | gates
+                CX | gates([low, high - 1])
+                self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, True) | gates
             else:
                 gates = self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, False)
-                CX & [low, high - 1] | gates
-                gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, True))
-                CX & [low, high - 1] | gates
+                CX | gates([low, high - 1])
+                self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, True) | gates
+                CX | gates([low, high - 1])
         elif is_left_cnot:
             gates = self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, False)
-            CX & [low, high - 1] | gates
-            gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, True))
+            CX | gates([low, high - 1])
+            self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, True) | gates
         else:
             gates = self.inner_uniformly_rotation(low + 1, high, Rxp, gate_type, False, False)
-            CX & [low, high - 1] | gates
-            gates.extend(self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, True))
+            CX | gates([low, high - 1])
+            self.inner_uniformly_rotation(low + 1, high, Rxn, gate_type, False, True) | gates
         return gates

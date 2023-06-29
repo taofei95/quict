@@ -138,14 +138,14 @@ class UnitaryDecomposition(object):
         u2: np.ndarray = u[1]
 
         if use_cz_ry:
-            reversed_ry.gates.pop()  # CZ on (0,1)
+            reversed_ry.pop()  # CZ on (0,1)
             # This CZ affects 1/4 last columns of the matrix of U, or 1/2 last columns of u2.
             _u_size = u2.shape[0]
             for i in range(_u_size // 2, _u_size):
                 u2[:, i] = -u2[:, i]
 
             if qubit_num > 2:
-                reversed_ry.gates.pop()  # CZ on (0, qubit_num - 1)
+                reversed_ry.pop()  # CZ on (0, qubit_num - 1)
                 # For similar reasons, this CZ only affect 2 parts of matrix of U.
                 for i in range(_u_size - _u_size // 4, _u_size):
                     u1[:, i] = - u1[:, i]
@@ -171,7 +171,8 @@ class UnitaryDecomposition(object):
         v2_dagger = v_dagger[1]
 
         if recursive_basis == 2:
-            forwarded_d_gate: BasicGate = u_gates.flatten_gates().pop(0)
+            u_gates.gate_decomposition(decomposition=False)
+            forwarded_d_gate: BasicGate = u_gates.pop(0)
             forwarded_mat = forwarded_d_gate.matrix
             for i in range(0, mat_size // 2, 4):
                 for k in range(4):
@@ -187,8 +188,8 @@ class UnitaryDecomposition(object):
         shift *= _shift
 
         gates = CompositeGate()
-        gates.extend(v_dagger_gates)
-        gates.extend(reversed_ry)
-        gates.extend(u_gates)
+        v_dagger_gates | gates
+        reversed_ry | gates
+        u_gates | gates
 
         return gates, shift

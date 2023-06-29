@@ -97,6 +97,14 @@ class BasicGate(object):
 
         return self._grad_matrix
 
+    @property
+    def grad_matrix(self):
+        if self._grad_matrix is None or self._is_matrix_update:
+            self._grad_matrix = GateMatrixGenerator().get_matrix(self, is_get_grad=True)
+            self._is_matrix_update = False
+
+        return self._grad_matrix
+
     ################    Quantum Gate's Target Qubits    ################
     @property
     def targets(self) -> int:
@@ -149,6 +157,10 @@ class BasicGate(object):
     def params(self) -> int:
         return self._params
     
+    @property
+    def variables(self) -> int:
+        return self._variables
+
     @property
     def variables(self) -> int:
         return self._variables
@@ -234,7 +246,6 @@ class BasicGate(object):
         self._target_matrix = None
         self._grad_matrix = None
         self._qasm_name = str(type_.name)
-        self.assigned_qubits = []   # list of qubits' id
         self._is_matrix_update = False
         self._is_original = is_original_gate
 
@@ -376,7 +387,6 @@ class BasicGate(object):
                     params.append(str(parg.pargs))
                 else:
                     params.append(str(parg))
-            
             params_string = "(" + ", ".join(params) + ")"
 
             qasm_string += params_string
@@ -400,18 +410,24 @@ class BasicGate(object):
         if inverse_gargs is None:
             return self
 
-        return gate_builder(inverse_gargs, params=inverse_pargs)
+        inverse_gate = gate_builder(inverse_gargs, params=inverse_pargs)
+        gate_args = self.cargs + self.targs
+        if len(gate_args) > 0:
+            inverse_gate & gate_args
+
+        return inverse_gate
 
     def build_gate(self, qidxes: list = None):
         """ Gate Decomposition, which divided the current gate with a set of small gates. """
         if self.type == GateType.cu3:
-            return ComplexGateBuilder.build_gate(self.type, self.parg, self.matrix)
+            cgate = ComplexGateBuilder.build_gate(self.type, self.parg, self.matrix)
+        else:
+            gate_list = ComplexGateBuilder.build_gate(self.type, self.parg)
+            if gate_list is None:
+                return gate_list
 
-        gate_list = ComplexGateBuilder.build_gate(self.type, self.parg)
-        if gate_list is None:
-            return gate_list
+            cgate = self._cgate_generator_from_build_gate(gate_list)
 
-        cgate = self._cgate_generator_from_build_gate(gate_list)
         gate_args = self.cargs + self.targs if qidxes is None else qidxes
         if len(gate_args) > 0:
             cgate & gate_args
@@ -590,7 +606,7 @@ class BasicGate(object):
         if self.variables == 0:
             pargs = self.pargs
         else:
-            pargs = [parg.copy() for parg in self.pargs]
+            pargs = self.pargs[:]
         gate = BasicGate(
             self.controls, self.targets, self.params, self.type,
             self.matrix_type, pargs, self.precision
@@ -601,9 +617,6 @@ class BasicGate(object):
 
         if self.controls > 0 and len(self.cargs) > 0:
             gate.cargs = self.cargs[:]
-
-        if self.assigned_qubits:
-            gate.assigned_qubits = self.assigned_qubits[:]
 
         return gate
 
@@ -636,6 +649,13 @@ class Unitary(BasicGate):
     def matrix(self):
         return self._matrix
 
+    @matrix.setter
+    def matrix(self, matrix):
+        self.validate_matrix_shape(matrix)
+        assert int(np.log2(matrix.shape[0])) == self.controls + self.targets, \
+            "Only support redefined unitary matrix with same size as before"
+        self._matrix = matrix
+
     def get_matrix(self, precision) -> np.ndarray:
         _dtype = np.complex128 if precision == "double" else np.complex64
         return self._matrix.astype(_dtype)
@@ -651,13 +671,33 @@ class Unitary(BasicGate):
             matrix_type (MatrixType, optional): The matrix's type. Defaults to None.
         """
         # Validate matrix type
+        self.validate_matrix_shape(matrix)
+
+        # Validate Matrix Type
+        if matrix_type is None:
+            matrix_type, controls = self.validate_matrix_type(matrix)
+        else:
+            matrix_type = matrix_type
+            controls = 0
+
+        n = int(np.log2(matrix.shape[0]))
+        if controls == n:
+            controls = 0
+
+        precision = "double" if matrix.dtype == np.complex64 else "single"
+        super().__init__(
+            controls=controls, targets=(n - controls), params=0,
+            type_=GateType.unitary, matrix_type=matrix_type, precision=precision
+        )
+        self._matrix = matrix
+
+    def validate_matrix_shape(self, matrix: np.ndarray):
         if isinstance(matrix, list):
             matrix = np.array(matrix)
 
         # Validate precision
         assert np.issubdtype(matrix.dtype, np.complex128) or np.issubdtype(matrix.dtype, np.complex64), \
             TypeError("unitary.matrix.dtype", "complex64/128", matrix.dtype)
-        precision = "double" if matrix.dtype == np.complex64 else "single"
 
         # Validate matrix shape is square
         length, width = matrix.shape
@@ -669,21 +709,6 @@ class Unitary(BasicGate):
         n = int(np.log2(matrix.shape[0]))
         if (1 << n) != matrix.shape[0]:
             raise GateMatrixError("the length of list should be the square of power(2, n)")
-
-        if matrix_type is None:
-            matrix_type, controls = self.validate_matrix_type(matrix)
-        else:
-            matrix_type = matrix_type
-            controls = 0
-
-        if controls == n:
-            controls = 0
-
-        super().__init__(
-            controls=controls, targets=(n - controls), params=0,
-            type_=GateType.unitary, matrix_type=matrix_type, precision=precision
-        )
-        self._matrix = matrix
 
     @staticmethod
     def validate_matrix_type(matrix: np.ndarray) -> MatrixType:
@@ -738,8 +763,9 @@ class Unitary(BasicGate):
             decomp_gate = ComplexGateBuilder.build_unitary(self._matrix)
         except:
             from QuICT.core.gate import CompositeGate
+
             decomp_gate = CompositeGate()
-            decomp_gate.append(self)
+            decomp_gate.append(self & list(range(self.targets)))
 
             return decomp_gate
 
@@ -759,9 +785,6 @@ class Unitary(BasicGate):
 
         if len(self.targs) > 0:
             _gate.targs = self.targs[:]
-
-        if self.assigned_qubits:
-            _gate.assigned_qubits = self.assigned_qubits[:]
 
         return _gate
 
@@ -813,7 +836,6 @@ class Perm(BasicGate):
             else:
                 matrix_[idx, p] = 1
 
-
         return matrix_
 
     def inverse(self):
@@ -851,13 +873,55 @@ class PermFx(Perm):
         super().__init__(0, targets, parameters, GateType.perm_fx, MatrixType.normal, pargs)
 
 
+class MultiControlGate(BasicGate):
+    def __init__(self, controls: int, gate_type: GateType, precision: str = "double", params: list = []):
+        assert controls >= 0, ValueError("MultiControlGate.controls", ">= 0", controls)
+        self._multi_controls = controls
+        if gate_type not in GATEINFO_MAP.keys():
+            raise TypeError("MultiControlGate.gate_type", "only support for QuICT Gate", gate_type)
+
+        gate_info = list(GATEINFO_MAP[gate_type])
+        gate_info[0] += controls
+        super().__init__(*gate_info, params, precision)
+
+    def inverse(self):
+        """ the inverse of the quantum gate, if there is no inverse gate, return itself.
+
+        Return:
+            BasicGate: the inverse of the gate
+        """
+        inverse_gargs, inverse_pargs = InverseGate.get_inverse_gate(self.type, self.pargs)
+
+        # Deal with inverse_gargs
+        if inverse_gargs is None:
+            return self
+
+        inverse_gate = MultiControlGate(self._multi_controls, inverse_gargs, self.precision, params=inverse_pargs)
+        gate_args = self.cargs + self.targs
+        if len(gate_args) > 0:
+            inverse_gate & gate_args
+
+        return inverse_gate
+
+    def build_gate(self):
+        pass
+
+    def copy(self):
+        _gate = MultiControlGate(self._multi_controls, self.type, self.precision, self.pargs)
+        gate_args = self.cargs + self.targs
+        if len(gate_args) > 0:
+            _gate & gate_args
+
+        return _gate
+
+
 def gate_builder(gate_type, precision: str = "double", params: list = [], random_params: bool = False) -> BasicGate:
     """ Build the target Quantum Gate.
 
     Args:
-        gate_type (_type_): The gate's type
-        precision (str, optional): The gate's precision. Defaults to "double".
-        params (list, optional): The gate's parameters. Defaults to [].
+        gate_type (GateType): The gate's type.  \n
+        precision (str, optional): The gate's precision. Defaults to "double".  \n
+        params (list, optional): The gate's parameters. Defaults to [].  \n
         random_params (bool, optional): Whether using random parameters. Defaults to False.
 
     Returns:

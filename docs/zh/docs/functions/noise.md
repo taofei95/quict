@@ -139,7 +139,7 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
 
 ## 含噪声量子电路模拟
 
-通过密度矩阵模拟器可以进行含噪声量子电路的模拟。下面通过一个简单的例子来说明如何进行含噪声量子电路模拟。
+通过状态向量或者密度矩阵模拟器可以进行含噪声量子电路的模拟。下面通过一个简单的例子来说明如何进行含噪声量子电路模拟。
 
 - 构建初始量子电路
   
@@ -179,7 +179,6 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
 - 构建噪声模型，并使用密度矩阵进行模拟
   
     ``` python
-    from QuICT.simulation.density_matrix import DensityMatrixSimulator
     from QuICT.core.noise import NoiseModel, BitflipError
 
     # 构建噪声模型
@@ -189,11 +188,10 @@ noised_circuit = nm.transpile(circuit)  # 生成含噪声量子电路
     nm.add_noise_for_all_qubits(bf2_err, ['cx'])
 
     # 含噪声量子电路模拟
-    dm_simu = DensityMatrixSimulator()
-    sv = dm_simu.run(circuit, noise_model=nm)
-    sample_result = dm_simu.sample(3000)
+    sv = simulator.run(circuit, quantum_machine_model=nm)
+    sample_result = simulator.sample(3000)
     ```
 
     ``` python
-    [1046, 57, 54, 56, 49, 6, 4, 59, 57, 3, 3, 14, 13, 4, 5, 95, 94, 8, 8, 5, 5, 3, 9, 56, 58, 6, 5, 59, 66, 52, 57, 984]
+    [1100, 57, 6, 92, 4, 0, 5, 104, 6, 1, 0, 0, 7, 0, 4, 91, 115, 6, 1, 4, 0, 0, 1, 11, 101, 9, 0, 11, 103, 1, 61, 1099]
     ```

@@ -14,9 +14,7 @@ class GpuSimulator:
 
     def __init__(self):
         self.algorithm = LinAlgLoader(
-            device="GPU",
-            enable_gate_kernel=True,
-            enable_multigpu_gate_kernel=False,
+            device="GPU", enable_gate_kernel=True, enable_multigpu_gate_kernel=False,
         )
 
     def forward(self, ansatz, state=None):
@@ -357,7 +355,7 @@ class Applygate(torch.autograd.Function):
     def backward(ctx, grad_output):
         """The Backward Propagation process of an ansatz."""
         (grad,) = ctx.saved_tensors
-        grad = grad_output * grad
+        grad = 2.0 * grad_output * grad
         return None, None, grad.real, None, None
 
 

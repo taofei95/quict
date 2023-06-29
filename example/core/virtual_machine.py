@@ -2,6 +2,7 @@ import os
 
 from QuICT.core import Layout
 from QuICT.core.virtual_machine import InstructionSet, VirtualQuantumMachine
+from QuICT.core.virtual_machine.quantum_machine import OriginalKFC6130
 from QuICT.core.utils import GateType
 from QuICT.core.noise import NoiseModel
 
@@ -14,7 +15,7 @@ def build_VQM():
         (0, 1, 0.9), (0, 3, 0.9), (1, 2, 0.91), (1, 4, 0.91), (2, 5, 0.8), (3, 4, 0.6),
         (3, 6, 0.6), (4, 5, 0.5), (4, 7, 0.5), (5, 8, 0.45), (6, 7, 0.45), (7, 8, 0.45),
     ]
-    gate_fidelity = {GateType.h: 0.99, GateType.x: 0.98, GateType.z: 0.89}
+    gate_fidelity = {GateType.h: 0.99, GateType.rx: 0.98, GateType.ry: 0.89, GateType.rz: 0.89}
     vqm = VirtualQuantumMachine(
         qubits=9,
         instruction_set=iset,
@@ -32,6 +33,11 @@ def build_VQM():
     print(vqm.instruction_set.gates)
 
     nm = NoiseModel(quantum_machine_info=vqm)
+    print(nm)
+
+
+def use_default_VQM():
+    nm = NoiseModel(quantum_machine_info=OriginalKFC6130)
     print(nm)
 
 

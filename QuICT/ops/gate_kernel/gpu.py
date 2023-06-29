@@ -18,13 +18,16 @@ __outward_functions = [
     "swap_targ",
     "reverse_targ",
     "reverse_ctargs",
+    "reverse_targs",
     "swap_targs",
     "reverse_more",
     "diagonal_more",
     "swap_tmore",
     "measured_prob_calculate",
     "apply_measuregate",
-    "apply_resetgate"
+    "apply_resetgate",
+    "apply_multi_control_targ_gate",
+    "apply_multi_control_targs_gate"
 ]
 
 
@@ -112,6 +115,62 @@ Diagonal_Multiply_targs_double_kernel = cp.RawKernel(r'''
         vec[_3] = vec[_3]*mat[15];
     }
     ''', 'Diagonal4x4Multiply')
+
+
+RDiagonal_Multiply_targs_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void RDiagonal4x4Multiply(int high, int low, const complex<float>* mat, complex<float>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset1 = 1 << low;
+        const int offset2 = 1 << high;
+        const int mask1 = offset1 - 1;
+        const int mask2 = offset2 - 1;
+
+        int gw = label >> low << (low + 1);
+        int _0 = (gw >> high << (high + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+
+        int _1 = _0 + offset1;
+        int _2 = _0 + offset2;
+        int _3 = _1 + offset2;
+
+        complex<float> temp_0 = vec[_0];
+        complex<float> temp_1 = vec[_1];
+        vec[_0] = vec[_3]*mat[3];
+        vec[_1] = vec[_2]*mat[6];
+        vec[_2] = temp_1*mat[9];
+        vec[_3] = temp_0*mat[12];
+    }
+    ''', 'RDiagonal4x4Multiply')
+
+
+RDiagonal_Multiply_targs_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void RDiagonal4x4Multiply(int high, int low, const complex<double>* mat, complex<double>* vec) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset1 = 1 << low;
+        const int offset2 = 1 << high;
+        const int mask1 = offset1 - 1;
+        const int mask2 = offset2 - 1;
+
+        int gw = label >> low << (low + 1);
+        int _0 = (gw >> high << (high + 1)) + (gw & (offset2 - offset1)) + (label & mask1);
+
+        int _1 = _0 + offset1;
+        int _2 = _0 + offset2;
+        int _3 = _1 + offset2;
+
+        complex<double> temp_0 = vec[_0];
+        complex<double> temp_1 = vec[_1];
+        vec[_0] = vec[_3]*mat[3];
+        vec[_1] = vec[_2]*mat[6];
+        vec[_2] = temp_1*mat[9];
+        vec[_3] = temp_0*mat[12];
+    }
+    ''', 'RDiagonal4x4Multiply')
 
 
 Based_InnerProduct_targ_single_kernel = cp.RawKernel(r'''
@@ -275,8 +334,8 @@ Controlled_Multiply_ctargs_single_kernel = cp.RawKernel(r'''
 
         int _1 = _0 + offset_t;
 
-        vec[_0] = vec[_0]*mat[10];
-        vec[_1] = vec[_1]*mat[15];
+        vec[_0] = vec[_0]*mat[0];
+        vec[_1] = vec[_1]*mat[3];
     }
     ''', 'Controlled4x4Multiply')
 
@@ -306,8 +365,8 @@ Controlled_Multiply_ctargs_double_kernel = cp.RawKernel(r'''
 
         int _1 = _0 + offset_t;
 
-        vec[_0] = vec[_0]*mat[10];
-        vec[_1] = vec[_1]*mat[15];
+        vec[_0] = vec[_0]*mat[0];
+        vec[_1] = vec[_1]*mat[3];
     }
     ''', 'Controlled4x4Multiply')
 
@@ -396,8 +455,8 @@ Controlled_InnerProduct_ctargs_single_kernel = cp.RawKernel(r'''
         int _1 = _0 + offset_t;
 
         complex<float> temp_0 = vec[_0];
-        vec[_0] = vec[_0]*mat[10] + vec[_1]*mat[11];
-        vec[_1] = temp_0*mat[14] + vec[_1]*mat[15];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[2] + vec[_1]*mat[3];
     }
     ''', 'Controlled4x4InnerProduct')
 
@@ -428,8 +487,8 @@ Controlled_InnerProduct_ctargs_double_kernel = cp.RawKernel(r'''
         int _1 = _0 + offset_t;
 
         complex<double> temp_0 = vec[_0];
-        vec[_0] = vec[_0]*mat[10] + vec[_1]*mat[11];
-        vec[_1] = temp_0*mat[14] + vec[_1]*mat[15];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[2] + vec[_1]*mat[3];
     }
     ''', 'Controlled4x4InnerProduct')
 
@@ -460,8 +519,8 @@ Controlled_MultiplySwap_ctargs_single_kernel = cp.RawKernel(r'''
         int _1 = _0 + offset_t;
 
         complex<float> temp_0 = vec[_0];
-        vec[_0] = vec[_1]*mat[11];
-        vec[_1] = temp_0*mat[14];
+        vec[_0] = vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[2];
     }
     ''', 'Controlled4x4MultiSwap')
 
@@ -492,8 +551,8 @@ Controlled_MultiplySwap_ctargs_double_kernel = cp.RawKernel(r'''
         int _1 = _0 + offset_t;
 
         complex<double> temp_0 = vec[_0];
-        vec[_0] = vec[_1]*mat[11];
-        vec[_1] = temp_0*mat[14];
+        vec[_0] = vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[2];
     }
     ''', 'Controlled4x4MultiSwap')
 
@@ -910,8 +969,8 @@ Controlled_Multiply_more_single_kernel = cp.RawKernel(r'''
 
         int _1 = _0 + offset_t;
 
-        vec[_0] = vec[_0]*mat[54];
-        vec[_1] = vec[_1]*mat[63];
+        vec[_0] = vec[_0]*mat[0];
+        vec[_1] = vec[_1]*mat[3];
     }
     ''', 'Controlled8x8Multiply')
 
@@ -947,8 +1006,8 @@ Controlled_Multiply_more_double_kernel = cp.RawKernel(r'''
 
         int _1 = _0 + offset_t;
 
-        vec[_0] = vec[_0]*mat[54];
-        vec[_1] = vec[_1]*mat[63];
+        vec[_0] = vec[_0]*mat[0];
+        vec[_1] = vec[_1]*mat[3];
     }
     ''', 'Controlled8x8Multiply')
 
@@ -1413,6 +1472,40 @@ def reverse_targ(t_index, mat, vec, vec_bit, sync: bool = False):
         cp.cuda.Device().synchronize()
 
 
+def reverse_targs(t_indexes, mat, vec, vec_bit, sync: bool = False):
+    """
+    Reverse matrix (4x4) dot vector
+        [[0, 0, 0, a],    *   vec
+         [0, 0, b, 0],
+         [0, c, 0, 0],
+         [d, 0, 0, 0]]
+    """
+    task_number = 1 << (vec_bit - 2)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    if t_indexes[0] > t_indexes[1]:
+        high, low = t_indexes[0], t_indexes[1]
+    else:
+        high, low = t_indexes[1], t_indexes[0]
+
+    if vec.dtype == np.complex64:
+        RDiagonal_Multiply_targs_single_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (high, low, mat, vec)
+        )
+    else:
+        RDiagonal_Multiply_targs_double_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (high, low, mat, vec)
+        )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+
 def reverse_ctargs(c_index, t_index, mat, vec, vec_bit, sync: bool = False):
     """
     Controlled matrix (4x4) dot vector
@@ -1845,6 +1938,206 @@ def apply_resetgate(index, vec, vec_bit, prob, sync: bool = False):
 
     if sync:
         cp.cuda.Device().synchronize()
+
+
+multi_control_targ_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void MultiControlTarg(
+        const complex<float>* mat,
+        complex<float>* vec,
+        int fixed, int t_index, int mat_bit, int* mat_args
+    ) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        const int offset_t = 1 << t_index;
+
+        int other = label & ((1 << mat_args[0]) - 1);
+        int gw = label >> mat_args[0] << (mat_args[0] + 1);
+        for(int i = 1; i < mat_bit; i++){
+            other += gw & ((1 << mat_args[i]) - (1 << mat_args[i - 1]));
+            gw = gw >> mat_args[i] << (mat_args[i] + 1);
+        }
+        other += gw;
+
+        int _0 = other + fixed;
+        int _1 = _0 + offset_t;
+
+        complex<float> temp_0 = vec[_0];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[2] + vec[_1]*mat[3];
+    }
+    ''', 'MultiControlTarg')
+
+
+multi_control_targ_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void MultiControlTarg(
+        const complex<double>* mat,
+        complex<double>* vec,
+        int fixed, int t_index, int mat_bit, int* mat_args
+    ) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        const int offset_t = 1 << t_index;
+
+        int other = label & ((1 << mat_args[0]) - 1);
+        int gw = label >> mat_args[0] << (mat_args[0] + 1);
+        for(int i = 1; i < mat_bit; i++){
+            other += gw & ((1 << mat_args[i]) - (1 << mat_args[i - 1]));
+            gw = gw >> mat_args[i] << (mat_args[i] + 1);
+        }
+        other += gw;
+
+        int _0 = other + fixed;
+        int _1 = _0 + offset_t;
+
+        complex<double> temp_0 = vec[_0];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1];
+        vec[_1] = temp_0*mat[2] + vec[_1]*mat[3];
+    }
+    ''', 'MultiControlTarg')
+
+
+def apply_multi_control_targ_gate(
+    vec: cp.array,
+    qubits: int,
+    mat: cp.array,
+    c_indexes: list,
+    t_index: int,
+    sync: bool = False
+):
+    # Get Fixed indexes by given c_indexes
+    based_idx = 0
+    for cidx in c_indexes:
+        based_idx += 1 << cidx
+
+    mat_args = c_indexes.copy()
+    mat_args.append(t_index)
+    mat_args.sort()
+    mat_args = cp.array(mat_args, dtype=np.int32)
+    mat_bit = len(mat_args)
+
+    # GPU preparation
+    task_number = 1 << (qubits - len(c_indexes) - 1)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    # Start GPU kernel function
+    kernel_function = multi_control_targ_single_kernel if vec.dtype == np.complex64 else \
+        multi_control_targ_double_kernel
+    kernel_function(
+        (block_num,),
+        (thread_per_block,),
+        (mat, vec, based_idx, t_index, mat_bit, mat_args)
+    )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+
+multi_control_targs_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void MultiControlTarg(
+        const complex<float>* mat,
+        complex<float>* vec,
+        int fixed, int* t_indexes, int mat_bit, int* mat_args
+    ) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        const int offset_t1 = 1 << t_indexes[0];
+        const int offset_t2 = 1 << t_indexes[1];
+
+        int other = label & ((1 << mat_args[0]) - 1);
+        int gw = label >> mat_args[0] << (mat_args[0] + 1);
+        for(int i = 1; i < mat_bit; i++){
+            other += gw & ((1 << mat_args[i]) - (1 << mat_args[i - 1]));
+            gw = gw >> mat_args[i] << (mat_args[i] + 1);
+        }
+        other += gw;
+
+        int _0 = other + fixed;
+        int _1 = _0 + offset_t1;
+        int _2 = _0 + offset_t2;
+        int _3 = _1 + offset_t2;
+
+        complex<float> temp_0 = vec[_0], temp_1 = vec[_1], temp_2 = vec[_2];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1] + vec[_2]*mat[2] + vec[_3]*mat[3];
+        vec[_1] = temp_0*mat[4] + vec[_1]*mat[5] + vec[_2]*mat[6] + vec[_3]*mat[7];
+        vec[_2] = temp_0*mat[8] + temp_1*mat[9] + vec[_2]*mat[10] + vec[_3]*mat[11];
+        vec[_3] = temp_0*mat[12] + temp_1*mat[13] + temp_2*mat[14] + vec[_3]*mat[15];
+    }
+    ''', 'MultiControlTarg')
+
+
+multi_control_targs_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void MultiControlTarg(
+        const complex<double>* mat,
+        complex<double>* vec,
+        int fixed, int* t_indexes, int mat_bit, int* mat_args
+    ) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+        const int offset_t1 = 1 << t_indexes[0];
+        const int offset_t2 = 1 << t_indexes[1];
+
+        int other = label & ((1 << mat_args[0]) - 1);
+        int gw = label >> mat_args[0] << (mat_args[0] + 1);
+        for(int i = 1; i < mat_bit; i++){
+            other += gw & ((1 << mat_args[i]) - (1 << mat_args[i - 1]));
+            gw = gw >> mat_args[i] << (mat_args[i] + 1);
+        }
+        other += gw;
+
+        int _0 = other + fixed;
+        int _1 = _0 + offset_t1;
+        int _2 = _0 + offset_t2;
+        int _3 = _1 + offset_t2;
+
+        complex<double> temp_0 = vec[_0], temp_1 = vec[_1], temp_2 = vec[_2];
+        vec[_0] = vec[_0]*mat[0] + vec[_1]*mat[1] + vec[_2]*mat[2] + vec[_3]*mat[3];
+        vec[_1] = temp_0*mat[4] + vec[_1]*mat[5] + vec[_2]*mat[6] + vec[_3]*mat[7];
+        vec[_2] = temp_0*mat[8] + temp_1*mat[9] + vec[_2]*mat[10] + vec[_3]*mat[11];
+        vec[_3] = temp_0*mat[12] + temp_1*mat[13] + temp_2*mat[14] + vec[_3]*mat[15];
+    }
+    ''', 'MultiControlTarg')
+
+
+def apply_multi_control_targs_gate(
+    vec: cp.array,
+    qubits: int,
+    mat: cp.array,
+    c_indexes: list,
+    t_indexes: list,
+    sync: bool = False
+):
+    # Get Fixed indexes by given c_indexes
+    based_idx = 0
+    for cidx in c_indexes:
+        based_idx += 1 << cidx
+
+    mat_args = c_indexes.copy() + t_indexes.copy()
+    mat_args.sort()
+    mat_args = cp.array(mat_args, dtype=np.int32)
+    t_args = cp.array(t_indexes, dtype=np.int32)
+    mat_bit = len(mat_args)
+
+    # GPU preparation
+    task_number = 1 << (qubits - len(c_indexes) - 1)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    # Start GPU kernel function
+    kernel_function = multi_control_targs_single_kernel if vec.dtype == np.complex64 else \
+        multi_control_targs_double_kernel
+    kernel_function(
+        (block_num,),
+        (thread_per_block,),
+        (mat, vec, based_idx, t_args, mat_bit, mat_args)
+    )
+
+    # if sync:
+    #     cp.cuda.Device().synchronize()
 
 
 kernel_funcs = list(locals().keys())

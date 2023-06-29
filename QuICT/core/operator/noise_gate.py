@@ -14,7 +14,10 @@ class NoiseGate(Operator):
 
     @property
     def qasm_name(self) -> str:
-        return "noise"
+        return self._gate.qasm_name
+
+    def qasm(self, targs) -> str:
+        return self._gate.qasm(targs)
 
     @property
     def type(self) -> str:
