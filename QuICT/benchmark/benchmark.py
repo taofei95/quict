@@ -1,5 +1,6 @@
 import os
 import re
+from typing import List
 import pandas as pd
 import prettytable as pt
 import numpy as np
@@ -11,10 +12,13 @@ from QuICT.core.gate.gate import *
 from QuICT.qcda.qcda import QCDA
 from QuICT.core import Circuit
 from QuICT.tools.circuit_library.circuitlib import CircuitLib
+from QuICT.tools.circuit_library.get_benchmark_circuit import BenchmarkCircuitBuilder
 
 
 class QuantumMachinebenchmark:
     """ The QuICT Benchmarking. """
+    __alg_fields_list = ["qft", "adder", "cnf", "vqe", "qnn", "quantum_walk"]
+
     def __init__(
         self,
         output_path: str = "./benchmark",
@@ -38,47 +42,68 @@ class QuantumMachinebenchmark:
         elif level == 2:
             gate_prob, pro_s = range(6, 10), 0.8
         elif level == 3:
-            gate_prob, pro_s = range(10, 15), 0.7
+            gate_prob, pro_s = range(10, 14), 0.7
+
         for gates in gate_prob:
             cir = Circuit(q_number)
-            len_s, len_d = len(Ins_set.one_qubit_gates), len([Ins_set.two_qubit_gate])
-            prob = [pro_s / len_s] * len_s + [(1 - pro_s) / len_d] * len_d
-            cir.random_append(q_number * gates, Ins_set.gates, probabilities=prob)
-            inverse_cgate = cir.to_compositegate().inverse()
-            inverse_cgate | cir
+            # Single-qubit gates
+            size_s = int(q_number * gates * pro_s)
+            cir.random_append(size_s, Ins_set.one_qubit_gates)
+
+            # Double-qubits gates
+            size_d = q_number * gates - size_s
+            layout_list = layout.edge_list
+            for _ in range(size_d):
+                biq_gate = gate_builder(Ins_set.two_qubit_gate, random_params=True)
+                bgate_layout = np.random.choice(layout_list)
+                biq_gate | cir([bgate_layout.u, bgate_layout.v])
+
+            # Build mirror circuit
+            inverse_gate = cir.to_compositegate().inverse()
+            inverse_gate | cir
+            Measure | cir
             cir.name = "+".join(["random", "random", f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"])
             cir_list.append(cir)
-
         return cir_list
 
-    def _get_algorithm_circuit(self, vqm, level:int, enable_qcda_for_alg_cir=False):
+    def _get_algorithm_circuit(self, vqm, level:int, enable_qcda_for_alg_cir):
         cir_list = []
-        alg_fields_list = ["adder", "qft", "clifford", "grover", "cnf", "maxcut", "qnn", "quantum_walk", "vqe"] # clifford can't qcda
+        if level == 1:
+            return []
         if level == 2:
-            field = alg_fields_list[:3]
-        if level == 3:
-            field = alg_fields_list
+            field = self.__alg_fields_list[:3]
+        elif level == 3:
+            field = self.__alg_fields_list
+
+        if enable_qcda_for_alg_cir:
+            qcda = QCDA()
+
         for i in range(len(field)):
             cirs = CircuitLib().get_algorithm_circuit(field[i], qubits_interval=vqm.qubit_number)
             for cir in cirs:
-                if enable_qcda_for_alg_cir is True:
-                    qcda = QCDA()
-                    cir = qcda.auto_compile(cir, vqm)                    
+                if enable_qcda_for_alg_cir:
+                    cir = qcda.auto_compile(cir, vqm)
+                    Measure | cir
+                else:
+                    Measure | cir
                 cir.name = "+".join(["algorithm", field[i], f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"])
                 cir_list.append(cir)
 
         return cir_list
 
-    def _get_benchmark_circuit(self, level:int, q_number:int):
+    def _get_benchmark_circuit(self, level:int, q_number:int, Ins_set):
         cir_list = []
-        based_fields_list = ["highly_entangled", "highly_parallelized", "highly_serialized", "mediate_measure"]
-        for field in based_fields_list:
-            circuits = CircuitLib().get_benchmark_circuit(str(field), qubits_interval=[int(q_number / 2)])
-            for cir in circuits:
-                inverse_cgate = cir.to_compositegate().inverse()
-                inverse_cgate | cir
-                cir.name = "+".join(["benchmark", field, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"])
-                cir_list.append(cir)
+        cirs = BenchmarkCircuitBuilder().get_benchmark_circuit(q_number, level, Ins_set)
+        for cir in cirs:
+            split = cir.name.split("+")
+            attribute = re.findall(r'\d+(?:\.\d+)?', split[2])
+            field, void_gates = split[1], attribute[3]
+            inverse_cgate = cir.to_compositegate().inverse()
+            inverse_cgate | cir
+            if field != "mediate_measure":
+                Measure | cir
+            cir.name = "+".join(["benchmark", field, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}_v{void_gates}", f"level{level}"])
+            cir_list.append(cir)
 
         return cir_list
 
@@ -101,6 +126,7 @@ class QuantumMachinebenchmark:
         Returns:
             (List[Circuit]): Return the list of output circuit order by output_type.
         """
+
         # obey instruction set and layout in vqm to build random circuit
         q_number = quantum_machine_info.qubit_number
         Ins_set = quantum_machine_info.instruction_set
@@ -113,7 +139,7 @@ class QuantumMachinebenchmark:
         circuit_list.extend(self._get_random_circuit(level, q_number, Ins_set, layout))
 
         # get benchmark circuits
-        circuit_list.extend(self._get_benchmark_circuit(level, q_number))
+        circuit_list.extend(self._get_benchmark_circuit(level, q_number, Ins_set))
 
         # get algorithm circuit
         circuit_list.extend(self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir))
@@ -121,8 +147,7 @@ class QuantumMachinebenchmark:
         # list of Special defined Circuit-benchmark data structure
         bench_cir = []
         for i in range(len(circuit_list)):
-            benchlib = BenchLib()
-            benchlib.circuit = circuit_list[i]
+            benchlib = BenchLib(circuit_list[i])
             bench_cir.append(benchlib)
 
         return bench_cir
@@ -160,74 +185,80 @@ class QuantumMachinebenchmark:
         # Step 2: physical machine simulation
         for i in range(len(bench_cir)):
             sim_result = simulator_interface(bench_cir[i].circuit)
-            bench_cir[i].machine_amplitude = sim_result
+            bench_cir[i].machine_amp = sim_result
 
-        # Step 2: evaluate each circuit
-        # TODO: fidelity or other = self.evaluate(circuit)
-        # circuit.fidelity = fidelity
+        # Step 3: evaluate each circuit
+        self.evaluate(bench_cir)
 
-        # TODO: Step 3: show result
-        # self.show_result(circuits_list)
+        # Step 4: show result
+        self.show_result(bench_cir)
 
-    # TODO: use it, self.evaluate(circuits: Union[List[BenchLib], BenchLib]) -> update given circuits, no return
-    # def evaluate(self):
-    #     """ Evaluate all circuits in circuit list group by fields. """
-    #     qv_list, fidelity_list = [], []
-    #     for i in range(len(benchlib.field)):
-    #         # Quantum volumn
-    #         cir_attribute = re.findall(r"\d+", self.benchlib.circuits[i].name)
-    #         QV = min(int(cir_attribute[0]), int(cir_attribute[2]))
-    #         qv_list.append(QV)
-    #         # fidelity
-    #         if self.benchlib.field[i] != 'algorithm':
-    #             fidelity_list.append(self.benchlib.machine_amp[i][0])
-    #         else:
-    #             index = self.benchlib.simulation_amp()[i]
-    #             fidelity_list.append(self.benchlib.machine_amp[i][index])
+    def evaluate(self, circuits: Union[List[BenchLib], BenchLib]):
+        """ Evaluate all circuits in circuit list group by fields. """     
+        for bench_cir in circuits:
+            if bench_cir.type == "random":
+                self._evaluate_random_circuits(bench_cir)
+            elif bench_cir.type == "benchmark":
+                self._evaluate_benchmark_circuit(bench_cir)
+            elif bench_cir.type == "algorithm":
+                self._evaluate_algorithm_circuits(bench_cir)
 
-    # TODO: self.show_result(circuits)
-    # def show_result(self, entropy_QV_score, eigenvalue_QV_score, valid_circuits_list):
-    #     """ show benchmark result. """
-    #     if not os.path.exists(self._output_path):
-    #         os.makedirs(self._output_path)
+    def _evaluate_random_circuits(self, bench_cir):
+        cir_qv = bench_cir.qv
+        cir_fidelity = bench_cir.fidelity
+        cir_score = round(cir_qv * cir_fidelity, 4)
+        bench_cir.benchmark_score = cir_score
 
-    #     if len(eigenvalue_QV_score) > 0:
-    #         self._graph_show(entropy_QV_score, eigenvalue_QV_score, valid_circuits_list)
+    def _evaluate_benchmark_circuit(self, bench_cir):
+        cir_qv = bench_cir.qv
+        cir_fidelity = bench_cir.fidelity
+        cir_value = bench_cir.value
+        cir_score = round(cir_qv * cir_fidelity * cir_value, 4)
+        bench_cir.benchmark_score = cir_score
+    
+    def _evaluate_algorithm_circuits(self, bench_cir):
+        cir_qv = bench_cir.qv
+        cir_fidelity = bench_cir.fidelity
+        cir_score = round(cir_qv * cir_fidelity, 4)
+        bench_cir.benchmark_score = cir_score
 
-    #     if self._output_file_type == "txt":
-    #         self._txt_show(entropy_QV_score)
+    def show_result(self, bench_cir):
+        """ show benchmark result. """
+        if not os.path.exists(self._output_path):
+            os.makedirs(self._output_path)
 
-    #     else:
-    #         self._excel_show(entropy_QV_score)
+        # if len(bench_cir) > 0:
+        #     self._graph_show(bench_cir)
 
-    # def _graph_show(self, entropy_QV_score, eigenvalue_QV_score, valid_circuits_list):
+        if self._output_file_type == "txt":
+            self._txt_show(bench_cir)
+
+        else:
+            self._excel_show(bench_cir)
+
+    # def _graph_show(self, bench_cir):
     #     plt.rcParams['axes.unicode_minus'] = False
     #     plt.style.use('ggplot')
-    #     ################################ based circuits benchmark #####################################
+    #     ################################ benchmark circuits #####################################
     #     # Construct the data
-    #     feature_name = ['parallelized', 'entangled', 'serialized', 'measure', 'QV']
+    #     feature_name = ['parallelized', 'entangled', 'serialized', 'measure']
 
-    #     P, E, S, M, QV, values, feature = [], [], [], [], [], [], []
-    #     for i in range(len(eigenvalue_QV_score)):
-    #         field = eigenvalue_QV_score[i][0].split("+")[-2]
+    #     P, E, S, M, values, feature = [], [], [], [], [], []
+    #     for i in range(len(bench_cir)):
+    #         field = bench_cir[i].field
     #         if field == "highly_parallelized":
-    #             P.append(eigenvalue_QV_score[i][1])
+    #             P.append(bench_cir[i].value)
     #         elif field == "highly_serialized":
-    #             S.append(eigenvalue_QV_score[i][1])
+    #             S.append(bench_cir[i].value)
     #         elif field == "highly_entangled":
-    #             E.append(eigenvalue_QV_score[i][1])
+    #             E.append(bench_cir[i].value)
     #         elif field == "mediate_measure":
-    #             M.append(eigenvalue_QV_score[i][1])
+    #             M.append(bench_cir[i].value)
 
-    #     for j in range(len(entropy_QV_score)):
-    #         field_random = entropy_QV_score[j][0].split("+")[-3]
-    #         if field_random == "random":
-    #             QV.append(float(entropy_QV_score[j][3]))
-
-    #     for x in [P, E, S, M, QV]:
+    #     for x in [P, E, S, M]:
     #         if len(x) > 0:
     #             values.append(max(x))
-    #             feature.append(feature_name[[P, E, S, M, QV].index(x)])
+    #             feature.append(feature_name[[P, E, S, M].index(x)])
     #     N = len(values)
 
     #     # Sets the angle of the radar chart to bisect a plane
@@ -254,11 +285,10 @@ class QuantumMachinebenchmark:
     #     # Construct the data
     #     value_list, feature, values_2 = [], [], []
     #     field_list = ["adder", "clifford", "cnf", "grover", "maxcut", "qft", "qnn", "quantum_walk", "vqe"]
-    #     for i in range(len(valid_circuits_list)):
-    #         field = valid_circuits_list[i].split("+")[-2]
+    #     for i in range(len(bench_cir)):
+    #         field = bench_cir[i].field
     #         if field in field_list:
-    #             cir_attribute = re.findall(r"\d+", valid_circuits_list[i])
-    #             QV = min(int(cir_attribute[0]), int(cir_attribute[2]))
+    #             QV = bench_cir[i].qv
     #             value_list.append([field, QV])
     #     if len(value_list) > 0:
     #         field_QV_map = defaultdict(list)
@@ -289,37 +319,32 @@ class QuantumMachinebenchmark:
     #     plt.savefig(self._output_path + "/benchmark_radar_chart_show.jpg")
     #     plt.show()
 
-    # def _txt_show(self, entropy_QV_score):
-    #     result_file = open(self._output_path + '/benchmark_txt_show.txt', mode='w+', encoding='utf-8')
-    #     tb = pt.PrettyTable()
-    #     tb.field_names = [
-    #         'field', 'circuit width', 'circuit size', 'circuit depth', 'entropy value', 'entropy score', 'QV value'
-    #     ]
-    #     for i in range(len(entropy_QV_score)):
-    #         field = entropy_QV_score[i][0].split("+")[-2]
-    #         cir_attribute = re.findall(r"\d+", entropy_QV_score[i][0])
-    #         tb.add_row([
-    #             field, cir_attribute[0], cir_attribute[1], cir_attribute[2], entropy_QV_score[i][1],
-    #             entropy_QV_score[i][2], (2 ** entropy_QV_score[i][3])
-    #         ])
-    #     result_file.write(str(tb))
-    #     result_file.close()
+    def _txt_show(self, bench_cir):
+        result_file = open(self._output_path + '/benchmark_txt_show.txt', mode='w+', encoding='utf-8')
+        tb = pt.PrettyTable()
+        tb.field_names = [
+            'field', 'circuit width', 'circuit size', 'circuit depth', 'fidelity', 'quantum volume', 'benchmark score'
+        ]
+        for i in range(len(bench_cir)):
+            cir = bench_cir[i]
+            tb.add_row([cir.field, cir.width, cir.size, cir.depth, cir.fidelity, cir.qv, cir.benchmark_score])
+        result_file.write(str(tb))
+        result_file.close()
 
-    # def _excel_show(self, entropy_QV_score):
-    #     dfData_list = []
-    #     for i in range(len(entropy_QV_score)):
-    #         field = entropy_QV_score[i][0].split("+")[-2]
-    #         cir_attribute = re.findall(r"\d+", entropy_QV_score[i][0])
-    #         dfData = {
-    #             'field': field,
-    #             'circuit width': cir_attribute[0],
-    #             'circuit size': cir_attribute[1],
-    #             'circuit depth': cir_attribute[2],
-    #             'entropy value': entropy_QV_score[i][1],
-    #             'entropy score': entropy_QV_score[i][2],
-    #             'QV value': 2 ** entropy_QV_score[i][3]
-    #         }
-    #         dfData_list.append(dfData)
+    def _excel_show(self, bench_cir):
+        dfData_list = []
+        for i in range(len(bench_cir)):
+            cir = bench_cir[i]
+            dfData = {
+                'field': cir.field,
+                'circuit width': cir.width,
+                'circuit size': cir.size,
+                'circuit depth': cir.depth,
+                'fidelity': cir.fidelity,
+                'quantum volume': cir.qv,
+                'benchmark score': cir.benchmark_score
+            }
+            dfData_list.append(dfData)
 
-    #     df = pd.DataFrame(dfData_list)
-    #     df.to_excel(self._output_path + "/benchmark_excel_show.xlsx")
+        df = pd.DataFrame(dfData_list)
+        df.to_excel(self._output_path + "/benchmark_excel_show.xlsx")

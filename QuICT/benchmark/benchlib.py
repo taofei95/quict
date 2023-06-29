@@ -4,21 +4,12 @@ import re
 from QuICT.core.circuit.circuit import Circuit
 
 
-# TODO: Not all circuit in one class, one class for one circuit
-# circuit, machine amp
-# property: circuit, machine_amplitude, field, level, simulation_amplitude_symbol?, fidelity, QV, ...
-# only machine_amplitude, fidelity, QV, other score has setter
-# function: self.is_valid(self) -> bool
 class BenchLib:
     """ A data structure for storing benchmark information. """
     @property
     def circuit(self) -> Circuit:
         """ Return the circuits of QuantumMachinebenchmark. """
         return self._circuit
-
-    @circuit.setter
-    def circuit(self, circuit:Circuit):
-        self._circuit = circuit
 
     @property
     def machine_amp(self) -> np.array:
@@ -30,92 +21,132 @@ class BenchLib:
         self._machine_amp = machine_amp
 
     @property
+    def benchmark_score(self) -> float:
+        """ Return the general benchmark score of each circuit. """
+        return self._benchmark_score
+
+    @benchmark_score.setter
+    def benchmark_score(self, benchmark_score:float):
+        self._benchmark_score = benchmark_score
+
+    @property
+    def type(self) -> str:
+        """ Return the field of circuits. """
+        self._type = self._circuit.name.split("+")[:-1][0]
+        return self._type
+
+    @property
     def field(self) -> str:
         """ Return the field of circuits. """
-        cir_field = self._circuit.name.split("+")[:-1][1]
-
-        return cir_field
+        self._field = self._circuit.name.split("+")[:-1][1]
+        return self._field
 
     @property
     def level(self) -> list:
         """ Return the level of circuits. """
-        cir_level = int(self._circuit.name[-1])
-        return cir_level
+        self._level = int(self._circuit.name[-1])
+        return self._level
 
     @property
-    def simulation_amp(self) -> list:
-        """ Return the simulation sample result of circuits. """
-        simulation_amp = []
-        for i in range(len(self._circuits)):
-            based_name = self._circuits[i].name
-            based_field = self._circuits[i].name.split("+")[:-1]
-            if based_field[0] == "algorithm":
-                amp_result = np.load(f"QuICT/benchmark/cir_amp_result/{str(based_field[1])}/{str(based_name[:-7])}.npy")
-                cir_sim_amp = bin(np.where(amp_result==np.max(amp_result))[0][0])[2:]
-                simulation_amp.append(cir_sim_amp)
-
-        return simulation_amp
+    def width(self):
+        """ Return the qubit number of circuit. """
+        self._width = re.findall(r"\d+", self.circuit.name)[0]
+        return self._width
 
     @property
-    def Quantum_volume(self) -> list:
+    def size(self):
+        """ Return the gate number of circuit. """
+        self._size = re.findall(r"\d+", self.circuit.name)[1]
+        return self._size
+
+    @property
+    def depth(self):
+        """ Return the depth of circuit. """
+        self._depth = re.findall(r"\d+", self.circuit.name)[2]
+        return self._depth
+
+    @property
+    def value(self):
+        """ Return the value of benchmark circuit. """
+        cir_value = float(re.findall(r"\d+(?:\.\d+)?", self.circuit.name)[3])
+        return cir_value
+
+    @property
+    def qv(self) -> list:
         """ Return the quantum volume of circuit. """
-        cir_attribute = re.findall(r"\d+", self._circuit.name)
-        QV = min(int(cir_attribute[0]), int(cir_attribute[2]))
-
-        return QV
+        cir_attribute = re.findall(r"\d+", self.circuit.name)
+        self._qv = (2 ** min(int(cir_attribute[0]), int(cir_attribute[2])))
+        return self._qv
 
     @property
     def fidelity(self) -> str:
         """ Return the fidelity of circuit. """
-        return self._fidelity
+        if self._type != "algorithm" or self._field == "adder":
+            self._fidelity = self._machine_amp[0]
+        else:
+            width = self.width
+            if self._field == "qft":
+                p, q = self._machine_amp, [float(1 / (2 ** int(width)))] * (2 ** int(width))
+                self._fidelity = self._alg_cir_entropy(p, q)
+            elif self._field == "cnf":
+                self._fidelity = self._machine_amp[8]
+            elif self._field == "qnn":
+                point1 = self._machine_amp[0] + self._machine_amp[(2 ** width) / 2]
+                point2 = self._machine_amp[3] + self._machine_amp[(2 ** width) / 2 + 3]
+                self._fidelity = max(point1, point2)
+            elif self._field == "quantum_walk":
+                self._fidelity = self._machine_amp[3] + self._machine_amp[-2]
+            elif self._field == "vqe":
+                index = '1' * int(width / 2)
+                if width % 2 == 1:
+                    index += '0' * (int(width / 2) + 1)
+                else:
+                    index += '0' * int(width / 2)
+                self._fidelity = self._machine_amp[int(index, 2)]
 
-    @fidelity.setter
-    def fidelity(self, fidelity:str):
-        self._fidelity = fidelity
+        return round(self._fidelity, 4)
 
-        # qv_list, fidelity_list, evaluate_list = [], [], []
-        # machine_amp, simulation_amp = self.machine_amp.copy(), self.simulation_amp.copy()
-        # for i in range(len(self.field)):
-        #     # quantum volumn
-        #     cir_attribute = re.findall(r"\d+", self.circuits[i].name)
-        #     QV = min(int(cir_attribute[0]), int(cir_attribute[2]))
-        #     qv_list.append(QV)
-        #     # fidelity
-        #     if self.field[i] != 'algorithm':
-        #         fidelity_list.append(machine_amp[0][0])
-        #         machine_amp.remove(machine_amp[0])
-        #     else:
-        #         index = int(simulation_amp[0])
-        #         fidelity_list.append(machine_amp[0][index])
-        #         simulation_amp.remove(simulation_amp[0])
-        #         machine_amp.remove(machine_amp[0])
-        # level_list = self.level
-        # for i in range(len(qv_list)):
-        #     evaluate_list.append(qv_list[i] * fidelity_list[i] * level_list[i])
+    def _alg_cir_entropy(self, p, q):
+        def normalization(data):
+            data = np.array(data)
+            data = data/np.sum(data)
 
-        # return evaluate_list
+            return data
+
+        p = abs(normalization(p))
+        q = abs(normalization(q))
+
+        import math
+
+        sum=0.0
+        delta=1e-7
+        for x in map(lambda y, p:(1 - y) * math.log(1 - p + delta) + y * math.log(p + delta), p, q):
+            sum+=x
+        cross_entropy = -sum / len(p)
+
+        return cross_entropy
 
     def __init__(
         self,
-        circuit = None,
-        machine_amp:list = None,
-        fidelity:str = None
+        circuit: Circuit
     ):
         """
         Args:
             circuits (list, optional): The list of circuit which from QuantumMachinebenchmark.
-            field (List[str], optional): The field of each circuit in circuits.
-            level (List[int], optional): The level of each circuit in circuits.
-            machine_amp (List[np.array], optional): The list of the quantum machine amplitude of the input circuit. Defaults to None.
-            fidelity (List[float], optional): The fidelity of each circuit.
         """
+        assert isinstance(circuit, Circuit)
         self._circuit = circuit
-        self._machine_amp = machine_amp
+        self._machine_amp = []
+        self._benchmark_score = 0
 
-        if circuit is not None:
-            assert isinstance(circuit, Circuit)
-            self.circuit = circuit
-        if machine_amp is not None:
-            self.machine_amp = machine_amp
-        if fidelity is not None:
-            self.fidelity = fidelity
+        # Score related
+        self._qv = 0
+        self._fidelity = 0
+
+        # Circuit related
+        self._level = 0
+        self._type = 0
+        self._field = 0
+        self._width = 0
+        self._size = 0
+        self._depth = 0
