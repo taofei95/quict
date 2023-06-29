@@ -68,7 +68,7 @@ QuICT 内置了一个量子算法电路库，里面包含多种经典量子算�
 from QuICT.tools.circuit_library import CircuitLib
 
 cir_lib = CircuitLib()
-cirs = cir_lib.get_algorithm_circuit("grover", [3, 5, 7], max_depth=20)     # 生成Grover算法电路，比特数分别为3、5、7，最大深度为20
+cirs = cir_lib.get_circuit("algorithm", "maxcut", [5, 10])     # 获得MaxCut算法电路，比特数为5-10
 ```
 
 
