@@ -7,7 +7,7 @@ from QuICT.core import *
 from QuICT.core.gate import H, X
 from QuICT.simulation.state_vector import StateVectorSimulator
 
-from QuICT.algorithm.submodule.multiplier import *
+from QuICT.algorithm.arithmetic import *
 
 class TestRCModMulti(unittest.TestCase):
 

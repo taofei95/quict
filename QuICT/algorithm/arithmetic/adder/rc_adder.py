@@ -2,7 +2,7 @@ from numpy import log2, pi
 
 from QuICT.core.gate import CompositeGate, Ry, CU3
 from QuICT.core.gate.composite_gate import CompositeGate
-from QuICT.algorithm.submodule.qft import ry_QFT
+from QuICT.algorithm.qft import ry_QFT
 
 class RCFourierAdderWired(CompositeGate):
     """

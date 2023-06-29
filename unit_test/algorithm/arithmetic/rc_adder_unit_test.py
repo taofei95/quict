@@ -7,7 +7,7 @@ import random
 from QuICT.core import Circuit
 from QuICT.core.gate.gate import X, H
 from QuICT.simulation.state_vector import StateVectorSimulator
-from QuICT.algorithm.submodule import RCFourierAdderWired
+from QuICT.algorithm.arithmetic import RCFourierAdderWired
 
 
 class TestRCAdder(unittest.TestCase):

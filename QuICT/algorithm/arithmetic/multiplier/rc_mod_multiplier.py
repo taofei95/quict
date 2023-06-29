@@ -5,8 +5,8 @@ from typing import List
 from QuICT.tools.exception.core.gate_exception import *
 from QuICT.core.gate import X, CX, CU3, Swap, CSwap
 from QuICT.core.gate.composite_gate import CompositeGate
-from QuICT.algorithm.submodule.adder import RCFourierAdderWired
-from QuICT.algorithm.submodule.qft import ry_QFT
+from QuICT.algorithm.arithmetic.adder import RCFourierAdderWired
+from QuICT.algorithm.qft import ry_QFT
 
 class RCOutOfPlaceModMultiplier(CompositeGate):
     """
