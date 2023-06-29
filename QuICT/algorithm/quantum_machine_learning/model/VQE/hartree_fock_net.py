@@ -1,11 +1,13 @@
-import torch
 import numpy as np
 
+from ..model import Model
 from QuICT.algorithm.quantum_machine_learning.ansatz_library import Thouless
-from QuICT.algorithm.quantum_machine_learning.utils_v1 import GpuSimulator, Hamiltonian
+from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
+from QuICT.algorithm.quantum_machine_learning.utils.loss import *
+from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 
 
-class HartreeFockVQENet(torch.nn.Module):
+class HartreeFockVQENet(Model):
     """The network used by restricted Hartree-Fock VQE with Thouless ansatz
     
     Reference:
@@ -16,7 +18,10 @@ class HartreeFockVQENet(torch.nn.Module):
         orbitals: int,
         electrons: int,
         hamiltonian: Hamiltonian,
-        device=torch.device("cuda:0"),
+        angles: np.ndarray = None,
+        device="GPU",
+        gpu_device_id: int = 0,
+        differentiator: str = "adjoint",
     ):
         """Initialize a HartreeFockVQENet instance.
 
@@ -24,65 +29,37 @@ class HartreeFockVQENet(torch.nn.Module):
             orbitals (int): The number of orbitals.
             electrons (int): The number of electrons.
             hamiltonian (Hamiltonian): The hamiltonian for a specific task.
-            device (torch.device, optional): The device to which the HartreeFockVQENet is assigned.
-                Defaults to torch.device("cuda:0").
         """
-        super().__init__()
+        super(HartreeFockVQENet, self).__init__(
+            orbitals, hamiltonian, angles, device, gpu_device_id, differentiator
+        )
         self.orbitals = orbitals
         self.electrons = electrons
         # Thouless ansatz
-        self.ansatz = Thouless(device)
-        self.hamiltonian = hamiltonian
-        self.device = device
-        self.simulator = GpuSimulator()
-        self.define_network()
+        self.ansatz = Thouless(orbitals, electrons)
+        self._circuit = self.ansatz.init_circuit(angles)
+        self._params = self.ansatz.params
 
-    def define_network(self):
-        self.params = torch.nn.Parameter(
-            torch.zeros(self.electrons * (self.orbitals - self.electrons), device=self.device),
-            requires_grad=True
+    def run_step(self, optimizer):
+        # FP
+        state = self._simulator.run(self._circuit)
+        # BP
+        _, loss = self._differentiator.run(
+            self._circuit, self._params, state, self._hamiltonian
         )
-
-    def forward(self, state=None):
-        """The forward propagation process of HartreeFockVQENet.
-
-        Args:
-            state (np.array/torch.Tensor, optional): The input state vector.
-                Defaults to None, which means the initial state |0>.
-
-        Returns:
-            torch.Tensor: The output state vector.
-        """
-        ansatz = self.ansatz(self.orbitals, self.electrons, self.params)
-        if self.device.type == "cpu":
-            state = ansatz.forward(state)
-        else:
-            state = self.simulator.forward(ansatz, state)
-        return state
-
-    def loss_func(self, state):
-        """The loss function for VQE, which aims to minimize the expectation of H.
-
-        Args:
-            state (torch.Tensor): The state vector.
-
-        Returns:
-            torch.Tensor: Loss, which is equal to the expectation of H.
-        """
-        if isinstance(state, np.ndarray):
-            state = torch.from_numpy(state).to(self.device)
-        assert state.shape[0] == 1 << self.orbitals
-
-        ansatz_list = self.hamiltonian.construct_hamiton_ansatz(
-            self.orbitals, self.device
+        # optimize
+        self._params.pargs = optimizer.update(
+            self._params.pargs, self._params.grads, "params"
         )
-        coefficients = self.hamiltonian.coefficients
-        state_vector = torch.zeros(1 << (self.orbitals), dtype=torch.complex128).to(
-            self.device
-        )
-        for coeff, ansatz in zip(coefficients, ansatz_list):
-            sv = ansatz.forward(state)
-            state_vector += coeff * sv
-        loss = torch.sum(state.conj() * state_vector).real
+        self._params.zero_grad()
 
-        return loss
+        # update
+        self.update()
+        return state, loss
+
+    def update(self):
+        self._circuit = self.ansatz.init_circuit(self._params)
+
+    def sample(self, shots):
+        sample = self._simulator.sample(shots)
+        return sample

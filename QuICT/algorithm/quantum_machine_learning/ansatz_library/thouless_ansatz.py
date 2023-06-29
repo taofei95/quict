@@ -1,11 +1,11 @@
-import torch
 import numpy as np
 
-from QuICT.core.gate import CompositeGate, Rz, sqiSwap, X
-from QuICT.algorithm.quantum_machine_learning.utils_v1 import Ansatz, Rz_tensor, sqiSwap_tensor, X_tensor
+from .ansatz import Ansatz
+from QuICT.core import Circuit
+from QuICT.core.gate import CompositeGate, Rz, Variable, np, sqiSwap, X
 
 
-class Thouless:
+class Thouless(Ansatz):
     """ Thouless ansatz
 
     Reference:
@@ -13,47 +13,52 @@ class Thouless:
         https://arxiv.org/abs/1711.04789
         https://arxiv.org/abs/2004.04174
     """
-    def __init__(self, device=torch.device("cuda:0")):
-        """
-        Args:
-            device (str, optional): The device to which the model is assigned.
-                Defaults to "cuda:0".
-        """
-        self._device = device
-
-    def __call__(self, orbitals, electrons, angles):
+    def __init__(self, orbitals, electrons):
         """
         Args:
             orbitals(int): number of orbitals (i.e. quantum qubits)
             electrons(int): number of electrons
-            angles(list[float]): the list of parameters
+        """
+        super(Thouless, self).__init__(orbitals)
+        self.orbitals = orbitals
+        self.electrons = electrons
+
+    def init_circuit(self, angles=None):
+        """
+        Args:
+            angles(Variable/np.ndarray): the list of parameters
 
         Returns:
-            Ansatz: thouless ansatz
+            Circuit: thouless ansatz
         """
-        ansatz = Ansatz(orbitals, device=self._device)
-        assert len(angles) == electrons * (orbitals - electrons), ValueError("Incorrect number of parameters")
+        if angles is None:
+            angles = np.zeros(self.electrons * (self.orbitals - self.electrons))
+        angles = Variable(pargs=angles) if isinstance(angles, np.ndarray) else angles
+        assert angles.shape == (self.electrons * (self.orbitals - self.electrons),), \
+            ValueError("Incorrect number of parameters")
+        self._params = angles
 
+        circuit = Circuit(self.orbitals)
         # The first X gates
-        for k in range(electrons):
-            ansatz.add_gate(X_tensor, k)
+        for k in range(self.electrons):
+            X | circuit(k)
 
         # Givens rotations
         param = 0
-        for layer in range(orbitals):
+        for layer in range(self.orbitals):
             for k in range(
-                abs(electrons - layer),
-                orbitals - abs(orbitals - (electrons + layer)),
+                abs(self.electrons - layer),
+                self.orbitals - abs(self.orbitals - (self.electrons + layer)),
                 2
             ):
-                ansatz.add_gate(sqiSwap_tensor, [k, k + 1])
-                ansatz.add_gate(Rz_tensor(-angles[param]), k)
-                ansatz.add_gate(Rz_tensor(np.pi + angles[param]), k + 1)
-                ansatz.add_gate(sqiSwap_tensor, [k, k + 1])
-                ansatz.add_gate(Rz_tensor(-np.pi), k + 1)
+                sqiSwap | circuit([k, k + 1])
+                Rz(0 - angles[param]) | circuit(k)
+                Rz(np.pi + angles[param]) | circuit(k + 1)
+                sqiSwap | circuit([k, k + 1])
+                Rz(-np.pi) | circuit(k + 1)
                 param += 1
 
-        return ansatz
+        return circuit
 
     @staticmethod
     def modified_Givens_rotation(angle):
