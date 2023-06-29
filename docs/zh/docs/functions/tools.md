@@ -50,7 +50,7 @@ circuit.draw(method='command')
 
 ## 量子电路算法库
 
-QuICT 内置了一个量子算法电路库，里面包含多种经典量子算法，例如 Grover、VQE、QFT 等。也支持基于量子指令集的随机电路生成和 benchmark 测试电路生成。
+QuICT 内置了一个量子算法电路库，里面包含多种经典量子算法，例如 Grover、VQE、QFT 等。也包含若干基于物理机的随机电路和模板电路。
 
 | 算法电路     | 比特数     | 门数         | 电路深度 |
 | ------------ | ---------- | ------------ | -------- |
@@ -140,8 +140,8 @@ cirs = cir_lib.get_circuit("algorithm", "maxcut", [5, 10])     # 获得MaxCut算
 - 使用命令行指令生成并管理电路
 
     ``` sh
-    # 生成量子随机电路
-    quict circuit get_random -i ibmq -q 10 -ms 100 -md 100 .
+    # 生成基于Ourense物理机的量子随机电路
+    quict circuit get_machine -m ourense .
     # 生成量子算法电路
     quict circuit get_algorithm clifford . -q 5
     # 电路管理

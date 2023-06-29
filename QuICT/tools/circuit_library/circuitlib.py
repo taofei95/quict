@@ -182,7 +182,7 @@ class CircuitLib:
             classify_list = self.__DEFAULT_CLASSIFY[type]
 
         if isinstance(qubits_interval, list):
-            assert len(qubits_interval) == 2
+            assert len(qubits_interval) == 2, f"{len(qubits_interval)}"
 
         circuit_list = []
         for classify in classify_list:
