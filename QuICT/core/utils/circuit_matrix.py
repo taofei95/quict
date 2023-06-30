@@ -2,7 +2,6 @@ from typing import *
 from collections import namedtuple
 import numpy as np
 
-from .gate_type import MatrixType
 import QuICT.ops.linalg.cpu_calculator as CPUCalculator
 
 from QuICT.tools.exception.core import TypeError
@@ -37,6 +36,7 @@ def get_gates_order_by_depth(gates: list) -> list:
 
 
 class MatrixGroup:
+    """ Create a group of Matrix with qubit indexes. """
     def __init__(self, matrix, args, blocked_args: set = set([])):
         self.args = set(args)
         self.value = [(matrix, args)]
@@ -54,8 +54,17 @@ class MatrixGroup:
 
 
 class CircuitMatrix:
-    def __init__(self, device: str = "CPU"):
+    """ Generate Circuit's Matrix. """
+    def __init__(self, device: str = "CPU", precision: str = "double"):
+        """
+        Args:
+            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
+            precision (str, optional): The precision for matrix, one of [single, double]. Defaults to "double".
+        """
         self._device = device
+        self._precision = precision
+        self._dtype = np.complex128 if precision == "double" else np.complex64
+
         if device == "CPU":
             self._computer = CPUCalculator
             self._array_helper = np
@@ -66,7 +75,18 @@ class CircuitMatrix:
             self._computer = GPUCalculator
             self._array_helper = cp
 
-    def get_unitary_matrix(self, gates: list, qubits_num: int, mini_arg: int = 0) -> np.ndarray:
+    def get_unitary_matrix(self, gates: list, qubits_num: int) -> np.ndarray:
+        """
+        Args:
+            gates (List[BasicGate]): The list of Quantum Gates in the Circuit.
+            qubits_num (int): The number of qubits
+
+        Returns:
+            np.ndarray: The unitary matrix of the Quantum Circuit.
+        """
+        if len(gates) == 0:
+            return self._array_helper.identity(1 << qubits_num, dtype=self._dtype)
+
         # Order gates by depth
         gates_order_by_depth = get_gates_order_by_depth(gates)
 
@@ -79,14 +99,15 @@ class CircuitMatrix:
                         "CircuitMatrix.get_unitary_matrix.gates", "1 or 2-qubits gates", gate.controls + gate.targets
                     )
 
-                if gate.matrix_type == MatrixType.special:
+                if gate.is_special():
                     continue
 
                 args = gate.cargs + gate.targs
-                matrix = gate.matrix if self._device == "CPU" else self._array_helper.array(gate.matrix)
+                matrix = gate.get_matrix(self._precision) if self._device == "CPU" else \
+                    self._array_helper.array(gate.get_matrix(self._precision))
                 if len(args) == 2 and args[0] > args[1]:
                     args.sort()
-                    matrix = self._computer.MatrixPermutation(matrix, self._array_helper.array([1, 0]))
+                    matrix = self._computer.MatrixPermutation(matrix, self._array_helper.array([1, 0]), False)
 
                 is_intersect, is_blocked_layer = self._find_related_MatrixGroup(matrix_groups, args)
                 if not is_intersect:
@@ -118,7 +139,7 @@ class CircuitMatrix:
         # Combined all matries from the combined MatrixGroup
         circuit_matrix, circuit_matrix_args = self._combined_gates(combined_matries)
         # Permutation the circuit matrix with currect qubits' order
-        args_baseline = list(range(mini_arg, qubits_num, 1))
+        args_baseline = list(range(qubits_num))
         if circuit_matrix_args != args_baseline:
             circuit_matrix = self._tensor_unitary(circuit_matrix, circuit_matrix_args, args_baseline)
 
@@ -149,6 +170,17 @@ class CircuitMatrix:
         return is_intersect, is_blocked
 
     def merge_gates(self, u1, u1_args, u2, u2_args):
+        """ Combined two Quantum Gate togather.
+
+        Args:
+            u1 (np.ndarray): The unitary matrix of Gate A.
+            u1_args (list): The qubit indexes of Gate A.
+            u2 (np.ndarray): The unitary matrix of Gate B.
+            u2_args (list): The qubit indexes of Gate B.
+
+        Returns:
+            Tuple(np.ndarray, list): The combined unitary matrix and its qubits indexes.
+        """
         u1_args_set, u2_args_set = set(u1_args), set(u2_args)
         insection_args = u1_args_set & u2_args_set
         if len(insection_args) == 0:
@@ -158,7 +190,8 @@ class CircuitMatrix:
             args_idx = [u1_args.index(u2_arg) for u2_arg in u2_args]
             u2 = self._computer.MatrixPermutation(
                 u2,
-                self._array_helper.array(args_idx)
+                self._array_helper.array(args_idx),
+                False
             )
 
         union_args = u1_args + [i for i in u2_args if i not in u1_args] if len(u1_args) >= len(u2_args) else \
@@ -178,7 +211,8 @@ class CircuitMatrix:
             if np.allclose(mono_diff, -1):
                 unitary = self._computer.MatrixPermutation(
                     unitary,
-                    self._array_helper.arange(len(unitary_args) - 1, -1, -1)
+                    self._array_helper.arange(len(unitary_args) - 1, -1, -1),
+                    False
                 )
 
             return self._computer.MatrixTensorI(
@@ -195,7 +229,7 @@ class CircuitMatrix:
         tmatrix_args = unitary_args + [earg for earg in extend_args if earg not in unitary_args]
         permutation_index = [extend_args.index(tm_arg) for tm_arg in tmatrix_args]
 
-        return self._computer.MatrixPermutation(tensor_matrix, self._array_helper.array(permutation_index))
+        return self._computer.MatrixPermutation(tensor_matrix, self._array_helper.array(permutation_index), False)
 
     def _combined_gates(self, gates):
         args_num = [len(args) for _, args in gates]

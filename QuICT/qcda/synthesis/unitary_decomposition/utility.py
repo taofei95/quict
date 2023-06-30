@@ -1,5 +1,6 @@
 from typing import *
 import numpy as np
+import scipy as sp
 
 from QuICT.core import *
 from QuICT.core.gate import *
@@ -29,9 +30,9 @@ def quantum_shannon_decompose(
     """
     s = u1 @ u2.conj().T
 
-    eig_values, v = np.linalg.eig(s)
+    d, v = sp.linalg.schur(s)
     v_dagger = v.conj().T
-    d = np.sqrt(np.diag(eig_values))
+    d = np.sqrt(np.diag(np.diagonal(d)))
     w = d @ v_dagger @ u2
 
     return v, d, w

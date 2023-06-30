@@ -11,7 +11,7 @@ from QuICT.core.layout.layout import Layout
 from QuICT.qcda.qcda import QCDA
 from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.tools.circuit_library.circuitlib import CircuitLib
-from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
+from QuICT.core.virtual_machine import InstructionSet
 
 
 class QuICTBenchmark:
@@ -23,7 +23,7 @@ class QuICTBenchmark:
         output_file_type: str = "txt"
     ):
         """
-        Initial circuit library
+        Initial benchmark for QuICT
 
         Args:
             output_path (str, optional): The path of the Analysis of the results.

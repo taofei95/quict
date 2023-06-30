@@ -5,13 +5,16 @@ from QuICT.qcda.optimization.symbolic_clifford_optimization import SymbolicCliff
 
 
 if __name__ == '__main__':
-    n = 5
+    n = 3
     circuit = Circuit(n)
     circuit.random_append(10 * n, CLIFFORD_GATE_SET)
     CUS = CliffordUnidirectionalSynthesizer()
     SCO = SymbolicCliffordOptimization()
     circuit_opt = CUS.execute(circuit)
     circuit_opt_opt = SCO.execute(circuit_opt)
-    circuit.draw(filename="origin_circuit")
-    circuit_opt.draw(filename="CliffordSyn")
-    circuit_opt_opt.draw(filename="SymbClifOpt")
+    print("The original Quantum Circuit.")
+    circuit.draw(method="command")
+    print("The Quantum Circuit through the CliffordUnidirectionalSynthesizer.")
+    circuit_opt.draw(method="command", flatten=True)
+    print("The Quantum Circuit through the SymbolicCliffordOptimization")
+    circuit_opt_opt.draw(method="command", flatten=True)

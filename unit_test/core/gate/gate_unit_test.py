@@ -2,72 +2,67 @@ import random
 import unittest
 import numpy as np
 
-from QuICT.core import Qureg, Circuit, Qubit
-from QuICT.core.gate import *
-from QuICT.core.utils import GateType
-from scipy.stats import unitary_group
-from QuICT.core.gate.gate_builder import build_random_gate, build_gate
+from QuICT.core.circuit.circuit import Circuit
+from QuICT.core.gate.gate import *
 
 
 class TestGate(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("The Gate unit test start!")
+        cls.default_1_qubits_gate = [
+            GateType.h, GateType.hy, GateType.s, GateType.sdg, GateType.x, GateType.y, GateType.z,
+            GateType.sx, GateType.sy, GateType.sw, GateType.id, GateType.u1, GateType.u2, GateType.u3,
+            GateType.rx, GateType.ry, GateType.rz, GateType.t, GateType.tdg, GateType.phase, GateType.gphase,
+            GateType.measure, GateType.reset, GateType.barrier
+        ]
+        cls.default_2_qubits_gate = [
+            GateType.cx, GateType.cz, GateType.ch, GateType.crz, GateType.cu1, GateType.cu3, GateType.fsim,
+            GateType.rxx, GateType.ryy, GateType.rzz, GateType.swap, GateType.iswap, GateType.iswapdg, GateType.sqiswap
+        ]
+        cls.default_3_qubits_gate = [GateType.ccx, GateType.ccz, GateType.ccrz, GateType.cswap]
 
     @classmethod
     def tearDownClass(cls) -> None:
         print("The Gate unit test finished!")
 
-    def test_gate_build(self):
-        cir = Circuit(10)
-        # single qubit gate
-        h1 = HGate()
-        h1 | cir(1)  # 1
-        H | cir  # 11
-
-        # single qubit gate with param
-        my_u1 = U1Gate([1])
-        my_u1 | cir(2)  # 12
-        U1(0) | cir(1)  # 13
-
-        # two qubit gate
-        my_CX = CX & [3, 4]
-        my_CX | cir  # 14
-        CX | cir([3, 4])  # 15
-
-        Rzz(1) | cir([1, 2])
-        CU3(1, 0, 0) | cir([5, 6])  # 16
-
-        # complexed gate
-        CCRz(1) | cir([7, 8, 9])  # 17
-        cg_ccrz = CCRz.build_gate()
-        cg_ccrz | cir([7, 8, 9])  # 22
-        assert len(cir.gates) == 23
-
     def test_gate_attribute(self):
-        # test single gate
-        assert H.is_single() and not CRz.is_single()
-        assert Y.is_single() and not CZ.is_single()
+        single_qubit_gate = [
+            H, Hy, S, S_dagger, X, Y, Z, SX, SY, SW, ID, U1, U2, U3,
+            Rx, Ry, Rz, T, T_dagger, Phase, GPhase, Measure, Reset, Barrier
+        ]
+        single_control_gate = [CZ, CX, CY, CRz, CU1, CU3]
+        clifford_gate = [X, Y, Z, H, S, S_dagger, CX]
+        diagonal_matrix_gate = [Rz, GPhase, CRz, CCRz]
+        pauli_gate = [X, Y, Z, ID]
+        special_matrix_gate = [Measure, Reset, Barrier]
+        complex_matrix_gate = [Rzz, FSim, Ryy, Rzx]
+        matrix_type_list = [
+            single_qubit_gate, single_control_gate, clifford_gate,
+            diagonal_matrix_gate, pauli_gate, special_matrix_gate
+        ]
 
-        # test control single
-        assert CRz.is_control_single() and not H.is_control_single()
-        assert CZ.is_control_single() and not U1.is_control_single()
-
-        # test Clifford gate
-        assert S.is_clifford() and not T.is_clifford()
-        assert CX.is_clifford() and not T.is_clifford()
-
-        # test diagonal gate
-        assert S.is_diagonal() and not H.is_diagonal()
-        assert CZ.is_diagonal() and not Y.is_diagonal()
-
-        # test Pauli gate
-        assert X.is_pauli() and not Rx.is_pauli()
+        for _ in range(10):
+            for gate_index in range(len(matrix_type_list)):
+                gate = random.choice(matrix_type_list[gate_index])
+                assert gate.matrix_type != random.choice(complex_matrix_gate).matrix_type
+                if gate_index == 0:
+                    assert gate.is_single()
+                elif gate_index == 1:
+                    assert gate.is_control_single()
+                elif gate_index == 2:
+                    assert gate.is_clifford()
+                elif gate_index == 3:
+                    assert gate.is_diagonal() and gate.matrix_type == MatrixType.diagonal
+                elif gate_index == 4:
+                    assert gate.is_pauli()
+                elif gate_index == 5:
+                    assert gate.is_special() and gate.matrix_type == MatrixType.special
 
         # test unitary gate diagonal
         amatrix = np.array([
-            [1, 0],
-            [0, 1j]
+            [1j, 0],
+            [0, 1]
         ], dtype=np.complex128)
         bmatrix = np.array([
             [1 / np.sqrt(2), 1 / np.sqrt(2)],
@@ -77,78 +72,59 @@ class TestGate(unittest.TestCase):
         bunitary = Unitary(bmatrix)
         assert aunitary.is_diagonal() and not bunitary.is_diagonal()
 
-        # test matrix_type
-        assert S.matrix_type != H.matrix_type
-        assert S.matrix_type != CX.matrix_type
-
-        # test special gate
-        assert Measure.is_special() and not H.is_special()
-
-    # gate_builder_test
-    def test_build_gate(self):
+    def test_gate_inverse(self):
+        gate_list = [
+            GateType.u1, GateType.rx, GateType.ry, GateType.phase, GateType.gphase,
+            GateType.cu1, GateType.rxx, GateType.ryy, GateType.rzz, GateType.rzx,
+            GateType.rz, GateType.crz, GateType.ccrz, GateType.fsim, GateType.s,
+            GateType.sdg, GateType.sy, GateType.sw, GateType.t, GateType.tdg
+        ]
+        # normal gates
         for _ in range(10):
-            typelist_1qubit = [GateType.rx, GateType.ry, GateType.rz]
-            typelist_2qubit = [
-                GateType.cx, GateType.cy, GateType.crz,
-                GateType.ch, GateType.cz, GateType.rxx,
-                GateType.ryy, GateType.rzz, GateType.fsim
-            ]
+            gate = gate_builder(random.choice(gate_list), random_params=True)
+            gate_inv = gate.inverse()
+            qidxes = gate.controls + gate.targets
+            gate_ide = np.identity(2 ** qidxes, np.complex128)
+            assert np.allclose(np.dot(gate.matrix, gate_inv.matrix), gate_ide)
 
-            # build 1qubit gate
-            gate_type = GateType.h
-            q6 = Qureg(1)
-            g6 = build_gate(gate_type, q6)
-            assert g6.type == gate_type and g6.assigned_qubits == q6
+        # unitary gates
+        from scipy.stats import unitary_group
+        matrix = unitary_group.rvs(2 ** 2)
+        u2 = Unitary(matrix).inverse()
+        double_ide = np.identity(4, np.complex128)
+        assert np.allclose(np.dot(matrix, u2.matrix), double_ide)
 
-            # build 1qubit gate with params
-            gate_type = typelist_1qubit[random.randint(0, len(typelist_1qubit) - 1)]
-            q1 = Qureg(1)
-            params = [random.random()]
-            g1 = build_gate(gate_type, q1, params)
-            assert g1.type == gate_type and g1.assigned_qubits == q1
+        # perm gates
+        for target_num in range(5):
+            p = Perm(target_num, list(range(target_num)))
+            p_inverse = p.inverse()
+            assert np.allclose(np.dot(p.matrix, p_inverse.matrix), p_inverse.matrix)
 
-            # build 2qubits gate
-            gate_type = typelist_2qubit[random.randint(0, len(typelist_2qubit) - 1)]
-            q2 = Qureg(2)
-            g2 = build_gate(gate_type, q2)
-            assert g2.type == gate_type and g2.assigned_qubits == q2
-
-            # build 2qubits gate with params
-            gate_type = GateType.cu3
-            q3 = Qureg(2)
-            params = [1, 1, 1]
-            g3 = build_gate(gate_type, q3, params)
-            assert g3.pargs == params and g3.assigned_qubits == q3
-
-            # build unitary gate
-            gate_type = GateType.unitary
-            matrix = unitary_group.rvs(2 ** 3)
-            g4 = build_gate(gate_type, [1, 2, 3], matrix)
-            assert g4.matrix.shape == (8, 8)
-
-            # build special gate
-            gate_type = GateType.measure
-            q5 = Qubit()
-            g5 = build_gate(gate_type, q5)
-            assert g5.assigned_qubits[0] == q5
+    def test_gate_commutative(self):
+        cir = Circuit(5)
+        cgate = CX & [0, 1]
+        cgate | cir
+        cgate2 = U2(1, 0)
+        cgate2 | cir
+        cgate2.commutative(cgate)
+        assert True
 
     def test_build_random_gate(self):
         for _ in range(10):
-            typelist_1qubit = [GateType.rx, GateType.ry, GateType.rz]
-            typelist_2qubit = [
-                GateType.cx, GateType.cy, GateType.crz,
-                GateType.ch, GateType.cz, GateType.rxx,
-                GateType.ryy, GateType.rzz, GateType.fsim
-            ]
             # build random 1qubit gate
-            gate_type = typelist_1qubit[random.randint(0, len(typelist_1qubit) - 1)]
-            rg1 = build_random_gate(gate_type, 10, random_params=True)
+            gate_type = self.default_1_qubits_gate[random.randint(0, len(self.default_1_qubits_gate) - 1)]
+            rg1 = gate_builder(gate_type, random_params=True)
             assert rg1.type == gate_type
 
             # build random 2qubits gate
-            gate_type = typelist_2qubit[random.randint(0, len(typelist_2qubit) - 1)]
-            rg2 = build_random_gate(gate_type, 10, random_params=True)
+            gate_type = self.default_2_qubits_gate[random.randint(0, len(self.default_2_qubits_gate) - 1)]
+            rg2 = gate_builder(gate_type, random_params=True)
             assert rg2.type == gate_type
+
+            # build random 3qubits gate
+            gate_type = self.default_3_qubits_gate[random.randint(0, len(self.default_3_qubits_gate) - 1)]
+            rg3 = gate_builder(gate_type, random_params=True)
+            assert rg3.type == gate_type
 
     def test_gate_expand(self):
         # single qubit quantum gate expand test

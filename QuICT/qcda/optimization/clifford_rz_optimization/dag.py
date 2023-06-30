@@ -9,9 +9,8 @@ except ImportError:
 
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.core.gate.gate_builder import GATE_TYPE_TO_CLASS
 
-from .symbolic_phase import SymbolicPhase, SymbolicPhaseVariable
+from .symbolic_phase import SymbolicPhase, SymbolicPhaseVariable, SymbolicRz
 
 
 class DAG(Iterable):
@@ -75,7 +74,14 @@ class DAG(Iterable):
                 BasicGate: corresponding gate
             """
 
-            return GATE_TYPE_TO_CLASS[self.gate_type]()(*self.params) & self.qubit_loc \
+            if self.gate_type == GateType.rz and isinstance(self._params[0], SymbolicPhase):
+                val = self._params[0].evaluate()
+                if val == float('inf'):
+                    return SymbolicRz(self._params[0]) & self.qubit_loc
+                else:
+                    return Rz(val) & self.qubit_loc
+
+            return gate_builder(self.gate_type, params=self.params) & self.qubit_loc \
                 if self.gate_type is not None else None
 
         def add_forward_edge(self, qubit_, node):
@@ -201,7 +207,7 @@ class DAG(Iterable):
         cur_nodes = self.start_nodes.copy()
 
         var_cnt = 0
-        for idx, gate_ in enumerate(gates.gates):
+        for idx, gate_ in enumerate(gates.flatten_gates()):
             # decouple ccx building with dag
             if build_toffoli and (gate_.type == GateType.ccx or gate_.type == GateType.ccz):
                 self.has_symbolic_rz = True

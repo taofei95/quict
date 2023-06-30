@@ -13,9 +13,9 @@ class MultiControlToffoli(object):
         """
         Args:
             aux_usage(str): 4 different usages of auxiliary qubits could be chosen, as listed
-                'no_aux': No auxiliary qubits are used
-                'one_clean_aux': 1 clean auxiliary qubit is used
-                'one_dirty_aux': 1 dirty auxiliary qubit is used
+                'no_aux': No auxiliary qubits are used  \n
+                'one_clean_aux': 1 clean auxiliary qubit is used  \n
+                'one_dirty_aux': 1 dirty auxiliary qubit is used  \n
                 'half_dirty_aux': more than half of all qubits are used as auxiliary qubits, which could be dirty
         """
         assert aux_usage in self.__AUX_USAGES, TypeError("MultiControlToffoli.aux_usage", self.__AUX_USAGES, aux_usage)
@@ -36,15 +36,15 @@ class MultiControlToffoli(object):
         # Special cases, no MCT would be executed.
         if control == 0:
             gates = CompositeGate()
-            X & 0 | gates
+            X | gates(0)
             return gates
         if control == 1:
             gates = CompositeGate()
-            CX & [0, 1] | gates
+            CX | gates([0, 1])
             return gates
         if control == 2:
             gates = CompositeGate()
-            CCX & [0, 1, 2] | gates
+            CCX | gates([0, 1, 2])
             return gates
 
         # Otherwise

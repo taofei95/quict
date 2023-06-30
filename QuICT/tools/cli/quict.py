@@ -60,44 +60,29 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
         circuit_sp (ArgumentParser): Circuit Parser
     """
     from QuICT.tools.cli.blueprint.circuit import (
-        get_random_circuit, get_algorithm_circuit, store_quantum_circuit,
+        get_machine_circuit, get_algorithm_circuit, store_quantum_circuit,
         delete_quantum_circuit, list_quantum_circuit
     )
 
     subparser = circuit_sp.add_subparsers()
-    # quict circuit get_random
-    get_random = subparser.add_parser(
-        name="get_random",
+    # quict circuit get_machine
+    get_machine = subparser.add_parser(
+        name="get_machine",
         description="Get random circuit.",
         help="get random circuit"
     )
-    get_random.add_argument(
-        "-i", "--instruction_set",
-        choices=["ctrl_unitary", "diag", "single_bit", "ctrl_diag", "google", "ibmq", "ionq", "ustc", "nam", "origin"],
-        nargs="?", default="nam",
+    get_machine.add_argument(
+        "-m", "--machine_name",
+        choices=["aspen-4", "ourense", "rochester", "sycamore", "tokyo"],
+        nargs="?", default="ourense",
         help="Choice the instrcution set for random circuit."
     )
-    get_random.add_argument(
-        "-q", "--qubits",
-        nargs="+", type=int, default=[5],
-        help="The number of qubits."
-    )
-    get_random.add_argument(
-        "-ms", "--max_size",
-        type=int, default=None,
-        help="The maximum number of quantum gates."
-    )
-    get_random.add_argument(
-        "-md", "--max_depth",
-        type=int, default=None,
-        help="The maximum number of circuit depth."
-    )
-    get_random.add_argument(
+    get_machine.add_argument(
         "output_path",
         nargs="?", default=".",
         help="The output path, default to be current path."
     )
-    get_random.set_defaults(func=get_random_circuit)
+    get_machine.set_defaults(func=get_machine_circuit)
 
     # quict circuit get_algorithm
     get_algorithm = subparser.add_parser(
@@ -112,7 +97,7 @@ def circuit_cli_construct(circuit_sp: ArgumentParser):
     )
     get_algorithm.add_argument(
         "-q", "--qubits",
-        nargs="+", type=int, default=5,
+        nargs="*", type=int, default=5,
         help="The number of qubits' number."
     )
     get_algorithm.add_argument(

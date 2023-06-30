@@ -16,11 +16,8 @@ default_customed_circuit_folder = os.path.join(
 )
 
 
-def get_random_circuit(
-    qubits: list,
-    max_size: int,
-    max_depth: int,
-    instruction_set: str = "nam",
+def get_machine_circuit(
+    machine_name: str = "nam",
     output_path: str = '.'
 ):
     """ Generate the circuit with give parameters and write circuit's qasm into output path.
@@ -33,13 +30,16 @@ def get_random_circuit(
         output_path (str, optional): The output folder. Defaults to current work dir.
     """
     circuit_library = CircuitLib(output_type="file", output_path=output_path)
-    circuit_library.get_random_circuit(instruction_set, qubits, max_size, max_depth)
+    circuit_library.get_circuit("machine", machine_name)
 
 
 def get_algorithm_circuit(alg: str, qubits: list, output_path: str = "."):
     """ Get the algorithm circuit and write its qasm into output path. """
     circuit_library = CircuitLib(output_type="file", output_path=output_path)
-    circuit_library.get_algorithm_circuit(alg, qubits_interval=qubits)
+    if len(qubits) == 1:
+        qubits = qubits[0]
+
+    circuit_library.get_circuit("algorithm", alg, qubits_interval=qubits)
 
 
 def store_quantum_circuit(name: str, file: str):

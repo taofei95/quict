@@ -7,7 +7,7 @@
 import numpy as np
 from scipy.stats import unitary_group
 
-from QuICT.core.gate import build_gate
+from QuICT.core.gate import gate_builder
 from QuICT.qcda.synthesis.gate_transform.transform_rule import *
 
 
@@ -37,7 +37,7 @@ def test_two_qubit_rules():
         for target in typelist:
             if source != target:
                 rule = eval(f"{source.name}2{target.name}_rule")
-                gate = build_gate(source, [0, 1])
+                gate = gate_builder(source) & [0, 1]
                 if gate.params:
                     gate.pargs = list(np.random.uniform(0, 2 * np.pi, gate.params))
                 gates = rule(gate)

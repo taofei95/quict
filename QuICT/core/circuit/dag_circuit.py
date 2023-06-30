@@ -214,7 +214,7 @@ class DAGCircuit:
     ############                Circuit to DAG              ############
     ####################################################################
     def _to_dag_circuit(self):
-        gates = self._circuit.gates
+        gates = self._circuit.flatten_gates()
         reachable = np.zeros(shape=(len(gates), ), dtype=bool)
         for idx, g in enumerate(gates):
             assert isinstance(g, BasicGate), "Only support BasicGate in DAGCircuit."
