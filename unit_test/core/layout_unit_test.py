@@ -70,7 +70,7 @@ def test_special_build():
     lin_layout = Layout.linear_layout(qubit_number=5)
     assert lin_layout.check_edge(0, 1) and not lin_layout.check_edge(2, 4)
 
-    # grid layout 
+    # grid layout
     #   0 - 1 - 2
     #   |   |   |
     #   3 - 4 - 5

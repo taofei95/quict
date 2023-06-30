@@ -1,6 +1,6 @@
 import numpy as np
 
-from QuICT.core.gate import BasicGate, GateMatrixGenerator
+from QuICT.core.gate import BasicGate, GateMatrixGenerator, MultiControlGate
 from QuICT.core.utils import GateType, MatrixType, matrix_product_to_circuit
 from QuICT.ops.utils import LinAlgLoader
 from QuICT.tools.exception.core import GateQubitAssignedError, ValueError
@@ -200,6 +200,9 @@ class GateSimulator:
         """
         matrix_list_for_gpu_only = []
         total_matrix_size = 0 if self._gates_matrix is None else self._gates_matrix.size
+        if total_matrix_size >= (1 << 10):
+            return
+
         for gate in circuit.flatten_gates():
             if (
                 not isinstance(gate, BasicGate)
@@ -209,7 +212,8 @@ class GateSimulator:
 
             gate_name = self._generate_gate_name_for_matrix_stored(gate.type, gate.pargs)
             if gate_name not in self._gate_matrix_info.keys():
-                matrix = self._gate_matrix_generator.get_matrix(gate, self._precision)
+                matrix = self._gate_matrix_generator.get_matrix(gate, self._precision, True)
+
                 if self._device == "CPU":
                     self._gate_matrix_info[gate_name] = matrix
                 else:
@@ -254,9 +258,9 @@ class GateSimulator:
         gate_name = self._generate_gate_name_for_matrix_stored(gate.type, gate.pargs)
 
         if gate_name not in self._gate_matrix_info.keys():
-            matrix = self._gate_matrix_generator.get_matrix(gate, self._precision)
+            matrix = self._gate_matrix_generator.get_matrix(gate, self._precision, True)
             if self._device == "GPU":
-                matrix = self._array_helper.array(matrix)
+                matrix = self._array_helper.array(matrix.flatten())
 
             return matrix
 
@@ -266,15 +270,16 @@ class GateSimulator:
             start, interval = self._gate_matrix_info[gate_name]
             return self._gates_matrix[start:start + interval]
 
-    def _get_gate_param_grad(self, gate: BasicGate):
+    def _get_gate_param_grad(self, gate: BasicGate, parg_id: int = 0):
         gtype = gate.type
         gpargs = gate.pargs
-        grad_list = self._gate_matrix_generator.grad_for_param(gtype, gpargs, self._precision)
+        gate_precision = np.complex128 if self._precision == "double" else np.complex64
+        matrix = self._gate_matrix_generator.grad_for_param(gtype, gpargs, gate_precision)[parg_id]
 
         if self._device == "GPU":
-            grad_list = [self._array_helper.array(grad) for grad in grad_list]
+            matrix = self._array_helper.array(matrix)
 
-        return grad_list
+        return matrix
 
     ####################################################################
     ############           Gate Kernel Functions            ############
@@ -284,7 +289,9 @@ class GateSimulator:
         gate: BasicGate,
         assigned_qubits: list,
         state_vector: np.ndarray,
-        qubits: int
+        qubits: int,
+        fp: bool = True,
+        parg_id: int = 0,
     ):
         """ Apply the kernel function of Quantum Gate to the State Vector.
 
@@ -295,29 +302,39 @@ class GateSimulator:
             qubits (int): the number of qubits
         """
         gate_type = gate.type
-        if (
-            gate_type in [GateType.id, GateType.barrier] or
-            gate.is_identity()
-        ):
+        if gate_type in [GateType.id, GateType.barrier] or gate.is_identity():
             return
 
         gate_cargs = [qubits - 1 - assigned_qubits[i] for i in range(gate.controls)]
-        gate_targs = [qubits - 1 - assigned_qubits[i] for i in range(gate.controls, len(assigned_qubits))]
+        gate_targs = [
+            qubits - 1 - assigned_qubits[i]
+            for i in range(gate.controls, len(assigned_qubits))
+        ]
         if self._device == "CPU":
-            return self._apply_gate_cpu(gate, gate_cargs, gate_targs, state_vector)
+            return self._apply_gate_cpu(
+                gate, gate_cargs, gate_targs, state_vector, fp, parg_id
+            )
         else:
-            return self._apply_gate_gpu(gate, gate_cargs, gate_targs, state_vector, qubits)
+            return self._apply_gate_gpu(
+                gate, gate_cargs, gate_targs, state_vector, qubits, fp, parg_id
+            )
 
     def _apply_gate_cpu(
         self,
         gate: BasicGate,
         cargs: list,
         targs: list,
-        state_vector
+        state_vector,
+        fp: bool = True,
+        parg_id: int = 0,
     ):
         """ The algorithm of apply gate into State Vector in CPU."""
         matrix_type = gate.matrix_type
-        matrix = self._get_gate_matrix(gate) if gate.type != GateType.unitary else gate.matrix
+        if gate.type != GateType.unitary:
+            matrix = self._get_gate_matrix(gate) if fp else self._get_gate_param_grad(gate, parg_id)
+        else:
+            matrix = gate.matrix
+
         control_idx = np.array(cargs, dtype=np.int64)
         target_idx = np.array(targs, dtype=np.int64)
 
@@ -337,7 +354,8 @@ class GateSimulator:
             self._algorithm.matrix_dot_vector(
                 state_vector,
                 matrix,
-                np.append(target_idx, control_idx)
+                control_idx,
+                target_idx
             )
 
     def _apply_gate_gpu(
@@ -346,21 +364,34 @@ class GateSimulator:
         cargs: list,
         targs: list,
         state_vector,
-        qubits
+        qubits,
+        fp: bool = True,
+        parg_id: int = 0,
     ):
         """ The algorithm of apply gate into State Vector in GPU."""
         gate_type, matrix_type = gate.type, gate.matrix_type
         args_num = gate.controls + gate.targets
-        matrix = self._get_gate_matrix(gate) if gate.type != GateType.unitary else self._array_helper.array(gate.matrix)
+        if gate.type != GateType.unitary:
+            matrix = self._get_gate_matrix(gate) if fp else self._get_gate_param_grad(gate, parg_id)
+        else:
+            matrix = gate.matrix
+
+        if isinstance(gate, MultiControlGate):
+            if len(targs) == 1:
+                self._algorithm.apply_multi_control_targ_gate(
+                    state_vector, qubits, matrix, cargs, targs[0], self._sync
+                )
+            else:
+                self._algorithm.apply_multi_control_targs_gate(
+                    state_vector, qubits, matrix, cargs, targs, self._sync
+                )
+
+            return
 
         # Deal with quantum gate with more than 3 qubits.
         if gate_type == GateType.unitary and args_num >= 3:
             state_vector = self._algorithm.matrix_dot_vector(
-                state_vector,
-                qubits,
-                matrix,
-                cargs + targs,
-                self._sync
+                state_vector, qubits, matrix, cargs + targs, self._sync
             )
 
             return
@@ -370,16 +401,22 @@ class GateSimulator:
 
         # [H, Hy, SX, SY, SW, U2, U3, Rx, Ry] 2-bits [CH, ] 2-bits[Rzx, targets, unitary]
         if matrix_type == MatrixType.normal:
-            self.apply_normal_matrix(matrix, args_num, cargs, targs, state_vector, qubits)
+            self.apply_normal_matrix(
+                matrix, args_num, cargs, targs, state_vector, qubits
+            )
         # [Rz, Phase], 2-bits [CRz, Rzz], 3-bits [CCRz]
         elif matrix_type in [MatrixType.diagonal, MatrixType.diag_diag]:
-            self.apply_diagonal_matrix(matrix, args_num, cargs, targs, state_vector, qubits)
+            self.apply_diagonal_matrix(
+                matrix, args_num, cargs, targs, state_vector, qubits
+            )
         # [X] 2-bits [swap, iswap, iswapdg, sqiswap] 3-bits [CSWAP]
         elif matrix_type == MatrixType.swap:
             self.apply_swap_matrix(matrix, args_num, cargs, targs, state_vector, qubits)
         # [Y] 2-bits [CX, CY] 3-bits: [CCX]
         elif matrix_type == MatrixType.reverse:
-            self.apply_reverse_matrix(matrix, args_num, cargs, targs, state_vector, qubits)
+            self.apply_reverse_matrix(
+                matrix, args_num, cargs, targs, state_vector, qubits
+            )
         # [S, sdg, Z, U1, T, tdg] # 2-bits [CZ, CU1]
         elif matrix_type == MatrixType.control:
             self.apply_control_matrix(matrix[-1].get(), args_num, cargs, targs, state_vector, qubits)
@@ -409,57 +446,45 @@ class GateSimulator:
                     mapping[args[idx]] = args[parg]
 
             self._algorithm.VectorPermutation(
-                state_vector,
-                mapping,
-                changeInput=True,
-                gpu_out=False,
-                sync=self._sync
+                state_vector, mapping, changeInput=True, gpu_out=False, sync=self._sync
             )
         # unsupported quantum gates
         else:
-            raise GateTypeNotImplementError(f"Unsupported Gate Type and Matrix Type: {gate_type} {matrix_type}.")
+            raise GateTypeNotImplementError(
+                f"Unsupported Gate Type and Matrix Type: {gate_type} {matrix_type}."
+            )
 
     def apply_normal_matrix(
-        self,
-        matrix,
-        args_num: int,
-        cargs: list,
-        targs: list,
-        state_vector,
-        qubits
+        self, matrix, args_num: int, cargs: list, targs: list, state_vector, qubits
     ):
         # Deal with 1-qubit normal gate e.g. H
         if args_num == 1:
             self._algorithm.normal_targ(
                 targs[0], matrix, state_vector, qubits, self._sync
             )
-        elif args_num == 2:     # Deal with 2-qubits control normal gate e.g. CH
+        elif args_num == 2:  # Deal with 2-qubits control normal gate e.g. CH
             if len(cargs) == 1:
                 self._algorithm.normal_ctargs(
                     cargs[0], targs[0], matrix, state_vector, qubits, self._sync
                 )
-            elif len(targs) == 2:     # Deal with 2-qubits unitary gate
+            elif len(targs) == 2:  # Deal with 2-qubits unitary gate
                 self._algorithm.normal_targs(
                     targs, matrix, state_vector, qubits, self._sync
                 )
             else:
-                raise GateQubitAssignedError("Quantum gate cannot only have control qubits.")
+                raise GateQubitAssignedError(
+                    "Quantum gate cannot only have control qubits."
+                )
 
     def apply_diagonal_matrix(
-        self,
-        matrix,
-        args_num: int,
-        cargs: list,
-        targs: list,
-        state_vector,
-        qubits
+        self, matrix, args_num: int, cargs: list, targs: list, state_vector, qubits
     ):
         # Deal with 1-qubit diagonal gate, e.g. Rz
         if args_num == 1:
             self._algorithm.diagonal_targ(
                 targs[0], matrix, state_vector, qubits, self._sync
             )
-        elif args_num == 2:     # Deal with 2-qubit diagonal gate, e.g. CRz
+        elif args_num == 2:  # Deal with 2-qubit diagonal gate, e.g. CRz
             if len(cargs) == 1:
                 self._algorithm.diagonal_ctargs(
                     cargs[0], targs[0], matrix, state_vector, qubits, self._sync
@@ -469,44 +494,30 @@ class GateSimulator:
                     targs, matrix, state_vector, qubits, self._sync
                 )
             else:
-                raise GateQubitAssignedError("Quantum gate cannot only have control qubits.")
-        else:   # [CCRz]
+                raise GateQubitAssignedError(
+                    "Quantum gate cannot only have control qubits."
+                )
+        else:  # [CCRz]
             self._algorithm.diagonal_more(
                 cargs, targs[0], matrix, state_vector, qubits, self._sync
             )
 
     def apply_swap_matrix(
-        self,
-        matrix,
-        args_num: int,
-        cargs: list,
-        targs: list,
-        state_vector,
-        qubits
+        self, matrix, args_num: int, cargs: list, targs: list, state_vector, qubits
     ):
-        if args_num == 1:       # Deal with X Gate
-            self._algorithm.swap_targ(
-                targs[0], state_vector, qubits, self._sync
-            )
-        elif args_num == 2:     # Deal with Swap Gate
-            self._algorithm.swap_targs(
-                targs, matrix, state_vector, qubits, self._sync
-            )
-        else:   # CSwap
+        if args_num == 1:  # Deal with X Gate
+            self._algorithm.swap_targ(targs[0], state_vector, qubits, self._sync)
+        elif args_num == 2:  # Deal with Swap Gate
+            self._algorithm.swap_targs(targs, matrix, state_vector, qubits, self._sync)
+        else:  # CSwap
             self._algorithm.swap_tmore(
                 targs, cargs[0], state_vector, qubits, self._sync
             )
 
     def apply_reverse_matrix(
-        self,
-        matrix,
-        args_num: int,
-        cargs: list,
-        targs: list,
-        state_vector,
-        qubits
+        self, matrix, args_num: int, cargs: list, targs: list, state_vector, qubits
     ):
-        if args_num == 1:   # Deal with 1-qubit reverse gate, e.g. Y
+        if args_num == 1:  # Deal with 1-qubit reverse gate, e.g. Y
             self._algorithm.reverse_targ(
                 targs[0], matrix, state_vector, qubits, self._sync
             )
@@ -527,24 +538,20 @@ class GateSimulator:
             )
 
     def apply_control_matrix(
-        self,
-        value,
-        args_num: int,
-        cargs: list,
-        targs: list,
-        state_vector,
-        qubits
+        self, value, args_num: int, cargs: list, targs: list, state_vector, qubits
     ):
-        if args_num == 1:       # Deal with 1-qubit control gate, e.g. S
+        if args_num == 1:  # Deal with 1-qubit control gate, e.g. S
             self._algorithm.control_targ(
                 targs[0], value, state_vector, qubits, self._sync
             )
-        elif args_num == 2:     # Deal with 2-qubit control gate, e.g. CZ
+        elif args_num == 2:  # Deal with 2-qubit control gate, e.g. CZ
             self._algorithm.control_ctargs(
                 cargs[0], targs[0], value, state_vector, qubits, self._sync
             )
         else:
-            raise GateAlgorithmNotImplementError(f"Unsupportted 3-qubits+ control unitary gate.")
+            raise GateAlgorithmNotImplementError(
+                f"Unsupportted 3-qubits+ control unitary gate."
+            )
 
     ####################################################################
     ############           Measure/Reset Function           ############

@@ -1060,7 +1060,7 @@ class TextDrawing:
         gates = []
         num_ctrl_qubits = instruction.controls
         ctrl_qubits = instruction.cargs
-        cstate = "{:b}".format(1).rjust(num_ctrl_qubits, '0')[::-1]
+        cstate = "{:b}".format(1).rjust(num_ctrl_qubits, '1')[::-1]
         for i in range(len(ctrl_qubits)):
             if cstate[i] == '1':
                 gates.append(Bullet(conditional=conditional, label=ctrl_label,
@@ -1130,14 +1130,14 @@ class TextDrawing:
             layer.set_qubit(gate.targs[0], mgate)
         elif gate_type == GateType.barrier:
             layer.set_qubit(gate.targ, Barrier())
-        elif gate_type == GateType.swap:
+        elif gate_type == GateType.swap and gate.controls == 0:
             # swap
             gates = [Ex(conditional=conditional) for _ in range(len(gate.cargs + gate.targs))]
             add_connected_gate(gate, gates, layer, current_cons)
         elif gate_type == GateType.reset:
             # reset
             layer.set_qubit(gate.targs[0], Reset(conditional=conditional))
-        elif gate_type == GateType.rzz:
+        elif gate_type == GateType.rzz and gate.controls == 0:
             # rzz
             connection_label = "ZZ(%s)" % TextDrawing.params_for_label(gate)[0]
             gates = [Bullet(conditional=conditional), Bullet(conditional=conditional)]
@@ -1154,7 +1154,17 @@ class TextDrawing:
             controlled_top, controlled_bot, controlled_edge, rest = params_array
             gates = self._set_ctrl_state(gate, conditional, ctrl_label,
                                          bool(controlled_bot))
-            gates.append(BoxOnQuWire(label, conditional=conditional))
+            if gate_type == GateType.swap:
+                for _ in range(gate.targets):
+                    gates.append(Ex(conditional=conditional))
+            elif gate_type == GateType.rzz:
+                connection_label = "ZZ(%s)" % TextDrawing.params_for_label(gate)[0]
+                for _ in range(gate.targets):
+                    gates.append(OpenBullet(conditional=conditional))
+            else:
+                for _ in range(gate.targets):
+                    gates.append(BoxOnQuWire(label, conditional=conditional))
+
             add_connected_gate(gate, gates, layer, current_cons)
         elif gate.targets >= 2:
             # multiple qubit gate

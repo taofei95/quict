@@ -9,3 +9,4 @@ from .composite_gate import CompositeGate
 from .quantum_frourier_transform import QFT, IQFT
 from .multicontrol_toffoli import MultiControlToffoli
 from .uniformly_control_gate import UniformlyControlGate
+from .multicontrol_rotation import MultiControlRotation

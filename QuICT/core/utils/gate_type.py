@@ -29,6 +29,7 @@ class GateType(Enum):
     cx = "controlled-X gate"
     cy = "controlled-Y gate"
     ch = "controlled-Hadamard gate"
+    cry = "controlled-Ry gate"
     crz = "controlled-Rz gate"
     cu1 = "controlled-U1 gate"
     cu3 = "controlled-U3 gate"
@@ -51,6 +52,7 @@ class GateType(Enum):
     reset = "Reset gate"
     barrier = "Barrier gate"
     unitary = "Unitary gate"
+    multi_control = "Multi_Control Gate"
 
     # no qasm represent below
     perm = "Permutation gate"
@@ -171,6 +173,7 @@ GATEINFO_MAP = {
     GateType.cx: (1, 1, 0, GateType.cx, MatrixType.reverse),
     GateType.cy: (1, 1, 0, GateType.cy, MatrixType.reverse),
     GateType.ch: (1, 1, 0, GateType.ch, MatrixType.normal),
+    GateType.cry: (1, 1, 1, GateType.cry, MatrixType.normal),
     GateType.crz: (1, 1, 1, GateType.crz, MatrixType.diagonal),
     GateType.cu1: (1, 1, 1, GateType.cu1, MatrixType.control),
     GateType.cu3: (1, 1, 3, GateType.cu3, MatrixType.normal),
@@ -203,6 +206,7 @@ GATE_ARGS_MAP = {
     GateType.rz: [np.pi / 2],
     GateType.phase: [0],
     GateType.gphase: [0],
+    GateType.cry: [np.pi / 2],
     GateType.crz: [np.pi / 2],
     GateType.cu1: [np.pi / 2],
     GateType.cu3: [np.pi / 2, 0, 0],
@@ -216,14 +220,14 @@ GATE_ARGS_MAP = {
 
 
 PAULI_GATE_SET = [GateType.x, GateType.y, GateType.z, GateType.id]
-
-
+DIAGONAL_GATE_SET = [
+    GateType.t, GateType.rz, GateType.z, GateType.sdg, GateType.tdg, GateType.u1, GateType.s,
+    GateType.id, GateType.crz, GateType.cu1, GateType.cz
+]
+SINGLE_QUBIT_GATE_SET = [
+    GateType.x, GateType.y, GateType.z, GateType.u1, GateType.u2, GateType.u3, GateType.tdg,
+    GateType.sdg, GateType.h, GateType.s, GateType.t, GateType.rx, GateType.ry, GateType.rz
+]
 CLIFFORD_GATE_SET = [
-    GateType.x,
-    GateType.y,
-    GateType.z,
-    GateType.h,
-    GateType.s,
-    GateType.sdg,
-    GateType.cx,
+    GateType.x, GateType.y, GateType.z, GateType.h, GateType.s, GateType.sdg, GateType.cx
 ]

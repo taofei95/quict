@@ -1,6 +1,7 @@
 import numpy as np
 
 from QuICT.core.utils import GateType
+from QuICT.core.utils import Variable
 
 
 class GateMatrixGenerator:
@@ -148,17 +149,26 @@ class GateMatrixGenerator:
         else:
             raise TypeError(gate_type)
 
-    def matrix_with_param(self, gate_type: GateType, pargs: list, precision: complex):
+    def matrix_with_param(self, gate_type: GateType, gate_pargs: list, precision: complex):
         """ Return the Quantum Gates' matrix, which has parameters.
 
         Args:
             gate_type (GateType): The type of Quantum Gate.
-            pargs (List): The Quantum Gate's parameters.
+            gate_pargs (List): The Quantum Gate's parameters.
             precision (complex): The precision of Quantum Gate.
 
         Returns:
             np.ndarray: The Quantum Gate's matrix.
         """
+        n_pargs = len(gate_pargs)
+        pargs = [0.0] * n_pargs
+        for i in range(n_pargs):
+            pargs[i] = (
+                gate_pargs[i].pargs
+                if isinstance(gate_pargs[i], Variable)
+                else gate_pargs[i]
+            )
+
         if gate_type in [GateType.u1, GateType.cu1]:
             return np.array([
                 [1, 0],
@@ -190,7 +200,7 @@ class GateMatrixGenerator:
                 [1j * sin_v, cos_v]
             ], dtype=precision)
 
-        elif gate_type == GateType.ry:
+        elif gate_type in [GateType.ry, GateType.cry]:
             cos_v = np.cos(pargs[0] / 2)
             sin_v = np.sin(pargs[0] / 2)
             return np.array([
@@ -274,22 +284,18 @@ class GateMatrixGenerator:
         else:
             TypeError(gate_type)
 
-    def grad_for_param(self, gate_type, gate_pargs, precision):
+    def grad_for_param(self, gate_type: GateType, gate_pargs: list, precision: complex):
         n_pargs = len(gate_pargs)
         pargs = [0.0] * n_pargs
         for i in range(n_pargs):
             pargs[i] = (
                 gate_pargs[i].pargs
-                if not isinstance(gate_pargs[i], float)
+                if isinstance(gate_pargs[i], Variable)
                 else gate_pargs[i]
             )
 
         if gate_type in [GateType.u1, GateType.cu1]:
-            return [
-                np.array(
-                    [[1, 0], [0, 1j * np.exp(1j * pargs[0])]], dtype=precision
-                )
-            ]
+            return [np.array([[1, 0], [0, 1j * np.exp(1j * pargs[0])]], dtype=precision)]
 
         elif gate_type == GateType.u2:
             sqrt2 = 1 / np.sqrt(2)
@@ -331,10 +337,7 @@ class GateMatrixGenerator:
             )
             grad2 = np.array(
                 [
-                    [
-                        np.cos(pargs[0] / 2),
-                        -np.exp(1j * pargs[2]) * np.sin(pargs[0] / 2),
-                    ],
+                    [np.cos(pargs[0] / 2), -np.exp(1j * pargs[2]) * np.sin(pargs[0] / 2), ],
                     [
                         1j * np.exp(1j * pargs[1]) * np.sin(pargs[0] / 2),
                         1j * np.exp(1j * (pargs[1] + pargs[2])) * np.cos(pargs[0] / 2),
@@ -360,20 +363,12 @@ class GateMatrixGenerator:
         elif gate_type == GateType.rx:
             cos_v = -np.cos(pargs[0] / 2) / 2
             sin_v = -np.sin(pargs[0] / 2) / 2
-            return [
-                np.array(
-                    [[sin_v, 1j * cos_v], [1j * cos_v, sin_v]], dtype=precision
-                )
-            ]
+            return [np.array([[sin_v, 1j * cos_v], [1j * cos_v, sin_v]], dtype=precision)]
 
         elif gate_type in [GateType.ry, GateType.cry]:
             cos_v = np.cos(pargs[0] / 2) / 2
             sin_v = np.sin(pargs[0] / 2) / 2
-            return [
-                np.array(
-                    [[-sin_v, -cos_v], [cos_v, -sin_v]], dtype=precision
-                )
-            ]
+            return [np.array([[-sin_v, -cos_v], [cos_v, -sin_v]], dtype=precision)]
 
         elif gate_type in [GateType.rz, GateType.crz, GateType.ccrz]:
             return [
@@ -387,11 +382,7 @@ class GateMatrixGenerator:
             ]
 
         elif gate_type == GateType.phase:
-            return [
-                np.array(
-                    [[1, 0], [0, 1j * np.exp(pargs[0] * 1j)]], dtype=precision
-                )
-            ]
+            return [np.array([[1, 0], [0, 1j * np.exp(pargs[0] * 1j)]], dtype=precision)]
 
         elif gate_type == GateType.gphase:
             return [
@@ -476,7 +467,6 @@ class GateMatrixGenerator:
         elif gate_type == GateType.rzx:
             costh = np.cos(pargs[0] / 2) / 2
             sinth = np.sin(pargs[0] / 2) / 2
-
             return [
                 np.array(
                     [
@@ -544,10 +534,7 @@ class ComplexGateBuilder:
 
     @staticmethod
     def build_cu1(parg):
-        return [
-            (GateType.crz, [0, 1], [parg]),
-            (GateType.u1, [0], [parg / 2])
-        ]
+        return [(GateType.crz, [0, 1], [parg]), (GateType.u1, [0], [parg / 2])]
 
     @staticmethod
     def build_rxx(parg):
@@ -666,7 +653,7 @@ class ComplexGateBuilder:
             (GateType.t, [0], None),
             (GateType.t, [2], None),
             (GateType.h, [2], None),
-            (GateType.cx, [2, 1], None)
+            (GateType.cx, [2, 1], None),
         ]
 
 
@@ -679,12 +666,24 @@ class InverseGate:
         GateType.sy: (GateType.ry, [-np.pi / 2]),
         GateType.sw: (GateType.u2, [3 * np.pi / 4, 5 * np.pi / 4]),
         GateType.t: GateType.tdg,
-        GateType.tdg: GateType.t
+        GateType.tdg: GateType.t,
     }
     __INVERSE_GATE_WITH_NEGATIVE_PARAMS = [
-        GateType.u1, GateType.rx, GateType.ry, GateType.phase, GateType.gphase,
-        GateType.cu1, GateType.rxx, GateType.ryy, GateType.rzz, GateType.rzx,
-        GateType.rz, GateType.crz, GateType.ccrz, GateType.fsim
+        GateType.u1,
+        GateType.rx,
+        GateType.ry,
+        GateType.cry,
+        GateType.phase,
+        GateType.gphase,
+        GateType.cu1,
+        GateType.rxx,
+        GateType.ryy,
+        GateType.rzz,
+        GateType.rzx,
+        GateType.rz,
+        GateType.crz,
+        GateType.ccrz,
+        GateType.fsim,
     ]
 
     @classmethod

@@ -478,7 +478,7 @@ class PhotoDrawer(object):
                      [y - 0.15 * HIG, y + 0.20 * HIG],
                      color=self.style.not_gate_lc, linewidth=2, zorder=PORDER_GATE)
 
-    def draw_ctrl_qubit(self, xy, fc=None, ec=None):
+    def draw_ctrl_qubit(self, xy, fc=None, ec=None, fill: bool = True):
         if self.style.gc != DefaultStyle().gc:
             fc = self.style.gc
             ec = self.style.gc
@@ -489,7 +489,7 @@ class PhotoDrawer(object):
         xpos, ypos = xy
         box = patches.Circle(xy=(xpos, ypos), radius=WID * 0.15,
                              fc=fc, ec=ec,
-                             linewidth=1.5, zorder=PORDER_GATE)
+                             linewidth=1.5, zorder=PORDER_GATE, fill=fill)
         self.ax.add_patch(box)
 
     def draw_tgt_qubit(self, xy, fc=None, ec=None, ac=None, add_width=None):
@@ -883,7 +883,7 @@ class PhotoDrawer(object):
                                                       text=gate.qasm_name, subtext=subtext)
                         else:
                             self.draw_gate(coord[-1],
-                                           text=gate.qasm_name[gate.controls:],
+                                           text=gate.qasm_name,
                                            fc=self.style.dispcol['multi'],
                                            p_string=subtext)
                         self.draw_line(bottom, top, lc=self.style.dispcol['swap'])
@@ -897,12 +897,32 @@ class PhotoDrawer(object):
                                                   gt=self.style.gt, sc=self.style.sc,
                                                   text=gate.qasm_name, subtext=subtext)
                 elif len(coord) > 3:
-                    self.draw_multiqubit_gate(
-                        coord, fc=self.style.dispcol['multi'],
-                        ec=self.style.dispcol['multi'],
-                        gt=self.style.gt, sc=self.style.sc,
-                        text=gate.qasm_name, subtext=""
-                    )
+                    if gate.controls > 0:
+                        for i in range(gate.controls):
+                            self.draw_ctrl_qubit(coord[i], fc=self.style.dispcol['multi'],
+                                                 ec=self.style.dispcol['multi'])
+                        if param:
+                            subtext = '{}'.format(param)
+                        else:
+                            subtext = ''
+                        if gate.targets >= 2:
+                            self.draw_multiqubit_gate(coord[gate.controls:], fc=self.style.dispcol['multi'],
+                                                      ec=self.style.dispcol['multi'],
+                                                      gt=self.style.gt, sc=self.style.sc,
+                                                      text=gate.qasm_name, subtext=subtext)
+                        else:
+                            self.draw_gate(coord[-1],
+                                           text=gate.qasm_name,
+                                           fc=self.style.dispcol['multi'],
+                                           p_string=subtext)
+                        self.draw_line(bottom, top, lc=self.style.dispcol['swap'])
+                    else:
+                        self.draw_multiqubit_gate(
+                            coord, fc=self.style.dispcol['multi'],
+                            ec=self.style.dispcol['multi'],
+                            gt=self.style.gt, sc=self.style.sc,
+                            text=gate.qasm_name, subtext=""
+                        )
             layer_position.append(position)
             position = position + layer_width
         layer_position.append(position)
