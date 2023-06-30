@@ -121,7 +121,7 @@ class ControlledUnitaryDecomposition(object):
         if recursive_basis == 2:
             forwarded_d_gate: BasicGate = v_gates.pop(0)
             forwarded_mat = forwarded_d_gate.matrix if isinstance(forwarded_d_gate, BasicGate) else \
-                forwarded_d_gate.matrix(True)
+                forwarded_d_gate.matrix()
             for i in range(0, w.shape[0], 4):
                 for k in range(4):
                     w[i + k, :] *= forwarded_mat[k, k]

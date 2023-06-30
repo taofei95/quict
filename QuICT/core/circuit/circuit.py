@@ -282,7 +282,7 @@ class Circuit(CircuitBased):
             if isinstance(gates, CompositeGate):
                 gate_qidxes = gates.qubits
             else:
-                gate_qidxes = self._get_extend_circuit_qidxes(gates)
+                gate_qidxes = list(range(gates.width()))
 
         if isinstance(gates, Circuit):
             gates = gates.to_compositegate()
@@ -446,20 +446,6 @@ class Circuit(CircuitBased):
         size = 1 if isinstance(op, NoiseGate) else 0
         self._gates.append((op, op_qidxes, size))
         self._logger.debug(f"Add an Operator {type(op)} with qubit indexes {op_qidxes}.")
-
-    def _get_extend_circuit_qidxes(self, circuit: Circuit):
-        """ Append qubits from expand circuit. """
-        ec_qidxes = []
-        aqubit_idxes = circuit.ancilla_qubits
-        for idx, qubit in enumerate(circuit.qubits):
-            if qubit in self.qubits:
-                ec_qidxes.append(self._qubits.index(qubit))
-            else:
-                is_ancilla = True if idx in aqubit_idxes else False
-                self.add_qubit(qubit, is_ancilla)
-                ec_qidxes.append(self.width() - 1)
-
-        return ec_qidxes
 
     def random_append(
         self,

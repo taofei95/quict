@@ -1,5 +1,4 @@
 import os
-import re
 import shutil
 from typing import Union, List
 
@@ -8,7 +7,6 @@ from QuICT.lib.qasm.exceptions import QasmError
 from QuICT.tools import Logger
 from QuICT.tools.interface import OPENQASMInterface
 from .circuit_lib_sql import CircuitLibDB
-from .get_benchmark_circuit import BenchmarkCircuitBuilder
 
 
 logger = Logger("QuICT_Circuit_Library")
