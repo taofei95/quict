@@ -125,6 +125,9 @@ class Variable(object):
     def __rmul__(self, other):
         return self.__mul__(other)
 
+    def __neg__(self):
+        return self.__mul__(-1.0)
+
     def __truediv__(self, other):
         if other == 0:
             raise ValueError
