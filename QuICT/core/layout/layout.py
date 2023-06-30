@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 from itertools import combinations
+from math import log2
 
 import json
 import warnings
@@ -78,10 +79,6 @@ class LayoutEdge:
 class Layout:
     """Implement a topology in a physical device
 
-    Attributes:
-        name(string): the name of the topology
-        edge_list(list<LayoutEdge>): the edge in layout
-        qubit_number(int): the number of qubits
     """
 
     DIRECTIONAL_DEFAULT = False
@@ -107,6 +104,11 @@ class Layout:
         return self._qubit_number
 
     def __init__(self, qubit_number: int, name: str = "unknown"):
+        """
+        Args:
+            qubit_number(int): the number of qubits
+            name(string): the name of the topology
+        """
         self._qubit_number = qubit_number
         self._name = name
         self._edges: Dict[Tuple[int, int], LayoutEdge] = {}
@@ -174,7 +176,7 @@ class Layout:
         # Reset cache
         self._directionalized = None
 
-    def check_edge(self, u, v):
+    def check_edge(self, u, v) -> bool:
         """Check whether layout contain u->v
 
         Args:
@@ -186,6 +188,31 @@ class Layout:
         return ((u, v) in self._edges) or (
             (v, u) in self._edges and not self._edges[(v, u)].directional
         )
+
+    def valid_circuit(self, circuit) -> bool:
+        """ Valid the given Circuit/CompositeGate is valid with current Layout.
+
+        Args:
+            circuit (Union[Circuit, CompositeGate]): The given Circuit/CompositeGate
+
+        Returns:
+            bool: Whether is valid for current layout.
+        """
+        if circuit.width() > self._qubit_number:
+            return False
+
+        for gate, qidxes, size in circuit.fast_gates:
+            if size > 1:
+                if not self.valid_circuit(gate):
+                    return False
+
+            if len(qidxes) > 2:
+                return False
+            elif len(qidxes) == 2:
+                if not self.check_edge(qidxes[0], qidxes[1]):
+                    return False
+
+        return True
 
     def to_json(self) -> str:
         """Serialize current layout into json string."""
@@ -294,3 +321,130 @@ class Layout:
             sub_layout.add_edge(index_mapping[u], index_mapping[v], directional=False)
 
         return sub_layout
+
+    @staticmethod
+    def linear_layout(qubit_number: int, directional: bool = DIRECTIONAL_DEFAULT, error_rate: list = []):
+        """ Get Linearly Topology.
+
+        Args:
+            qubit_number(int): the number of qubits
+            directional (_type_, optional): Whether the edge is directional. Defaults to DIRECTIONAL_DEFAULT.
+            error_rate (list, optional): Error rate for each edges, default 1.0. Defaults to [].
+
+        Returns:
+            Layout: The layout with linearly topology
+        """
+        linear_layout = Layout(qubit_number)
+        if len(error_rate) == 0:
+            error_rate = [1.0] * (qubit_number - 1)
+
+        assert len(error_rate) == (qubit_number - 1)
+        for i in range(qubit_number - 1):
+            linear_layout.add_edge(i, i + 1, directional, error_rate[i])
+
+        return linear_layout
+
+    @staticmethod
+    def grid_layout(
+        qubit_number: int,
+        width: int = None,
+        unreachable_nodes: list = [],
+        directional: bool = DIRECTIONAL_DEFAULT,
+        error_rate: list = []
+    ):
+        """ Get Grid Structure Topology.
+
+        Args:
+            qubit_number(int): the number of qubits
+            width (int, optional): The width of grid layout. Defaults to None.
+            unreachable_nodes (list, optional): The nodes which are not work. Defaults to [].
+            directional (bool, optional): Whether the edge is directional. Defaults to DIRECTIONAL_DEFAULT.
+            error_rate (list, optional): Error rate for each edges, default 1.0. Defaults to [].
+                WARNING: The error rate is for each valid edges from top to bottom, left to right. Please make sure
+                you know exactly every edges' position and rate.
+
+        Returns:
+            Layout: The layout with grid topology
+        """
+        grid_layout = Layout(qubit_number)
+        exist_unreachable_nodes = len(unreachable_nodes) != 0
+        grid_width = int(log2(qubit_number)) if width is None else width
+        edge_idx = 0
+        for s in range(0, qubit_number - 1):
+            horizontal_exist, vertical_exist = True, True
+            u, hv, vv = s, s + 1, s + grid_width
+            if exist_unreachable_nodes:
+                if u in unreachable_nodes:
+                    continue
+
+                if hv in unreachable_nodes:
+                    horizontal_exist = False
+
+                if vv in unreachable_nodes:
+                    vertical_exist = False
+
+            curr_error = error_rate[edge_idx] if len(error_rate) != 0 else 1.0
+            # horizontal line draw
+            if hv % grid_width != 0 and horizontal_exist:
+                grid_layout.add_edge(u, hv, directional, curr_error)
+                edge_idx += 1
+
+            # vertical line draw
+            if vv < qubit_number and vertical_exist:
+                grid_layout.add_edge(u, vv, directional, curr_error)
+                edge_idx += 1
+
+        return grid_layout
+
+    @staticmethod
+    def rhombus_layout(
+        qubit_number: int,
+        width: int = None,
+        unreachable_nodes: list = [],
+        directional: bool = DIRECTIONAL_DEFAULT,
+        error_rate: list = []
+    ):
+        """ Get Rhombus Structure Topology.
+
+        Args:
+            qubit_number(int): the number of qubits
+            width (int, optional): The width of grid layout. Defaults to None.
+            unreachable_nodes (list, optional): The nodes which are not work. Defaults to [].
+            directional (bool, optional): Whether the edge is directional. Defaults to DIRECTIONAL_DEFAULT.
+            error_rate (list, optional): Error rate for each edges, default 1.0. Defaults to [].
+                WARNING: The error rate is for each valid edges from top to bottom, left to right. Please make sure
+                you know exactly every edges' position and rate.
+
+        Returns:
+            Layout: The layout with rhombus topology
+        """
+        rhombus_layout = Layout(qubit_number)
+        exist_unreachable_nodes = len(unreachable_nodes) != 0
+        grid_width = int(log2(qubit_number)) if width is None else width
+        edge_idx = 0
+        for s in range(0, qubit_number - grid_width + 1):
+            vertical_exist, rhombus_exist = True, True
+            # horizontal line draw
+            u, lv, rv = s, s + grid_width, s + grid_width + (-1) ** (s // grid_width)
+            if exist_unreachable_nodes:
+                if u in unreachable_nodes:
+                    continue
+
+                if lv in unreachable_nodes:
+                    vertical_exist = False
+
+                if rv in unreachable_nodes:
+                    rhombus_exist = False
+
+            curr_error = error_rate[edge_idx] if len(error_rate) != 0 else 1.0
+            # vertical line draw
+            if lv < qubit_number and vertical_exist:
+                rhombus_layout.add_edge(u, lv, directional, curr_error)
+                edge_idx += 1
+
+            # rhombus line draw
+            if rv < qubit_number and u // grid_width + 1 == rv // grid_width and rhombus_exist:
+                rhombus_layout.add_edge(u, rv, directional, curr_error)
+                edge_idx += 1
+
+        return rhombus_layout

@@ -29,7 +29,7 @@ def test_uni_disentangle_one_qubit():
             z_op[target] = GateType.z
             pauli_x = PauliOperator(x_op)
             pauli_z = PauliOperator(z_op)
-            for gate in gates_next:
+            for gate in gates_next.flatten_gates():
                 pauli_x.conjugate_act(gate)
                 pauli_z.conjugate_act(gate)
             assert pauli_x.phase == 1 and pauli_z.phase == 1
@@ -44,8 +44,9 @@ def test_unidirectional():
     CUS = CliffordUnidirectionalSynthesizer(strategy='greedy')
     # CUS = CliffordUnidirectionalSynthesizer(strategy='random')
     circ_syn = CUS.execute(circuit)
+    gates_syn = CompositeGate(gates=circ_syn.gates)
     gates_remain = gates.inverse()
-    gates_remain.extend(circ_syn.gates)
+    gates_remain.extend(gates_syn)
     # np.set_printoptions(precision=3, suppress=True)
     assert np.allclose(gates_remain.matrix(), gates_remain.matrix()[0][0] * np.eye(2 ** n))
 
@@ -69,7 +70,7 @@ def test_bi_disentangle_one_qubit():
             z_op[target] = GateType.z
             pauli_x = PauliOperator(x_op)
             pauli_z = PauliOperator(z_op)
-            for gate in gates_next:
+            for gate in gates_next.flatten_gates():
                 pauli_x.conjugate_act(gate)
                 pauli_z.conjugate_act(gate)
             assert pauli_x.phase == 1 and pauli_z.phase == 1
@@ -90,7 +91,8 @@ def test_bidirectional():
         chunksize=64
     )
     circ_syn = CBS.execute(circuit)
+    gates_syn = CompositeGate(gates=circ_syn.gates)
     gates_remain = gates.inverse()
-    gates_remain.extend(circ_syn.gates)
+    gates_remain.extend(gates_syn)
     # np.set_printoptions(precision=3, suppress=True)
     assert np.allclose(gates_remain.matrix(), gates_remain.matrix()[0][0] * np.eye(2 ** n))

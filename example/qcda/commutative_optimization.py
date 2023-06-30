@@ -14,8 +14,8 @@ typelist = [
 if __name__ == '__main__':
     circuit = Circuit(5)
     circuit.random_append(rand_size=30, typelist=typelist, random_params=True)
-    circuit.draw(filename="before_comopt")
+    circuit.draw(method="command")
 
     CO = CommutativeOptimization()
     circuit_opt = CO.execute(circuit)
-    circuit_opt.draw(filename="after_comopt")
+    circuit_opt.draw(method="command", flatten=True)

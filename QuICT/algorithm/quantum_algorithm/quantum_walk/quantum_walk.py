@@ -86,7 +86,7 @@ class QuantumWalk:
             coin_oracle = np.kron(
                 np.eye(self._graph.position), self._coin_unmarked
             ) + np.kron(search_array, self._coin_marked - self._coin_unmarked)
-            return Unitary(coin_oracle)
+            return Unitary(np.complex128(coin_oracle))
 
         action_qubits = [self._position_qubits + i for i in range(self._action_qubits)]
         if not (self._operator_by_position or self._operator_by_time):
@@ -112,7 +112,7 @@ class QuantumWalk:
         action_gate.gate_decomposition()
         return action_gate
 
-    def _mct_generator(self, op: np.ndarray) -> UnitaryGate:
+    def _mct_generator(self, op: np.ndarray) -> Unitary:
         """ Build multi-control-'op' gate. """
         mct_unitary = np.identity(1 << self._total_qubits, dtype=np.complex128)
         op_shape = op.shape

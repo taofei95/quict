@@ -13,12 +13,12 @@ class MCTSMapping:
     def __init__(
         self,
         layout: Layout,
-        bp_num: int = 10,
-        sim_cnt: int = 10,
+        bp_num: int = 20,
+        sim_cnt: int = 50,
         sim_gate_num: int = 30,
-        gamma: float = 0.9,
+        gamma: float = 0.7,
         epsilon: float = 0.001,
-        c: float = 0.01,
+        c: float = 20,
     ) -> None:
         self._layout_info = LayoutInfo(layout=layout)
         self._bp_num = bp_num

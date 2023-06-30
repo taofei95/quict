@@ -12,15 +12,7 @@ def get_circuit_from_CLIB():
     print(len(cirs))
     print(cirs[-1].name)
 
-    cirs = cir_lib.get_algorithm_circuit("grover", [3, 5, 7], max_depth=20)
-    print(len(cirs))
-    print(cirs[-1].name)
-
-    cirs = cir_lib.get_random_circuit("diag", [3, 5, 7], 40, 20)
-    print(len(cirs))
-    print(cirs[-1].name)
-
-    cirs = cir_lib.get_benchmark_circuit("highly_entangled", [3, 5], 20, 15)
+    cirs = cir_lib.get_circuit("algorithm", "grover", [3, 7])
     print(len(cirs))
     print(cirs[-1].name)
 
@@ -30,13 +22,13 @@ def get_circuit_from_CLIB():
     print(len(qasms))
     print(qasms[-1])
 
-    qasms = cir_lib_qasm.get_random_circuit("single_bit", 4, 15, 15)
+    qasms = cir_lib_qasm.get_template_circuit(4, 15, 15)
     print(len(qasms))
     print(qasms[-1])
 
     # Save to the given folder
     cir_lib_file = CircuitLib(output_type="file", output_path="./temp_list")
-    cir_lib_file.get_circuit("template", "template", 3, 6, 5)
+    cir_lib_file.get_circuit("machine", "ourense")
 
 
 if __name__ == "__main__":
