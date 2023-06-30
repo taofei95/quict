@@ -220,14 +220,14 @@ GATE_ARGS_MAP = {
 
 
 PAULI_GATE_SET = [GateType.x, GateType.y, GateType.z, GateType.id]
-
-
+DIAGONAL_GATE_SET = [
+    GateType.t, GateType.rz, GateType.z, GateType.sdg, GateType.tdg, GateType.u1, GateType.s,
+    GateType.id, GateType.crz, GateType.cu1, GateType.cz
+]
+SINGLE_QUBIT_GATE_SET = [
+    GateType.x, GateType.y, GateType.z, GateType.u1, GateType.u2, GateType.u3, GateType.tdg,
+    GateType.sdg, GateType.h, GateType.s, GateType.t, GateType.rx, GateType.ry, GateType.rz
+]
 CLIFFORD_GATE_SET = [
-    GateType.x,
-    GateType.y,
-    GateType.z,
-    GateType.h,
-    GateType.s,
-    GateType.sdg,
-    GateType.cx,
+    GateType.x, GateType.y, GateType.z, GateType.h, GateType.s, GateType.sdg, GateType.cx
 ]

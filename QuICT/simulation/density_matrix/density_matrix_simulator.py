@@ -14,6 +14,14 @@ from QuICT.tools.exception.simulation import SampleBeforeRunError
 
 class DensityMatrixSimulator:
     """ The Density Matrix Simulator """
+    @property
+    def density_matrix(self):
+        return self._density_matrix
+
+    @property
+    def device(self) -> str:
+        return self._gate_calculator.device
+
     def __init__(
         self,
         device: str = "CPU",
