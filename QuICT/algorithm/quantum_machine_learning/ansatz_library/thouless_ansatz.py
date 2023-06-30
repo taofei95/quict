@@ -32,7 +32,8 @@ class Thouless(Ansatz):
             Circuit: thouless ansatz
         """
         if angles is None:
-            angles = np.zeros(self.electrons * (self.orbitals - self.electrons))
+            # angles = np.zeros(self.electrons * (self.orbitals - self.electrons))
+            angles = np.random.randn(self.electrons * (self.orbitals - self.electrons))
         angles = Variable(pargs=angles) if isinstance(angles, np.ndarray) else angles
         assert angles.shape == (self.electrons * (self.orbitals - self.electrons),), \
             ValueError("Incorrect number of parameters")
@@ -52,8 +53,8 @@ class Thouless(Ansatz):
                 2
             ):
                 sqiSwap | circuit([k, k + 1])
-                Rz(0 - angles[param]) | circuit(k)
-                Rz(np.pi + angles[param]) | circuit(k + 1)
+                Rz(0 - self._params[param]) | circuit(k)
+                Rz(np.pi + self._params[param]) | circuit(k + 1)
                 sqiSwap | circuit([k, k + 1])
                 Rz(-np.pi) | circuit(k + 1)
                 param += 1
