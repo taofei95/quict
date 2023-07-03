@@ -1,5 +1,6 @@
 import numpy as np
 import re
+import math
 
 from QuICT.core.circuit.circuit import Circuit
 
@@ -17,7 +18,7 @@ class BenchLib:
         return self._machine_amp
 
     @machine_amp.setter
-    def machine_amp(self, machine_amp:np.array):
+    def machine_amp(self, machine_amp: np.array):
         self._machine_amp = machine_amp
 
     @property
@@ -26,7 +27,7 @@ class BenchLib:
         return self._benchmark_score
 
     @benchmark_score.setter
-    def benchmark_score(self, benchmark_score:float):
+    def benchmark_score(self, benchmark_score: float):
         self._benchmark_score = benchmark_score
 
     @property
@@ -50,26 +51,26 @@ class BenchLib:
     @property
     def width(self):
         """ Return the qubit number of circuit. """
-        self._width = re.findall(r"\d+", self.circuit.name)[0]
+        self._width = int(re.findall(r"\d+", self.circuit.name)[0])
         return self._width
 
     @property
     def size(self):
         """ Return the gate number of circuit. """
-        self._size = re.findall(r"\d+", self.circuit.name)[1]
+        self._size = int(re.findall(r"\d+", self.circuit.name)[1])
         return self._size
 
     @property
     def depth(self):
         """ Return the depth of circuit. """
-        self._depth = re.findall(r"\d+", self.circuit.name)[2]
+        self._depth = int(re.findall(r"\d+", self.circuit.name)[2])
         return self._depth
 
     @property
     def value(self):
         """ Return the value of benchmark circuit. """
-        cir_value = float(re.findall(r"\d+(?:\.\d+)?", self.circuit.name)[3])
-        return cir_value
+        self._value = float(re.findall(r"\d+(?:\.\d+)?", self.circuit.name)[3])
+        return self._value
 
     @property
     def qv(self) -> list:
@@ -91,8 +92,8 @@ class BenchLib:
             elif self._field == "cnf":
                 self._fidelity = self._machine_amp[8]
             elif self._field == "qnn":
-                point1 = self._machine_amp[0] + self._machine_amp[(2 ** width) / 2]
-                point2 = self._machine_amp[3] + self._machine_amp[(2 ** width) / 2 + 3]
+                point1 = self._machine_amp[0] + self._machine_amp[int((2 ** width) / 2)]
+                point2 = self._machine_amp[3] + self._machine_amp[int((2 ** width) / 2 + 3)]
                 self._fidelity = max(point1, point2)
             elif self._field == "quantum_walk":
                 self._fidelity = self._machine_amp[3] + self._machine_amp[-2]
@@ -109,19 +110,16 @@ class BenchLib:
     def _alg_cir_entropy(self, p, q):
         def normalization(data):
             data = np.array(data)
-            data = data/np.sum(data)
+            data = data / np.sum(data)
 
             return data
 
+        sum = 0.0
+        delta = 1e-7
         p = abs(normalization(p))
         q = abs(normalization(q))
-
-        import math
-
-        sum=0.0
-        delta=1e-7
-        for x in map(lambda y, p:(1 - y) * math.log(1 - p + delta) + y * math.log(p + delta), p, q):
-            sum+=x
+        for x in map(lambda y, p: (1 - y) * math.log(1 - p + delta) + y * math.log(p + delta), p, q):
+            sum += x
         cross_entropy = -sum / len(p)
 
         return cross_entropy
@@ -141,6 +139,7 @@ class BenchLib:
 
         # Score related
         self._qv = 0
+        self._value = 0
         self._fidelity = 0
 
         # Circuit related
