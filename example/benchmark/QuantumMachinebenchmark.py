@@ -1,13 +1,20 @@
 import os
 
-from QuICT.benchmark.benchmark import QuICTBenchmark
+from QuICT.benchmark.benchmark import QuantumMachinebenchmark
 from QuICT.core.layout import Layout
 from QuICT.core.utils.gate_type import GateType
 from QuICT.core.virtual_machine import InstructionSet
 from QuICT.simulation.state_vector import StateVectorSimulator
+from QuICT.core.virtual_machine.virtual_machine import VirtualQuantumMachine
 
-layout = Layout.load_file(os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/layout/grid_3x3.json")
-Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
+
+layout = Layout.linear_layout(5)
+iset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
+vqm = VirtualQuantumMachine(
+    qubits=5,
+    instruction_set=iset,
+    layout=layout,
+)
 
 
 def simulation(circuit):
@@ -20,8 +27,8 @@ def simulation(circuit):
         List: Amplitude results or Sample results for circuits.
     """
     simulator = StateVectorSimulator()
-    sim_results = simulator.run(circuit)
-    # sim_sample = simulator.sample(circuit)
+    simulator.run(circuit)
+    sim_results = simulator.sample()
     return sim_results
 
 
@@ -29,31 +36,25 @@ def step_benchmark():
     # First method: Initialize -> Get the circuits -> Results Analysis.
 
     # Step1: initialize QuICTBenchmark.
-    benchmark = QuICTBenchmark(
-        device="CPU",                 # choose simulation device, one of [CPU, GPU]
+    benchmark = QuantumMachinebenchmark(
         output_path="./benchmark",    # The path of the Analysis of the results.
         output_file_type="txt"        # The type of the Analysis of the results.
     )
 
     # Step2: Get the circuits group.
     circuits_list = benchmark.get_circuits(
-        quantum_machine_info={"qubits_number": 3, "layout_file": layout, "Instruction_Set": Inset},
-        # The sub-physical machine properties to be measured.
-        # qubits_number is The number of physical machine bits, layout_file is Physical machine topology,
-        # Instruction_Set is Physical machine instruction set type.
-        level=1,              # choose circuits group level, one of [1, 2, 3].
-        mapping=True,         # Mapping according to the physical machine topology or not.
-        gate_transform=True   # Gate transform according to the physical machine Instruction Set or not.
-    )
+        quantum_machine_info=vqm,       # The information about the quantum machine - virual quantum machine.
+        level=1,                        # choose circuits group level, one of [1, 2, 3].
+        enable_qcda_for_alg_cir=True    # Auto-Compile the circuit with the given quantum machine info,
+    )                                   # just for algorithm circuit.
     print(len(circuits_list))
 
     # Here the sub-physical machine to be measured is simulated.
-    amp_results_list = []
     for circuit in circuits_list:
-        amp_results_list.append(simulation(circuit))
+        circuit.machine_amp = simulation(circuit.circuit)
 
     # Step3: Enter the evalute system
-    benchmark.evaluate(circuits_list, amp_results_list)
+    benchmark.evaluate(circuits_list)
 
     print(os.listdir("./benchmark"))
 
@@ -62,8 +63,7 @@ def run():
     # Second method: Initialize -> Connect physical machines to perform benchmarks.
 
     # Step1: initialize QuICTBenchmark.
-    benchmark = QuICTBenchmark(
-        device="CPU",                 # choose simulation device, one of [CPU, GPU]
+    benchmark = QuantumMachinebenchmark(
         output_path="./benchmark",    # The path of the Analysis of the results.
         output_file_type="txt"        # The type of the Analysis of the results.
     )
@@ -71,13 +71,12 @@ def run():
     # Step2: Connect physical machines to perform benchmarking.
     benchmark.run(
         simulator_interface=simulation,  # Perform simulation of amplitude for each circuit.
-        quantum_machine_info={"qubits_number": 3, "layout_file": layout, "Instruction_Set": Inset},
+        quantum_machine_info=vqm,
         level=3,
-        mapping=True,
-        gate_transform=True
+        enable_qcda_for_alg_cir=False
     )
     print(os.listdir("./benchmark"))
 
 
 if __name__ == "__main__":
-    step_benchmark()
+    run()

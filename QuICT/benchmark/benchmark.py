@@ -19,7 +19,7 @@ from QuICT.tools.circuit_library.get_benchmark_circuit import BenchmarkCircuitBu
 
 class QuantumMachinebenchmark:
     """ The QuICT Benchmarking. """
-    __alg_fields_list = ["qft", "adder", "cnf", "vqe", "qnn", "quantum_walk"]
+    __alg_fields_list = ["qft", "adder", "cnf", "qnn", "quantum_walk"]
 
     def __init__(
         self,
@@ -95,7 +95,7 @@ class QuantumMachinebenchmark:
 
         return cir_list
 
-    def _get_benchmark_circuit(self, level: int, q_number:int, Ins_set):
+    def _get_benchmark_circuit(self, level: int, q_number: int, Ins_set):
         cir_list = []
         cirs = BenchmarkCircuitBuilder().get_benchmark_circuit(q_number, level, Ins_set)
         for cir in cirs:
@@ -108,7 +108,7 @@ class QuantumMachinebenchmark:
                 Measure | cir
             cir.name = "+".join([
                 "benchmark", field, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}_v{void_gates}", f"level{level}"
-                ])
+            ])
             cir_list.append(cir)
 
         return cir_list
@@ -311,11 +311,11 @@ class QuantumMachinebenchmark:
 
         # Draw the first diagram
         ax1 = plt.subplot(222, polar=True)
-        ax1.plot(angles_1, values, 'y-', linewidth=2)
-        ax1.fill(angles_1, values, 'r', alpha=0.5)
+        ax1.plot(angles_1, values_1, 'y-', linewidth=2)
+        ax1.fill(angles_1, values_1, 'r', alpha=0.5)
 
         ax1.set_thetagrids(angles_1 * 180 / np.pi, feature_1)
-        ax1.set_ylim(0, np.floor(values.max()) + 0.5)
+        ax1.set_ylim(0, np.floor(values_1.max()) + 0.5)
 
         plt.tick_params(labelsize=12)
         plt.title('Special benchmark circuits radar chart show')
@@ -343,7 +343,12 @@ class QuantumMachinebenchmark:
                 values_2.append(max(field_QV_map[value]))
             # Sets the angle of the radar chart to bisect a plane
             N = len(values_2)
-            alg_data = values_2
+            if N > 4:
+                alg_data = random.sample(list(values_2), 4)
+            elif N == 4:
+                alg_data = values_2
+            elif N < 4:
+                alg_data = values_2 + [0] * (4 - len(values_2))
             angles_2 = np.linspace(0, 2 * np.pi, N, endpoint=False)
             feature_2 = np.concatenate((feature_2, [feature_2[0]]))
             values_2 = np.concatenate((values_2, [values_2[0]]))
@@ -360,6 +365,8 @@ class QuantumMachinebenchmark:
             plt.legend(["score"])
 
             ax2.grid(True)
+        else:
+            alg_data = values_2 + [0] * (4 - len(values_2))
 
         ################################ the overall benchmark score #####################################
         radar_labels = np.array(['random', 'special', 'algorithm'])
@@ -367,7 +374,7 @@ class QuantumMachinebenchmark:
         data = np.array([
             list(random_data),
             list(special_data),
-            random.sample(list(alg_data), 4)
+            alg_data
         ])
         angles_3 = np.linspace(0, 2 * np.pi, nAttr, endpoint=False)
         data = np.concatenate((data, [data[0]]))

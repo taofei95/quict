@@ -22,15 +22,6 @@ class BenchLib:
         self._machine_amp = machine_amp
 
     @property
-    def benchmark_score(self) -> float:
-        """ Return the general benchmark score of each circuit. """
-        return self._benchmark_score
-
-    @benchmark_score.setter
-    def benchmark_score(self, benchmark_score: float):
-        self._benchmark_score = benchmark_score
-
-    @property
     def type(self) -> str:
         """ Return the field of circuits. """
         self._type = self._circuit.name.split("+")[:-1][0]
@@ -93,8 +84,11 @@ class BenchLib:
                 self._fidelity = self._machine_amp[8]
             elif self._field == "qnn":
                 point1 = self._machine_amp[0] + self._machine_amp[int((2 ** width) / 2)]
-                point2 = self._machine_amp[3] + self._machine_amp[int((2 ** width) / 2 + 3)]
-                self._fidelity = max(point1, point2)
+                if point1 == 0:
+                    point2 = self._machine_amp[3] + self._machine_amp[int((2 ** width) / 2 + 3)]
+                    self._fidelity = max(point1, point2)
+                else:
+                    self._fidelity = point1
             elif self._field == "quantum_walk":
                 self._fidelity = self._machine_amp[3] + self._machine_amp[-2]
             elif self._field == "vqe":
@@ -123,6 +117,15 @@ class BenchLib:
         cross_entropy = -sum / len(p)
 
         return cross_entropy
+
+    @property
+    def benchmark_score(self) -> float:
+        """ Return the general benchmark score of each circuit. """
+        return self._benchmark_score
+
+    @benchmark_score.setter
+    def benchmark_score(self, benchmark_score: float):
+        self._benchmark_score = benchmark_score
 
     def __init__(
         self,
