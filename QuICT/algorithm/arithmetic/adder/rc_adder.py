@@ -1,16 +1,18 @@
-from numpy import log2, pi
+from numpy import pi
 
-from QuICT.core.gate import CompositeGate, Ry, CU3
+from QuICT.core.gate import Ry, CU3
 from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.algorithm.qft import ry_QFT
 
+
 class RCFourierAdderWired(CompositeGate):
     """
-        An adder in Fourier space using ry QFT. A quantum-classical adder circuit,
-        addend is hardwired into the circuit. Assuming size of the quantum register is 
-        "n" and the addend is in the range, this adder is in place, uses n qubits. 
+        An adder in Fourier space using ry QFT. A quantum-classical adder
+        circuit, addend is hardwired into the circuit. Assuming size of
+        the quantum register is "n" and the addend is in the range, this
+        adder is in place, uses n qubits.
 
-        Based on paper "High Performance Quantum Modular Multipliers" 
+        Based on paper "High Performance Quantum Modular Multipliers"
         by Rich Rines, Isaac Chuang: https://arxiv.org/abs/1801.01081
     """
 
@@ -24,22 +26,31 @@ class RCFourierAdderWired(CompositeGate):
         name: str = None
     ):
         """
-            Construct the adder circuit that adds 'addend' to a quantum register of size 'qreg_size'
-            The circuit will have width 'qreg_size' for 'controlled' is False and 'qreg_size + 1' 
+            Construct the adder circuit that adds 'addend' to a quantum
+            register of size 'qreg_size'The circuit will have width
+            'qreg_size' for 'controlled' is False and 'qreg_size + 1'
             for 'controlled' is True with the control bit on the index 0.
-        
+
             Args:
-                qreg_size (int): Size of the quantum register waiting to be added. >= 2
+                qreg_size (int):
+                    Size of the quantum register waiting to be added. >= 2
 
-                addend (int): The integer that will add to the qreg. Can be positive or negative.
+                addend (int):
+                    The integer that will add to the qreg. Can be positive
+                    or negative.
 
-                controlled (bool): 
-                    Indicates whether the adder is controlled by a qubit. If True, a controlled adder 
-                    will be constructed and the 0 index is the control bit.
-                
-                in_fourier (bool): If True, assuming the input register is already in ry-qft basis.
+                controlled (bool):
+                    Indicates whether the adder is controlled by a qubit.
+                    If True, a controlled adder will be constructed and
+                    the 0 index is the control bit.
 
-                out_fourier (bool): If True, after the addition, the qreg will be left in ry-qft basis.
+                in_fourier (bool):
+                    If True, assuming the input register is already in ry-qft
+                    basis.
+
+                out_fourier (bool):
+                    If True, after the addition, the qreg will be left in
+                    ry-qft basis.
 
         """
 
@@ -61,36 +72,34 @@ class RCFourierAdderWired(CompositeGate):
             if not out_fourier:
                 ry_QFT(qreg_size, inverse=True) | self
 
-
     @property
     def is_controlled(self):
         return self._controlled
-    
+
     @property
     def get_addend(self):
         return self._addend
-    
 
     def __build_phi_adder(
-        self, 
+        self,
         qreg_size: int,
         addend: int
     ):
-        
+
         for k in range(qreg_size):
-            theta = pi * addend / ( 2**(k) )
+            theta = pi * addend / (2**(k))
             Ry(theta) | self([qreg_size - 1 - k])
-        
+
         return
-    
+
     def __build_ctl_phi_adder(
         self,
         qreg_size: int,
         addend: int
     ):
         for k in range(qreg_size):
-            theta = pi * addend / ( 2**(k) )
+            theta = pi * addend / (2**(k))
             # CU3(theta, 0, 0) is CRy(theta)
             CU3(theta, 0, 0) | self([0, qreg_size - k])
-        
+
         return
