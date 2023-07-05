@@ -1,14 +1,14 @@
 import os
 import random
 import re
-from typing import List
+from typing import List, Union
 import pandas as pd
 import prettytable as pt
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
-from QuICT.benchmark.benchlib import BenchLib
-from QuICT.core.gate.gate import *
+from QuICT.benchmark.benchcirdata import BenchCirData
+from QuICT.core.gate.gate import Measure, gate_builder
 from QuICT.core.virtual_machine.virtual_machine import VirtualQuantumMachine
 
 from QuICT.qcda.qcda import QCDA
@@ -19,7 +19,7 @@ from QuICT.tools.circuit_library.get_benchmark_circuit import BenchmarkCircuitBu
 
 class QuantumMachinebenchmark:
     """ The QuICT Benchmarking. """
-    __alg_fields_list = ["qft", "adder", "cnf", "qnn", "quantum_walk"]
+    __alg_fields_list = ["qft", "adder", "cnf", "vqe", "qnn", "quantum_walk"]
 
     def __init__(
         self,
@@ -37,45 +37,43 @@ class QuantumMachinebenchmark:
         self._output_path = os.path.abspath(output_path)
         self._output_file_type = output_file_type
 
-    def _get_random_circuit(self, level: int, q_number: int, Ins_set, layout=None):
+    def _get_random_circuit(self, level: int, q_number: int, ins_set, layout, is_measure):
         cir_list = []
-        if level == 1:
-            gate_prob, pro_s = range(2, 6), 0.9
-        elif level == 2:
-            gate_prob, pro_s = range(6, 10), 0.8
-        elif level == 3:
-            gate_prob, pro_s = range(10, 14), 0.7
+        gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
+        pro_s = 1 - level / 10
 
         for gates in gate_prob:
             cir = Circuit(q_number)
             # Single-qubit gates
             size_s = int(q_number * gates * pro_s)
-            cir.random_append(size_s, Ins_set.one_qubit_gates)
+            cir.random_append(size_s, ins_set.one_qubit_gates)
 
             # Double-qubits gates
             size_d = q_number * gates - size_s
             layout_list = layout.edge_list
             for _ in range(size_d):
-                biq_gate = gate_builder(Ins_set.two_qubit_gate, random_params=True)
+                biq_gate = gate_builder(ins_set.two_qubit_gate, random_params=True)
                 bgate_layout = np.random.choice(layout_list)
-                biq_gate | cir([bgate_layout.u, bgate_layout.v])
+                insert_idx =  random.choice(list(range(q_number)))
+                cir.insert(biq_gate & [bgate_layout.u, bgate_layout.v], insert_idx) 
 
             # Build mirror circuit
             inverse_gate = cir.to_compositegate().inverse()
             inverse_gate | cir
-            Measure | cir
+            if is_measure:
+                Measure | cir
             cir.name = "+".join(["random", "random", f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"])
+            cir = BenchCirData(cir)
             cir_list.append(cir)
         return cir_list
 
-    def _get_algorithm_circuit(self, vqm, level: int, enable_qcda_for_alg_cir):
+    def _get_algorithm_circuit(self, vqm, level: int, enable_qcda_for_alg_cir, is_measure):
         cir_list = []
-        if level == 1:
-            return []
+        assert level > 1
         if level == 2:
             field = self.__alg_fields_list[:3]
-        elif level == 3:
-            field = self.__alg_fields_list
+        else:
+            field = self.__alg_fields_list[:]
 
         if enable_qcda_for_alg_cir:
             qcda = QCDA()
@@ -85,30 +83,31 @@ class QuantumMachinebenchmark:
             for cir in cirs:
                 if enable_qcda_for_alg_cir:
                     cir = qcda.auto_compile(cir, vqm)
-                    Measure | cir
-                else:
-                    Measure | cir
+                    if is_measure:
+                        Measure | cir
                 cir.name = "+".join([
                     "algorithm", field[i], f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"
                 ])
+                cir = BenchCirData(cir)
                 cir_list.append(cir)
 
         return cir_list
 
-    def _get_benchmark_circuit(self, level: int, q_number: int, Ins_set):
+    def _get_benchmark_circuit(self, level: int, q_number:int, ins_set, is_measure):
         cir_list = []
-        cirs = BenchmarkCircuitBuilder().get_benchmark_circuit(q_number, level, Ins_set)
+        cirs = BenchmarkCircuitBuilder().get_benchmark_circuit(q_number, level, ins_set)
         for cir in cirs:
             split = cir.name.split("+")
             attribute = re.findall(r'\d+(?:\.\d+)?', split[2])
             field, void_gates = split[1], attribute[3]
             inverse_cgate = cir.to_compositegate().inverse()
             inverse_cgate | cir
-            if field != "mediate_measure":
+            if field != "mediate_measure" and is_measure:
                 Measure | cir
             cir.name = "+".join([
                 "benchmark", field, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}_v{void_gates}", f"level{level}"
-            ])
+                ])
+            cir = BenchCirData(cir)
             cir_list.append(cir)
 
         return cir_list
@@ -117,7 +116,8 @@ class QuantumMachinebenchmark:
         self,
         quantum_machine_info: VirtualQuantumMachine,
         level: int = 1,
-        enable_qcda_for_alg_cir: bool = False
+        enable_qcda_for_alg_cir: bool = False,
+        is_measure: bool = False
     ):
         """
         Get circuit from CircuitLib and Get the algorithm circuit after qcda.
@@ -135,35 +135,30 @@ class QuantumMachinebenchmark:
 
         # obey instruction set and layout in vqm to build random circuit
         q_number = quantum_machine_info.qubit_number
-        Ins_set = quantum_machine_info.instruction_set
+        ins_set = quantum_machine_info.instruction_set
         layout = quantum_machine_info.layout
 
         # get circuits from circuitlib
         circuit_list = []
 
         # get random circuits
-        circuit_list.extend(self._get_random_circuit(level, q_number, Ins_set, layout))
+        circuit_list.extend(self._get_random_circuit(level, q_number, ins_set, layout, is_measure))
 
         # get benchmark circuits
-        circuit_list.extend(self._get_benchmark_circuit(level, q_number, Ins_set))
+        circuit_list.extend(self._get_benchmark_circuit(level, q_number, ins_set, is_measure))
 
         # get algorithm circuit
-        circuit_list.extend(self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir))
+        circuit_list.extend(self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure))
 
-        # list of Special defined Circuit-benchmark data structure
-        bench_cir = []
-        for i in range(len(circuit_list)):
-            benchlib = BenchLib(circuit_list[i])
-            bench_cir.append(benchlib)
-
-        return bench_cir
+        return circuit_list
 
     def run(
         self,
         simulator_interface,
         quantum_machine_info: VirtualQuantumMachine,
         level: int = 1,
-        enable_qcda_for_alg_cir: bool = False
+        enable_qcda_for_alg_cir: bool = False,
+        is_measure: bool = False
     ):
         """
         Connect real-time benchmarking to the sub-physical machine to be measured.
@@ -188,7 +183,7 @@ class QuantumMachinebenchmark:
             Return the analysis of benchmarking.
         """
         # Step1 : get circuits from circuitlib
-        bench_cir = self.get_circuits(quantum_machine_info, level, enable_qcda_for_alg_cir)
+        bench_cir = self.get_circuits(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
 
         # Step 2: physical machine simulation
         for i in range(len(bench_cir)):
@@ -201,8 +196,8 @@ class QuantumMachinebenchmark:
         # Step 4: show result
         self.show_result(bench_cir)
 
-    def evaluate(self, circuits: Union[List[BenchLib], BenchLib]):
-        """ Evaluate all circuits in circuit list group by fields. """
+    def evaluate(self, circuits: Union[List[BenchCirData], BenchCirData]):
+        """ Evaluate all circuits. """
         for bench_cir in circuits:
             if bench_cir.type == "random":
                 self._evaluate_random_circuits(bench_cir)
@@ -311,11 +306,11 @@ class QuantumMachinebenchmark:
 
         # Draw the first diagram
         ax1 = plt.subplot(222, polar=True)
-        ax1.plot(angles_1, values_1, 'y-', linewidth=2)
-        ax1.fill(angles_1, values_1, 'r', alpha=0.5)
+        ax1.plot(angles_1, values, 'y-', linewidth=2)
+        ax1.fill(angles_1, values, 'r', alpha=0.5)
 
         ax1.set_thetagrids(angles_1 * 180 / np.pi, feature_1)
-        ax1.set_ylim(0, np.floor(values_1.max()) + 0.5)
+        ax1.set_ylim(0, np.floor(values.max()) + 0.5)
 
         plt.tick_params(labelsize=12)
         plt.title('Special benchmark circuits radar chart show')
@@ -343,12 +338,7 @@ class QuantumMachinebenchmark:
                 values_2.append(max(field_QV_map[value]))
             # Sets the angle of the radar chart to bisect a plane
             N = len(values_2)
-            if N > 4:
-                alg_data = random.sample(list(values_2), 4)
-            elif N == 4:
-                alg_data = values_2
-            elif N < 4:
-                alg_data = values_2 + [0] * (4 - len(values_2))
+            alg_data = values_2
             angles_2 = np.linspace(0, 2 * np.pi, N, endpoint=False)
             feature_2 = np.concatenate((feature_2, [feature_2[0]]))
             values_2 = np.concatenate((values_2, [values_2[0]]))
@@ -365,8 +355,6 @@ class QuantumMachinebenchmark:
             plt.legend(["score"])
 
             ax2.grid(True)
-        else:
-            alg_data = values_2 + [0] * (4 - len(values_2))
 
         ################################ the overall benchmark score #####################################
         radar_labels = np.array(['random', 'special', 'algorithm'])
@@ -374,7 +362,7 @@ class QuantumMachinebenchmark:
         data = np.array([
             list(random_data),
             list(special_data),
-            alg_data
+            random.sample(list(alg_data), 4)
         ])
         angles_3 = np.linspace(0, 2 * np.pi, nAttr, endpoint=False)
         data = np.concatenate((data, [data[0]]))

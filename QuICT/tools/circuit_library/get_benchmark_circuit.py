@@ -7,20 +7,16 @@ from QuICT.core.virtual_machine.instruction_set import InstructionSet
 
 
 class BenchmarkCircuitBuilder:
-    """ A class fetch QuICT benchmark circuits. """
+    """
+    A class fetch QuICT benchmark circuits.
 
+    Args:
+        width(int): number of qubits
+        size(int): number of gates
+        random_params (bool, optional): whether random parameter or use default parameter. Defaults to True.
+    """
     @staticmethod
-    def parallelized_circuit_build(width: int, level: int, gateset):
-        """Highly parallelised circuit construction.
-
-        Args:
-            width(int): number of qubits.
-            level(int): level of circuit for benchmark.
-            gateset(InstructionSet): the instruction set of quantum machine.
-
-        Returns:
-            (List[Circuit]): Return the list of circuit.
-        """
+    def parallelized_circuit_build(width: int, level:int, gateset):
         typelist = [random.choice(gateset.one_qubit_gates), gateset.two_qubit_gate]
         prob = [0.8, 0.2]
 
@@ -29,12 +25,8 @@ class BenchmarkCircuitBuilder:
         shuffle_qindexes = qubits_indexes[:]
         random.shuffle(shuffle_qindexes)
 
-        if level == 1:
-            gate_prob, random_para = range(2, 6), 0.3
-        elif level == 2:
-            gate_prob, random_para = range(6, 10), 0.6
-        elif level == 3:
-            gate_prob, random_para = range(10, 14), 0.9
+        gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
+        random_para = 1 - level / 1
 
         cirs_list = []
         for g in gate_prob:
@@ -61,32 +53,15 @@ class BenchmarkCircuitBuilder:
                     shuffle_qindexes = shuffle_qindexes[gsize:]
 
             depth = cir.depth()
-            random_para = round((size / depth - 1) / (width - 1), 2)
-            cir.name = "+".join([
-                "benchmark", "highly_parallelized", f"w{width}_s{size}_d{depth}_v{random_para}_level{level}"
-            ])
+            cir.name = "+".join(["benchmark", "highly_parallelized", f"w{width}_s{size}_d{depth}_v{random_para}_level{level}"])
             cirs_list.append(cir)
 
         return cirs_list
 
     @staticmethod
-    def serialized_circuit_build(width: int, level: int, gateset):
-        """Highly serialized circuit construction.
-
-        Args:
-            width(int): number of qubits.
-            level(int): level of circuit for benchmark.
-            gateset(InstructionSet): the instruction set of quantum machine.
-
-        Returns:
-            (List[Circuit]): Return the list of circuit.
-        """
-        if level == 1:
-            gate_prob, random_para = range(2, 6), 0.3
-        elif level == 2:
-            gate_prob, random_para = range(6, 10), 0.6
-        elif level == 3:
-            gate_prob, random_para = range(10, 14), 0.9
+    def serialized_circuit_build(width: int, level:int, gateset):
+        gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
+        random_para = 1 - level / 1
 
         cirs_list = []
         base_gate = gate_builder(gateset.two_qubit_gate)
@@ -113,28 +88,15 @@ class BenchmarkCircuitBuilder:
                     void_gates += 1
 
             depth = cir.depth()
-            void_gates = round((1 - void_gates / size), 2)
-            cir.name = "+".join([
-                "benchmark", "highly_serialized", f"w{width}_s{size}_d{depth}_v{void_gates}_level{level}"
-            ])
+            void_gates = round(void_gates / size, 2)
+            cir.name = "+".join(["benchmark", "highly_serialized", f"w{width}_s{size}_d{depth}_v{void_gates}_level{level}"])
             cirs_list.append(cir)
 
         return cirs_list
 
     @staticmethod
-    def entangled_circuit_build(width: int, level: int, gateset):
-        """Highly entangled circuit construction.
-
-        Args:
-            width(int): number of qubits.
-            level(int): level of circuit for benchmark.
-            gateset(InstructionSet): the instruction set of quantum machine.
-
-        Returns:
-            (List[Circuit]): Return the list of circuit.
-        """
+    def entangled_circuit_build(width: int, level:int, gateset):
         base_gate = gate_builder(gateset.two_qubit_gate)
-
         def _pattern1():
             cgate = CompositeGate()
             qubit_indexes = list(range(width))
@@ -165,24 +127,19 @@ class BenchmarkCircuitBuilder:
             result = [qubit_indexes[i + 1:i + 3] for i in range(0, len(qubit_indexes), 2)]
             for i in range(len(result)):
                 if len(result[i]) == 2:
-                    base_gate | cgate(result[i])
+                    base_gate| cgate(result[i])
                 else:
                     break
 
             return cgate
 
-        if level == 1:
-            gate_prob, random_para = range(2, 6), 0.3
-        elif level == 2:
-            gate_prob, random_para = range(6, 10), 0.6
-        elif level == 3:
-            gate_prob, random_para = range(10, 14), 0.9
+        gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
+        random_para = 1 - level / 1
 
         cirs_list = []
         for g in gate_prob:
             void_gates = 0
             cir = Circuit(width)
-            H | cir(0)
             size = width * g
             while cir.size() < size:
                 if size - cir.size() < width or random.random() > random_para:
@@ -193,26 +150,14 @@ class BenchmarkCircuitBuilder:
                     cgate | cir
 
             depth = cir.depth()
-            void_gates = round((1 - void_gates / size), 2)
-            cir.name = "+".join([
-                "benchmark", "highly_entangled", f"w{width}_s{size}_d{depth}_v{void_gates}_level{level}"
-            ])
+            void_gates = round(void_gates / size, 2)
+            cir.name = "+".join(["benchmark", "highly_entangled", f"w{width}_s{size}_d{depth}_v{void_gates}_level{level}"])
             cirs_list.append(cir)
 
         return cirs_list
 
     @staticmethod
-    def mediate_measure_circuit_build(width: int, level: int, gateset):
-        """Intermediate state measurement circuit construction.
-
-        Args:
-            width(int): number of qubits.
-            level(int): level of circuit for benchmark.
-            gateset(InstructionSet): the instruction set of quantum machine.
-
-        Returns:
-            (List[Circuit]): Return the list of circuit.
-        """
+    def mediate_measure_circuit_build(width: int, level:int, gateset):
         typelist = [random.choice(gateset.one_qubit_gates), gateset.two_qubit_gate]
         prob = [0.8, 0.2]
 
@@ -233,12 +178,8 @@ class BenchmarkCircuitBuilder:
             return cgate
 
         cir_list = []
-        if level == 1:
-            gate_prob, random_para = range(2, 6), 0.3
-        elif level == 2:
-            gate_prob, random_para = range(6, 10), 0.6
-        elif level == 3:
-            gate_prob, random_para = range(10, 14), 0.9
+        gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
+        random_para = 1 - level / 1
 
         for g in gate_prob:
             size = width * g
@@ -255,25 +196,13 @@ class BenchmarkCircuitBuilder:
                     flat_build() | cir
 
             depth = cir.depth()
-            void_gates = round((1 - void_gates / depth), 2)
-            cir.name = "+".join([
-                "benchmark", "mediate_measure", f"w{width}_s{size}_d{depth}_v{void_gates}_level{level}"
-            ])
+            void_gates = round(void_gates / depth, 2)
+            cir.name = "+".join(["benchmark", "mediate_measure", f"w{width}_s{size}_d{depth}_v{void_gates}_level{level}"])
             cir_list.append(cir)
 
         return cir_list
 
-    def get_benchmark_circuit(self, qubits_interval: int, level: int, gateset: InstructionSet):
-        """get special benchmark circuit - highly_parallelized, highly_entangled, highly_serialized, mediate_measure.
-
-        Args:
-            qubits_interval(int): number of qubits.
-            level(int): level of circuit for benchmark.
-            gateset(InstructionSet): the instruction set of quantum machine.
-
-        Returns:
-            (List[Circuit]): Return the list of each type circuit.
-        """
+    def get_benchmark_circuit(self, qubits_interval:int, level:int, gateset:InstructionSet):
         cirs_list = []
         cirs_list.extend(self.parallelized_circuit_build(qubits_interval, level, gateset))
         cirs_list.extend(self.entangled_circuit_build(qubits_interval, level, gateset))
