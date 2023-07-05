@@ -36,30 +36,30 @@ class TestRCAdder(unittest.TestCase):
 
         # regular cases
         self.assertEqual(
-            self.__get_rc_adder_result(5,  6, 8, signed=True),
+            self.__get_rc_adder_result(5, 6, 8, signed=True),
             6 + 8
         )
         self.assertEqual(
-            self.__get_rc_adder_result(6,  3, -5, signed=True),
+            self.__get_rc_adder_result(6, 3, -5, signed=True),
             3 - 5
         )
         self.assertEqual(
-            self.__get_rc_adder_result(7, -7,  2, signed=True),
+            self.__get_rc_adder_result(7, -7, 2, signed=True),
             -7 + 2
         )
         self.assertEqual(
-            self.__get_rc_adder_result(8, -1,  -3, signed=True),
+            self.__get_rc_adder_result(8, -1, -3, signed=True),
             -1 - 3
         )
         # overflow
         self.assertEqual(
             self.__get_rc_adder_result(5, 7, 9, signed=True),
-            (7 + 9 + 2**(5-1)) % (2**5) - 2**(5-1)
+            (7 + 9 + 2**(5 - 1)) % (2**5) - 2**(5 - 1)
         )
         # underflow
         self.assertEqual(
             self.__get_rc_adder_result(5, -10, -11, signed=True),
-            (-10 - 11 + 2**(5-1)) % (2**5) - 2**(5-1)
+            (-10 - 11 + 2**(5 - 1)) % (2**5) - 2**(5 - 1)
         )
 
         return
@@ -78,7 +78,7 @@ class TestRCAdder(unittest.TestCase):
         # overflow
         self.assertEqual(
             self.__get_rc_adder_result_controlled(5, 23, 14),
-            (23, (23+14) % (2**5))
+            (23, (23 + 14) % (2**5))
         )
 
         return
@@ -109,12 +109,12 @@ class TestRCAdder(unittest.TestCase):
         # overflow
         self.assertEqual(
             self.__get_rc_adder_result_controlled(5, 8, 11, signed=True),
-            (8, (8 + 11 + 2**(5-1)) % (2**5) - 2**(5-1))
+            (8, (8 + 11 + 2**(5 - 1)) % (2**5) - 2**(5 - 1))
         )
         # underflow
         self.assertEqual(
             self.__get_rc_adder_result(6, 7, -80, signed=True),
-            (7 - 80 + 2**(6-1)) % (2**6) - 2**(6-1)
+            (7 - 80 + 2**(6 - 1)) % (2**6) - 2**(6 - 1)
         )
 
         return
@@ -206,7 +206,7 @@ class TestRCAdder(unittest.TestCase):
         ctl_adder_circ = Circuit(qreg_size + 1)
         for i, bit in enumerate(q_x_bin):
             if '1' == bit:
-                X | ctl_adder_circ([i+1])
+                X | ctl_adder_circ([i + 1])
 
         # put the control bit into superposition
         H | ctl_adder_circ([0])

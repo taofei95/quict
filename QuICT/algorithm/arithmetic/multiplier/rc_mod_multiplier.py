@@ -2,9 +2,8 @@ import numpy as np
 
 from typing import List
 
-from QuICT.tools.exception.core.gate_exception import (
-    GateParametersAssignedError
-)
+from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError
+
 from QuICT.core.gate import X, CX, CU3, Swap, CSwap
 from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.algorithm.arithmetic.adder import RCFourierAdderWired
@@ -54,14 +53,10 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
                     Requires M to be coprime with modulus N.
 
         """
-        if int(np.ceil(np.log2(modulus+1))) > qreg_size:
-            raise GateParametersAssignedError(
-                "Not enough register size for modulus."
-            )
+        if int(np.ceil(np.log2(modulus + 1))) > qreg_size:
+            raise GateParametersAssignedError("Not enough register size for modulus.")
         if modulus % 2 == 0:
-            raise GateParametersAssignedError(
-                "Modulus cannot be an even number."
-            )
+            raise GateParametersAssignedError("Modulus cannot be an even number.")
 
         self._modulus = modulus
         self._multiple = multiple
@@ -70,11 +65,9 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
         self._ancilla_size = int(np.ceil(np.log2(qreg_size))) + 1
         self._total_size = 2 * qreg_size + self._ancilla_size
 
-        self._input_qubit_list = [i for i in range(qreg_size)]
-        self._output_qubit_list = [i for i in range(qreg_size, 2 * qreg_size)]
-        self._ancilla_qubit_list = [
-            i for i in range(2 * qreg_size, self._total_size)
-        ]
+        self._input_qubit_list = list(range(qreg_size))
+        self._output_qubit_list = list(range(qreg_size, 2 * qreg_size))
+        self._ancilla_qubit_list = list(range(2 * qreg_size, self._total_size))
 
         super().__init__(name)
 
@@ -82,18 +75,10 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
         if inverse_multiple:
             multiple = pow(multiple, -1, modulus)
 
-        multi_prime = (
-            multiple * pow(2, self._ancilla_size - 1, modulus)
-        ) % modulus
-
-        # Preprocess #
-
-        # ry_QFT(
-        #   self._register_size + self._ancilla_size
-        # ) | self(self._output_qubit_list + self._ancilla_qubit_list)
+        multi_prime = (multiple * pow(2, self._ancilla_size - 1, modulus)) % modulus
 
         # Multiplication stage #
-        self.__phi_MAC_mod(
+        self._phi_MAC_mod(
             in_reg_size=self._register_size,
             out_reg_size=self._register_size + self._ancilla_size,
             modulus=modulus,
@@ -105,8 +90,7 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
         # estimate
         for i in range(self._ancilla_size - 1):
             ctl_idx = self._total_size - 1 - i
-            reduced_reg = self._output_qubit_list + \
-                self._ancilla_qubit_list[:-i-1]
+            reduced_reg = self._output_qubit_list + self._ancilla_qubit_list[:-i - 1]
             RCFourierAdderWired(
                 qreg_size=self._register_size + self._ancilla_size - 1 - i,
                 addend=- modulus / 2,
@@ -116,8 +100,7 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
             ) | self([ctl_idx] + reduced_reg)
 
         # correction
-        correction_block = self._output_qubit_list + \
-            self._ancilla_qubit_list[:1]
+        correction_block = self._output_qubit_list + self._ancilla_qubit_list[:1]
         ry_QFT(
             targets=self._register_size + 1,
             inverse=True
@@ -132,7 +115,7 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
         # inside the block, permute one position upward such that
         # the highest bit goes to the bottom of the block
         for i in range(len(correction_block) - 1):
-            Swap | self(correction_block[i:i+2])
+            Swap | self(correction_block[i:i + 2])
 
         # correct the output
         ctl_idx = correction_block[-1]
@@ -164,20 +147,16 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
         comp_mod = pow(2, self._ancilla_size)
         uncompute_addend_list = []
         for i in range(self._register_size):
-            uncompute_addend = (
-                (multi_prime * pow(2, i, modulus)) % modulus
-            ) * pow(modulus, -1, comp_mod)
+            uncompute_addend = ((multi_prime * pow(2, i, modulus)) % modulus) * pow(modulus, -1, comp_mod)
             uncompute_addend_list.append(-uncompute_addend)
 
-        self.__phi_MAC_list(
+        self._phi_MAC_list(
             in_reg_size=self._register_size,
             out_reg_size=self._ancilla_size,
             addend_list=uncompute_addend_list
         ) | self(self._input_qubit_list + self._ancilla_qubit_list)
 
-        return
-
-    def __phi_MAC_mod(
+    def _phi_MAC_mod(
         self,
         in_reg_size: int,
         out_reg_size: int,
@@ -185,7 +164,7 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
         multiple: int
     ) -> CompositeGate:
         """
-            Quantum Montgomery Multiplication's multiplication stage.
+            Quantum Montgomery Reduction's multiplication stage.
             Refer to section 3.1 in the original paper for detail.
 
             a quantum multiply accumulator specially for calculating an
@@ -207,9 +186,9 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
             addend = (addend * 2) % modulus
             addend_list.append(addend)
 
-        return self.__phi_MAC_list(in_reg_size, out_reg_size, addend_list)
+        return self._phi_MAC_list(in_reg_size, out_reg_size, addend_list)
 
-    def __phi_MAC_list(
+    def _phi_MAC_list(
         self,
         in_reg_size: int,
         out_reg_size: int,
@@ -220,22 +199,19 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
             in in_reg is given by the addend list.
         """
         assert len(addend_list) == in_reg_size, \
-            f"addend list length: {len(addend_list)} not agree with register \
-                size: {in_reg_size}"
+            f"addend list length: {len(addend_list)} not agree with register size: {in_reg_size}"
 
         total_size = in_reg_size + out_reg_size
 
         phi_mac_gate = CompositeGate()
-        accumulator_reg = [
-            j for j in range(in_reg_size, in_reg_size + out_reg_size)
-        ]
+        accumulator_reg = list(range(in_reg_size, in_reg_size + out_reg_size))
 
         # When input reg size is less than output reg size, can further
         # optimize the depth by paralleling all the CRys that are commute
         # with each other.
         if in_reg_size <= out_reg_size:
             for i in range(out_reg_size):
-                j_bound = min(i+1, in_reg_size)
+                j_bound = min(i + 1, in_reg_size)
                 for j in range(j_bound):
                     theta = np.pi * addend_list[j] / (2**(i - j))
                     ctl_idx = in_reg_size - 1 - j
@@ -243,8 +219,7 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
                     CU3(theta, 0, 0) | phi_mac_gate([ctl_idx, target_idx])
 
                 for j in range(in_reg_size - j_bound):
-                    theta = np.pi * addend_list[j + j_bound] \
-                        / (2**(out_reg_size - 1 - j))
+                    theta = np.pi * addend_list[j + j_bound] / (2**(out_reg_size - 1 - j))
                     ctl_idx = in_reg_size - 1 - j_bound - j
                     target_idx = in_reg_size + j
                     CU3(theta, 0, 0) | phi_mac_gate([ctl_idx, target_idx])
@@ -311,18 +286,12 @@ class RCModMultiplier(CompositeGate):
             than modulus on any register by design).
         """
 
-        if int(np.ceil(np.log2(modulus+1))) > qreg_size:
-            raise GateParametersAssignedError(
-                "Not enough register size for modulus."
-            )
+        if int(np.ceil(np.log2(modulus + 1))) > qreg_size:
+            raise GateParametersAssignedError("Not enough register size for modulus.")
         if modulus % 2 == 0:
-            raise GateParametersAssignedError(
-                "Modulus cannot be an even number."
-            )
+            raise GateParametersAssignedError("Modulus cannot be an even number.")
         if np.gcd(modulus, multiple) != 1:
-            raise GateParametersAssignedError(
-                "Modulus and multiple have to be co-prime."
-            )
+            raise GateParametersAssignedError("Modulus and multiple have to be co-prime.")
 
         self._modulus = modulus
         self._multiple = multiple
@@ -331,14 +300,11 @@ class RCModMultiplier(CompositeGate):
         self._ancilla_n = qreg_size
         self._ancilla_mp1 = int(np.ceil(np.log2(qreg_size))) + 1
 
-        self._total_size = self._register_size + self._ancilla_n \
-            + self._ancilla_mp1
+        self._total_size = self._register_size + self._ancilla_n + self._ancilla_mp1
 
-        self._register_list = [i for i in range(qreg_size)]
-        self._ancilla_n_list = [i for i in range(qreg_size, 2 * qreg_size)]
-        self._ancilla_mp1_list = [
-            i for i in range(2 * qreg_size, self._total_size)
-        ]
+        self._register_list = list(range(qreg_size))
+        self._ancilla_n_list = list(range(qreg_size, 2 * qreg_size))
+        self._ancilla_mp1_list = list(range(2 * qreg_size, self._total_size))
 
         super().__init__(name)
 
@@ -361,8 +327,6 @@ class RCModMultiplier(CompositeGate):
             qreg_size=qreg_size,
             inverse_multiple=True
         ).inverse() | self
-
-        return
 
 
 class RCModMultiplierCtl(CompositeGate):
@@ -412,7 +376,7 @@ class RCModMultiplierCtl(CompositeGate):
             than modulus on any register by design).
         """
 
-        if int(np.ceil(np.log2(modulus+1))) > qreg_size:
+        if int(np.ceil(np.log2(modulus + 1))) > qreg_size:
             raise GateParametersAssignedError(
                 "Not enough register size for modulus."
             )
@@ -432,31 +396,20 @@ class RCModMultiplierCtl(CompositeGate):
         self._ancilla_n = qreg_size
         self._ancilla_mp1 = int(np.ceil(np.log2(qreg_size))) + 1
 
-        self._total_size = 1 \
-            + self._register_size \
-            + self._ancilla_n \
-            + self._ancilla_mp1
+        self._total_size = 1 + self._register_size + self._ancilla_n + self._ancilla_mp1
 
         self._control_list = [0]
-        self._register_list = [i for i in range(1, qreg_size + 1)]
-        self._ancilla_n_list = [
-            i for i in range(qreg_size + 1, 2 * qreg_size + 1)
-        ]
-        self._ancilla_mp1_list = [
-            i for i in range(2 * qreg_size + 1, self._total_size)
-        ]
+        self._register_list = list(range(1, qreg_size + 1))
+        self._ancilla_n_list = list(range(qreg_size + 1, 2 * qreg_size + 1))
+        self._ancilla_mp1_list = list(range(2 * qreg_size + 1, self._total_size))
 
         super().__init__(name)
 
-        swap_list = [
-            i for i in range(self._total_size - qreg_size, self._total_size)
-        ]
+        swap_list = list(range(self._total_size - qreg_size, self._total_size))
         # 0-ctl cswap two registers
         X | self(self._control_list)
         for i in range(self._register_size):
-            CSwap | self(
-                self._control_list + [self._register_list[i], swap_list[i]]
-            )
+            CSwap | self(self._control_list + [self._register_list[i], swap_list[i]])
         X | self(self._control_list)
 
         # *multiple % modulus, forward
@@ -465,35 +418,21 @@ class RCModMultiplierCtl(CompositeGate):
             multiple=multiple,
             qreg_size=qreg_size,
             inverse_multiple=False
-        ) | self(
-            self._register_list + self._ancilla_n_list + self._ancilla_mp1_list
-        )
+        ) | self(self._register_list + self._ancilla_n_list + self._ancilla_mp1_list)
 
         # replace input with output and prepare for uncompute (conditioned)
         for i in range(self._register_size):
-            CSwap | self(
-                self._control_list + [
-                    self._register_list[i], self._ancilla_n_list[i]
-                ]
-            )
+            CSwap | self(self._control_list + [self._register_list[i], self._ancilla_n_list[i]])
 
         RCOutOfPlaceModMultiplier(
             modulus=modulus,
             multiple=multiple,
             qreg_size=qreg_size,
             inverse_multiple=True
-        ).inverse() | self(
-            self._register_list + self._ancilla_n_list + self._ancilla_mp1_list
-        )
+        ).inverse() | self(self._register_list + self._ancilla_n_list + self._ancilla_mp1_list)
 
         # 0-ctl cswap two registers
         X | self(self._control_list)
         for i in range(self._register_size):
-            CSwap | self(
-                self._control_list + [
-                    self._register_list[i], swap_list[i]
-                ]
-            )
+            CSwap | self(self._control_list + [self._register_list[i], swap_list[i]])
         X | self(self._control_list)
-
-        return

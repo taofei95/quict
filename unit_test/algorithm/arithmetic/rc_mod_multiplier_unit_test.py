@@ -6,9 +6,7 @@ from QuICT.core.gate import H, X
 from QuICT.simulation.state_vector import StateVectorSimulator
 
 import unittest
-from QuICT.tools.exception.core.gate_exception import (
-    GateParametersAssignedError
-)
+from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError
 
 from QuICT.algorithm.arithmetic import (
     RCOutOfPlaceModMultiplier,
@@ -56,8 +54,6 @@ class TestRCModMulti(unittest.TestCase):
         # uncompute successfully
         self.assertEqual(ancilla, 0)
 
-        return
-
     def test_out_of_place_mod_multi_raised_exception(self):
         # test input errors #
 
@@ -84,8 +80,6 @@ class TestRCModMulti(unittest.TestCase):
                 multiple=multiple,
                 init_val=input_val
             )
-
-        return
 
     def test_in_place_mod_multi_correctness(self):
         # test for correctness of the gate #
@@ -114,8 +108,6 @@ class TestRCModMulti(unittest.TestCase):
         self.assertEqual(ancilla_n, 0)
         self.assertEqual(ancilla_mp1, 0)
 
-        return
-
     def test_in_place_mod_multi_inappropriate(self):
         # Test for apply the gate on inappropriate register #
         n = 5
@@ -141,8 +133,6 @@ class TestRCModMulti(unittest.TestCase):
             # but higher n bits in the ancilla cannnot be uncomputed as desired
             self.assertNotEqual(ancilla_n, 0)
             self.assertEqual(ancilla_mp1, 0)
-
-        return
 
     def test_in_place_mod_multi_raised_exception(self):
         # Test input errors #
@@ -177,8 +167,6 @@ class TestRCModMulti(unittest.TestCase):
                 qreg_size=n, modulus=modulus, multiple=multiple
             )
 
-        return
-
     def test_ctl_in_place_mod_multi_correctness(self):
         # test for correctness of the gate #
         n = 5
@@ -211,8 +199,6 @@ class TestRCModMulti(unittest.TestCase):
             self.assertEqual(ancilla_n, 0)
             self.assertEqual(ancilla_mp1, 0)
 
-        return
-
     def test_ctl_in_place_mod_multi_inappropriate(self):
         n = 5
         modulus = 13
@@ -242,8 +228,6 @@ class TestRCModMulti(unittest.TestCase):
                 # as desired
                 self.assertNotEqual(ancilla_n, 0)
             self.assertEqual(ancilla_mp1, 0)
-
-        return
 
     def test_ctl_in_place_mod_multi_raised_exception(self):
         # Test input errors #
@@ -276,8 +260,6 @@ class TestRCModMulti(unittest.TestCase):
             self.__run_ctl_in_place_mod_multiplier(
                 qreg_size=n, modulus=modulus, multiple=multiple
             )
-
-        return
 
     def __run_out_of_place_mod_multiplier(
         self, qreg_size, modulus, multiple, init_val: int = 0
