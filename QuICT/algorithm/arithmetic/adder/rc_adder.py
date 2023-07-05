@@ -62,13 +62,13 @@ class RCFourierAdderWired(CompositeGate):
         if controlled:
             if not in_fourier:
                 ry_QFT(qreg_size) | self(range(1, qreg_size + 1))
-            self.__build_ctl_phi_adder(qreg_size, addend)
+            self._build_ctl_phi_adder(qreg_size, addend)
             if not out_fourier:
                 ry_QFT(qreg_size, inverse=True) | self(range(1, qreg_size + 1))
         else:
             if not in_fourier:
                 ry_QFT(qreg_size) | self
-            self.__build_phi_adder(qreg_size, addend)
+            self._build_phi_adder(qreg_size, addend)
             if not out_fourier:
                 ry_QFT(qreg_size, inverse=True) | self
 
@@ -80,7 +80,7 @@ class RCFourierAdderWired(CompositeGate):
     def get_addend(self):
         return self._addend
 
-    def __build_phi_adder(
+    def _build_phi_adder(
         self,
         qreg_size: int,
         addend: int
@@ -90,9 +90,7 @@ class RCFourierAdderWired(CompositeGate):
             theta = pi * addend / (2**(k))
             Ry(theta) | self([qreg_size - 1 - k])
 
-        return
-
-    def __build_ctl_phi_adder(
+    def _build_ctl_phi_adder(
         self,
         qreg_size: int,
         addend: int
