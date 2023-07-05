@@ -85,7 +85,6 @@ class RCFourierAdderWired(CompositeGate):
         qreg_size: int,
         addend: int
     ):
-
         for k in range(qreg_size):
             theta = pi * addend / (2**(k))
             Ry(theta) | self([qreg_size - 1 - k])
