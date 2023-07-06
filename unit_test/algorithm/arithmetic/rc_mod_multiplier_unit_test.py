@@ -19,25 +19,28 @@ class TestRCModMulti(unittest.TestCase):
     def test_out_of_place_mod_multi_correctness(self):
         # test for correctness of the gate #
         n = 5
-        modulus = 11
-        multiple = 7
 
-        counts = self.__run_out_of_place_mod_multiplier(
+        # modulus can not be even
+        modulus = self._rand_mod(2, 2**n)
+        # multiple can be large than the maximum representable by the register
+        multiple = np.random.randint(2**(n + 1))
+
+        counts = self._run_out_of_place_mod_multiplier(
             qreg_size=n, modulus=modulus, multiple=multiple
         )
 
         # confirm modular multiplication is properly calculated for
         # all input states
-        for z, Xz_mod, ancilla in self.__decode_mod_multiplier(counts, n):
+        for z, Xz_mod, ancilla in self._decode_mod_multiplier(counts, n):
             # check the gate outputs modular multiplication for all inputs
             self.assertEqual(Xz_mod, (multiple * z) % modulus)
             # check ancilla bits are properly uncomputed
             self.assertEqual(ancilla, 0)
 
         # test the output state only contains the single desired state
-        input_val = 6
-        decoded_result = self.__decode_mod_multiplier(
-            counts=self.__run_out_of_place_mod_multiplier(
+        input_val = np.random.randint(2**n)
+        decoded_result = self._decode_mod_multiplier(
+            counts=self._run_out_of_place_mod_multiplier(
                 qreg_size=n,
                 modulus=modulus,
                 multiple=multiple,
@@ -57,24 +60,28 @@ class TestRCModMulti(unittest.TestCase):
     def test_out_of_place_mod_multi_raised_exception(self):
         # test input errors #
 
-        # modulus can not be larger than the maximum for the register size
+        # test modulus can not be larger than the maximum representable by the register size
         n = 5
-        modulus = 37  # larger than 2^n - 1
-        multiple = 7
+
+        # force the modulus >= maximum possible for the register, still be odd
+        modulus = self._rand_mod(2**n, 2**(n + 1))
+        multiple = np.random.randint(2**(n + 1))
 
         with self.assertRaises(GateParametersAssignedError):
-            self.__run_out_of_place_mod_multiplier(
+            self._run_out_of_place_mod_multiplier(
                 qreg_size=n, modulus=modulus, multiple=multiple
             )
 
-        # modulus can not be even numbers
+        # test modulus can not be even numbers
         n = 5
-        modulus = 14
-        multiple = 3
-        input_val = 5
+
+        # force the modulus to be even
+        modulus = self._rand_mod(2, 2**n, is_odd=False)
+        multiple = np.random.randint(2**n)
+        input_val = np.random.randint(2**n)
 
         with self.assertRaises(GateParametersAssignedError):
-            self.__run_out_of_place_mod_multiplier(
+            self._run_out_of_place_mod_multiplier(
                 qreg_size=n,
                 modulus=modulus,
                 multiple=multiple,
@@ -84,13 +91,16 @@ class TestRCModMulti(unittest.TestCase):
     def test_in_place_mod_multi_correctness(self):
         # test for correctness of the gate #
         n = 5
-        modulus = 11
-        multiple = 7
+
+        # modulus can not be even
+        modulus = self._rand_mod(2, 2**n)
+        # modulus and multiple have to be coprime
+        multiple = self._multiple_gen(modulus, 2**(n + 1))
 
         # randomly choose an input val smaller than modulus
         input_val = np.random.randint(modulus)
-        decoded_result = self.__decode_mod_multiplier(
-            self.__run_in_place_mod_multiplier(
+        decoded_result = self._decode_mod_multiplier(
+            self._run_in_place_mod_multiplier(
                 qreg_size=n,
                 modulus=modulus,
                 multiple=multiple,
@@ -111,13 +121,16 @@ class TestRCModMulti(unittest.TestCase):
     def test_in_place_mod_multi_inappropriate(self):
         # Test for apply the gate on inappropriate register #
         n = 5
-        modulus = 11
-        multiple = 7
 
-        # value in the input quantum register is >= modulus
-        input_val = 15
-        decoded_result = self.__decode_mod_multiplier(
-            self.__run_in_place_mod_multiplier(
+        # modulus can not be even
+        modulus = self._rand_mod(2, 2**n)
+        # modulus and multiple have to be coprime
+        multiple = self._multiple_gen(modulus, 2**(n + 1))
+
+        # force value in the input quantum register to be >= modulus
+        input_val = np.random.randint(modulus, 2**n)
+        decoded_result = self._decode_mod_multiplier(
+            self._run_in_place_mod_multiplier(
                 qreg_size=n,
                 modulus=modulus,
                 multiple=multiple,
@@ -137,46 +150,58 @@ class TestRCModMulti(unittest.TestCase):
     def test_in_place_mod_multi_raised_exception(self):
         # Test input errors #
 
-        # modulus can not be larger than the maximum for the register size
+        # test modulus can not be larger than the maximum representable by the register size
         n = 5
-        modulus = 37  # larger than 2^n - 1
-        multiple = 7
+
+        # force modulus to be greater than 2^n - 1
+        modulus = self._rand_mod(2**n, 2**(n + 1))
+        # modulus and multiple have to be coprime
+        multiple = self._multiple_gen(modulus, 2**(n + 1))
 
         with self.assertRaises(GateParametersAssignedError):
-            self.__run_in_place_mod_multiplier(
+            self._run_in_place_mod_multiplier(
                 qreg_size=n, modulus=modulus, multiple=multiple
             )
 
-        # modulus can not be even numbers
+        # test modulus can not be even numbers
         n = 5
-        modulus = 14
-        multiple = 3
+
+        # force modulus to be even
+        modulus = self._rand_mod(2, 2**n, is_odd=False)
+        # modulus and multiple have to be coprime
+        multiple = self._multiple_gen(modulus, 2**(n + 1))
 
         with self.assertRaises(GateParametersAssignedError):
-            self.__run_in_place_mod_multiplier(
+            self._run_in_place_mod_multiplier(
                 qreg_size=n, modulus=modulus, multiple=multiple
             )
 
         # modulus and multiple must be coprime
         n = 5
-        modulus = 15
-        multiple = 3
+
+        # modulus can not be even
+        modulus = self._rand_mod(2, 2**n)
+        # force modulus and multiple not coprime
+        multiple = self._multiple_gen(modulus, 2**(n + 1), is_coprime=False)
 
         with self.assertRaises(GateParametersAssignedError):
-            self.__run_in_place_mod_multiplier(
+            self._run_in_place_mod_multiplier(
                 qreg_size=n, modulus=modulus, multiple=multiple
             )
 
     def test_ctl_in_place_mod_multi_correctness(self):
         # test for correctness of the gate #
         n = 5
-        modulus = 13
-        multiple = 4
+
+        # modulus can not be even
+        modulus = self._rand_mod(2, 2**n)
+        # modulus and multiple have to be coprime
+        multiple = self._multiple_gen(modulus, 2**(n + 1))
 
         # randomly choose an input val smaller than modulus
         input_val = np.random.randint(modulus)
-        decoded_result = self.__decode_ctl_mod_multiplier(
-            self.__run_ctl_in_place_mod_multiplier(
+        decoded_result = self._decode_ctl_mod_multiplier(
+            self._run_ctl_in_place_mod_multiplier(
                 qreg_size=n,
                 modulus=modulus,
                 multiple=multiple,
@@ -201,13 +226,17 @@ class TestRCModMulti(unittest.TestCase):
 
     def test_ctl_in_place_mod_multi_inappropriate(self):
         n = 5
-        modulus = 13
-        multiple = 4
 
-        # value in the input quantum register is >= modulus
-        input_val = 15
-        decoded_result = self.__decode_ctl_mod_multiplier(
-            self.__run_ctl_in_place_mod_multiplier(
+        # modulus can not be even
+        modulus = self._rand_mod(2, 2**n)
+        # modulus and multiple have to be coprime
+        multiple = self._multiple_gen(modulus, 2**(n + 1))
+
+        # force value in the input quantum register to be >= modulus
+        input_val = np.random.randint(modulus, 2**n)
+
+        decoded_result = self._decode_ctl_mod_multiplier(
+            self._run_ctl_in_place_mod_multiplier(
                 qreg_size=n,
                 modulus=modulus,
                 multiple=multiple,
@@ -231,37 +260,86 @@ class TestRCModMulti(unittest.TestCase):
 
     def test_ctl_in_place_mod_multi_raised_exception(self):
         # Test input errors #
-        # modulus can not be larger than the maximum for the register size
+        # test modulus can not be larger than the maximum representable by the register size
         n = 5
-        modulus = 43  # larger than 2^n - 1
-        multiple = 4
+
+        # force modulus to be greater than 2^n - 1
+        modulus = self._rand_mod(2**n, 2**(n + 1))
+        # modulus and multiple have to be coprime
+        multiple = self._multiple_gen(modulus, 2**(n + 1))
 
         with self.assertRaises(GateParametersAssignedError):
-            self.__run_ctl_in_place_mod_multiplier(
+            self._run_ctl_in_place_mod_multiplier(
                 qreg_size=n, modulus=modulus, multiple=multiple
             )
 
-        # modulus can not be even numbers
+        # test modulus can not be even numbers
         n = 5
-        modulus = 18
-        multiple = 7
+
+        # force modulus to be even
+        modulus = self._rand_mod(2, 2**n, is_odd=False)
+        # modulus and multiple have to be coprime
+        multiple = self._multiple_gen(modulus, 2**(n + 1))
 
         with self.assertRaises(GateParametersAssignedError):
-            self.__run_ctl_in_place_mod_multiplier(
+            self._run_ctl_in_place_mod_multiplier(
                 qreg_size=n, modulus=modulus, multiple=multiple
             )
 
-        # modulus and multiple must be coprime
+        # test modulus and multiple must be coprime
         n = 5
-        modulus = 21
-        multiple = 7
+
+        # modulus can not be even
+        modulus = self._rand_mod(2, 2**n)
+        # force modulus and multiple not coprime
+        multiple = self._multiple_gen(modulus, 2**(n + 1), is_coprime=False)
 
         with self.assertRaises(GateParametersAssignedError):
-            self.__run_ctl_in_place_mod_multiplier(
+            self._run_ctl_in_place_mod_multiplier(
                 qreg_size=n, modulus=modulus, multiple=multiple
             )
 
-    def __run_out_of_place_mod_multiplier(
+    def _rand_mod(
+            self, lo: int, hi: int, is_odd: bool = True
+    ) -> int:
+        """
+            return an odd or even number in [lo, hi) based on `is_odd`
+        """
+        offset = (lo + hi) % 2 * ((-1)**hi)
+        num_odd = (hi - lo + offset) // 2
+        num_even = (hi - lo - offset) // 2
+
+        if is_odd:
+            rand_step = np.random.randint(num_odd)
+        else:
+            rand_step = np.random.randint(num_even)
+
+        res = lo + 2 * rand_step
+
+        if (lo % 2) != int(is_odd):
+            res += 1
+
+        return res
+
+    def _multiple_gen(
+        self, mod: int, hi: int, is_coprime: bool = True
+    ) -> int:
+        """
+            generate a number in `range(1, hi)`, that is coprime or
+            not coprime to mod, based on `is_coprime`
+        """
+        if is_coprime:
+            multiple = mod
+            while np.gcd(multiple, mod) != 1:
+                multiple = np.random.randint(1, hi)
+        else:
+            multiple = 1
+            while np.gcd(multiple, mod) == 1:
+                multiple = np.random.randint(1, hi)
+
+        return multiple
+
+    def _run_out_of_place_mod_multiplier(
         self, qreg_size, modulus, multiple, init_val: int = 0
     ):
         n = qreg_size
@@ -288,7 +366,7 @@ class TestRCModMulti(unittest.TestCase):
 
         return counts
 
-    def __run_in_place_mod_multiplier(
+    def _run_in_place_mod_multiplier(
         self, qreg_size, modulus, multiple, init_val: int = -1
     ):
         n = qreg_size
@@ -297,7 +375,8 @@ class TestRCModMulti(unittest.TestCase):
         mm_circ = Circuit(2 * n + m + 1)
 
         if init_val == -1:
-            init_val = np.random.randint(1, modulus)
+            upper = np.minimum(modulus, 2**n - 1)
+            init_val = np.random.randint(1, upper)
 
         for i, bit in enumerate(np.binary_repr(init_val, n)):
             if "1" == bit:
@@ -316,7 +395,7 @@ class TestRCModMulti(unittest.TestCase):
 
         return counts
 
-    def __run_ctl_in_place_mod_multiplier(
+    def _run_ctl_in_place_mod_multiplier(
         self,
         qreg_size,
         modulus,
@@ -335,7 +414,8 @@ class TestRCModMulti(unittest.TestCase):
             X | mm_circ([0])
 
         if init_val == -1:
-            init_val = np.random.randint(1, modulus)
+            upper = np.minimum(modulus, 2**n - 1)
+            init_val = np.random.randint(1, upper)
 
         for i, bit in enumerate(np.binary_repr(init_val, n)):
             if "1" == bit:
@@ -354,7 +434,7 @@ class TestRCModMulti(unittest.TestCase):
 
         return counts
 
-    def __decode_mod_multiplier(self, counts, n) -> List[Tuple[int, int, int]]:
+    def _decode_mod_multiplier(self, counts, n) -> List[Tuple[int, int, int]]:
         m = int(np.ceil(np.log2(n)))
         decoded_res = []
 
@@ -378,7 +458,7 @@ class TestRCModMulti(unittest.TestCase):
 
         return decoded_res
 
-    def __decode_ctl_mod_multiplier(
+    def _decode_ctl_mod_multiplier(
         self,
         counts,
         n

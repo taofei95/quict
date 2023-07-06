@@ -20,14 +20,19 @@ class TestRCAdder(unittest.TestCase):
         """
 
         # regular case
-        self.assertEqual(self.__get_rc_adder_result(5, 3, 5), 3 + 5)
+        self.assertEqual(self._get_rc_adder_result(5, 3, 5), 3 + 5)
         # test for overflow
         self.assertEqual(
-            self.__get_rc_adder_result(5, 22, 17),
+            self._get_rc_adder_result(5, 22, 17),
             (17 + 22) % (2**5)
         )
-
-        return
+        # random inputs
+        reg_size = 5
+        a, b = np.random.randint(2**reg_size, size=2)
+        self.assertEqual(
+            self._get_rc_adder_result(reg_size, a, b),
+            (a + b) % (2**reg_size)
+        )
 
     def test_rc_adder_signed(self):
         """
@@ -36,33 +41,38 @@ class TestRCAdder(unittest.TestCase):
 
         # regular cases
         self.assertEqual(
-            self.__get_rc_adder_result(5, 6, 8, signed=True),
+            self._get_rc_adder_result(5, 6, 8, signed=True),
             6 + 8
         )
         self.assertEqual(
-            self.__get_rc_adder_result(6, 3, -5, signed=True),
+            self._get_rc_adder_result(6, 3, -5, signed=True),
             3 - 5
         )
         self.assertEqual(
-            self.__get_rc_adder_result(7, -7, 2, signed=True),
+            self._get_rc_adder_result(7, -7, 2, signed=True),
             -7 + 2
         )
         self.assertEqual(
-            self.__get_rc_adder_result(8, -1, -3, signed=True),
+            self._get_rc_adder_result(8, -1, -3, signed=True),
             -1 - 3
         )
         # overflow
         self.assertEqual(
-            self.__get_rc_adder_result(5, 7, 9, signed=True),
+            self._get_rc_adder_result(5, 7, 9, signed=True),
             (7 + 9 + 2**(5 - 1)) % (2**5) - 2**(5 - 1)
         )
         # underflow
         self.assertEqual(
-            self.__get_rc_adder_result(5, -10, -11, signed=True),
+            self._get_rc_adder_result(5, -10, -11, signed=True),
             (-10 - 11 + 2**(5 - 1)) % (2**5) - 2**(5 - 1)
         )
-
-        return
+        # random inputs
+        reg_size = 5
+        a, b = np.random.randint(low=-(2**(reg_size - 1)), high=(2**(reg_size - 1)), size=2)
+        self.assertEqual(
+            self._get_rc_adder_result(reg_size, a, b, signed=True),
+            (a + b + 2**(reg_size - 1)) % (2**reg_size) - 2**(reg_size - 1)
+        )
 
     def test_rc_adder_controlled_unsigned(self):
         """
@@ -72,16 +82,21 @@ class TestRCAdder(unittest.TestCase):
 
         # regular case
         self.assertEqual(
-            self.__get_rc_adder_result_controlled(5, 2, 7),
+            self._get_rc_adder_result_controlled(5, 2, 7),
             (2, 9)
         )
         # overflow
         self.assertEqual(
-            self.__get_rc_adder_result_controlled(5, 23, 14),
+            self._get_rc_adder_result_controlled(5, 23, 14),
             (23, (23 + 14) % (2**5))
         )
-
-        return
+        # random inputs
+        reg_size = 5
+        a, b = np.random.randint(2**(reg_size), size=2)
+        self.assertEqual(
+            self._get_rc_adder_result_controlled(reg_size, a, b),
+            (a, (a + b) % (2**reg_size))
+        )
 
     def test_rc_adder_controlled_signed(self):
         """
@@ -91,35 +106,40 @@ class TestRCAdder(unittest.TestCase):
 
         # regular cases
         self.assertEqual(
-            self.__get_rc_adder_result_controlled(6, 2, 7, signed=True),
+            self._get_rc_adder_result_controlled(6, 2, 7, signed=True),
             (2, 9)
         )
         self.assertEqual(
-            self.__get_rc_adder_result_controlled(5, 3, -7, signed=True),
+            self._get_rc_adder_result_controlled(5, 3, -7, signed=True),
             (3, -4)
         )
         self.assertEqual(
-            self.__get_rc_adder_result_controlled(7, -7, 3, signed=True),
+            self._get_rc_adder_result_controlled(7, -7, 3, signed=True),
             (-7, -4)
         )
         self.assertEqual(
-            self.__get_rc_adder_result_controlled(6, -10, -9, signed=True),
+            self._get_rc_adder_result_controlled(6, -10, -9, signed=True),
             (-10, -19)
         )
         # overflow
         self.assertEqual(
-            self.__get_rc_adder_result_controlled(5, 8, 11, signed=True),
+            self._get_rc_adder_result_controlled(5, 8, 11, signed=True),
             (8, (8 + 11 + 2**(5 - 1)) % (2**5) - 2**(5 - 1))
         )
         # underflow
         self.assertEqual(
-            self.__get_rc_adder_result(6, 7, -80, signed=True),
-            (7 - 80 + 2**(6 - 1)) % (2**6) - 2**(6 - 1)
+            self._get_rc_adder_result_controlled(6, 7, -80, signed=True),
+            (7, (7 - 80 + 2**(6 - 1)) % (2**6) - 2**(6 - 1))
+        )
+        # random inputs
+        reg_size = 5
+        a, b = np.random.randint(low=-(2**(reg_size - 1)), high=(2**(reg_size - 1)), size=2)
+        self.assertEqual(
+            self._get_rc_adder_result_controlled(reg_size, a, b, signed=True),
+            (a, (a + b + 2**(reg_size - 1)) % (2**reg_size) - 2**(reg_size - 1))
         )
 
-        return
-
-    def __get_rc_adder_result(
+    def _get_rc_adder_result(
         self,
         qreg_size: int,
         q_x: int,
@@ -167,11 +187,11 @@ class TestRCAdder(unittest.TestCase):
         for idx, val in enumerate(result):
             if val != 0:
                 if signed:
-                    return self.__unsigned_to_signed(idx, qreg_size)
+                    return self._unsigned_to_signed(idx, qreg_size)
                 else:
                     return idx
 
-    def __get_rc_adder_result_controlled(
+    def _get_rc_adder_result_controlled(
         self,
         qreg_size: int,
         q_x: int,
@@ -231,7 +251,7 @@ class TestRCAdder(unittest.TestCase):
                 # remove ctl bit to get the actual addition result
                 output = ~(ctl_bit << qreg_size) & idx
                 if signed:
-                    output = self.__unsigned_to_signed(output, qreg_size)
+                    output = self._unsigned_to_signed(output, qreg_size)
 
                 addition_res[ctl_bit] = output
 
@@ -240,7 +260,7 @@ class TestRCAdder(unittest.TestCase):
 
         return addition_res[0], addition_res[1]
 
-    def __unsigned_to_signed(self, value: int, bit_len: int):
+    def _unsigned_to_signed(self, value: int, bit_len: int):
         return value - (value >> (bit_len - 1)) * (2 ** bit_len)
 
 
