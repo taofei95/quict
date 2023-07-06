@@ -43,7 +43,7 @@ class ry_QFT(CompositeGate):
 
         super().__init__(name)
 
-        self.__build_ry_qft(targets, inverse, approx_level)
+        self._build_ry_qft(targets, inverse, approx_level)
 
     @property
     def is_inverse(self):
@@ -59,7 +59,7 @@ class ry_QFT(CompositeGate):
         """
         return self._approx_level
 
-    def __build_ry_qft(self, targets: int, inverse: bool, approx_level: int):
+    def _build_ry_qft(self, targets: int, inverse: bool, approx_level: int):
 
         # construct inverse qft
         if inverse:
