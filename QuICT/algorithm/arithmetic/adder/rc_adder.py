@@ -98,5 +98,3 @@ class RCFourierAdderWired(CompositeGate):
             theta = pi * addend / (2**(k))
             # CU3(theta, 0, 0) is CRy(theta)
             CU3(theta, 0, 0) | self([0, qreg_size - k])
-
-        return
