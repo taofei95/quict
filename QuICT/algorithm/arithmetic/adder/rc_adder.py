@@ -77,7 +77,7 @@ class RCFourierAdderWired(CompositeGate):
         return self._controlled
 
     @property
-    def get_addend(self):
+    def addend(self):
         return self._addend
 
     def _build_phi_adder(

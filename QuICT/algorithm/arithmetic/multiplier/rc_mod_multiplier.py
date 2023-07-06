@@ -156,6 +156,14 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
             addend_list=uncompute_addend_list
         ) | self(self._input_qubit_list + self._ancilla_qubit_list)
 
+    @property
+    def multiple(self):
+        return self._multiple
+
+    @property
+    def modulus(self):
+        return self._modulus
+
     def _phi_MAC_mod(
         self,
         in_reg_size: int,
@@ -328,6 +336,14 @@ class RCModMultiplier(CompositeGate):
             inverse_multiple=True
         ).inverse() | self
 
+    @property
+    def multiple(self):
+        return self._multiple
+
+    @property
+    def modulus(self):
+        return self._modulus
+
 
 class RCModMultiplierCtl(CompositeGate):
     """
@@ -436,3 +452,11 @@ class RCModMultiplierCtl(CompositeGate):
         for i in range(self._register_size):
             CSwap | self(self._control_list + [self._register_list[i], swap_list[i]])
         X | self(self._control_list)
+
+    @property
+    def multiple(self):
+        return self._multiple
+
+    @property
+    def modulus(self):
+        return self._modulus
