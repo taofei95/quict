@@ -1,5 +1,6 @@
-from QuICT.core.gate import CompositeGate, H, CX, gate_builder, GateType, QFT, Rx
+from QuICT.core.gate import CompositeGate, H, CX, gate_builder, GateType, Rx
 from QuICT.core.gate import MultiControlToffoli
+from QuICT.algorithm.qft import QFT
 
 
 def build_BasicGate():
