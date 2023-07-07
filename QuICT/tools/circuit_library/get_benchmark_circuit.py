@@ -3,22 +3,26 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.core.layout.layout import Layout
 from QuICT.core.virtual_machine.instruction_set import InstructionSet
 
 
 class BenchmarkCircuitBuilder:
     """
-    A class fetch QuICT benchmark circuits.
+    A class fetch special benchmark circuits.
 
     Args:
-        width(int): number of qubits
-        size(int): number of gates
-        random_params (bool, optional): whether random parameter or use default parameter. Defaults to True.
+        width(int): number of qubits.
+        level(int): level of benchmark circuits.
+        gateset(InstructionSet): The set of quantum gates which Quantum Machine supports.
+        layout (Layout, optional): The description of physical topology of Quantum Machine.
     """
     @staticmethod
-    def parallelized_circuit_build(width: int, level:int, gateset):
+    def parallelized_circuit_build(width: int, level:int, gateset:InstructionSet, layout:Layout):
         typelist = [random.choice(gateset.one_qubit_gates), gateset.two_qubit_gate]
         prob = [0.8, 0.2]
+        layout_list = layout.edge_list
+        inset_index = np.random.choice(layout_list)
 
         gate_indexes = list(range(2))
         qubits_indexes = list(range(width))
@@ -31,7 +35,6 @@ class BenchmarkCircuitBuilder:
         cirs_list = []
         for g in gate_prob:
             cir = Circuit(width)
-            H | cir(0)
             size = width * g
             while cir.size() < size:
                 rand_type = np.random.choice(gate_indexes, p=prob)
@@ -44,8 +47,11 @@ class BenchmarkCircuitBuilder:
                 gsize = gate.controls + gate.targets
                 if gsize > len(shuffle_qindexes):
                     continue
-
-                gate | cir(shuffle_qindexes[:gsize])
+                if gsize == 2:
+                    insert_idx = random.choice(list(range(width)))
+                    cir.insert(gate & [inset_index.u, inset_index.v], insert_idx)
+                else:
+                    gate | cir(shuffle_qindexes[:gsize])
                 if gsize == len(shuffle_qindexes) or random.random() > random_para:
                     shuffle_qindexes = qubits_indexes[:]
                     random.shuffle(shuffle_qindexes)
@@ -59,24 +65,27 @@ class BenchmarkCircuitBuilder:
         return cirs_list
 
     @staticmethod
-    def serialized_circuit_build(width: int, level:int, gateset):
+    def serialized_circuit_build(width: int, level:int, gateset:InstructionSet, layout:Layout):
         gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
         random_para = 1 - level / 1
 
         cirs_list = []
         base_gate = gate_builder(gateset.two_qubit_gate)
+        layout_list = layout.edge_list
 
         for g in gate_prob:
             size = width * g
             temp_size, void_gates = 0, 0
 
             cir = Circuit(width)
-            H | cir(0)
             temp_size += 1
             qubit_indexes = list(range(width))
             qubit = random.choice(qubit_indexes)
             qubit_indexes.remove(qubit)
             while temp_size < size:
+                inset_index = np.random.choice(layout_list)
+                cir.insert(base_gate & [inset_index.u, inset_index.v], qubit)
+
                 qubit_new = random.choice(qubit_indexes)
                 qubits_list = [qubit, qubit_new]
                 random.shuffle(qubits_list)
@@ -95,7 +104,7 @@ class BenchmarkCircuitBuilder:
         return cirs_list
 
     @staticmethod
-    def entangled_circuit_build(width: int, level:int, gateset):
+    def entangled_circuit_build(width: int, level:int, gateset:InstructionSet, layout:Layout):
         base_gate = gate_builder(gateset.two_qubit_gate)
         def _pattern1():
             cgate = CompositeGate()
@@ -157,12 +166,17 @@ class BenchmarkCircuitBuilder:
         return cirs_list
 
     @staticmethod
-    def mediate_measure_circuit_build(width: int, level:int, gateset):
+    def mediate_measure_circuit_build(width: int, level:int, gateset:InstructionSet, layout:Layout):
         typelist = [random.choice(gateset.one_qubit_gates), gateset.two_qubit_gate]
         prob = [0.8, 0.2]
 
+        layout_list = layout.edge_list
+        inset_index = np.random.choice(layout_list)
+
         def flat_build():
             cgate = CompositeGate()
+        
+
             qubits_indexes = list(range(width))
             random.shuffle(qubits_indexes)
             while len(qubits_indexes) > 0:
@@ -202,11 +216,11 @@ class BenchmarkCircuitBuilder:
 
         return cir_list
 
-    def get_benchmark_circuit(self, qubits_interval:int, level:int, gateset:InstructionSet):
+    def get_benchmark_circuit(self, qubits_interval:int, level:int, gateset:InstructionSet, layout:Layout):
         cirs_list = []
-        cirs_list.extend(self.parallelized_circuit_build(qubits_interval, level, gateset))
-        cirs_list.extend(self.entangled_circuit_build(qubits_interval, level, gateset))
-        cirs_list.extend(self.serialized_circuit_build(qubits_interval, level, gateset))
-        cirs_list.extend(self.mediate_measure_circuit_build(qubits_interval, level, gateset))
+        cirs_list.extend(self.parallelized_circuit_build(qubits_interval, level, gateset, layout))
+        # cirs_list.extend(self.entangled_circuit_build(qubits_interval, level, gateset, layout))
+        cirs_list.extend(self.serialized_circuit_build(qubits_interval, level, gateset, layout))
+        # cirs_list.extend(self.mediate_measure_circuit_build(qubits_interval, level, gateset))
 
         return cirs_list
