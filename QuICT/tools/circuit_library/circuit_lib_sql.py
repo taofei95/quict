@@ -44,8 +44,8 @@ class CircuitLibDB:
         if isinstance(max_width, int):
             condition_cmd += f" AND WIDTH<=\'{max_width}\'"
         elif isinstance(max_width, list):
-            width_str = ", ".join([str(w) for w in max_width])
-            condition_cmd += " AND WIDTH IN (%s)" % width_str
+            condition_cmd += f" AND WIDTH>=\'{max_width[0]}\'"
+            condition_cmd += f" AND WIDTH<=\'{max_width[1]}\'"
 
         if max_size is not None:
             condition_cmd += f" AND SIZE<=\'{max_size}\'"
@@ -79,7 +79,7 @@ class CircuitLibDB:
         )
 
         for file in filter(lambda x: x.endswith('.qasm'), os.listdir(file_path)):
-            _, width, size, depth, _ = file.split("_")
+            width, size, depth = file.split("_")[:3]
             width = int(width[1:])
             size = int(size[1:])
             depth = int(depth[1:])
@@ -119,3 +119,13 @@ class CircuitLibDB:
                 )
 
         self._connect.commit()
+
+
+if __name__ == "__main__":
+    db = CircuitLibDB()
+
+    db.add_circuit('algorithm')
+    db.add_circuit('machine')
+    db.add_template_circuit()
+
+    print(db.size())

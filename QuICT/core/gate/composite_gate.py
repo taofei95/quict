@@ -88,7 +88,7 @@ class CompositeGate(CircuitBased):
             targets = [targets]
 
         if len(targets) != self.width():
-            raise ValueError("CompositeGate.&", f"not equal {self.width}", len(targets))
+            raise ValueError("CompositeGate.&", f"not equal {self.width()}", len(targets))
 
         self._mapping(targets)
 
@@ -117,7 +117,7 @@ class CompositeGate(CircuitBased):
 
     def _update_qubit_limit(self, indexes: list):
         for idx in indexes:
-            assert idx >= 0 and isinstance(idx, int)
+            assert idx >= 0 and isinstance(idx, (int, np.int32, np.int64)), idx
             if idx not in self._qubits:
                 self._qubits.append(idx)
 
@@ -281,7 +281,7 @@ class CompositeGate(CircuitBased):
         Args:
             index (int): The target Quantum Gate's index, **Start from 0**.
             reassigned_qubits (Union[int, list]): The new assigned qubits of target Quantum Gate
-            is_adjust_vale (bool): Whether the reassigned_qubits means the new qubit indexes or the adjustment
+            is_adjust_value (bool): Whether the reassigned_qubits means the new qubit indexes or the adjustment
                 value from original indexes.
         """
         if index < 0:

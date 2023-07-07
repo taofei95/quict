@@ -7,10 +7,12 @@ from enum import Enum
 import numpy as np
 
 from .gate_type import GateType
+from .variable import Variable
 
 
 class CircuitBased(object):
     """ Based Class for Circuit and Composite Gate. """
+
     @property
     def name(self) -> str:
         return self._name
@@ -159,6 +161,26 @@ class CircuitBased(object):
 
         return count
 
+    def count_training_gate(self):
+        """ the number of the trainable gates in the Circuit/CompositeGate
+
+        Returns:
+            int: the number of the trainable gates
+        """
+        count = 0
+        for gate, _, size in self._gates:
+            if size == 0:
+                continue
+
+            if size > 1 or hasattr(gate, "count_training_gate"):
+                count += gate.count_training_gate()
+                continue
+
+            if gate.variables > 0:
+                count += 1
+
+        return count
+
     def __str__(self):
         circuit_info = {
             "name": self.name,
@@ -166,7 +188,8 @@ class CircuitBased(object):
             "size": self.size(),
             "depth": self.depth(),
             "1-qubit gates": self.count_1qubit_gate(),
-            "2-qubit gates": self.count_2qubit_gate()
+            "2-qubit gates": self.count_2qubit_gate(),
+            "training gates": self.count_training_gate(),
         }
 
         return str(circuit_info)
@@ -205,7 +228,7 @@ class CircuitBased(object):
                 qasm_string += gate.qasm(targs)
 
         if output_file is not None:
-            with open(output_file, 'w+') as of:
+            with open(output_file, "w+") as of:
                 of.write(qasm_string)
 
         return qasm_string
@@ -252,6 +275,47 @@ class CircuitBased(object):
             self._gates = decomp_gates
 
         return decomp_gates
+
+    def get_variable_shape(self):
+        for gate, _, _ in self._gates:
+            if gate.variables == 0:
+                continue
+            for i in range(gate.params):
+                if isinstance(gate.pargs[i], Variable):
+                    return gate.pargs[i].origin_shape
+
+    def get_variables(self):
+        shape = self.get_variable_shape()
+        pargs = np.zeros(shape=shape, dtype=np.float64)
+        grads = np.zeros(shape=shape, dtype=np.float64)
+
+        remain_training_gates = self.count_training_gate()
+        for gate, _, _ in self._gates:
+            if remain_training_gates == 0:
+                break
+            if gate.variables == 0:
+                continue
+            remain_training_gates -= 1
+            for i in range(gate.params):
+                if isinstance(gate.pargs[i], Variable):
+                    index = gate.pargs[i].index
+                    pargs[index] = gate.pargs[i].pargs
+                    grads[index] = gate.pargs[i].grads
+        return Variable(pargs=pargs, grads=grads)
+
+    def update(self, variables):
+        assert variables.shape == self.get_variable_shape()
+        remain_training_gates = self.count_training_gate()
+        for gate, _, _ in self._gates:
+            if remain_training_gates == 0:
+                return
+            if gate.variables == 0:
+                continue
+            remain_training_gates -= 1
+            for i in range(gate.params):
+                if isinstance(gate.pargs[i], Variable):
+                    index = gate.pargs[i].index
+                    gate.pargs[i].pargs = variables.pargs[index]
 
     def show_detail(self):
         """
@@ -350,5 +414,5 @@ class CircuitBased(object):
 class CircuitMode(Enum):
     Clifford = "Clifford"
     CliffordRz = "CliffordRz"
-    Arithmetic = 'Arithmetic'
+    Arithmetic = "Arithmetic"
     Misc = "Misc"

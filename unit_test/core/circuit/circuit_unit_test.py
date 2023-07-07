@@ -10,9 +10,18 @@ class TestCircuit(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("The Circuit unit test start!")
-        cls.default_1_qubits_gate = [GateType.x, GateType.y, GateType.z]
-        cls.default_2_qubits_gate = [GateType.cx, GateType.cz]
-        cls.default_parameter_gates_for_call_test = [U1, U2]
+        cls.default_1_qubits_gate = [
+            GateType.h, GateType.hy, GateType.s, GateType.sdg, GateType.x, GateType.y, GateType.z,
+            GateType.sx, GateType.sy, GateType.sw, GateType.id, GateType.u1, GateType.u2, GateType.u3,
+            GateType.rx, GateType.ry, GateType.rz, GateType.t, GateType.tdg, GateType.phase, GateType.gphase,
+            GateType.measure, GateType.reset, GateType.barrier
+        ]
+        cls.default_2_qubits_gate = [
+            GateType.cx, GateType.cz, GateType.ch, GateType.crz, GateType.cu1, GateType.cu3, GateType.fsim,
+            GateType.rxx, GateType.ryy, GateType.rzz, GateType.swap, GateType.iswap, GateType.iswapdg, GateType.sqiswap
+        ]
+        cls.default_3_qubits_gate = [GateType.ccx, GateType.ccz, GateType.ccrz, GateType.cswap]
+        cls.default_parameter_gates_for_call_test = [U1, U2, CU3, FSim, CCRz]
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -26,19 +35,30 @@ class TestCircuit(unittest.TestCase):
             count_gate1, count_gate2 = 0, 0
             for _ in range(100):
                 # choice Gate[] and random index, TODO: add 3-qubits gate here
-                gate_args_choice = np.random.randint(0, 2)
+                gate_args_choice = np.random.randint(0, 3)
                 if gate_args_choice == 0:
                     target_gate_list = self.default_1_qubits_gate
                     target_gate_indexes = [np.random.choice(qubit_range)]
                     count_gate1 += 1
                     depth[target_gate_indexes[0]] += 1
-                else:
+                elif gate_args_choice == 1:
                     target_gate_list = self.default_2_qubits_gate
                     target_gate_indexes = list(np.random.choice(qubit_range, 2, False))
                     count_gate2 += 1
                     new_depth = max(depth[target_gate_indexes[0]], depth[target_gate_indexes[1]]) + 1
                     depth[target_gate_indexes[0]] = new_depth
                     depth[target_gate_indexes[1]] = new_depth
+                else:
+                    target_gate_list = self.default_3_qubits_gate
+                    target_gate_indexes = list(np.random.choice(qubit_range, 3, False))
+                    new_depth = max(
+                        depth[target_gate_indexes[0]],
+                        depth[target_gate_indexes[1]],
+                        depth[target_gate_indexes[2]]
+                    ) + 1
+                    depth[target_gate_indexes[0]] = new_depth
+                    depth[target_gate_indexes[1]] = new_depth
+                    depth[target_gate_indexes[2]] = new_depth
 
                 gate_type_choice = np.random.randint(0, len(target_gate_list))
                 target_gate = gate_builder(target_gate_list[gate_type_choice], random_params=True)
@@ -58,22 +78,40 @@ class TestCircuit(unittest.TestCase):
                 # parameter gate
                 is_add_param_call = np.random.rand()
                 if is_add_param_call > 0.5:
-                    target_pgate = self.default_parameter_gates_for_call_test[np.random.randint(0, len(self.default_parameter_gates_for_call_test))]
+                    target_pgate = self.default_parameter_gates_for_call_test[
+                        np.random.randint(0, len(self.default_parameter_gates_for_call_test))
+                    ]
                     random_params = [np.random.rand() for _ in range(target_pgate.params)]
-                    target_pgate_indexes = list(np.random.choice(qubit_range, target_pgate.controls + target_pgate.targets, False))
+                    target_pgate_indexes = list(np.random.choice(
+                        qubit_range,
+                        target_pgate.controls + target_pgate.targets,
+                        False
+                    ))
                     target_pgate(*random_params) | cir(target_pgate_indexes)
 
                     size += 1
                     if len(target_pgate_indexes) == 1:
                         count_gate1 += 1
                         depth[target_pgate_indexes[0]] += 1
-                    else:
+                    elif len(target_pgate_indexes) == 2:
                         count_gate2 += 1
                         new_depth = max(depth[target_pgate_indexes[0]], depth[target_pgate_indexes[1]]) + 1
                         depth[target_pgate_indexes[0]] = new_depth
                         depth[target_pgate_indexes[1]] = new_depth
+                    else:
+                        new_depth = max(
+                            depth[target_pgate_indexes[0]],
+                            depth[target_pgate_indexes[1]],
+                            depth[target_pgate_indexes[2]]
+                        ) + 1
+                        depth[target_pgate_indexes[0]] = new_depth
+                        depth[target_pgate_indexes[1]] = new_depth
+                        depth[target_pgate_indexes[2]] = new_depth
 
             assert cir.depth() == np.max(depth)
+            assert cir.count_1qubit_gate() == count_gate1
+            assert cir.count_2qubit_gate() == count_gate2
+
             # CompositeGate
             qft_gate = QFT(3)
             qft_gate | cir([0, 1, 2])
@@ -94,24 +132,24 @@ class TestCircuit(unittest.TestCase):
 
             assert cir.size() == size
 
-    # def test_sub_circuit(self):
-    #     # append sub circuit
-    #     cir = Circuit(5)
-    #     cir.random_append(100)
+    def test_sub_circuit(self):
+        # append sub circuit
+        cir = Circuit(5)
+        cir.random_append(100)
 
-    #     # qubits limit
-    #     sub_cir_qubit = cir.sub_circuit(qubit_limit=[0, 1, 2])
-    #     assert cir.size() == 100 and sub_cir_qubit.width() == 3
+        # qubits limit
+        sub_cir_qubit = cir.sub_circuit(qubit_limit=[0, 1, 2])
+        assert cir.size() == 100 and sub_cir_qubit.width() == 3
 
-    #     # size limit
-    #     sub_cir_size = cir.sub_circuit(max_size=20)
-    #     assert sub_cir_size.size() == 20
+        # size limit
+        sub_cir_size = cir.sub_circuit(max_size=20)
+        assert sub_cir_size.size() == 20
 
-    #     # gate limit
-    #     sub_cir_gate = cir.sub_circuit(gate_limit=[GateType.cx])
-    #     assert sub_cir_gate.size() == cir.count_gate_by_gatetype(GateType.cx)
+        # gate limit
+        sub_cir_gate = cir.sub_circuit(gate_limit=[GateType.cx])
+        assert sub_cir_gate.size() == cir.count_gate_by_gatetype(GateType.cx)
 
-    # def test_to_compositegate(self):
+    def test_to_compositegate(self):
         # transform circuit to composite gate
         cir_trans = Circuit(3)
         cir_trans.random_append(10)
@@ -146,6 +184,14 @@ class TestCircuit(unittest.TestCase):
         cir.adjust(-1, [3])
         cir.adjust(-1, [1], True)
         assert cir.gates[-1].targ == 4
+
+        # extend gate/circuit
+        cgate = CompositeGate()
+        CX | cgate([1, 2])
+        cir.extend(cgate)
+        assert cir.width() == 15 and cir.size() == 13
+        cir.extend(cir)
+        assert cir.width() == 15 and cir.size() == 26
 
     def test_inverse_circuit(self):
         cir = Circuit(3)
@@ -184,7 +230,9 @@ class TestCircuit(unittest.TestCase):
         qasm_str = cir.qasm()
 
         qasm_cir = OPENQASMInterface.load_string(qasm_str).circuit
-        assert qasm_cir.size() == 20 and qasm_cir.width() == 5
+
+        count_qasm_line = len(qasm_str.split(';'))
+        assert qasm_cir.size() == 20 and qasm_cir.width() == 5 and count_qasm_line == qasm_cir.size() + 5
 
 
 if __name__ == "__main__":
