@@ -2,8 +2,7 @@ import numpy as np
 from random import choice
 
 from QuICT.core.circuit import Circuit
-from QuICT.core.utils import CLIFFORD_GATE_SET, GateType
-from QuICT.core.utils.circuit_info import CircuitMode
+from QuICT.core.utils import CLIFFORD_GATE_SET, GateType, CircuitMode
 from QuICT.qcda.optimization.circuit_partition import CircuitPartitionOptimization
 
 
@@ -55,3 +54,7 @@ def test_default_heavy_optimization():
 
         circ_h = cp_heavy.execute(circ)
         assert np.allclose(circ_h.matrix(), circ.matrix())
+
+
+if __name__ == '__main__':
+    test_default_light_optimization()
