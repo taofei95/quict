@@ -46,38 +46,42 @@ class BenchCirData:
         return self._level
 
     @property
-    def width(self):
+    def width(self) -> int:
         """ Return the qubit number of circuit. """
         return self._width
 
     @property
-    def size(self):
+    def size(self) -> int:
         """ Return the gate number of circuit. """
         return self._size
 
     @property
-    def depth(self):
+    def depth(self) -> int:
         """ Return the depth of circuit. """
         return self._depth
 
     @property
-    def value(self):
+    def value(self) -> float:
         """ Return the value of benchmark circuit. """
         self._value = float(re.findall(r"\d+(?:\.\d+)?", self.circuit.name)[3])
         return self._value
 
     @property
-    def qv(self) -> list:
+    def qv(self) -> int:
         """ Return the quantum volume of circuit. """
         cir_attribute = re.findall(r"\d+", self.circuit.name)
         self._qv = (2 ** min(int(cir_attribute[0]), int(cir_attribute[2])))
         return self._qv
 
     @property
-    def fidelity(self) -> str:
+    def level_score(self) -> float:
+        """ Return the quantum volume of circuit. """
+        return self._level_score
+
+    @property
+    def fidelity(self) -> float:
         """ Return the fidelity of circuit. """
         self._fidelity = round(self._calculate_fidelity(), 4)
-
         return self._fidelity
 
     def _calculate_fidelity(self):
@@ -85,7 +89,6 @@ class BenchCirData:
             def normalization(data):
                 data = np.array(data)
                 data = data / np.sum(data)
-
                 return data
 
             sum = 0.0
@@ -95,24 +98,29 @@ class BenchCirData:
             for x in map(lambda y, p: (1 - y) * math.log(1 - p + delta) + y * math.log(p + delta), p, q):
                 sum += x
             cross_entropy = -sum / len(p)
-
             return cross_entropy
 
+        split_list = np.linspace(0.0, 1.0, num=6)
         if self._type != "algorithm" or self._field == "adder":
             self._fidelity = self._machine_amp[0]
+            self._level_score = split_list[0]
         else:
             width = self.width
             if self._field == "qft":
                 p, q = self._machine_amp, [float(1 / (2 ** int(width)))] * (2 ** int(width))
                 self._fidelity = _calculate_entropy(p, q)
+                self._level_score = split_list[1]
             elif self._field == "cnf":
                 self._fidelity = self._machine_amp[8]
+                self._level_score = split_list[2]
             elif self._field == "qnn":
-                point1 = self._machine_amp[0] + self._machine_amp[int((2 ** width) / 2)]
-                point2 = self._machine_amp[3] + self._machine_amp[int((2 ** width) / 2 + 3)]
-                self._fidelity = max(point1, point2)
+                self._fidelity = self._machine_amp[0] + self._machine_amp[int((2 ** width) / 2)]
+                if self._fidelity == 0:
+                    self._fidelity = self._machine_amp[3] + self._machine_amp[int((2 ** width) / 2 + 3)]
+                self._level_score = split_list[3]
             elif self._field == "quantum_walk":
                 self._fidelity = self._machine_amp[3] + self._machine_amp[-2]
+                self._level_score = split_list[4]
             elif self._field == "vqe":
                 index = '1' * int(width / 2)
                 if width % 2 == 1:
@@ -120,6 +128,7 @@ class BenchCirData:
                 else:
                     index += '0' * int(width / 2)
                 self._fidelity = self._machine_amp[int(index, 2)]
+                self._level_score = split_list[5]
 
     def __init__(
         self,
@@ -138,6 +147,7 @@ class BenchCirData:
         self._qv = 0
         self._value = 0
         self._fidelity = 0
+        self._level_score = 0
 
         # Circuit related
         cir_Property = self._circuit.name

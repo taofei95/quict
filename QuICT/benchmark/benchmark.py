@@ -18,8 +18,8 @@ from QuICT.tools.circuit_library.get_benchmark_circuit import BenchmarkCircuitBu
 
 
 class QuantumMachinebenchmark:
-    """ The QuICT Benchmarking. """
-    __alg_fields_list = ["qft", "adder", "cnf", "vqe", "qnn", "quantum_walk"]
+    """ The quantum machine Benchmark. """
+    __alg_fields_list = ["adder", "qft", "cnf", "vqe", "qnn", "quantum_walk"]
 
     def __init__(
         self,
@@ -222,7 +222,9 @@ class QuantumMachinebenchmark:
     def _evaluate_algorithm_circuits(self, bench_cir):
         cir_qv = bench_cir.qv
         cir_fidelity = bench_cir.fidelity
-        cir_score = round(cir_qv * cir_fidelity, 4)
+        cir_fidelity = bench_cir.fidelity
+        cir_level_score = bench_cir.level_score
+        cir_score = round(cir_qv * cir_fidelity * cir_level_score, 4)
         bench_cir.benchmark_score = cir_score
 
     def show_result(self, bench_cir):
