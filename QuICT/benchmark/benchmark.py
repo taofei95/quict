@@ -54,8 +54,8 @@ class QuantumMachinebenchmark:
             for _ in range(size_d):
                 biq_gate = gate_builder(ins_set.two_qubit_gate, random_params=True)
                 bgate_layout = np.random.choice(layout_list)
-                insert_idx =  random.choice(list(range(q_number)))
-                cir.insert(biq_gate & [bgate_layout.u, bgate_layout.v], insert_idx) 
+                insert_idx = random.choice(list(range(q_number)))
+                cir.insert(biq_gate & [bgate_layout.u, bgate_layout.v], insert_idx)
 
             # Build mirror circuit
             inverse_gate = cir.to_compositegate().inverse()
@@ -93,9 +93,9 @@ class QuantumMachinebenchmark:
 
         return cir_list
 
-    def _get_benchmark_circuit(self, level: int, q_number:int, ins_set, is_measure):
+    def _get_benchmark_circuit(self, level: int, q_number: int, ins_set, layout, is_measure):
         cir_list = []
-        cirs = BenchmarkCircuitBuilder().get_benchmark_circuit(q_number, level, ins_set)
+        cirs = BenchmarkCircuitBuilder().get_benchmark_circuit(q_number, level, ins_set, layout)
         for cir in cirs:
             split = cir.name.split("+")
             attribute = re.findall(r'\d+(?:\.\d+)?', split[2])
@@ -106,7 +106,7 @@ class QuantumMachinebenchmark:
                 Measure | cir
             cir.name = "+".join([
                 "benchmark", field, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}_v{void_gates}", f"level{level}"
-                ])
+            ])
             cir = BenchCirData(cir)
             cir_list.append(cir)
 
@@ -145,10 +145,12 @@ class QuantumMachinebenchmark:
         circuit_list.extend(self._get_random_circuit(level, q_number, ins_set, layout, is_measure))
 
         # get benchmark circuits
-        circuit_list.extend(self._get_benchmark_circuit(level, q_number, ins_set, is_measure))
+        circuit_list.extend(self._get_benchmark_circuit(level, q_number, ins_set, layout, is_measure))
 
         # get algorithm circuit
-        circuit_list.extend(self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure))
+        circuit_list.extend(
+            self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
+        )
 
         return circuit_list
 
@@ -215,7 +217,7 @@ class QuantumMachinebenchmark:
     def _evaluate_benchmark_circuit(self, bench_cir):
         cir_qv = bench_cir.qv
         cir_fidelity = bench_cir.fidelity
-        cir_value = bench_cir.value
+        cir_value = bench_cir.bench_cir_value
         cir_score = round(cir_qv * cir_fidelity * cir_value, 4)
         bench_cir.benchmark_score = cir_score
 
@@ -370,7 +372,7 @@ class QuantumMachinebenchmark:
         data = np.concatenate((data, [data[0]]))
         angles_3 = np.concatenate((angles_3, [angles_3[0]]))
         ax3 = plt.subplot(224, polar=True)
-        ax3.plot(angles_3, data, 'bo-', color='gray', linewidth=1, alpha=0.2)
+        # ax3.plot(angles_3, data, 'bo-', color='gray', linewidth=1, alpha=0.2)
         ax3.plot(angles_3, data, 'o-', linewidth=1.5, alpha=0.2)
         ax3.fill(angles_3, data, alpha=0.25)
         plt.thetagrids((angles_3 * 180 / np.pi)[:-1], radar_labels)
