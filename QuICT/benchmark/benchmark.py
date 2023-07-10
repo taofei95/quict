@@ -148,9 +148,10 @@ class QuantumMachinebenchmark:
         circuit_list.extend(self._get_benchmark_circuit(level, q_number, ins_set, layout, is_measure))
 
         # get algorithm circuit
-        circuit_list.extend(
-            self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
-        )
+        if level > 1:
+            circuit_list.extend(
+                self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
+            )
 
         return circuit_list
 
@@ -219,6 +220,7 @@ class QuantumMachinebenchmark:
         cir_fidelity = bench_cir.fidelity
         cir_value = bench_cir.bench_cir_value
         cir_score = round(cir_qv * cir_fidelity * cir_value, 4)
+        print(cir_qv, cir_fidelity, cir_value)
         bench_cir.benchmark_score = cir_score
 
     def _evaluate_algorithm_circuits(self, bench_cir):
@@ -363,10 +365,16 @@ class QuantumMachinebenchmark:
         ################################ the overall benchmark score #####################################
         radar_labels = np.array(['random', 'special', 'algorithm'])
         nAttr = 3
+        alg_data = values_2
+        if len(alg_data) < 4:
+            alg_data = alg_data + (4 - len(alg_data)) * [0]
+        else:
+            alg_data = random.sample(list(alg_data), 4)
+
         data = np.array([
             list(random_data),
             list(special_data),
-            random.sample(list(alg_data), 4)
+            list(alg_data)
         ])
         angles_3 = np.linspace(0, 2 * np.pi, nAttr, endpoint=False)
         data = np.concatenate((data, [data[0]]))

@@ -22,7 +22,6 @@ class BenchmarkCircuitBuilder:
         typelist = [random.choice(gateset.one_qubit_gates), gateset.two_qubit_gate]
         prob = [0.8, 0.2]
         layout_list = layout.edge_list
-        inset_index = np.random.choice(layout_list)
 
         gate_indexes = list(range(2))
         qubits_indexes = list(range(width))
@@ -30,7 +29,7 @@ class BenchmarkCircuitBuilder:
         random.shuffle(shuffle_qindexes)
 
         gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
-        random_para = 1 - level / 1
+        random_para = round(level / 3, 4)
 
         cirs_list = []
         for g in gate_prob:
@@ -48,6 +47,7 @@ class BenchmarkCircuitBuilder:
                 if gsize > len(shuffle_qindexes):
                     continue
                 if gsize == 2:
+                    inset_index = np.random.choice(layout_list)
                     insert_idx = random.choice(list(range(width)))
                     cir.insert(gate & [inset_index.u, inset_index.v], insert_idx)
                 else:
@@ -69,7 +69,7 @@ class BenchmarkCircuitBuilder:
     @staticmethod
     def serialized_circuit_build(width: int, level: int, gateset: InstructionSet, layout: Layout):
         gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
-        random_para = 1 - level / 1
+        random_para = round(level / 3, 4)
 
         cirs_list = []
         base_gate = gate_builder(gateset.two_qubit_gate)
@@ -146,7 +146,7 @@ class BenchmarkCircuitBuilder:
             return cgate
 
         gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
-        random_para = 1 - level / 1
+        random_para = round(level / 3, 4)
 
         cirs_list = []
         layout_list = layout.edge_list
@@ -198,7 +198,7 @@ class BenchmarkCircuitBuilder:
 
         cir_list = []
         gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
-        random_para = 1 - level / 1
+        random_para = round(level / 3, 4)
 
         for g in gate_prob:
             size = width * g
@@ -217,7 +217,7 @@ class BenchmarkCircuitBuilder:
             depth = cir.depth()
             void_gates = round(void_gates / depth, 2)
             cir.name = "+".join(
-                ["benchmark", "mediate_measure", f"w{width}_s{size}_d{depth}_v{void_gates}_level{level}"]
+                ["benchmark", "mediate_measure", f"w{width}_s{size}_d{depth}_v{random_para}_level{level}"]
             )
             cir_list.append(cir)
 
