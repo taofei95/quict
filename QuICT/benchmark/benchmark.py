@@ -31,7 +31,7 @@ class QuantumMachinebenchmark:
 
         Args:
             output_path (str, optional): The path of the Analysis of the results.
-            show_type (str, optional): Analysis of the Graph exists by default,
+            output_file_type (str, optional): Analysis of the Graph exists by default,
                 and other analysis selects "txt" or "excel".
         """
         self._output_path = os.path.abspath(output_path)
@@ -134,7 +134,7 @@ class QuantumMachinebenchmark:
             is_measure(bool): Can choose whether to measure the circuit according to your needs.
 
         Returns:
-            (List[Circuit]): Return the list of output circuit order by output_type.
+            (List[Circuit]): Return the list of structure for output circuits.
         """
 
         # obey instruction set and layout in vqm to build random circuit
