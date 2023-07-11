@@ -1,3 +1,4 @@
+import random
 import unittest
 
 from QuICT.benchmark.benchmark import QuantumMachinebenchmark
@@ -31,7 +32,10 @@ class TestBenchmark(unittest.TestCase):
         assert len(circuits_list) == 20  # random4 + benchmark16
         # level3, and qcda for algorithm circuit
         circuits_list = benchmark.get_circuits(quantum_machine_info=vqm, level=3, enable_qcda_for_alg_cir=True)
-        assert len(circuits_list) == 33  # random4 + benchmark16 + alg13
+        assert len(circuits_list) == 35  # random4 + benchmark16 + alg17
+        circuits_list = benchmark.get_circuits(quantum_machine_info=vqm, is_measure=True)
+        random_test_cir = random.choice(circuits_list)
+        assert random_test_cir.circuit.gates[-1].type == GateType.measure
 
     def test_benchlib(self):
         def sim_interface(cir):
@@ -53,12 +57,12 @@ class TestBenchmark(unittest.TestCase):
         for cir in circuits_list:
             circuit = cir.circuit
             if cir.type != "benchmark":
-                circuit_name = f"{cir.type}+{cir.field}+w{cir.width}_s{cir.size}_d{cir.depth}+level{cir.level}"
-                assert circuit.name == circuit_name
+                circuit_name1 = f"{cir.type}+{cir.field}+w{cir.width}_s{cir.size}_d{cir.depth}+level{cir.level}"
+                assert circuit.name == circuit_name1
             else:
-                circuit_name = f"{cir.type}+{cir.field}+w{cir.width}_s{cir.size}_d{cir.depth}_v{cir.value}+\
+                circuit_name2 = f"{cir.type}+{cir.field}+w{cir.width}_s{cir.size}_d{cir.depth}_v{cir.bench_cir_value}+\
                     level{cir.level}"
-                assert circuit.name == circuit_name
+                assert circuit_name2 != circuit_name1
             cir.machine_amp = sim_interface(cir.circuit)
             assert cir.fidelity == cir.machine_amp[0]
             assert cir.benchmark_score <= cir.qv * cir.fidelity

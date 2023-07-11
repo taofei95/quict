@@ -68,7 +68,7 @@ class QuantumMachinebenchmark:
         return cir_list
 
     def _get_algorithm_circuit(self, vqm, level: int, enable_qcda_for_alg_cir, is_measure):
-        cir_list = []
+        cir_list, alg_cirs = [], []
         assert level > 1
         if level == 2:
             field = self.__alg_fields_list[:3]
@@ -80,16 +80,19 @@ class QuantumMachinebenchmark:
 
         for i in range(len(field)):
             cirs = CircuitLib().get_circuit("algorithm", field[i], qubits_interval=vqm.qubit_number)
-            for cir in cirs:
-                if enable_qcda_for_alg_cir:
+            alg_cirs.extend(cirs)
+        for cir in alg_cirs:
+            field = cir.name.split("+")[0]
+            if enable_qcda_for_alg_cir == True:
+                if field != "vqe":
                     cir = qcda.auto_compile(cir, vqm)
-                    if is_measure:
-                        Measure | cir
-                cir.name = "+".join([
-                    "algorithm", field[i], f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"
-                ])
-                cir = BenchCirData(cir)
-                cir_list.append(cir)
+            if is_measure:
+                Measure | cir
+            cir.name = "+".join([
+                "algorithm", field, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"
+            ])
+            cir = BenchCirData(cir)
+            cir_list.append(cir)
 
         return cir_list
 
@@ -220,7 +223,6 @@ class QuantumMachinebenchmark:
         cir_fidelity = bench_cir.fidelity
         cir_value = bench_cir.bench_cir_value
         cir_score = round(cir_qv * cir_fidelity * cir_value, 4)
-        print(cir_qv, cir_fidelity, cir_value)
         bench_cir.benchmark_score = cir_score
 
     def _evaluate_algorithm_circuits(self, bench_cir):
