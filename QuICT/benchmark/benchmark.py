@@ -148,13 +148,13 @@ class QuantumMachinebenchmark:
         circuit_list.extend(self._get_random_circuit(level, q_number, ins_set, layout, is_measure))
 
         # get benchmark circuits
-        # circuit_list.extend(self._get_benchmark_circuit(level, q_number, ins_set, layout, is_measure))
+        circuit_list.extend(self._get_benchmark_circuit(level, q_number, ins_set, layout, is_measure))
 
         # get algorithm circuit
-        # if level > 1:
-        #     circuit_list.extend(
-        #         self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
-        #     )
+        if level > 1:
+            circuit_list.extend(
+                self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
+            )
 
         return circuit_list
 
@@ -238,8 +238,8 @@ class QuantumMachinebenchmark:
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path)
 
-        # if len(bench_cir) > 0:
-        #     self._graph_show(bench_cir)
+        if len(bench_cir) > 0:
+            self._graph_show(bench_cir)
 
         if self._output_file_type == "txt":
             self._txt_show(bench_cir)
