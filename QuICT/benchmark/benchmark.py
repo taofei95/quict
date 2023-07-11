@@ -131,6 +131,7 @@ class QuantumMachinebenchmark:
                 default 1.
             enable_qcda_for_alg_cir(bool): Auto-Compile the circuit with the given quantum machine info, just for
                 algorithm circuit, default False.
+            is_measure(bool): Can choose whether to measure the circuit according to your needs.
 
         Returns:
             (List[Circuit]): Return the list of output circuit order by output_type.
@@ -184,6 +185,7 @@ class QuantumMachinebenchmark:
                 default 1.
             enable_qcda_for_alg_cir(bool): Auto-Compile the circuit with the given quantum machine info, just for
                 algorithm circuit, default False.
+            is_measure(bool): Can choose whether to measure the circuit according to your needs.
 
         Returns:
             Return the analysis of benchmarking.
