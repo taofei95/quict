@@ -7,7 +7,7 @@ from QuICT.tools.exception.core.gate_exception import GateParametersAssignedErro
 from QuICT.core.gate import X, CX, CU3, Swap, CSwap
 from QuICT.core.gate.composite_gate import CompositeGate
 from QuICT.algorithm.arithmetic.adder import RCFourierAdderWired
-from QuICT.algorithm.qft import ry_QFT
+from QuICT.algorithm.qft import ry_QFT, ry_IQFT
 
 
 class RCOutOfPlaceModMultiplier(CompositeGate):
@@ -101,15 +101,9 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
 
         # correction
         correction_block = self._output_qubit_list + self._ancilla_qubit_list[:1]
-        ry_QFT(
-            targets=self._register_size + 1,
-            inverse=True
-        ) | self(correction_block)
+        ry_IQFT(targets=self._register_size + 1) | self(correction_block)
 
-        ry_QFT(
-            targets=self._register_size,
-            inverse=False
-        ) | self(correction_block[1:])
+        ry_QFT(targets=self._register_size) | self(correction_block[1:])
 
         # Consider output register + first bit of the ancilla as a block,
         # inside the block, permute one position upward such that
@@ -131,17 +125,11 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
         CX | self(correction_block[-2:])
 
         # Get modular multiplication result #
-        ry_QFT(
-            targets=self._register_size,
-            inverse=True
-        ) | self(self._output_qubit_list)
+        ry_IQFT(targets=self._register_size) | self(self._output_qubit_list)
 
         # Uncomputation stage #
         # parallel to the inverse qft above
-        ry_QFT(
-            targets=self._ancilla_size,
-            inverse=False
-        ) | self(self._ancilla_qubit_list)
+        ry_QFT(targets=self._ancilla_size) | self(self._ancilla_qubit_list)
 
         # modulus and 2 have to be co-prime
         comp_mod = pow(2, self._ancilla_size)

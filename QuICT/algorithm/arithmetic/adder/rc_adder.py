@@ -2,7 +2,7 @@ from numpy import pi
 
 from QuICT.core.gate import Ry, CU3
 from QuICT.core.gate.composite_gate import CompositeGate
-from QuICT.algorithm.qft import ry_QFT
+from QuICT.algorithm.qft import ry_QFT, ry_IQFT
 
 
 class RCFourierAdderWired(CompositeGate):
@@ -64,13 +64,13 @@ class RCFourierAdderWired(CompositeGate):
                 ry_QFT(qreg_size) | self(range(1, qreg_size + 1))
             self._build_ctl_phi_adder(qreg_size, addend)
             if not out_fourier:
-                ry_QFT(qreg_size, inverse=True) | self(range(1, qreg_size + 1))
+                ry_IQFT(qreg_size) | self(range(1, qreg_size + 1))
         else:
             if not in_fourier:
                 ry_QFT(qreg_size) | self
             self._build_phi_adder(qreg_size, addend)
             if not out_fourier:
-                ry_QFT(qreg_size, inverse=True) | self
+                ry_IQFT(qreg_size) | self
 
     @property
     def is_controlled(self):
