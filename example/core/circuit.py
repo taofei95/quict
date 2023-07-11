@@ -8,6 +8,7 @@ import os
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.tools.interface import OPENQASMInterface
+from QuICT.algorithm.qft import QFT
 
 
 def circuit_build():

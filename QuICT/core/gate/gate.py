@@ -364,7 +364,7 @@ class BasicGate(object):
         Return:
             string: the OpenQASM 2.0 describe of the gate
         """
-        if self.type in [GateType.perm, GateType.perm_fx, GateType.qft, GateType.iqft]:
+        if self.type in [GateType.perm, GateType.perm_fx]:
             raise QASMError(f"This gate do not support qasm, {self.type}")
 
         qasm_string = self.qasm_name
