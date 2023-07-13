@@ -18,6 +18,8 @@ from .utility import *
 from QuICT.tools import Logger
 from QuICT.tools.exception.core import *
 
+from QuICT.algorithm.qft import IQFT
+
 logger = Logger("HRS")
 
 
