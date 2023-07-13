@@ -6,7 +6,21 @@ from QuICT.core.gate import *
 
 
 class HEAnsatz(Ansatz):
+    """Hardware-Efficient Ansatz.
+
+    References:
+        https://www.nature.com/articles/nature23879
+    """
+
     def __init__(self, n_qubits: int, d: int, layers: list):
+        """Initialize an HE-ansatz instance.
+
+        Args:
+            n_qubits (int): The number of qubits.
+            d (int): The depth of HE-ansatz.
+            layers (list): The list of layers. Supported layers are "CX", "CZ", "SWAP", "RY", "RZ".
+        """
+
         super(HEAnsatz, self).__init__(n_qubits)
         self._d = d
         self._layers = layers
@@ -14,6 +28,15 @@ class HEAnsatz(Ansatz):
         self._validate_layers()
 
     def init_circuit(self, params: Union[Variable, np.ndarray] = None):
+        """Initialize an HE-ansatz with trainable parameters.
+
+        Args:
+            params (Union[Variable, np.ndarray], optional): Initialization parameters. Defaults to None.
+
+        Returns:
+            Circuit: The HE-ansatz ansatz.
+        """
+
         params = (
             np.random.randn(self._d, self._param_layers, self._n_qubits)
             if params is None
@@ -46,9 +69,3 @@ class HEAnsatz(Ansatz):
                 self._param_layers += 1
             elif layer not in ["CX", "CZ", "SWAP"]:
                 raise ValueError
-
-
-if __name__ == "__main__":
-    builder = HEAnsatz(6, 2, ["CZ", "RY", "RZ"])
-    circuit = builder.init_circuit()
-    circuit.draw(filename="1")

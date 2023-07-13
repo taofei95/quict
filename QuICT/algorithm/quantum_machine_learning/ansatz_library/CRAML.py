@@ -5,14 +5,14 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 
 
-class CRADL(Ansatz):
-    """Color-Readout-Alternating-Double-Layer architecture (CRADL) Ansatz.
+class CRAML(Ansatz):
+    """Color-Readout-Alternating-Mixed-Layer architecture (CRAML) Ansatz.
     
     Reference:
         https://arxiv.org/abs/2110.05476
     """
 
-    def __init__(self, n_qubits: int, color_qubit: int, readout: int, layers: int):
+    def __init__(self, n_qubits: int, color_qubit: int, readout: int, layers: int = 1):
         """Initialize a CRADL ansatz instance.
 
         Args:
@@ -22,7 +22,7 @@ class CRADL(Ansatz):
             layers (int, optional): The number of layers.
         """
 
-        super(CRADL, self).__init__(n_qubits)
+        super(CRAML, self).__init__(n_qubits)
         if (
             readout < 0
             or readout >= self._n_qubits
@@ -39,13 +39,13 @@ class CRADL(Ansatz):
         self._layers = layers
 
     def init_circuit(self, params: Union[Variable, np.ndarray] = None):
-        """Initialize a CRADL ansatz with trainable parameters.
+        """Initialize a CRAML ansatz with trainable parameters.
 
         Args:
             params (Union[Variable, np.ndarray], optional): Initialization parameters. Defaults to None.
 
         Returns:
-            Circuit: The CRADL ansatz.
+            Circuit: The CRAML ansatz.
         """
 
         n_data_qubits = len(self._data_qubits)
@@ -62,14 +62,11 @@ class CRADL(Ansatz):
 
         circuit = Circuit(self._n_qubits)
         for l in range(self._layers):
-            for i in range(n_data_qubits):
-                Rxx(params[l][i]) | circuit([self._data_qubits[i], self._readout])
-                Rxx(params[l][i]) | circuit([self._data_qubits[i], self._color_qubit])
-            for i in range(n_data_qubits):
-                Rzz(params[l][n_data_qubits + i]) | circuit(
-                    [self._data_qubits[i], self._readout]
-                )
-                Rzz(params[l][n_data_qubits + i]) | circuit(
+            for i, k in zip(range(n_data_qubits), range(0, n_data_qubits * 2, 2)):
+                Rxx(params[l][k]) | circuit([self._data_qubits[i], self._readout])
+                Rxx(params[l][k]) | circuit([self._data_qubits[i], self._color_qubit])
+                Rzz(params[l][k + 1]) | circuit([self._data_qubits[i], self._readout])
+                Rzz(params[l][k + 1]) | circuit(
                     [self._data_qubits[i], self._color_qubit]
                 )
 
