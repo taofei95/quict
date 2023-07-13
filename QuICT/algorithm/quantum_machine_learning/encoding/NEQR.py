@@ -6,14 +6,34 @@ from QuICT.core.gate import *
 
 
 class NEQR(FRQI):
-    """NEQR encoding for encoding classical image data into quantum circuits."""
+    """NEQR encoding for encoding classical image data into quantum circuits.
+    
+    References:
+        https://link.springer.com/article/10.1007/s11128-013-0567-z
+    """
 
     def __init__(self, grayscale: int = 2):
+        """Initialize an NEQR instance.
+
+        Args:
+            grayscale (int, optional): The grayscale of the input images. Defaults to 2.
+        """
+
         super(NEQR, self).__init__(grayscale)
         self._n_color_qubits = int(np.log2(grayscale))
         assert 1 << self._n_color_qubits == grayscale
 
     def __call__(self, img, use_qic=False):
+        """Call NEQR for a given image.
+
+        Args:
+            img (np.ndarray): The input image.
+            use_qic (bool, optional): Whether to use Quantum Image Commpression. Defaults to False.
+
+        Returns:
+            Circuit: Quantum circuit form of the image.
+        """
+
         img = self._img_preprocess(img, flatten=True)
 
         # step 1: |0> -> |H>
