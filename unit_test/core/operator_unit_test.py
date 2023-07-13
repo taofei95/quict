@@ -5,6 +5,7 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.operator import *
 from QuICT.simulation.state_vector import StateVectorSimulator
+from QuICT.algorithm.qft import QFT, IQFT
 
 
 class TestOperator(unittest.TestCase):
