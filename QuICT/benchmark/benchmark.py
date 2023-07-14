@@ -8,10 +8,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
 from QuICT.benchmark.benchcirdata import BenchCirData
-from QuICT.core.gate.gate import Measure, gate_builder
-from QuICT.core.virtual_machine.virtual_machine import VirtualQuantumMachine
+from QuICT.core.gate import Measure, gate_builder
+from QuICT.core.virtual_machine import VirtualQuantumMachine
 
-from QuICT.qcda.qcda import QCDA
+from QuICT.qcda import QCDA
 from QuICT.core import Circuit
 from QuICT.tools.circuit_library.circuitlib import CircuitLib
 from QuICT.tools.circuit_library.get_benchmark_circuit import BenchmarkCircuitBuilder
@@ -19,7 +19,7 @@ from QuICT.tools.circuit_library.get_benchmark_circuit import BenchmarkCircuitBu
 
 class QuantumMachinebenchmark:
     """ The quantum machine Benchmark. """
-    __alg_fields_list = ["adder", "qft", "cnf", "vqe", "qnn", "quantum_walk"]
+    __alg_fields_list = ["cnf", "vqe"]
 
     def __init__(
         self,
@@ -69,7 +69,8 @@ class QuantumMachinebenchmark:
 
     def _get_algorithm_circuit(self, vqm, level: int, enable_qcda_for_alg_cir, is_measure):
         cir_list, alg_cirs = [], []
-        assert level > 1
+        if level == 1:
+            return []
         if level == 2:
             field = self.__alg_fields_list[:3]
         else:
@@ -152,10 +153,9 @@ class QuantumMachinebenchmark:
         circuit_list.extend(self._get_benchmark_circuit(level, q_number, ins_set, layout, is_measure))
 
         # get algorithm circuit
-        if level > 1:
-            circuit_list.extend(
-                self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
-            )
+        circuit_list.extend(
+            self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
+        )
 
         return circuit_list
 
@@ -240,8 +240,8 @@ class QuantumMachinebenchmark:
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path)
 
-        if len(bench_cir) > 0:
-            self._graph_show(bench_cir)
+        # if len(bench_cir) > 0:
+        #     self._graph_show(bench_cir)
 
         if self._output_file_type == "txt":
             self._txt_show(bench_cir)

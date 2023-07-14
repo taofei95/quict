@@ -19,44 +19,44 @@ class BenchmarkCircuitBuilder:
     """
     @staticmethod
     def parallelized_circuit_build(width: int, level: int, gateset: InstructionSet, layout: Layout):
-        typelist = [random.choice(gateset.one_qubit_gates), gateset.two_qubit_gate]
-        prob = [0.8, 0.2]
-        layout_list = layout.edge_list
-
-        gate_indexes = list(range(2))
-        qubits_indexes = list(range(width))
-        shuffle_qindexes = qubits_indexes[:]
-        random.shuffle(shuffle_qindexes)
-
-        gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
-        random_para = round(level / 3, 4)
+        """
+        Highly parallel applications place a large number of operations into a relatively small circuit depth.
+        Example:
+            q_0: |0>──■─────■─────■─────■─────────────────
+                    ┌─┴──┐┌─┴──┐┌─┴──┐┌─┴──┐┌────────────┐
+            q_1: |0>┤ cx ├┤ cx ├┤ cx ├┤ cx ├┤ rx(1.6479) ├
+                    └────┘└────┘├───┬┘└────┘└────────────┘
+            q_2: |0>──■─────■───┤ h ├─────────────────────
+                    ┌─┴──┐┌─┴──┐├───┤                     
+            q_3: |0>┤ cx ├┤ cx ├┤ h ├─────────────────────
+                    └────┘└────┘└───┘                     
+        """
+        gate_prob = range(2 + (level - 1) * 4, 2 + level * 4) # the size of cir according cirs group level
+        random_para = round(1 - 1 / (3 * level), 4) # the degree of control circuit parallelism
+        two_qubits_size = int(width * random_para) # the number of two qubits gate that match the topology
 
         cirs_list = []
         for g in gate_prob:
             cir = Circuit(width)
             size = width * g
             while cir.size() < size:
-                rand_type = np.random.choice(gate_indexes, p=prob)
-                gate_type = typelist[rand_type]
-                gate = gate_builder(gate_type)
-
-                if gate.params:
-                    gate.pargs = list(np.random.uniform(0, 2 * np.pi, gate.params))
-
-                gsize = gate.controls + gate.targets
-                if gsize > len(shuffle_qindexes):
-                    continue
-                if gsize == 2:
+                layout_list = layout.edge_list
+                for _ in range(two_qubits_size):
+                    qubits_indexes = list(range(width))
+                    # number of double-bit gates in a layer obey width and level
                     inset_index = np.random.choice(layout_list)
-                    insert_idx = random.choice(list(range(width)))
-                    cir.insert(gate & [inset_index.u, inset_index.v], insert_idx)
-                else:
-                    gate | cir(shuffle_qindexes[:gsize])
-                if gsize == len(shuffle_qindexes) or random.random() > random_para:
-                    shuffle_qindexes = qubits_indexes[:]
-                    random.shuffle(shuffle_qindexes)
-                else:
-                    shuffle_qindexes = shuffle_qindexes[gsize:]
+                    index = [inset_index.u, inset_index.v] # the list of layout nodes
+                    insert_index = random.choice(list(range(width)))
+                    gate_2q = gate_builder(gateset.two_qubit_gate, random_params=True)
+                    print(index, insert_index)
+                    cir.insert(gate_2q & index, insert_index)
+                    qubits_indexes = list(set(qubits_indexes) - set(index)) # extra qubits after insert two qubits gate
+                for _ in range(int(len(qubits_indexes) * random_para)):
+                    # number of one-bit gates in a layer obey level
+                    one_qubit_gate = random.choice(gateset.one_qubit_gates)
+                    one_qubit_index = random.choice(qubits_indexes)
+                    gate_1q = gate_builder(one_qubit_gate, random_params=True)
+                    gate_1q & one_qubit_index | cir
 
             depth = cir.depth()
             cir.name = "+".join(
@@ -68,38 +68,60 @@ class BenchmarkCircuitBuilder:
 
     @staticmethod
     def serialized_circuit_build(width: int, level: int, gateset: InstructionSet, layout: Layout):
-        gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
-        random_para = round(level / 3, 4)
-
-        cirs_list = []
-        base_gate = gate_builder(gateset.two_qubit_gate)
+        """
+        The number of two quantum bits interacting on the longest path of the circuit depth is close to the total number of doublets.
+        Example:
+            q_0: |0>────────■─────■────────────────────────────────────────────────────
+                          ┌─┴──┐┌─┴──┐                        ┌───┐┌─────────────┐┌───┐
+            q_1: |0>──■───┤ cx ├┤ cx ├──■───────────■─────■───┤ h ├┤ rx(0.67334) ├┤ h ├
+                    ┌─┴──┐└────┘└────┘┌─┴──┐      ┌─┴──┐┌─┴──┐└───┘└─────────────┘└───┘
+            q_2: |0>┤ cx ├──■─────■───┤ cx ├──■───┤ cx ├┤ cx ├─────────────────────────
+                    └────┘┌─┴──┐┌─┴──┐└────┘┌─┴──┐└────┘└────┘                         
+            q_3: |0>──────┤ cx ├┤ cx ├──────┤ cx ├─────────────────────────────────────
+                          └────┘└────┘      └────┘                                     
+        """
+        cirs_list, l_list, r_list = [], [], []
         layout_list = layout.edge_list
+        for i in layout_list:
+            if i.u not in l_list or i.v not in l_list:
+                l_list.append(i.u)
+                l_list.append(i.v)
+        a = max(l_list, key=l_list.count) # Find the bits that appear most frequently in the topology
+        for j in range(len(layout_list)):
+            if layout_list[j].u == a or layout_list[j].v == a:
+                r_list.append(layout_list[j]) # Associated topology nodes for identified qubits
+        l_list = list(set(layout_list) - set(r_list)) # Associative topological nodes of uncertain qubits
+
+        gate_prob = range(2 + (level - 1) * 4, 2 + level * 4) # the size of cir according cirs group level
+        random_para = round(1 - 1 / (3 * level), 4) # the degree of control circuit parallelism
+        gate_2q = gate_builder(gateset.two_qubit_gate, random_params=True)
 
         for g in gate_prob:
             size = width * g
-            temp_size, void_gates = 0, 0
+            temp_size = 0
 
             cir = Circuit(width)
-            temp_size += 1
-            qubit_indexes = list(range(width))
-            qubit = random.choice(qubit_indexes)
-            qubit_indexes.remove(qubit)
             while temp_size < size:
-                qubit_new = random.choice(qubit_indexes)
-                qubits_list = [qubit, qubit_new]
-                random.shuffle(qubits_list)
-                base_gate | cir(qubits_list)
+                r_index = np.random.choice(r_list)
+                index = [r_index.u, r_index.v]
+                insert_index = random.choice(list(range(width)))
+                cir.insert(gate_2q & index, insert_index)
                 temp_size += 1
-                if random.random() > random_para:
-                    inset_index = np.random.choice(layout_list)
-                    cir.insert(base_gate & [inset_index.u, inset_index.v], qubit)
+                if random.random() > random_para: # Method of selecting the insertion gate
+                    def insert_two_qubit():
+                        l_index = np.random.choice(l_list)
+                        cir.insert(gate_2q & [l_index.u, l_index.v], insert_index)
+                    def insert_one_qubit():
+                        one_qubit_gate = random.choice(gateset.one_qubit_gates)
+                        one_qubit_index = random.choice(list(range(width)))
+                        gate_1q = gate_builder(one_qubit_gate, random_params=True)
+                        gate_1q & one_qubit_index | cir
+                    random.choice([insert_two_qubit(), insert_one_qubit()])
                     temp_size += 1
-                    void_gates += 1
 
             depth = cir.depth()
-            void_gates = round(void_gates / size, 2)
             cir.name = "+".join(
-                ["benchmark", "highly_serialized", f"w{width}_s{size}_d{depth}_v{void_gates}_level{level}"]
+                ["benchmark", "highly_serialized", f"w{width}_s{size}_d{depth}_v{random_para}_level{level}"]
             )
             cirs_list.append(cir)
 
@@ -107,68 +129,57 @@ class BenchmarkCircuitBuilder:
 
     @staticmethod
     def entangled_circuit_build(width: int, level: int, gateset: InstructionSet, layout: Layout):
-        base_gate = gate_builder(gateset.two_qubit_gate)
+        """ 
+        By calculating the two quantum bits interacting to a maximum value
+        Example:
+                                            ┌────────────┐┌────────────┐               
+            q_0: |0>──■─────■─────■─────■───┤ ry(1.4706) ├┤ rz(3.4078) ├───────────────
+                    ┌─┴──┐┌─┴──┐┌─┴──┐┌─┴──┐└────────────┘└────────────┘               
+            q_1: |0>┤ cx ├┤ cx ├┤ cx ├┤ cx ├──────■────────────────────────────────────
+                    └────┘└────┘└────┘└────┘    ┌─┴──┐                  ┌─────────────┐
+            q_2: |0>──■─────■───────────────────┤ cx ├──────────■───────┤ ry(0.97552) ├
+                    ┌─┴──┐┌─┴──┐                └────┘        ┌─┴──┐    └─────────────┘
+            q_3: |0>┤ cx ├┤ cx ├──────────────────────────────┤ cx ├───────────────────
+                    └────┘└────┘                              └────┘                   
+        """
+        gate_prob = range(2 + (level - 1) * 4, 2 + level * 4) # the size of cir according cirs group level
+        random_para = round(1 - 1 / (3 * level), 4) # the degree of control circuit parallelism
+        two_qubits_size = int(width * random_para) # the number of two qubits gate that match the topology
 
-        def _pattern1():
-            cgate = CompositeGate()
-            qubit_indexes = list(range(width))
-            qubit_extra = []
-            for _ in range(width):
-                if len(qubit_indexes) > 1:
-                    qubit_index = random.sample(qubit_indexes, 2)
-                    base_gate | cgate(qubit_index)
-                    qubit_extra.append(qubit_index)
-                    qubit_indexes = list(set(qubit_indexes) - set(qubit_index))
-                elif len(qubit_indexes) == 1:
-                    for i in range(len(qubit_extra)):
-                        q_collect = random.choice(qubit_extra[i])
-                        base_gate | cgate([qubit_indexes[0], q_collect])
-                    break
-                else:
-                    break
-            return cgate
-
-        def _pattern2():
-            cgate = CompositeGate()
-            qubit_indexes = list(range(width))
-            result = [qubit_indexes[i:i + 2] for i in range(0, len(qubit_indexes), 2)]
-            for i in range(len(result)):
-                if len(result[i]) == 2:
-                    base_gate | cgate(result[i])
-
-            result = [qubit_indexes[i + 1:i + 3] for i in range(0, len(qubit_indexes), 2)]
-            for i in range(len(result)):
-                if len(result[i]) == 2:
-                    base_gate | cgate(result[i])
-                else:
-                    break
-
-            return cgate
-
-        gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
-        random_para = round(level / 3, 4)
-
-        cirs_list = []
-        layout_list = layout.edge_list
+        cirs_list, extra_layout_list = [], []
         for g in gate_prob:
-            void_gates = 0
             cir = Circuit(width)
             size = width * g
             while cir.size() < size:
-                if size - cir.size() < width or random.random() > random_para:
+                layout_list = layout.edge_list
+                qubits_indexes = list(range(width))
+                for _ in range(two_qubits_size):
                     inset_index = np.random.choice(layout_list)
-                    qubit_indexes = list(range(width))
-                    qubit = random.choice(qubit_indexes)
-                    cir.insert(base_gate & [inset_index.u, inset_index.v], qubit)
-                    void_gates += 1
-                else:
-                    cgate = random.choice([_pattern1(), _pattern2()])
-                    cgate | cir
+                    index = [inset_index.u, inset_index.v] # the chosen two qubits gate index
+                    insert_index = random.choice(list(range(width)))
+                    gate_2q = gate_builder(gateset.two_qubit_gate, random_params=True)
+                    cir.insert(gate_2q & index, insert_index)
+                    extra_layout_list = list(set(layout_list) - set([inset_index])) # extra layout
+                    qubits_indexes = list(set(qubits_indexes) - set(index)) # extra qubits after insert two qubits gate
+                    if random.random() > random_para:
+                        # There is a certain probability of inserting a list of topologies that do not require the qubit
+                        prob_inset_index = np.random.choice(extra_layout_list)
+                        index = [prob_inset_index.u, prob_inset_index.v]
+                        insert_index = random.choice(list(range(width)))
+                        gate_2q = gate_builder(gateset.two_qubit_gate, random_params=True)
+                        cir.insert(gate_2q & index, insert_index)
+                        # Stop the loop when each qubit is highly entangled
+                    if len(qubits_indexes) == 2:
+                        insert_index = random.choice(list(range(width)))
+                        cir.insert(gate_2q & qubits_indexes, insert_index)
+                    if len(qubits_indexes) == 1:
+                        one_qubit_gate = random.choice(gateset.one_qubit_gates)
+                        gate_1q = gate_builder(one_qubit_gate, random_params=True)
+                        gate_1q & qubits_indexes[:] | cir
 
             depth = cir.depth()
-            void_gates = round(void_gates / size, 2)
             cir.name = "+".join(
-                ["benchmark", "highly_entangled", f"w{width}_s{size}_d{depth}_v{void_gates}_level{level}"]
+                ["benchmark", "highly_entangled", f"w{width}_s{size}_d{depth}_v{random_para}_level{level}"]
             )
             cirs_list.append(cir)
 
@@ -176,46 +187,45 @@ class BenchmarkCircuitBuilder:
 
     @staticmethod
     def mediate_measure_circuit_build(width: int, level: int, gateset: InstructionSet, layout: Layout):
-        typelist = [random.choice(gateset.one_qubit_gates), gateset.two_qubit_gate]
-        prob = [0.8, 0.2]
-
-        layout_list = layout.edge_list
-
-        def flat_build():
-            cgate = CompositeGate()
-            inset_index = np.random.choice(layout_list)
-            gate_indexes = list(range(2))
-            rand_type = np.random.choice(gate_indexes, p=prob)
-            rand_one_qubit = int(np.random.choice(list(range(width))))
-            gate_type = typelist[rand_type]
-            gate = gate_builder(gate_type)
-            if gate.controls + gate.targets == 1:
-                cgate.insert(gate & rand_one_qubit, rand_one_qubit)
-            else:
-                gate & [inset_index.u, inset_index.v] | cgate
-
-            return cgate
-
+        """ 
+        For circuits consisting of multiple consecutive layers of gate operations, the measurement gates extract information at different
+        layers for the duration of and after the execution of the programme.
+        Example:
+                          ┌────────────┐                  
+            q_0: |0>──■───┤ rx(3.7113) ├──────────────────
+                    ┌─┴──┐└────────────┘ ┌─┐              
+            q_1: |0>┤ cx ├──────■────────┤M├──────────■───
+                    └────┘    ┌─┴──┐     └─┘        ┌─┴──┐
+            q_2: |0>──────────┤ cx ├──────■─────■───┤ cx ├
+                     ┌─┐      └────┘    ┌─┴──┐┌─┴──┐└┬─┬─┘
+            q_3: |0>─┤M├────────────────┤ cx ├┤ cx ├─┤M├──
+                     └─┘                └────┘└────┘ └─┘  
+        """
         cir_list = []
-        gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
-        random_para = round(level / 3, 4)
+        gate_prob = range(2 + (level - 1) * 4, 2 + level * 4) # the size of cir according cirs group level
+        random_para = round(1 - 1 / (3 * level), 4) # the degree of control circuit parallelism
 
         for g in gate_prob:
             size = width * g
-            void_gates = 0
             cir = Circuit(width)
-            for _ in range(size - 2 * width, size + 2 * width):
-                flat_build() | cir
-            Measure | cir
+            layout_list = layout.edge_list
+            temp_size = 0
             while cir.size() < size:
-                if size - cir.size() < width or random.random() > random_para:
-                    cir.random_append(1, [random.choice(typelist)])
-                    void_gates += 1
-                else:
-                    flat_build() | cir
+                gate = gate_builder(gateset.two_qubit_gate, random_params=True)
+                inset_index = np.random.choice(layout_list)
+                insert_idx = random.choice(list(range(width)))
+                cir.insert(gate & [inset_index.u, inset_index.v], insert_idx)
+                temp_size += 1
+                if temp_size > int(size / 4) and temp_size < int(size * 3 / 4): # insert measure gate between 1/4 and 3/4 of size
+                    mea_index = random.choice(list(range(width)))
+                    cir.insert(Measure & mea_index, mea_index)
+                if random.random() > random_para:
+                    one_qubit_gate = random.choice(gateset.one_qubit_gates)
+                    one_qubit_index = random.choice(list(range(width)))
+                    gate_1q = gate_builder(one_qubit_gate, random_params=True)
+                    gate_1q & one_qubit_index | cir
 
             depth = cir.depth()
-            void_gates = round(void_gates / depth, 2)
             cir.name = "+".join(
                 ["benchmark", "mediate_measure", f"w{width}_s{size}_d{depth}_v{random_para}_level{level}"]
             )

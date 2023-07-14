@@ -82,9 +82,10 @@ class BenchCirData:
     @property
     def fidelity(self) -> float:
         """ Return the fidelity of circuit. """
-        self._calculate_fidelity()
-        self._fidelity = round(self._fidelity, 4)
-        return self._fidelity
+        if self._fidelity == 0:
+            self._calculate_fidelity()
+            self._fidelity = round(self._fidelity, 4)
+            return self._fidelity
 
     def _calculate_fidelity(self):
         def calculate_entropy(p, q):
@@ -152,11 +153,12 @@ class BenchCirData:
         self._level_score = 0
 
         # Circuit related
-        cir_Property = self._circuit.name
+        cir_property = self._circuit.name
+        circuit_info = re.findall(r"\d+", cir_property)
 
-        self._level = int(cir_Property[-1])
-        self._type = cir_Property.split("+")[:-1][0]
-        self._field = cir_Property.split("+")[:-1][1]
-        self._width = int(re.findall(r"\d+", cir_Property)[0])
-        self._size = int(re.findall(r"\d+", cir_Property)[1])
-        self._depth = int(re.findall(r"\d+", cir_Property)[2])
+        self._level = int(cir_property[-1])
+        self._type = cir_property.split("+")[:-1][0]
+        self._field = cir_property.split("+")[:-1][1]
+        self._width = int(circuit_info[0])
+        self._size = int(circuit_info[1])
+        self._depth = int(circuit_info[2])
