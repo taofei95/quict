@@ -1,6 +1,5 @@
 import copy
 import numpy as np
-import torch
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *

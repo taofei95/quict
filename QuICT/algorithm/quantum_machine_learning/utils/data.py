@@ -3,14 +3,13 @@ import random
 
 
 class Dataset:
-    """An abstract class representing a Dataset."""
+    """An abstract class representing a dataset."""
 
     def __init__(self, *datas: list):
         """Initialize a Dataset.
         
         This method accepts multiple lists of data and returns an iterable dataset.
         """
-
         assert all(
             len(datas[0]) == len(data) for data in datas
         ), "Length mismatch between datas"
@@ -45,7 +44,6 @@ class DataLoader:
             shuffle (bool, optional): Whether shuffle the data at every epoch. Defaults to True.
             drop_last (bool, optional): Whether to drop the last incomplete batch when the dataset size is not divisible by the batch size. Defaults to True.
         """
-
         self._dataset = dataset
         self._shuffle = shuffle
         self._batch_size = batch_size
