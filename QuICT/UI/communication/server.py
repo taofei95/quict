@@ -25,7 +25,7 @@ from flask import Flask, send_file, send_from_directory, flash, request, redirec
 from flask_socketio import SocketIO, send, disconnect, emit
 from QuICT.core import *
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
+# from QuICT.qcda.synthesis.gate_transform.instruction_set import InstructionSet
 from QuICT.tools.interface import OPENQASMInterface
 # from QuICT.qcda.simulation.statevector_simulator import ConstantStateVectorSimulator
 from QuICT.simulation.simulator import Simulator
@@ -333,9 +333,9 @@ def get_gate_set(content):
             simpleSet['gates'].append({
                 "targets": gate.targets,
                 "controls": gate.controls,
-                "name": gate.__class__.__name__,
+                "name": gate.qasm_name,
                 "pargs": pi_args,
-                "img": f"{gate.__class__.__name__}.png",
+                "img": f"{gate.qasm_name}.png",
                 "matrix": matrix,
                 "qasm_name": str(gate.qasm_name).lower(),
             })
@@ -754,9 +754,9 @@ def get_gates_list(qasm: Circuit):
         gates.append({
             "targets": gate.targs,
             "controls": gate.cargs,
-            "name": gate.__class__.__name__,
+            "name": gate.qasm_name,
             "pargs": pi_args,
-            "img": f"{gate.__class__.__name__}.png",
+            "img": f"{gate.qasm_name}.png",
             "matrix": matrix,
             "qasm_name": str(gate.qasm_name).lower(),
         })
