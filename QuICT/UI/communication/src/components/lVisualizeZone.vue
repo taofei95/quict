@@ -1,7 +1,6 @@
 <template>
   <div>
-    <div id="l_drawZone"></div>
-    
+    <div :id="id_base+'drawZone'"></div>
   </div>
 </template>
 <style>
@@ -9,6 +8,7 @@
   --el-dialog-background-color: #13141c;
   fill: white;
 }
+
 .el-dialog__title {
   --el-color-text-primary: white;
 }
@@ -17,7 +17,10 @@
 import * as d3 from "d3";
 
 export default {
-  props: ["VisContentIn"],
+    props: {
+    VisContentIn: Object,
+    id_base: String,
+  },
   data: function () {
     return {
       VisContent: undefined,
@@ -77,13 +80,13 @@ export default {
       }
 
       if (this.drawZone != undefined) {
-        d3.select("#l_drawZone").selectAll("*").remove();
+        d3.select("#"+this.id_base+"drawZone").selectAll("*").remove();
       }
       this.drawZone = d3
-        .select("#l_drawZone")
+        .select("#"+this.id_base+"drawZone")
         .append("svg")
-        .attr("width", `${width*1.25}px`)
-        .attr("height", `${height*1.25}px`)
+        .attr("width", `${width * 1.25}px`)
+        .attr("height", `${height * 1.25}px`)
         .attr("viewBox", "0,0," + width + "," + height)
         .attr("background", "blue")
         .append("g")

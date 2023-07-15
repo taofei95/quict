@@ -9,7 +9,7 @@
     <el-container>
       <el-container direction="vertical">
         <el-main class="vis-block">
-          <VisualizeZone ref="visVue" :VisContentIn="VisContent" v-on:VisUpdate="VisUpdate">
+          <VisualizeZone ref="visVue" :VisContentIn="VisContent" v-on:VisUpdate="VisUpdate" id_base="quCompuser">
           </VisualizeZone>
         </el-main>
         <el-main class="status-bar" style="color: #9aa0be; padding: 0px">

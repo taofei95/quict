@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div id="drawZone"></div>
+    <div :id="id_base+'drawZone'"></div>
     <el-dialog :title="'Edit ' + gateEdit.name" v-model="dialogGateVisible" width="30%">
       <div id="paramsZone"></div>
       <div id="controlTargetZone">
@@ -8,8 +8,8 @@
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogGateVisible = false">取 消</el-button>
-          <el-button type="primary" @click="gate_edited">确 定</el-button>
+          <el-button @click="dialogGateVisible = false">Cancel</el-button>
+          <el-button type="primary" @click="gate_edited">OK</el-button>
         </span>
       </template>
     </el-dialog>
@@ -29,7 +29,10 @@
 import * as d3 from "d3";
 
 export default {
-  props: ["VisContentIn"],
+  props: {
+    VisContentIn: Object,
+    id_base: String,
+  },
   data: function () {
     return {
       VisContent: undefined,
@@ -91,10 +94,10 @@ export default {
       }
 
       if (this.drawZone != undefined) {
-        d3.select("#drawZone").selectAll("*").remove();
+        d3.select("#"+this.id_base+"drawZone").selectAll("*").remove();
       }
       this.drawZone = d3
-        .select("#drawZone")
+        .select("#"+this.id_base+"drawZone")
         .append("svg")
         .attr("width", `${width * 1.25}px`)
         .attr("height", `${height * 1.25}px`)
@@ -146,7 +149,6 @@ export default {
         thisRef.$emit("VisUpdate", { type: "q remove", index: d });
       });
 
-
       // draw gates
       let gates = this.drawZone
         .selectAll(".gatesNode")
@@ -154,7 +156,8 @@ export default {
         .join("g")
         .classed("gatesNode", true)
         .style("transform", (d) => {
-          return `translateX(${d.posX * gateSize + 10 + 10}px) translateY(${d.q * gateSize + 100 + 10
+          return `translateX(${d.posX * gateSize + 10 + 10}px) translateY(${
+            d.q * gateSize + 100 + 10
             }px)`;
         })
         .call(
@@ -204,7 +207,8 @@ export default {
         .attr("height", gateSize - 2)
         .attr("xlink:href", (d) => `./assets/gate/${d.img}`)
         .style("transform", (d) => {
-          return `translateX(-${gateSize / 2}px) translateY(${d.delta * gateSize - gateSize / 2
+          return `translateX(-${gateSize / 2}px) translateY(${
+            d.delta * gateSize - gateSize / 2
             }px)`;
         });
 

@@ -53,8 +53,8 @@
               v-on:UpdataTopology="n_UpdataTopology" :all_sets="n_all_sets" :customer_set="n_customer_set"
               :topology="n_topology" :q="n_qbit" :id_base="'QCDA_new'" :show_save_run_load="false">
             </ToolBar>
-            <nVisualizeZone ref="n_visVue" :VisContentIn="n_VisContent" v-on:VisUpdate="n_VisUpdate">
-            </nVisualizeZone>
+            <VisualizeZone ref="n_visVue" :VisContentIn="n_VisContent" v-on:VisUpdate="n_VisUpdate" id_base="qcda_new">
+            </VisualizeZone>
 
           </el-main>
           <el-aside width="20%" style="background-color: #292c3d; padding: 0px">
@@ -69,7 +69,7 @@
           :all_sets="l_all_sets" :customer_set="l_customer_set" :topology="l_topology" :q="l_qbit" :id_base="'QCDA_load'"
           :show_save_run_load="false" :show_instruction="Route == 'N'">
         </ToolBar>
-        <lVisualizeZone ref="l_visVue" :VisContentIn="l_VisContent">
+        <lVisualizeZone ref="l_visVue" :VisContentIn="l_VisContent" id_base="load_qcda">
           <!-- TODO: replace with a one way vue component -->
         </lVisualizeZone>
 
@@ -82,9 +82,9 @@
       color: white;
       display: flex;
       margin-left: 20px">Original:</span>
-            <oVisualizeZone2 ref="o_visVue2" :VisContentIn="o_VisContent2">
+            <lVisualizeZone ref="o_visVue2" :VisContentIn="o_VisContent2" id_base="op2_qcda">
               <!-- TODO: replace with a one way vue component -->
-            </oVisualizeZone2>
+            </lVisualizeZone>
           </el-main>
           <el-main style="width: 50%;">
             <span style="font-size: large;
@@ -92,9 +92,9 @@
       color: white;
       display: flex;
       margin-left: 20px">Optimized:</span>
-            <oVisualizeZone ref="o_visVue" :VisContentIn="o_VisContent">
+            <lVisualizeZone ref="o_visVue" :VisContentIn="o_VisContent" id_base="op_qcda">
               <!-- TODO: replace with a one way vue component -->
-            </oVisualizeZone>
+            </lVisualizeZone>
           </el-main>
         </el-container>
       </div>
@@ -216,10 +216,8 @@
 </style>
 <script>
 import * as d3 from "d3";
-import oVisualizeZone from "./oVisualizeZone.vue";
-import oVisualizeZone2 from "./oVisualizeZone2.vue";
 import lVisualizeZone from "./lVisualizeZone.vue";
-import nVisualizeZone from "./nVisualizeZone.vue";
+import VisualizeZone from "./VisualizeZone.vue";
 import ProgramZone from "./ProgramZone.vue";
 import ToolBar from "./ToolBar.vue";
 
@@ -274,10 +272,8 @@ export default {
     };
   },
   components: {
-    oVisualizeZone,
-    oVisualizeZone2,
     lVisualizeZone,
-    nVisualizeZone,
+    VisualizeZone,
     ProgramZone,
     ToolBar,
   },
