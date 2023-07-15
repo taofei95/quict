@@ -1,7 +1,8 @@
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import CompositeGate, Swap, H, Measure, IQFT
+from QuICT.core.gate import CompositeGate, Swap, H, Measure
+from QuICT.algorithm.qft import IQFT
 
 from ..utility import OracleInfo, StatePreparationInfo
 
@@ -40,7 +41,7 @@ def construct_circuit(
     # IQFT
     for k in range(len(trickbits) // 2):
         Swap | cgate([trickbits[k], trickbits[len(trickbits) - 1 - k]])
-    IQFT.build_gate(m) | cgate(trickbits)
+    IQFT(m) | cgate(trickbits)
 
     return cgate, {"trickbits": trickbits, "m": m, "n": n, "n_ancilla": n_ancilla}
 

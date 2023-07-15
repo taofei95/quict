@@ -1,5 +1,45 @@
 import numpy as np
 
+from QuICT.core.gate import BasicGate
+from QuICT.core.utils import GateType, MatrixType
+
+
+class SymbolicBasicGate(BasicGate):
+    def __init__(self,
+                 controls: int,
+                 targets: int,
+                 params: int,
+                 type_: GateType,
+                 matrix_type: MatrixType = MatrixType.normal,
+                 pargs: list = None,
+                 precision: str = "double",
+                 is_original_gate: bool = False):
+
+        if pargs is None:
+            pargs = []
+        super().__init__(controls, targets, params, type_, matrix_type, pargs, precision, is_original_gate)
+
+    def permit_element(self, element):
+        """ judge whether the type of a parameter is int/float/complex
+
+        for a quantum gate, the parameter should be int/float/complex
+
+        Args:
+            element: the element to be judged
+
+        Returns:
+            bool: True if the type of element is int/float/complex
+        """
+        if not isinstance(element, list):
+            element = [element]
+
+        for el in element:
+            if not isinstance(el, (int, float, complex, np.complex64, SymbolicPhase)):
+                raise TypeError("basicGate.targs", "int/float/complex/SymbolicPhase", type(el))
+
+
+SymbolicRz = SymbolicBasicGate(0, 1, 1, GateType.rz, MatrixType.diagonal, is_original_gate=True)
+
 
 class SymbolicPhaseVariable:
     """

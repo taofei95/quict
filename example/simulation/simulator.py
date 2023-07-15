@@ -21,7 +21,7 @@ def simulate_random_circuit(device, backend, shots, precision):
 if __name__ == "__main__":
     device = "CPU"                  # one of [CPU, GPU], warning make sure have a GPU Environment, if using GPU device
     backend = "state_vector"        # one of [state_vector, unitary, density_matrix]
-    shots = 1000                    # The time of sample.
+    shots = 100                     # The time of sample.
     precision = "single"            # one of [single, double]
 
     simulate_random_circuit(device, backend, shots, precision)

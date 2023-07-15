@@ -48,15 +48,15 @@ class CommutativeOptimization(object):
     the commutative relation between gates in consideration.
     """
     para_rule = {
-        GateType.x: (Rx(np.pi), np.pi / 2),
-        GateType.sx: (Rx(np.pi / 2), np.pi / 4),
-        GateType.y: (Ry(np.pi), np.pi / 2),
-        GateType.sy: (Ry(np.pi / 2), 0),
-        GateType.z: (Rz(np.pi), np.pi / 2),
-        GateType.s: (Rz(np.pi / 2), np.pi / 4),
-        GateType.sdg: (Rz(-np.pi / 2), -np.pi / 4),
-        GateType.t: (Rz(np.pi / 4), np.pi / 8),
-        GateType.tdg: (Rz(-np.pi / 4), -np.pi / 8)
+        GateType.x: (GateType.rx, [np.pi], np.pi / 2),
+        GateType.sx: (GateType.rx, [np.pi / 2], np.pi / 4),
+        GateType.y: (GateType.ry, [np.pi], np.pi / 2),
+        GateType.sy: (GateType.ry, [np.pi / 2], 0),
+        GateType.z: (GateType.rz, [np.pi], np.pi / 2),
+        GateType.s: (GateType.rz, [np.pi / 2], np.pi / 4),
+        GateType.sdg: (GateType.rz, [-np.pi / 2], -np.pi / 4),
+        GateType.t: (GateType.rz, [np.pi / 4], np.pi / 8),
+        GateType.tdg: (GateType.rz, [-np.pi / 4], -np.pi / 8)
     }
 
     depara_rule = {
@@ -128,8 +128,9 @@ class CommutativeOptimization(object):
                 Otherwise, the `gate` itself with phase angle 0 will be returned.
         """
         try:
-            gate_para, phase = cls.para_rule[gate.type]
-            return gate_para & gate.targ, phase
+            gate_type, gate_pargs, phase = cls.para_rule[gate.type]
+            param_gate = gate_builder(gate_type, params=gate_pargs)
+            return param_gate & gate.targ, phase
         except KeyError:
             return gate, 0
 
@@ -236,15 +237,15 @@ class CommutativeOptimization(object):
         Returns:
             CompositeGate: The CompositeGate after optimization
         """
-        gates = CompositeGate(gates=gates.gates)
+        opt_gates = gates.to_compositegate() if not isinstance(gates, CompositeGate) else gates
         nodes: list[Node] = []
         phase_angle = 0
 
         # Greedy optimizationn
-        for gate in gates:
+        for gate in opt_gates.flatten_gates():
             gate: BasicGate
             # IDGate
-            if gate.type == GateType.id:
+            if gate.type in [GateType.id, GateType.measure, GateType.reset, GateType.barrier]:
                 continue
 
             # GlobalPhaseGate

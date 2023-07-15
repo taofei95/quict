@@ -4,22 +4,22 @@
 
 如何验证量子算法的正确性是量子计算最重要的部分之一，使用经典机器模拟量子电路是验证量子算法的一种方式。在 QuICT 中， Simulator 用于模拟量子电路运行过程中量子比特的状态，目前支持三种量子电路模拟器，分别是酉矩阵、状态向量和密度矩阵模拟。
 
-|  模拟器后端   |   CPU   |   GPU   |    multi-GPU   |
+|  模拟器后端   |   CPU   |   GPU   |    Noise   |
 | ------      | ------- |  ------  |    ------    |
 |   状态向量    |   &#10004;   |  &#10004;   |    &#10004;   |
 |    酉矩阵     |   &#10004;   |  &#10004;   |    &#10008;   |
-|   密度矩阵    |   &#10004;   |  &#10004;   |    &#10008;   |
+|   密度矩阵    |   &#10004;   |  &#10004;   |    &#10004;   |
 
 模拟器将返回一个 Dict 数据结构，该数据结构存储有关量子电路模拟的信息
 
 - ID：电路名称
 - SHOTS：模拟的重复次数
-  
+
 - 模拟器参数：
     - 设备：硬件类型 [CPU, GPU]
     - 后端：模拟器的模式
     - 选项：模拟器的参数
-  
+
 - 数据：
     - 计数：每次模拟的测量结果
     - 状态向量：经过模拟之后的量子比特状态向量
@@ -77,6 +77,7 @@ circuit.random_append(rand_size=100)
 # Simulate Quantum Circuit
 simulator = StateVectorSimulator()
 result = simulator.run(circuit)
+sample = simulator.sample(1000)
 ```
 
 ## 酉矩阵模拟 (Unitary Simulator)
@@ -94,6 +95,7 @@ circuit.random_append(rand_size=100)
 # Simulate Quantum Circuit
 simulator = UnitarySimulator(device="CPU", precision="double")
 result = simulator.run(circuit)
+sample = simulator.sample(1000)
 ```
 
 ## 密度矩阵模拟器
@@ -129,14 +131,17 @@ circuit.random_append(rand_size=100)
 # Simulate Quantum Circuit
 simulator = DensityMatrixSimulator(device="CPU", precision="double")
 result = simulator.run(circuit)
+sample = simulator.sample(1000)
 ```
 
-## 高性能状态向量模拟器 (QuICT_sim)
+## CPU高性能状态向量模拟器 (QuICT_sim)
 
     !!! warning
         使用前需要安装 QuICT_sim， 可以使用 ‘pip install quict-sim’ 来安装。
 
 为达到更快的模拟速度，充分利用经典计算机的计算性能，QuICT 基于 CPU 的 AVX 指令集和 SSE 指令集开发了一款更高性能的状态向量模拟器。与 QuICT 的基础状态向量模拟器相比，高性能状态向量模拟器可达到数倍到数十倍的性能提升，并且随着比特数的增加，其优势也愈发明显。
+
+WARNING: 此量子电路模拟器暂不支持含噪声电路模拟
 
 |  量子比特数量   |   10   |   12   |    14   |   16   |   18   |    20   | 
 | ------      | ------- |  ------  |  ------  | ------- |  ------  |  ------  |
@@ -156,5 +161,5 @@ circuit.random_append(rand_size=100)
 # Simulate Quantum Circuit
 simulator = HPStateVecotrSimulator(precision="double")
 result = simulator.run(circuit)
+sample = simulator.sample(1000)
 ```
-

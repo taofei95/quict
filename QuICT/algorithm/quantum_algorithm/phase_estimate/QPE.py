@@ -1,5 +1,6 @@
 from QuICT.core import Circuit
-from QuICT.core.gate import CompositeGate, H, Swap, IQFT
+from QuICT.core.gate import CompositeGate, H, Swap
+from QuICT.algorithm.qft import IQFT
 from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.tools import Logger
 import numpy as np
@@ -40,13 +41,20 @@ class QPE:
         for idx in trickbits:
             H | circ(idx)
         # controlled unitary, EXPECT idx 0 to be the control bit
-        workbits_state_preparation | circ(workbits)
+        wsp_idx = workbits[:workbits_state_preparation.width()]
+        workbits_state_preparation | circ(wsp_idx)
         for k in range(n_phase):
-            controlled_unitary(1 << (n_phase - 1 - k)) | circ([trickbits[k]] + workbits)
+            cu_gate = controlled_unitary(1 << (n_phase - 1 - k))
+            if isinstance(cu_gate, CompositeGate):
+                cu_idx = [trickbits[k]] + workbits[:cu_gate.width() - 1]
+            else:
+                cu_idx = [trickbits[k]] + workbits[:cu_gate.controls + cu_gate.targets - 1]
+
+            cu_gate | circ(cu_idx)
         # IQFT
         for k in range(n_phase // 2):
             Swap | circ([trickbits[k], trickbits[n_phase - 1 - k]])
-        IQFT.build_gate(n_phase) | circ(trickbits)
+        IQFT(n_phase) | circ(trickbits)
         return circ
 
     def run(

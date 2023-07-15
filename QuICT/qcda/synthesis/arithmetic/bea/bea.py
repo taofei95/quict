@@ -1,6 +1,7 @@
 import numpy as np
 
-from QuICT.core.gate import CompositeGate, CX, CCX, CSwap, X, QFT, IQFT, CU1, U1, CCRz, Phase
+from QuICT.core.gate import CompositeGate, CX, CCX, CSwap, X, CU1, U1, CCRz, Phase
+from QuICT.algorithm.qft import QFT, IQFT
 
 
 def ex_gcd(a, b, arr):
@@ -184,18 +185,18 @@ def cc_fourier_adder_mod(gate_set, a, N, phib, c, low, dualControlled=True):
     cc_fourier_adder_wired(gate_set, a, phib, c, dualControlled=dualControlled)
     fourier_adder_wired_reversed(gate_set, N, phib)
     with gate_set:
-        IQFT.build_gate(len(phib)) & phib
+        IQFT(len(phib)) & phib
         CX & [phib[0], low[0]]
-        QFT.build_gate(len(phib)) & phib
+        QFT(len(phib)) & phib
     cc_fourier_adder_wired(gate_set, N, phib, low, dualControlled=False)
     cc_fourier_adder_wired_reversed(
         gate_set, a, phib, c, dualControlled=dualControlled)
     with gate_set:
-        IQFT.build_gate(len(phib)) & phib
+        IQFT(len(phib)) & phib
         X & phib[0]
         CX & [phib[0], low[0]]
         X & phib[0]
-        QFT.build_gate(len(phib)) & phib
+        QFT(len(phib)) & phib
     cc_fourier_adder_wired(gate_set, a, phib, c, dualControlled=dualControlled)
 
 
@@ -282,9 +283,9 @@ def fourier_mult_mod(gate_set, a, N, x, phib, low):
 
 def c_mult_mod(gate_set, a, N, x, b, c, low):
     with gate_set:
-        QFT.build_gate(len(b)) & b
+        QFT(len(b)) & b
         c_fourier_mult_mod(gate_set, a, N, x, b, c, low)
-        IQFT.build_gate(len(b)) & b
+        IQFT(len(b)) & b
 
 
 class BEAAdder(object):

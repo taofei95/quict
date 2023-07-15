@@ -1,6 +1,4 @@
-import pytest
-
-from QuICT.algorithm.quantum_algorithm import QAE, StatePreparationInfo, OracleInfo
+from QuICT.algorithm.quantum_algorithm import QAE, OracleInfo
 
 from QuICT.core.gate import *
 from QuICT.simulation.state_vector import StateVectorSimulator

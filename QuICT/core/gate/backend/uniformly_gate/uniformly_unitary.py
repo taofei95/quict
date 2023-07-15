@@ -7,7 +7,7 @@
 import numpy as np
 
 from .uniformly_rotation import UniformlyRotation
-from QuICT.core.gate import build_gate, GateType, CompositeGate, H, Rz, CX
+from QuICT.core.gate import gate_builder, GateType, CompositeGate, H, Rz, CX
 
 
 class UniformlyUnitary(object):
@@ -61,12 +61,11 @@ class UniformlyUnitary(object):
             angle_list[dual_position] = angles[0]
             angle_list[dual_position + length] = angles[1]
         gates = self.uniformly_unitary(low + 1, high, Rxv)
-        CX & [low, high - 1] | gates
-        gates.extend(self.uniformly_unitary(low + 1, high, Rxu))
+        CX | gates([low, high - 1])
+        self.uniformly_unitary(low + 1, high, Rxu) | gates
         URz = UniformlyRotation(GateType.rz)
         urz = URz.execute(angle_list)
-        urz & list(range(high - 1, low - 1, -1))
-        gates.extend(urz)
+        urz | gates(list(range(high - 1, low - 1, -1)))
         return gates
 
     def unitary_to_u3gate(self, unitary, target):
@@ -90,7 +89,7 @@ class UniformlyUnitary(object):
         else:
             lamda = 0
             phi = np.angle(unitary[1, 1] / np.cos(theta))
-        gate = build_gate(GateType.u3, target, [theta * 2, phi, lamda])
+        gate = gate_builder(GateType.u3, params=[theta * 2, phi, lamda]) & target
         assert np.allclose(gate.matrix, unitary)
         return gate
 

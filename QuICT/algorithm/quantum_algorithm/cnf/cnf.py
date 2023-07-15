@@ -16,6 +16,7 @@ from QuICT.qcda.optimization.commutative_optimization import *
 class CNFSATOracle:
     def __init__(self, simu=None):
         self.simulator = simu
+        self.mct_generator = MCTOneAux()
 
     def circuit(
         self, cnf_para: str, ancilla_qubits_num: int = 3, dirty_ancilla: int = 0, output_cgate: bool = True
@@ -58,7 +59,7 @@ class CNFSATOracle:
                 X | self._cgate(controls_X[i])
             X | self._cgate(target)
             if controls_abs != []:
-                MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(
+                self.mct_generator.execute(len(controls_abs) + 2) | self._cgate(
                     controls_abs + [target, current_Aux]
                 )
 
@@ -81,7 +82,7 @@ class CNFSATOracle:
                             depth,
                         )
                     if controls_abs != []:
-                        MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(
+                        self.mct_generator.execute(len(controls_abs) + 2) | self._cgate(
                             controls_abs + [target, target - 1]
                         )
                     else:
@@ -119,7 +120,7 @@ class CNFSATOracle:
 
                     current_Aux = variable_number + 1
                     if controls != []:
-                        MCTOneAux().execute(len(controls) + 2) | self._cgate(
+                        self.mct_generator.execute(len(controls) + 2) | self._cgate(
                             controls + [target, current_Aux]
                         )
 
@@ -150,7 +151,7 @@ class CNFSATOracle:
                             depth,
                         )
                     if controls_abs != []:
-                        MCTOneAux().execute(len(controls_abs) + 2) | self._cgate(
+                        self.mct_generator.execute(len(controls_abs) + 2) | self._cgate(
                             controls_abs + [target, target - 1]
                         )
 

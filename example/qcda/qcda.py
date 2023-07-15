@@ -1,18 +1,21 @@
 import random
 
 import os
+import numpy as np
 from scipy.stats import unitary_group
 
 from QuICT.core import Circuit, Layout
-from QuICT.core.gate import GateType
-from QuICT.qcda.synthesis.gate_transform import *
-from QuICT.qcda.qcda import QCDA
+from QuICT.core.gate import GateType, CCRz, CSwap, Unitary
+from QuICT.core.virtual_machine.special_set import USTCSet
+from QuICT.core.virtual_machine.quantum_machine import OriginalKFC6130
+from QuICT.qcda import QCDA
 
 
 typelist = [GateType.rx, GateType.ry, GateType.rz, GateType.x, GateType.y, GateType.z, GateType.cx]
+cli_tlist = [GateType.cx, GateType.x, GateType.y, GateType.z, GateType.h]
 
 
-if __name__ == '__main__':
+def qcda_workflow():
     layout_path = os.path.join(os.path.dirname(__file__), "../layout/ibmqx2_layout.json")
     layout = Layout.load_file(layout_path)
 
@@ -37,3 +40,19 @@ if __name__ == '__main__':
     qcda.add_gate_transform(USTCSet)
     circuit_phy = qcda.compile(circuit)
     circuit_phy.draw(filename="after_qcda")
+
+
+def auto_qcda_with_qm():
+    circuit = Circuit(6)
+    circuit.random_append(20, typelist=typelist, random_params=True)
+    print("The original Quantum Circuit.")
+    circuit.draw("command")
+
+    qcda = QCDA()
+    circuit_phy = qcda.auto_compile(circuit, OriginalKFC6130)
+    print("The suitable Quantum Circuit for the given Quantum Machine.")
+    circuit_phy.draw('command', flatten=True)
+
+
+if __name__ == '__main__':
+    auto_qcda_with_qm()

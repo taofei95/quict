@@ -59,7 +59,7 @@ class TestGrover(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("The Grover unit test start!")
-        cls.simulator = StateVectorSimulator(matrix_aggregation=False)
+        cls.simulator = StateVectorSimulator()
 
     @classmethod
     def tearDownClass(cls) -> None:

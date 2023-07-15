@@ -30,6 +30,7 @@ class CheckPoint(Operator):
         self._pos += shift
 
     def __init__(self):
+        """ The Initialization of the class of CheckPoint """
         super().__init__(targets=1)
         self._uid = unique_id_generator()
         self._pos = -1
