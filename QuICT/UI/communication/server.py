@@ -164,39 +164,45 @@ def connect():
 
 # Login PART
 
+
 @socketio.on("login", namespace="/api/pty")
 def login(content):
     uid = content['uuid']
     content = content['content']
     usr = content['user']
     psw = content['psw']
-    if SQLManger().validate_user(usr) :
+    if SQLManger().validate_user(usr):
 
-        if SQLManger().validation_password(usr, psw) : #psw == users[usr]['password']:
+        if SQLManger().validation_password(usr, psw):
             user = User()
             user.id = usr
             userinfo = SQLManger().get_user_info(usr)
             flask_login.login_user(user)
-            emit('login_success', {'uuid': uid, 'info':userinfo}, namespace="/api/pty")
+            emit('login_success', {'uuid': uid,
+                 'info': userinfo}, namespace="/api/pty")
         else:
-            emit('login_error', {'uuid': uid,}, namespace="/api/pty")
+            emit('login_error', {'uuid': uid, }, namespace="/api/pty")
 
     else:
-        emit('error_msg', {'uuid': uid, 'error_msg': 'Failed to Login, enter the correct User.'})
-    
+        emit('error_msg', {
+             'uuid': uid, 'error_msg': 'Failed to Login, enter the correct User.'})
+
+
 @socketio.on("testLogin", namespace="/api/pty")
 def testLogin(content):
     uid = content['uuid']
 
     if flask_login.current_user is not None and flask_login.current_user.is_authenticated:
-        emit('login_success', {'uuid': uid,}, namespace="/api/pty")
+        emit('login_success', {'uuid': uid, }, namespace="/api/pty")
     else:
-        emit('need_login', {'uuid': uid,}, namespace="/api/pty")
+        emit('need_login', {'uuid': uid, }, namespace="/api/pty")
+
 
 @socketio.on("logout", namespace="/api/pty")
 def logout(content):
     flask_login.logout_user()
     return 'Logged out'
+
 
 @socketio.on("register", namespace="/api/pty")
 @authenticated_only
@@ -207,28 +213,29 @@ def register(content):
     psw = content['psw']
     email = content['email']
     json_dict = {
-            'username': usr,
-            'password': psw,
-            'email': email,
-            'level': 0,
-            }
+        'username': usr,
+        'password': psw,
+        'email': email,
+        'level': 0,
+    }
 
     # Create user folder
     try:
-        if not SQLManger().validate_user(usr) :
+        if not SQLManger().validate_user(usr):
 
             create_user_folder(usr)
 
             # Update user info for SQL and Redis
             SQLManger().add_user(json_dict)
             # RedisController().update_user_dynamic_info(usr, get_default_user_config(usr))
-            emit('register_ok', {'uuid': uid,}, namespace="/api/pty")
+            emit('register_ok', {'uuid': uid, }, namespace="/api/pty")
 
         else:
             emit('error_msg', {'uuid': uid, 'error_msg': 'User existed.'})
 
     except:
         emit('error_msg', {'uuid': uid, 'error_msg': 'Failed to register.'})
+
 
 @socketio.on("unsubscribe", namespace="/api/pty")
 @authenticated_only
@@ -247,7 +254,8 @@ def unsubscribe(content):
 
     # Delete user information in database
     SQLManger().delete_user(usr)
-    emit('unsubscribe_ok', {'uuid': uid,}, namespace="/api/pty")
+    emit('unsubscribe_ok', {'uuid': uid, }, namespace="/api/pty")
+
 
 @socketio.on("forget", namespace="/api/pty")
 @authenticated_only
@@ -257,7 +265,7 @@ def forget_password(content):
     usr = content['user']
     email = content['email']
     """ Send email for user for activate new password. """
-    if SQLManger().validate_user(usr) :
+    if SQLManger().validate_user(usr):
         user_info = SQLManger().get_user_info(usr)
         user_email = user_info[1]
         if user_email != email:
@@ -267,12 +275,13 @@ def forget_password(content):
             reset_password = send_reset_password_email(user_email)
             SQLManger().update_password(usr, reset_password)
 
-            emit('forget_ok', {'uuid': uid,}, namespace="/api/pty")
+            emit('forget_ok', {'uuid': uid, }, namespace="/api/pty")
     else:
         emit('error_msg', {'uuid': uid, 'error_msg': 'User not existed.'})
 
+
 @socketio.on("changepsw", namespace="/api/pty")
-@authenticated_only    
+@authenticated_only
 def update_password(content):
     uid = content['uuid']
     content = content['content']
@@ -283,22 +292,24 @@ def update_password(content):
         """ Update user's password. """
         SQLManger().update_password(usr, new_password)
 
-        emit('update_psw_ok', {'uuid': uid,}, namespace="/api/pty")
+        emit('update_psw_ok', {'uuid': uid, }, namespace="/api/pty")
     else:
-        emit('error_msg', {'uuid': uid, 'error_msg': 'Old Password Not Correct.'})
+        emit('error_msg', {'uuid': uid,
+             'error_msg': 'Old Password Not Correct.'})
 
 # QCDA PART
+
 
 @socketio.on("get_gate_set", namespace="/api/pty")
 @authenticated_only
 def get_gate_set(content):
     uid = content['uuid']
-    source = content['source']    
+    source = content['source']
     gate_set = []
     # QFT, IQFT,Perm, ControlPermMulDetail, PermShift, ControlPermShift, PermMul, ControlPermMul, PermFx, Unitary, ShorInitial,
     FullSet = [H, S, S_dagger, X, Y, Z, SX, SY, SW, ID, U1, U2, U3, Rx, Ry, Rz, T, T_dagger, Phase, CZ,
                CX, CY, CH, CRz, CU1, CU3, FSim, Rxx, Ryy, Rzz, Measure, Reset, Barrier, Swap, CCX, CCRz,  CSwap]
-    for name, gateset in {'FullSet': FullSet, 'CustomerSet':[], 'GoogleSet': [FSim, SX, SY, SW, Rx, Ry], 'IBMQSet': [CX, Rz, SX, X], 'IonQSet': [Rxx, Rx, Ry, Rz], 'USTCSet': [CX, Rx, Ry, Rz, H, X]}.items():
+    for name, gateset in {'FullSet': FullSet, 'CustomerSet': [], 'GoogleSet': [FSim, SX, SY, SW, Rx, Ry], 'IBMQSet': [CX, Rz, SX, X], 'IonQSet': [Rxx, Rx, Ry, Rz], 'USTCSet': [CX, Rx, Ry, Rz, H, X]}.items():
         logger.warning(name)
         simpleSet = {'name': name, 'gates': []}
         for gate in gateset:
@@ -331,13 +342,13 @@ def get_gate_set(content):
         gate_set.append(simpleSet)
     if source == 'QCDA':
         emit('n_all_sets', {'uuid': uid,
-                        'all_sets': gate_set}, namespace="/api/pty")
+                            'all_sets': gate_set}, namespace="/api/pty")
     elif source == 'QCDA_load':
         emit('l_all_sets', {'uuid': uid,
-                        'all_sets': gate_set}, namespace="/api/pty")
+                            'all_sets': gate_set}, namespace="/api/pty")
     else:
         emit('all_sets', {'uuid': uid,
-                        'all_sets': gate_set}, namespace="/api/pty")
+                          'all_sets': gate_set}, namespace="/api/pty")
 
 
 @socketio.on("qasm_load", namespace="/api/pty")
@@ -346,7 +357,7 @@ def load_file(content):
     uid = content['uuid']
     source = content['source']
     program_text = content['content']
-    
+
     try:
         circuit = load_data(data=program_text)
     except Exception as e:
@@ -360,13 +371,14 @@ def load_file(content):
             f"error parse qasm file {e} {traceback.format_exc()}")
         return
     if source == 'QCDA':
-        # optimize 
+        # optimize
         optimize = content['optimize']
         mapping = content['mapping']
         topology = content['topology']
         set = content['set']
         logger.info(f'circuit.qasm(): {circuit.qasm()}')
-        optimized_q = optimize_qasm(uid=uid, qasm_text=program_text, topology=topology, set=set, optimize=optimize, mapping=mapping)
+        optimized_q = optimize_qasm(uid=uid, qasm_text=program_text,
+                                    topology=topology, set=set, optimize=optimize, mapping=mapping)
         org_q = load_data(data=program_text)
         org_gates = get_gates_list(org_q)
         emit(
@@ -374,18 +386,19 @@ def load_file(content):
         logger.info(f'optimized_q: {optimized_q}')
         gates = get_gates_list(optimized_q)
         logger.info(f'gates: {gates}')
-        emit('QCDA_o_gates_update', {'uuid': uid, 'gates': gates, 'gates2':org_gates}, namespace="/api/pty")
+        emit('QCDA_o_gates_update', {
+             'uuid': uid, 'gates': gates, 'gates2': org_gates}, namespace="/api/pty")
     else:
         # no optimize
         emit(
             "qasm_load", {'uuid': uid, 'qasm': circuit.qasm()}, namespace="/api/pty")
 
         gates = get_gates_list(circuit)
-        emit('gates_update', {'uuid': uid, 'gates': gates}, namespace="/api/pty")
+        emit('gates_update', {'uuid': uid,
+             'gates': gates}, namespace="/api/pty")
 
-        
 
-def optimize_qasm(uid, qasm_text, topology, set, optimize, mapping): 
+def optimize_qasm(uid, qasm_text, topology, set, optimize, mapping):
     circuit = load_data(data=qasm_text)
     if not optimize and not mapping:
         return circuit
@@ -410,7 +423,6 @@ def optimize_qasm(uid, qasm_text, topology, set, optimize, mapping):
     #             gate_set2 = t_gate._type
     #     circuit_set = InstructionSet(gate_set2, gate_set1)
     #     circuit_set.register_one_qubit_rule(xyx_rule)
-    
 
     emit(
         'info',  {'uuid': uid, 'info': f"Compiling circuit..."}, namespace="/api/pty")
@@ -421,18 +433,19 @@ def optimize_qasm(uid, qasm_text, topology, set, optimize, mapping):
     if optimize:
         qcda.add_default_optimization()
     if mapping:
-        qcda.add_default_mapping(circuit_topology)
+        qcda.add_mapping(circuit_topology)
 
     # if set['name'] not in ['FullSet']:
     #     qcda.add_default_synthesis(circuit_set)
     circuit_phy = qcda.compile(circuit)
-    
+
     logger.info(f"circuit_phy.qasm() {circuit_phy.qasm()}")
 
     # instance = OPENQASMInterface()
     # instance.load_circuit(circuit_phy)
-    
+
     return circuit_phy
+
 
 @socketio.on("qasm_save", namespace="/api/pty")
 @authenticated_only
@@ -450,8 +463,9 @@ def save_file(content):
     emit('download_uri', {'uuid': uid, 'download_uri': url_for(
         'download_file', name=file_path)}, namespace="/api/pty")
 
+
 class NumpyEncoder(json.JSONEncoder):
-    
+
     def default(self, myobj):
         if isinstance(myobj, np.integer):
             return int(myobj)
@@ -460,6 +474,7 @@ class NumpyEncoder(json.JSONEncoder):
         elif isinstance(myobj, np.ndarray):
             return myobj.tolist()
         return json.JSONEncoder.default(self, myobj)
+
 
 @socketio.on("qasm_run", namespace="/api/pty")
 @authenticated_only
@@ -474,26 +489,28 @@ def run_file(content):
     logger.info(f"run content {content} \nusing setting {setting}")
     try:
 
-        circuit = optimize_qasm(uid=uid, qasm_text=data, topology=topology, set=set, optimize=optimize, mapping=mapping)
+        circuit = optimize_qasm(uid=uid, qasm_text=data, topology=topology,
+                                set=set, optimize=optimize, mapping=mapping)
 
         logger.info(f"run qasm {circuit.qasm()}")
         emit(
             'info',  {'uuid': uid, 'info': f"Running circuit..."}, namespace="/api/pty")
-        simulation = Simulator(**setting)
-        result = simulation.run(circuit)
+        simulation = Simulator(
+            setting['device'], setting['backend'], setting['precision'])
+        result = simulation.run(circuit, setting['shots'])
         emit(
             'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
         logger.info(f"run result {result}")
         if result["data"]["state_vector"] is not None:
-            state = result["data"]["state_vector"] 
+            state = result["data"]["state_vector"]
 
             state_np = cupy.asnumpy(state)
             state_np_r = np.real(state_np)
             state_np_i = np.imag(state_np)
             state_str_r = np.array2string(state_np_r, separator=',', formatter={
-                                        'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+                'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
             state_str_i = np.array2string(state_np_i, separator=',', formatter={
-                                        'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+                'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
             # logger.info( state_str_r, state_str_i)
             state_r = json.loads(state_str_r)
             state_i = json.loads(state_str_i)
@@ -506,16 +523,16 @@ def run_file(content):
                 state_amp.append(amp)
                 state_ang.append(ang)
 
-            result["data"]["state_vector"]  = list(
+            result["data"]["state_vector"] = list(
                 zip(index, state_r, state_i, state_amp, state_ang))
 
         if result["data"]["density_matrix"] is not None:
-            state = result["data"]["density_matrix"] 
+            state = result["data"]["density_matrix"]
 
-            state_np = state # cupy.asnumpy(state)
+            state_np = state  # cupy.asnumpy(state)
             state_np_r = np.real(state_np)
             state_np_i = np.imag(state_np)
-            
+
             # state_str_r = np.array2string(state_np_r, separator=',', formatter={
             #                             'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
             # state_str_i = np.array2string(state_np_i, separator=',', formatter={
@@ -537,20 +554,23 @@ def run_file(content):
                 row_0.append(i2bin)
                 t_row = [i2bin]
                 for j in range(len(state_r)):
-                    t_row.append(f'{state_r[i][j]}{"+"if state_i[i][j] >=0 else "-"}{state_i[i][j]}j')
+                    t_row.append(
+                        f'{state_r[i][j]}{"+"if state_i[i][j] >=0 else "-"}{state_i[i][j]}j')
 
                 rows.append(t_row)
 
-            result["data"]["density_matrix"]  = rows
+            result["data"]["density_matrix"] = rows
 
             logger.info(f"rows{rows}")
 
-        emit('run_result', {'uuid': uid, 'run_result': result}, namespace="/api/pty")
+        emit('run_result', {'uuid': uid,
+             'run_result': result}, namespace="/api/pty")
     except Exception as e:
         import traceback
         logger.warning(f"Run circuit error: {e}, {traceback.format_exc()}")
         emit(
             'info', {'uuid': uid, 'info': f"Run circuit error"}, namespace="/api/pty")
+
 
 @socketio.on("o_qasm_run", namespace="/api/pty")
 @authenticated_only
@@ -564,27 +584,29 @@ def o_run_file(content):
     setting = content['setting']
     logger.info(f"run content {content}")
     try:
-         
-        circuit = optimize_qasm(uid=uid, qasm_text=data, topology=topology, set=set, optimize=optimize, mapping=mapping)
+
+        circuit = optimize_qasm(uid=uid, qasm_text=data, topology=topology,
+                                set=set, optimize=optimize, mapping=mapping)
         # circuit = load_data(data=data)
         logger.info(f"run qasm {circuit.qasm()}")
         emit(
             'info',  {'uuid': uid, 'info': f"Running circuit..."}, namespace="/api/pty")
-        simulation = Simulator(**setting)
-        result = simulation.run(circuit)
+        simulation = Simulator(
+            setting['device'], setting['backend'], setting['precision'])
+        result = simulation.run(circuit, setting['shots'])
         emit(
             'info', {'uuid': uid, 'info': f"Run circuit finished."}, namespace="/api/pty")
         logger.info(f"run result {result}")
         if result["data"]["state_vector"] is not None:
-            state = result["data"]["state_vector"] 
+            state = result["data"]["state_vector"]
 
             state_np = cupy.asnumpy(state)
             state_np_r = np.real(state_np)
             state_np_i = np.imag(state_np)
             state_str_r = np.array2string(state_np_r, separator=',', formatter={
-                                        'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+                'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
             state_str_i = np.array2string(state_np_i, separator=',', formatter={
-                                        'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
+                'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
             # logger.info( state_str_r, state_str_i)
             state_r = json.loads(state_str_r)
             state_i = json.loads(state_str_i)
@@ -597,16 +619,16 @@ def o_run_file(content):
                 state_amp.append(amp)
                 state_ang.append(ang)
 
-            result["data"]["state_vector"]  = list(
+            result["data"]["state_vector"] = list(
                 zip(index, state_r, state_i, state_amp, state_ang))
 
         if result["data"]["density_matrix"] is not None:
-            state = result["data"]["density_matrix"] 
+            state = result["data"]["density_matrix"]
 
-            state_np = state # cupy.asnumpy(state)
+            state_np = state  # cupy.asnumpy(state)
             state_np_r = np.real(state_np)
             state_np_i = np.imag(state_np)
-            
+
             # state_str_r = np.array2string(state_np_r, separator=',', formatter={
             #                             'float_kind': lambda x: "\""+("%f" % x).rstrip('0').rstrip('.')+"\""})
             # state_str_i = np.array2string(state_np_i, separator=',', formatter={
@@ -628,23 +650,27 @@ def o_run_file(content):
                 row_0.append(i2bin)
                 t_row = [i2bin]
                 for j in range(len(state_r)):
-                    t_row.append(f'{state_r[i][j]}{"+"if state_i[i][j] >=0 else "-"}{state_i[i][j]}j')
+                    t_row.append(
+                        f'{state_r[i][j]}{"+"if state_i[i][j] >=0 else "-"}{state_i[i][j]}j')
 
                 rows.append(t_row)
 
-            result["data"]["density_matrix"]  = rows
+            result["data"]["density_matrix"] = rows
 
             logger.info(f"rows{rows}")
-        emit('o_run_result', {'uuid': uid, 'run_result': result}, namespace="/api/pty")
+        emit('o_run_result', {'uuid': uid,
+             'run_result': result}, namespace="/api/pty")
     except Exception as e:
         import traceback
         logger.warning(f"Run circuit error: {e}, {traceback.format_exc()}")
         emit(
             'info', {'uuid': uid, 'info': f"Run circuit error: {e}"}, namespace="/api/pty")
 
+
 def cal_mod(x, y):
     z = complex(x, y)
     return cmath.polar(z)
+
 
 def load_data(data) -> Circuit:
     instance = OPENQASMInterface()
@@ -652,6 +678,7 @@ def load_data(data) -> Circuit:
     instance.analyse_circuit_from_ast(instance.ast)
 
     return instance.circuit
+
 
 @socketio.on("qcda_load", namespace="/api/pty")
 @authenticated_only
@@ -675,6 +702,7 @@ def qcda_load(content):
         emit(
             'qcda_error', {'uuid': uid, 'info': f"load gates error: {e}"}, namespace="/api/pty")
 
+
 @socketio.on("programe_update", namespace="/api/pty")
 @authenticated_only
 def programe_update(content):
@@ -689,10 +717,10 @@ def programe_update(content):
         gates = get_gates_list(qasm)
         if source == 'QCDA':
             emit('QCDA_gates_update', {'uuid': uid,
-             'gates': gates}, namespace="/api/pty")
+                                       'gates': gates}, namespace="/api/pty")
         else:
             emit('gates_update', {'uuid': uid,
-                'gates': gates}, namespace="/api/pty")
+                                  'gates': gates}, namespace="/api/pty")
             emit(
                 'info', {'uuid': uid, 'info': f"gates updated."}, namespace="/api/pty")
     except Exception as e:
@@ -702,7 +730,7 @@ def programe_update(content):
             'info', {'uuid': uid, 'info': f"update gates error: {e}"}, namespace="/api/pty")
 
 
-def get_gates_list(qasm:Circuit):
+def get_gates_list(qasm: Circuit):
     gates_org = qasm.gates
     gates = []
 

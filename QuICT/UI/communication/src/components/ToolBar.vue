@@ -739,31 +739,12 @@ export default {
       setting.shots = Number(this.dialogSeShots);
       switch (setting.device) {
         case "CPU":
-          setting.backend = "unitary";
+          setting.backend = this.dialogBe_Backend;
           setting.precision = this.dialogSe_Precision;
           break;
         case "GPU":
           setting.backend = this.dialogBe_Backend;
           setting.precision = this.dialogSe_Precision;
-          switch (this.dialogBe_Backend) {
-            case "unitary":
-              break;
-            case "statevector":
-              setting.gpu_device_id = Number(this.dialogSe_GPU_device_id);
-              setting.sync = this.dialogSe_sync;
-              setting.optimize = this.dialogSe_optimize;
-              break;
-            case "multiGPU":
-              setting.ndev = Number(this.dialogSe_ndev);
-              setting.sync = this.dialogSe_sync;
-              break;
-          }
-          break;
-        case "qiskit":
-          setting.token = Number(this.dialogSeToken);
-          break;
-        case "qcompute":
-          setting.token = Number(this.dialogSeToken);
           break;
       }
       return setting;
