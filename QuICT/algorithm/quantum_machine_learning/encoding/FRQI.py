@@ -9,6 +9,8 @@ from QuICT.core.gate import *
 class FRQI:
     """FRQI encoding for encoding classical image data into quantum circuits.
     
+    For a 2^n x 2^n image, the number of qubits required for FRQI is 2n + 1 (2n position qubits + 1 color qubit).
+    
     References:
         https://link.springer.com/article/10.1007/s11128-010-0177-y
     """

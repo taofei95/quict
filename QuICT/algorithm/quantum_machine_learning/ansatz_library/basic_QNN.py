@@ -12,21 +12,21 @@ class BasicQNN(Ansatz):
         https://arxiv.org/abs/1802.06002
     """
 
-    def __init__(self, n_qubits: int, readout: int, layers: list):
+    @property
+    def readout(self):
+        return [self._readout]
+
+    def __init__(self, n_qubits: int, layers: list):
         """Initialize a basic QNN instance.
 
         Args:
             n_qubits (int): The number of qubits.
-            readout (int): The index of the readout qubit.
             layers (list): The list of PQC layers. Supported layers are "XX", "YY", "ZZ", "ZX".
         """
 
         super(BasicQNN, self).__init__(n_qubits)
-        if readout < 0 or readout >= self._n_qubits:
-            raise ValueError
-        self._data_qubits = list(range(n_qubits))
-        self._data_qubits.remove(readout)
-        self._readout = readout
+        self._readout = n_qubits - 1
+        self._data_qubits = list(range(n_qubits - 1))
         self._layers = layers
         self._validate_layers()
 

@@ -12,7 +12,11 @@ class HEAnsatz(Ansatz):
         https://www.nature.com/articles/nature23879
     """
 
-    def __init__(self, n_qubits: int, d: int, layers: list):
+    @property
+    def readout(self):
+        return self._readout
+
+    def __init__(self, n_qubits: int, d: int, layers: list, readout: list = None):
         """Initialize an HE-ansatz instance.
 
         Args:
@@ -25,6 +29,7 @@ class HEAnsatz(Ansatz):
         self._d = d
         self._layers = layers
         self._param_layers = 0
+        self._readout = [0] if readout is None else readout
         self._validate_layers()
 
     def init_circuit(self, params: Union[Variable, np.ndarray] = None):

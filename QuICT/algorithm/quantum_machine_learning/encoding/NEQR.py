@@ -8,6 +8,8 @@ from QuICT.core.gate import *
 class NEQR(FRQI):
     """NEQR encoding for encoding classical image data into quantum circuits.
     
+    For a 2^n x 2^n image with a gray scale of 2^q, the number of qubits required for FRQI is 2n + q (2n position qubits + q color qubits).
+    
     References:
         https://link.springer.com/article/10.1007/s11128-013-0567-z
     """

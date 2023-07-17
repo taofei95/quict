@@ -18,9 +18,8 @@ class QAOALayer(Ansatz):
         Args:
             n_qubits (int): The number of qubits.
             p (int): The number of layers of the QAOA ansatz.
-            hamiltonian (Hamiltonian): The hamiltonian of a specific combinatorial-optimization problem.
+            hamiltonian (Hamiltonian): The hamiltonian for a specific combinatorial-optimization problem.
         """
-
         super(QAOALayer, self).__init__(n_qubits)
         self._p = p
         self._hamiltonian = hamiltonian
@@ -34,7 +33,6 @@ class QAOALayer(Ansatz):
         Returns:
             Circuit: The QAOA ansatz.
         """
-
         params = np.random.randn(2, self._p) if params is None else params
         params = Variable(pargs=params) if isinstance(params, np.ndarray) else params
         if params.shape == (2, self._p):
