@@ -54,6 +54,7 @@ class TestBenchmark(unittest.TestCase):
         benchmark = QuantumMachinebenchmark()
         circuits_list = benchmark.get_circuits(quantum_machine_info=vqm)
         assert len(circuits_list) == 20
+
         for cir in circuits_list:
             circuit = cir.circuit
             if cir.type != "benchmark":

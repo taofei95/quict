@@ -19,7 +19,7 @@ from QuICT.tools.circuit_library.get_benchmark_circuit import BenchmarkCircuitBu
 
 class QuantumMachinebenchmark:
     """ The quantum machine Benchmark. """
-    __alg_fields_list = ["cnf", "vqe"]
+    __alg_fields_list = ["adder", "qft", "cnf", "vqe", "quantum_walk"]
 
     def __init__(
         self,
@@ -80,11 +80,11 @@ class QuantumMachinebenchmark:
             qcda = QCDA()
 
         for i in range(len(field)):
-            cirs = CircuitLib().get_circuit("algorithm", field[i], qubits_interval=vqm.qubit_number)
+            cirs = CircuitLib().get_circuit("algorithm", field[i], qubits_interval=[vqm.qubit_number, vqm.qubit_number])
             alg_cirs.extend(cirs)
         for cir in alg_cirs:
             field = cir.name.split("+")[0]
-            if enable_qcda_for_alg_cir == True:
+            if enable_qcda_for_alg_cir is True:
                 if field != "vqe":
                     cir = qcda.auto_compile(cir, vqm)
             if is_measure:
@@ -207,29 +207,10 @@ class QuantumMachinebenchmark:
     def evaluate(self, circuits: Union[List[BenchCirData], BenchCirData]):
         """ Evaluate all circuits. """
         for bench_cir in circuits:
-            if bench_cir.type == "random":
-                self._evaluate_random_circuits(bench_cir)
-            elif bench_cir.type == "benchmark":
-                self._evaluate_benchmark_circuit(bench_cir)
-            elif bench_cir.type == "algorithm":
-                self._evaluate_algorithm_circuits(bench_cir)
+            self._evaluate_circuits(bench_cir)
 
-    def _evaluate_random_circuits(self, bench_cir):
+    def _evaluate_circuits(self, bench_cir):
         cir_qv = bench_cir.qv
-        cir_fidelity = bench_cir.fidelity
-        cir_score = round(cir_qv * cir_fidelity, 4)
-        bench_cir.benchmark_score = cir_score
-
-    def _evaluate_benchmark_circuit(self, bench_cir):
-        cir_qv = bench_cir.qv
-        cir_fidelity = bench_cir.fidelity
-        cir_value = bench_cir.bench_cir_value
-        cir_score = round(cir_qv * cir_fidelity * cir_value, 4)
-        bench_cir.benchmark_score = cir_score
-
-    def _evaluate_algorithm_circuits(self, bench_cir):
-        cir_qv = bench_cir.qv
-        cir_fidelity = bench_cir.fidelity
         cir_fidelity = bench_cir.fidelity
         cir_level_score = bench_cir.level_score
         cir_score = round(cir_qv * cir_fidelity * cir_level_score, 4)
@@ -240,8 +221,8 @@ class QuantumMachinebenchmark:
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path)
 
-        # if len(bench_cir) > 0:
-        #     self._graph_show(bench_cir)
+        if len(bench_cir) > 0:
+            self._graph_show(bench_cir)
 
         if self._output_file_type == "txt":
             self._txt_show(bench_cir)
@@ -321,7 +302,7 @@ class QuantumMachinebenchmark:
         ax1.fill(angles_1, values, 'r', alpha=0.5)
 
         ax1.set_thetagrids(angles_1 * 180 / np.pi, feature_1)
-        ax1.set_ylim(0, np.floor(values.max()) + 0.5)
+        ax1.set_ylim(0, np.floor(values_1.max()) + 0.5)
 
         plt.tick_params(labelsize=12)
         plt.title('Special benchmark circuits radar chart show')
@@ -350,6 +331,7 @@ class QuantumMachinebenchmark:
             # Sets the angle of the radar chart to bisect a plane
             N = len(values_2)
             alg_data = values_2
+
             angles_2 = np.linspace(0, 2 * np.pi, N, endpoint=False)
             feature_2 = np.concatenate((feature_2, [feature_2[0]]))
             values_2 = np.concatenate((values_2, [values_2[0]]))
@@ -368,30 +350,32 @@ class QuantumMachinebenchmark:
             ax2.grid(True)
 
         ################################ the overall benchmark score #####################################
-        radar_labels = np.array(['random', 'special', 'algorithm'])
-        nAttr = 3
-        alg_data = values_2
+        data_labels = ('random', 'special', 'algorithm')
+        alg_data = list(values_2)
         if len(alg_data) < 4:
-            alg_data = alg_data + (4 - len(alg_data)) * [0]
+            alg_data += (4 - len(alg_data)) * [0]
         else:
             alg_data = random.sample(list(alg_data), 4)
-
-        data = np.array([
-            list(random_data),
-            list(special_data),
-            list(alg_data)
-        ])
-        angles_3 = np.linspace(0, 2 * np.pi, nAttr, endpoint=False)
-        data = np.concatenate((data, [data[0]]))
+        target_list = [random_data, special_data, alg_data]
+        list_1, list_2, list_3, list_4 = [], [], [], []
+        for i in range(len(target_list)):
+            list_1.append(target_list[i][0])
+            list_2.append(target_list[i][1])
+            list_3.append(target_list[i][2])
+            list_4.append(target_list[i][3])
+        values_3 = np.array([list_1, list_2, list_3, list_4])
+        angles_3 = np.linspace(0, 2 * np.pi, len(values_3), endpoint=False)
+        values_3 = np.concatenate((values_3, [values_3[0]]))
         angles_3 = np.concatenate((angles_3, [angles_3[0]]))
+
         ax3 = plt.subplot(224, polar=True)
-        # ax3.plot(angles_3, data, 'bo-', color='gray', linewidth=1, alpha=0.2)
-        ax3.plot(angles_3, data, 'o-', linewidth=1.5, alpha=0.2)
-        ax3.fill(angles_3, data, alpha=0.25)
-        plt.thetagrids((angles_3 * 180 / np.pi)[:-1], radar_labels)
+        ax3.plot(angles_3, values_3, 'o-', linewidth=2, alpha=0.2)
+        ax3.fill(angles_3, values_3, alpha=0.5)
+        ax3.set_ylim(0, np.floor(values_3.max()) + 0.5)
+        plt.tick_params(labelsize=12)
         plt.title('The overall benchmark score radar chart show')
-        plt.legend(["number type score"])
-        ax3.set_ylim(0, np.floor(data.max()) + 4)
+        plt.legend(data_labels, loc=(0.94, 0.80), labelspacing=0.1)
+        ax3.set_ylim(0, np.floor(values_3.max()) + 4)
         plt.grid(True)
 
         plt.savefig(self._output_path + "/benchmark_radar_chart_show.jpg")

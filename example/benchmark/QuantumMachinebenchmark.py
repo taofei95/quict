@@ -47,7 +47,7 @@ def step_benchmark():
         level=1,                        # choose circuits group level, one of [1, 2, 3].
         enable_qcda_for_alg_cir=True,   # Auto-Compile the algorithm circuit with the given quantum machine info,
         is_measure=True                 # can choose whether to measure the circuit according to your needs.
-    )                                   
+    )
     print(len(circuits_list))
 
     # Here the sub-physical machine to be measured is simulated.
