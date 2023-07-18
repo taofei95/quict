@@ -4,6 +4,7 @@ import numpy as np
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.tools.interface.qasm_interface import OPENQASMInterface
+from QuICT.algorithm.qft import QFT
 
 
 class TestCircuit(unittest.TestCase):
