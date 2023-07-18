@@ -21,10 +21,6 @@ from QuICT.tools.exception.simulation import SampleBeforeRunError
 class StateVectorSimulator:
     """ The simulator for qubits' vector state. """
     @property
-    def circuit(self):
-        return self._circuit
-
-    @property
     def vector(self):
         return self._vector
 
@@ -33,7 +29,11 @@ class StateVectorSimulator:
         self._vector = self._gate_calculator.normalized_state_vector(vec, self._qubits)
 
     @property
-    def device(self):
+    def device(self) -> str:
+        return self._gate_calculator.device
+
+    @property
+    def device_id(self) -> int:
         return self._gate_calculator._gpu_device_id
 
     def __init__(

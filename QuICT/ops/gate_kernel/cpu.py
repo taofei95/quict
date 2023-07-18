@@ -45,8 +45,9 @@ def matrix_dot_vector(
 
     # Step 2: Get fixed index of vector by control indexes
     based_idx = 0
-    for carg_idx in control_args:
-        based_idx += 1 << carg_idx
+    if control_args is not None:
+        for carg_idx in control_args:
+            based_idx += 1 << carg_idx
 
     # Step 3: Get related index of vector by target indexes
     arg_len = 1 << len(target_args)
@@ -56,7 +57,7 @@ def matrix_dot_vector(
             if idx & (1 << midx):
                 indexes[idx] += 1 << target_args[midx]
 
-    mat_args = np.append(control_args, target_args)
+    mat_args = np.append(control_args, target_args) if control_args is not None else target_args
     sorted_args = mat_args.copy()
     sorted_args = np.sort(sorted_args)
 

@@ -13,6 +13,10 @@ class UnitarySimulator():
     def vector(self):
         return self._vector
 
+    @property
+    def device(self):
+        return self._gate_calculator.device
+
     def __init__(
         self,
         device: str = "CPU",
