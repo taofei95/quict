@@ -61,8 +61,6 @@ class StateVectorSimulator:
         self._qubits = int(circuit.width())
         self._pipeline = circuit.fast_gates
 
-        # self._gate_calculator.gate_matrix_combined(self._circuit)
-
     def initial_state_vector(self, all_zeros: bool = False):
         """ Initial qubits' vector states. """
         if not all_zeros:
