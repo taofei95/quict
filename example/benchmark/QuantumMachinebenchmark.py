@@ -3,9 +3,8 @@ import os
 from QuICT.benchmark.benchmark import QuantumMachinebenchmark
 from QuICT.core.layout import Layout
 from QuICT.core.utils.gate_type import GateType
-from QuICT.core.virtual_machine import InstructionSet
+from QuICT.core.virtual_machine import InstructionSet, VirtualQuantumMachine
 from QuICT.simulation.state_vector import StateVectorSimulator
-from QuICT.core.virtual_machine.virtual_machine import VirtualQuantumMachine
 
 
 layout = Layout.linear_layout(5)
