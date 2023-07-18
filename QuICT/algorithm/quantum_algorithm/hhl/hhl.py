@@ -1,9 +1,9 @@
 import numpy as np
 
+from QuICT.algorithm.qft import QFT, IQFT
 from QuICT.core import Circuit
 from QuICT.core.gate import (
     H, X, Ry, CU3, Measure,
-    QFT, IQFT,
     CompositeGate, MultiControlToffoli)
 from QuICT.qcda.synthesis.quantum_state_preparation import QuantumStatePreparation
 from QuICT.qcda.synthesis.unitary_decomposition.controlled_unitary import ControlledUnitaryDecomposition
@@ -26,6 +26,7 @@ class HHL:
     def __init__(self, simulator=None) -> None:
         self.simulator = simulator
         self._circuit_cache = None
+        self._circuit_params = None
 
     def _reconstruct(self, matrix):
         matrix_conj = matrix.T.conj()
@@ -43,7 +44,7 @@ class HHL:
         Return:
             CompositeGate
         """
-        c = 1
+        c = max(1, c)
         n = len(control)
         control_rotation_gates = CompositeGate()
         multi_control = MultiControlToffoli()(n - 1)
@@ -73,13 +74,18 @@ class HHL:
         X | control_rotation_gates(target)
         return control_rotation_gates
 
+    def reset(self):
+        self._circuit_params = None
+        self._circuit_cache = None
+
     def circuit(
         self,
-        matrix,
-        vector,
+        matrix=None,
+        vector=None,
         dominant_eig=None,
         min_abs_eig=None,
         phase_qubits: int = 9,
+        control_unitary=ControlledUnitaryDecomposition(recursive_basis=1),
         measure=True
     ):
         """
@@ -92,16 +98,22 @@ class HHL:
             min_abs_eig(float/None): estimation of minimum absolute eigenvalue
                 If None, use 'np.linalg.eigvals' to obtain
             phase_qubits(int): number of qubits representing the Phase
+            control_unitary: method for preparing control-unitary gates
             measure(bool): measure ancilla qubit or not
         Returns:
             Circuit: HHL circuit
         """
         if self._circuit_cache:
             return self._circuit_cache
+
+        self._circuit_params = (matrix, vector, dominant_eig, min_abs_eig, phase_qubits, control_unitary, measure)
+
         n = int(np.log2(len(matrix)))
         if (1 << n) != len(matrix) or (1 << n) != len(matrix[0]) or (1 << n) != len(vector):
             raise QuICTException(
-                f"shape of matrix and vector should be 2^n, here are {len(matrix)}*{len(matrix[0])} and {len(vector)}")
+                3999,
+                f"Shape of matrix and vector should be 2^n, here are {len(matrix)}*{len(matrix[0])} and {len(vector)}"
+            )
 
         vector /= np.linalg.norm(vector)
         if not np.allclose(matrix, matrix.T.conj(), rtol=1e-6, atol=1e-6):
@@ -136,7 +148,7 @@ class HHL:
         scale = 1 - 1 / (1 << phase_qubits - 1)
         m = expm(matrix / dominant_eig * np.pi * 1.0j * scale)
         for idx in reversed(phase):
-            U, _ = ControlledUnitaryDecomposition().execute(
+            U, _ = control_unitary.execute(
                 np.identity(1 << n, dtype=np.complex128), m
             )
             U | unitary_matrix_gates([idx] + register)
@@ -166,44 +178,36 @@ class HHL:
             f"circuit width    = {circuit.width():4}\n" +
             f"circuit size     = {circuit.size():4}\n" +
             f"hamiltonian size = {unitary_matrix_gates.size():4}\n" +
-            f"CRy size         = {control_rotation.size():4}"
+            f"CRy size         = {control_rotation.size():4}\n" +
+            f"eigenvalue bits  = {phase_qubits:4}"
         )
 
         self._circuit_cache = circuit
 
         return self._circuit_cache
 
-    def run(
-        self,
-        matrix,
-        vector,
-        dominant_eig=None,
-        min_abs_eig=None,
-        phase_qubits: int = 9,
-        measure=True
-    ):
-        """ hhl algorithm to solve linear equation such as Ax=b,
-            where A is the given matrix and b is the given vector
-        Args:
-            matrix(ndarray): the matrix A above, which shape must be 2^n * 2^n
-            vector(array): the vector b above, which shape must be 2^n
-                matrix and vector MUST have the same number of ROWS!
-            dominant_eig(float/None): estimation of dominant eigenvalue
-                If None, use 'np.linalg.eigvals' to obtain
-            phase_qubits(int): number of qubits representing the Phase
-            measure(bool): measure ancilla qubit or not
+    def run(self):
+        """
         Returns:
             list: vector x_hat, which equal to kx:
                 x is the solution vector of Ax = b, and k is an unknown coefficient
         """
+        if not self._circuit_cache:
+            raise QuICTException(
+                3999,
+                "The HHL algorithm has not already generated a circuit, please run 'hhl.circuit(**args)' first."
+            )
+
+        vector, measure = self._circuit_params[1], self._circuit_params[-1]
+
         size = len(vector)
-
-        circuit = self.circuit(matrix, vector, dominant_eig, min_abs_eig, phase_qubits, measure)
-
+        circuit = self._circuit_cache
         state_vector = self.simulator.run(circuit)
 
-        if self.simulator._device == "GPU":
+        try:
             state_vector = state_vector.get()
+        except:
+            pass
 
         if measure and int(circuit[0]) == 0 or not measure:
             return np.array(state_vector[: size], dtype=np.complex128)

@@ -31,18 +31,22 @@ class TestHHL(unittest.TestCase):
     def test_hhl_accuracy(self):
         np_slt = np.linalg.solve(matrix, vector)
         np_slt /= np.linalg.norm(np_slt)
-        hhl_slt = HHL(TestHHL.simulator).run(
+        hhl = HHL(TestHHL.simulator)
+        hhl.circuit(
             matrix, vector, phase_qubits=6, measure=False
         )
+        hhl_slt = hhl.run()
         hhl_slt /= np.linalg.norm(hhl_slt)
         mse = MSE(np_slt, hhl_slt)
 
         assert abs(mse) < 0.01
 
     def test_hhl_measure(self):
-        str = HHL(TestHHL.simulator).run(
+        hhl = HHL(TestHHL.simulator)
+        hhl.circuit(
             matrix, vector, phase_qubits=6
         )
+        hhl.run()
 
         assert 1
 
