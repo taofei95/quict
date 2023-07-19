@@ -3,7 +3,7 @@ import unittest
 
 from QuICT.core.gate import H
 from QuICT.simulation.state_vector import StateVectorSimulator
-from QuICT.algorithm.quantum_algorithm.quantum_walk_v1 import QuantumWalk, Graph
+from QuICT.algorithm.quantum_algorithm.quantum_walk import QuantumWalk, Graph
 
 
 class TestQuantumWalk(unittest.TestCase):
