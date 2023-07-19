@@ -10,6 +10,8 @@ from QuICT.algorithm.quantum_machine_learning.differentiator.adjoint import (
 
 
 class Differentiator:
+    """ The high-level differentiator class, including all QuICT differentiator mode. """
+
     __DEVICE = ["CPU", "GPU"]
     __BACKEND = ["adjoint"]
     __PRECISION = ["single", "double"]
@@ -25,6 +27,15 @@ class Differentiator:
         precision: str = "double",
         **options,
     ):
+        """Initialize a differentiator.
+
+        Args:
+            device (str, optional): The device of the simulator. One of [CPU, GPU]. Defaults to "GPU".
+            backend (str, optional): The backend for the simulator. One of ["adjoint"]. Defaults to "adjoint".
+            precision (str, optional): The precision of simulator, one of ["single", "double"]. Defaults to "double".
+            **options (dict): other optional parameters for the simulator.
+                adjoint: [gpu_device_id] (only for gpu)
+        """
         assert device in Differentiator.__DEVICE, ValueError(
             "Differentiator.device", "[CPU, GPU]", device
         )
@@ -74,6 +85,18 @@ class Differentiator:
         state_vector: np.ndarray,
         expectation_op: Hamiltonian,
     ):
+        """Calculate the gradients and expectation of a Parameterized Quantum Circuit (PQC).
+
+        Args:
+            circuit (Circuit): PQC that needs to calculate gradients.
+            variables (Variable): The parameters of the circuit.
+            state_vector (np.ndarray): The state vector output from forward propagation.
+            expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
+
+        Returns:
+            Variable: The parameters with gradients.
+            np.float: The expectation.
+        """
         return self._differentiator.run(
             circuit, variables, state_vector, expectation_op
         )
@@ -85,6 +108,18 @@ class Differentiator:
         state_vector_list: list,
         expectation_op: Hamiltonian,
     ):
+        """Calculate the gradients and expectations of a batch of PQCs.
+
+        Args:
+            circuit (Circuit): PQC that needs to calculate gradients.
+            variables (Variable): The parameters of the circuit.
+            state_vector_list (list): The state vectors output from multiple FP process.
+            expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
+
+        Returns:
+            list: The list of parameters with gradients.
+            np.ndarray: The expectations.
+        """
         return self._differentiator.run_batch(
             circuit, variables, state_vector_list, expectation_op
         )
@@ -92,11 +127,29 @@ class Differentiator:
     def get_expectation(
         self, state_vector: np.ndarray, expectation_op: Hamiltonian,
     ):
+        """Calculate the expectation of a PQC.
+
+        Args:
+            state_vector (np.ndarray): The state vector output from forward propagation.
+            expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
+
+        Returns:
+            np.float: The expectation.
+        """
         return self._differentiator.get_expectation(state_vector, expectation_op)
 
     def get_expectations_batch(
         self, state_vector_list: list, expectation_op: Hamiltonian,
     ):
+        """Calculate the expectations of a batch of PQCs.
+
+        Args:
+            state_vector_list (list): The state vectors output from multiple FP process.
+            expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
+
+        Returns:
+            np.ndarray: The expectations.
+        """
         return self._differentiator.get_expectations_batch(
             state_vector_list, expectation_op
         )
