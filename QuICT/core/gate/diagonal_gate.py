@@ -70,3 +70,15 @@ class DiagonalGate(object):
                 CX & [i, n + i * copies + j] | gates
 
         # Stage 2: Gray Initial
+
+    def phase_shift(self, alpha):
+        """
+        Implement the phase shift defined in Equation 5
+        |x> -> exp(i alpha_s <s, x>) |x>
+
+        Args:
+            alpha(listLike): list of alpha_s in the equation
+
+        Returns:
+            CompositeGate: CompositeGate for equation 5
+        """
