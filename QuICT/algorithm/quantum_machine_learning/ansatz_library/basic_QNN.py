@@ -5,23 +5,41 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 
 
-class QNNLayer(Ansatz):
-    """Initialize a QNNLayer instance."""
+class BasicQNN(Ansatz):
+    """Basic QNN ansatz.
+    
+    References:
+        https://arxiv.org/abs/1802.06002
+    """
 
-    def __init__(self, n_qubits: int, readout: int, layers: list):
-        """The QNN layer constructor.
+    @property
+    def readout(self):
+        return [self._readout]
+
+    def __init__(self, n_qubits: int, layers: list):
+        """Initialize a basic QNN instance.
+
+        Args:
+            n_qubits (int): The number of qubits.
+            layers (list): The list of PQC layers. Supported layers are "XX", "YY", "ZZ", "ZX".
         """
 
-        super(QNNLayer, self).__init__(n_qubits)
-        if readout < 0 or readout >= self._n_qubits:
-            raise ValueError
-        self._data_qubits = list(range(n_qubits))
-        self._data_qubits.remove(readout)
-        self._readout = readout
+        super(BasicQNN, self).__init__(n_qubits)
+        self._readout = n_qubits - 1
+        self._data_qubits = list(range(n_qubits - 1))
         self._layers = layers
         self._validate_layers()
 
     def init_circuit(self, params: Union[Variable, np.ndarray] = None):
+        """Initialize a basic QNN ansatz with trainable parameters.
+
+        Args:
+            params (Union[Variable, np.ndarray], optional): Initialization parameters. Defaults to None.
+
+        Returns:
+            Circuit: The basic QNN ansatz.
+        """
+
         params = (
             np.random.randn(len(self._layers), self._n_qubits - 1)
             if params is None

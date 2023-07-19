@@ -7,9 +7,21 @@ from QuICT.core.gate import *
 
 
 class FRQI:
-    """FRQI encoding for encoding classical image data into quantum circuits."""
+    """FRQI encoding for encoding classical image data into quantum circuits.
+    
+    For a 2^n x 2^n image, the number of qubits required for FRQI is 2n + 1 (2n position qubits + 1 color qubit).
+    
+    References:
+        https://link.springer.com/article/10.1007/s11128-010-0177-y
+    """
 
     def __init__(self, grayscale: int = 2):
+        """Initialize a FRQI instance.
+
+        Args:
+            grayscale (int, optional): The grayscale of the input images. Defaults to 2.
+        """
+
         self._grayscale = grayscale
         self._N = None
         self._n_qubits = None
@@ -18,6 +30,16 @@ class FRQI:
         self._q_state = None
 
     def __call__(self, img, use_qic=False):
+        """Call FRQI for a given image.
+
+        Args:
+            img (np.ndarray): The input image.
+            use_qic (bool, optional): Whether to use Quantum Image Commpression. Defaults to False.
+
+        Returns:
+            Circuit: Quantum circuit form of the image.
+        """
+
         img = self._img_preprocess(img, flatten=True)
 
         # step 1: |0> -> |H>

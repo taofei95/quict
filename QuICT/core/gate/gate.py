@@ -603,9 +603,12 @@ class BasicGate(object):
         Returns:
             gate(BasicGate): a copy of this gate
         """
+        pargs = [
+            parg.copy() if isinstance(parg, Variable) else parg for parg in self.pargs
+        ]
         gate = BasicGate(
             self.controls, self.targets, self.params, self.type,
-            self.matrix_type, self.pargs[:], self.precision
+            self.matrix_type, pargs, self.precision
         )
 
         if len(self.targs) > 0:

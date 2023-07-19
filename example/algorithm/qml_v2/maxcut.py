@@ -1,4 +1,3 @@
-import sys
 import tqdm
 import numpy_ml
 
@@ -6,8 +5,6 @@ from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 from QuICT.algorithm.tools.drawer.graph_drawer import *
 from QuICT.algorithm.quantum_machine_learning.model import QAOA
-from QuICT.simulation.state_vector import StateVectorSimulator
-
 
 n = 5
 nodes = list(range(n))
@@ -28,18 +25,18 @@ H = maxcut_hamiltonian(edges)
 p = 4  # 量子电路层数
 MAX_ITERS = 150  # 最大迭代次数
 LR = 0.1  # 梯度下降的学习率
-SEED = 17  # 随机数种子
+SEED = 1  # 随机数种子
 SHOTS = 1000
 
 set_seed(SEED)  # 设置全局随机种子
 
-qaoa_net = QAOA(n_qubits=n, p=p, hamiltonian=H)
 optim = numpy_ml.neural_nets.optimizers.Adam(lr=LR)
+qaoa_net = QAOA(n_qubits=n, p=p, hamiltonian=H, optimizer=optim, device="CPU")
 
 # 开始训练
 loader = tqdm.trange(MAX_ITERS, desc="Training", leave=True)
 for it in loader:
-    state, loss = qaoa_net.run_step(optim)
+    state, loss = qaoa_net.run_step()
     loader.set_postfix(loss=loss.item())
 
 prob = qaoa_net.sample(SHOTS)

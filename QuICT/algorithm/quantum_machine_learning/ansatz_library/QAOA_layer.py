@@ -8,18 +8,30 @@ from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 
 
 class QAOALayer(Ansatz):
+    """The quantum approximate optimization algorithm (QAOA) ansatz."""
+
     def __init__(
         self, n_qubits: int, p: int, hamiltonian: Hamiltonian,
     ):
+        """Initialize a QAOA ansatz instance.
+
+        Args:
+            n_qubits (int): The number of qubits.
+            p (int): The number of layers of the QAOA ansatz.
+            hamiltonian (Hamiltonian): The hamiltonian for a specific combinatorial-optimization problem.
+        """
         super(QAOALayer, self).__init__(n_qubits)
         self._p = p
         self._hamiltonian = hamiltonian
 
     def init_circuit(self, params: Union[Variable, np.ndarray] = None):
-        """Build QAOA circuit with optimizable parameters.
+        """Initialize a QAOA ansatz with trainable parameters.
+
+        Args:
+            params (Union[Variable, np.ndarray], optional): Initialization parameters. Defaults to None.
 
         Returns:
-            Circuit: The QAOA circuit.
+            Circuit: The QAOA ansatz.
         """
         params = np.random.randn(2, self._p) if params is None else params
         params = Variable(pargs=params) if isinstance(params, np.ndarray) else params
