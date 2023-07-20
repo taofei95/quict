@@ -68,7 +68,7 @@ class BenchmarkCircuitBuilder:
                     shuffle_qindexes = list(set(shuffle_qindexes) - set([index]))
             depth = cir.depth()
             cir.name = "+".join(
-                ["benchmark", "highly_parallelized", f"w{width}_s{cir.size()}_d{cir.depth()}_level{level}"]
+                ["benchmark", "highly_parallelized", f"w{width}_s{gates}_d{depth}_level{level}"]
             )
             cirs_list.append(cir)
 
@@ -231,7 +231,7 @@ class BenchmarkCircuitBuilder:
 
             depth = cir.depth()
             cir.name = "+".join(
-                ["benchmark", "mediate_measure", f"w{width}_s{cir.size()}_d{depth}_level{level}"]
+                ["benchmark", "mediate_measure", f"w{width}_s{gates}_d{depth}_level{level}"]
             )
             cir_list.append(cir)
 
