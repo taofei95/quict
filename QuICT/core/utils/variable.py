@@ -164,10 +164,3 @@ class Variable(object):
 
     def zero_grad(self):
         self._grads = np.zeros(self._shape, dtype=np.float64)
-
-
-if __name__ == "__main__":
-    pargs = Variable(np.array([[0, 1, 2], [0.1, 0.2, 0.3]]))
-    print(pargs[0, 2].pargs)
-    print((pargs[0, 2] ** 3 + 2.3).pargs, (pargs[0, 2] ** 3 + 2.3).grads)
-    print((3 / pargs[0, 2]).pargs, (3 / pargs[0, 2]).grads)
