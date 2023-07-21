@@ -758,6 +758,14 @@ class CNFSATOracle:
 
     @staticmethod
     def read_CNF(cnf_file):
+        """ Load the file which contains the CNFs
+
+        Args:
+            cnf_file (str): The file path
+
+        Returns:
+            Tuple(int, int, list): The variable number, the clause number, the list of CNF
+        """
         # file analysis
         variable_number = 0
         clause_number = 0
