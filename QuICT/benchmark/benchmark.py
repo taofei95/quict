@@ -63,7 +63,7 @@ class QuantumMachinebenchmark:
             if is_measure:
                 Measure | cir
             cir.name = "+".join(["random", "random", f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"])
-            cir = BenchCirData(cir)
+
             cir_list.append(cir)
         return cir_list
 
