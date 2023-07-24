@@ -65,6 +65,7 @@ class HEAnsatz(Ansatz):
                 else:
                     for qid in range(self._n_qubits - 1):
                         gate_dict[gate] | circuit([qid, qid + 1])
+                    gate_dict[gate] | circuit([self._n_qubits - 1, 0])
 
         return circuit
 
