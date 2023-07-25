@@ -91,14 +91,15 @@ class Variable(object):
             return False
 
     def __add__(self, other):
-        if isinstance(other, (int, float, np.float64)):
-            if isinstance(self.pargs, np.float64):
-                return Variable(
-                    pargs=self.pargs + other,
-                    grads=self.grads,
-                    identity=self.identity,
-                    origin_shape=self.origin_shape,
-                )
+        if isinstance(other, (int, float, np.float64, np.ndarry)):
+            if isinstance(other, np.ndarry) and other.shape != self.pargs.shape:
+                raise ValueError
+            return Variable(
+                pargs=self.pargs + other,
+                grads=self.grads,
+                identity=self.identity,
+                origin_shape=self.origin_shape,
+            )
         raise TypeError
 
     def __radd__(self, other):
@@ -114,12 +115,15 @@ class Variable(object):
         if isinstance(other, (int, float, np.float64)):
             if isinstance(self.pargs, np.float64):
                 grads = other if abs(self.grads) < 1e-12 else self.grads * other
-                return Variable(
-                    pargs=self.pargs * other,
-                    grads=grads,
-                    identity=self.identity,
-                    origin_shape=self.origin_shape,
-                )
+            else:
+                grads = self.grads * other
+                grads[abs(grads) < 1e-12] = other
+            return Variable(
+                pargs=self.pargs * other,
+                grads=grads,
+                identity=self.identity,
+                origin_shape=self.origin_shape,
+            )
         raise TypeError
 
     def __rmul__(self, other):
@@ -138,21 +142,22 @@ class Variable(object):
 
     def __pow__(self, other):
         if isinstance(other, (int, float, np.float64)):
+            grad = other * self.pargs ** (other - 1.0)
             if isinstance(self.pargs, np.float64):
-                grad = other * self.pargs ** (other - 1.0)
                 grads = grad if abs(self.grads) < 1e-12 else self.grads * grad
-                return Variable(
-                    pargs=self.pargs ** other,
-                    grads=grads,
-                    identity=self.identity,
-                    origin_shape=self.origin_shape,
-                )
+            else:
+                grads = self.grads * grad
+                grads[abs(grads) < 1e-12] = grad
+            return Variable(
+                pargs=self.pargs ** other,
+                grads=grads,
+                identity=self.identity,
+                origin_shape=self.origin_shape,
+            )
         raise TypeError
 
     def __str__(self):
-        return "Variable(pargs={}, grads={}, identity={}, shape={})".format(
-            self.pargs, self.grads, self.identity, self.shape
-        )
+        return "Variable(pargs={}, grads={})".format(self.pargs, self.grads)
 
     def copy(self):
         return Variable(
@@ -164,3 +169,11 @@ class Variable(object):
 
     def zero_grad(self):
         self._grads = np.zeros(self._shape, dtype=np.float64)
+
+    def flatten(self):
+        return Variable(
+            pargs=self._pargs.flatten(),
+            grads=self._grads.flatten(),
+            identity=self.identity,
+            origin_shape=self._pargs.shape,
+        )
