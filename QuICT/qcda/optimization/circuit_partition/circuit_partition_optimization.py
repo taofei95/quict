@@ -5,7 +5,7 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.circuit import DAGCircuit
-from QuICT.core.gate import BasicGate, CompositeGate
+from QuICT.core.gate import BasicGate
 from QuICT.core.utils import GateType, CircuitMode
 from QuICT.qcda.optimization import SymbolicCliffordOptimization, CliffordRzOptimization, TemplateOptimization, \
     CommutativeOptimization
@@ -107,7 +107,6 @@ class CircuitPartitionOptimization(object):
             self.circuit.append(g)
 
         def extend(self, gates):
-            # self.circuit.extend(gates)
             for g in gates:
                 self.circuit.append(g)
 
@@ -230,9 +229,6 @@ class CircuitPartitionOptimization(object):
         for b in blocks[1:]:
             m = self._get_merged_mode(ret[-1], b)
             if m is not None:
-                # for g in b.circuit.gates:
-                #     ret[-1].append(g)
-
                 ret[-1].extend(b.circuit.gates)
                 ret[-1].mode = m
             else:
@@ -413,14 +409,9 @@ class CircuitPartitionOptimization(object):
                     if self.verbose:
                         print(f'\tafter {optimizer}: {cur_circ.size()}')
 
-            # if isinstance(cur_circ, CompositeGate):
-            #     new_circ.extend(cur_circ)
-            # else:
-            #     for g in cur_circ.gates:
-            #         new_circ.append(g)
+            cur_circ.gate_decomposition(decomposition=False)
             for g in cur_circ.gates:
                 new_circ.append(g)
-
 
         return new_circ
 
