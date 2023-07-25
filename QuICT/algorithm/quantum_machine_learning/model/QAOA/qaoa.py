@@ -56,16 +56,16 @@ class QAOA(Model):
         # FP
         state = self._simulator.run(self._circuit)
         # BP
-        _, loss = self._differentiator.run(
-            self._circuit, self._params, state, -1 * self._hamiltonian
+        param_grads, loss = self._differentiator.run(
+            self._circuit, self._params, state, [-1 * self._hamiltonian]
         )
         # optimize
         self._params.pargs = self._optimizer.update(
-            self._params.pargs, self._params.grads, "QAOA_params"
+            self._params.pargs, param_grads[0], "QAOA_params"
         )
         self._params.zero_grad()
         # update
-        self._update()
+        self.update()
         return state, loss
 
     def sample(self, shots: int):
@@ -80,5 +80,6 @@ class QAOA(Model):
         sample = self._simulator.sample(shots)
         return sample
 
-    def _update(self):
+    def update(self):
+        """Update the trainable parameters in the PQC."""
         self._circuit = self._qaoa_builder.init_circuit(self._params)

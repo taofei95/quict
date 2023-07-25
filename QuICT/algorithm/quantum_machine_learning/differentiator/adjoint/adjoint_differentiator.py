@@ -85,7 +85,7 @@ class AdjointDifferentiator:
             self._device, self._precision, self._device_id, self._sync
         )
 
-    def run(
+    def _run_one_op(
         self,
         circuit: Circuit,
         variables: Variable,
@@ -101,7 +101,7 @@ class AdjointDifferentiator:
             expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
 
         Returns:
-            Variable: The parameters with gradients.
+            np.ndarry: The gradients of parameters (params_shape).
             np.float: The expectation.
         """
 
@@ -122,7 +122,7 @@ class AdjointDifferentiator:
 
         for idx in range(len(self._bp_pipeline)):
             if self._remain_training_gates == 0:
-                return variables, expectation
+                return variables.grads, expectation
             origin_gate = self._pipeline[idx]
             gate, qidxes, _ = self._bp_pipeline[idx]
             if isinstance(gate, BasicGate):
@@ -138,14 +138,44 @@ class AdjointDifferentiator:
                 raise TypeError(
                     "AdjointDifferentiator.run.circuit", "BasicGate".type(gate)
                 )
-        return variables, expectation
+        return variables.grads, expectation
+
+    def run(
+        self,
+        circuit: Circuit,
+        variables: Variable,
+        state_vector: np.ndarray,
+        expectation_ops: list,
+    ):
+        """Calculate the gradients and expectation of a Parameterized Quantum Circuit (PQC).
+
+        Args:
+            circuit (Circuit): PQC that needs to calculate gradients.
+            variables (Variable): The parameters of the circuit.
+            state_vector (np.ndarray): The state vector output from forward propagation.
+            expectation_ops (list): The hamiltonians that need to get expectations.
+
+        Returns:
+            np.ndarray: The gradients of parameters (ops_num, params_shape).
+            np.ndarray: The expectations (ops_num, ).
+        """
+        params_grad_list = []
+        expectation_list = []
+        for op in expectation_ops:
+            params_grad, expectation = self._run_one_op(
+                circuit, variables.copy(), state_vector, op
+            )
+            params_grad_list.append(params_grad)
+            expectation_list.append(expectation)
+
+        return np.array(params_grad_list), np.array(expectation_list)
 
     def run_batch(
         self,
         circuit: Circuit,
         variables: Variable,
         state_vector_list: list,
-        expectation_op: Hamiltonian,
+        expectation_ops: list,
     ):
         """Calculate the gradients and expectations of a batch of PQCs.
 
@@ -153,24 +183,24 @@ class AdjointDifferentiator:
             circuit (Circuit): PQC that needs to calculate gradients.
             variables (Variable): The parameters of the circuit.
             state_vector_list (list): The state vectors output from multiple FP process.
-            expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
+            expectation_ops (list): The hamiltonians that need to get expectations.
 
         Returns:
-            list: The list of parameters with gradients.
-            np.ndarray: The expectations.
+            np.ndarray: The gradients of parameters (batch_size, ops_num, params_shape).
+            np.ndarray: The expectations (batch_size, ops_num).
         """
         params_grad_list = []
         expectation_list = []
         for state_vector in state_vector_list:
-            params, expectation = self.run(
-                circuit, variables.copy(), state_vector, expectation_op
+            params_grads, expectations = self.run(
+                circuit, variables.copy(), state_vector, expectation_ops
             )
-            params_grad_list.append(params.grads)
-            expectation_list.append(expectation)
+            params_grad_list.append(params_grads)
+            expectation_list.append(expectations)
 
-        return params_grad_list, np.array(expectation_list)
+        return np.array(params_grad_list), np.array(expectation_list)
 
-    def get_expectation(
+    def _get_one_expectation(
         self, state_vector: np.ndarray, expectation_op: Hamiltonian,
     ):
         """Calculate the expectation of a PQC.
@@ -194,22 +224,40 @@ class AdjointDifferentiator:
         )
         return expectation
 
+    def get_expectations(
+        self, state_vector: np.ndarray, expectation_ops: list,
+    ):
+        """Calculate the expectation of a PQC.
+
+        Args:
+            state_vector (np.ndarray): The state vector output from forward propagation.
+            expectation_ops (list): The hamiltonians that need to get expectations.
+
+        Returns:
+            np.ndarray: The expectations.
+        """
+        expectation_list = []
+        for op in expectation_ops:
+            expectation = self._get_one_expectation(state_vector, op)
+            expectation_list.append(expectation)
+        return np.array(expectation_list)
+
     def get_expectations_batch(
-        self, state_vector_list: list, expectation_op: Hamiltonian,
+        self, state_vector_list: list, expectation_ops: list,
     ):
         """Calculate the expectations of a batch of PQCs.
 
         Args:
             state_vector_list (list): The state vectors output from multiple FP process.
-            expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
+            expectation_ops (list): The hamiltonians that need to get expectations.
 
         Returns:
             np.ndarray: The expectations.
         """
         expectation_list = []
         for state_vector in state_vector_list:
-            expectation = self.get_expectation(state_vector, expectation_op)
-            expectation_list.append(expectation)
+            expectations = self.get_expectations(state_vector, expectation_ops)
+            expectation_list.append(expectations)
         return np.array(expectation_list)
 
     def _initial_circuit(self, circuit: Circuit):
@@ -261,10 +309,10 @@ class AdjointDifferentiator:
                 grad = np.float64((self._grad_vector @ vector.conj()).real)
 
                 # write gradient
-                origin_gate.pargs[i].grads = (
+                gate_grads = (
                     grad
                     if abs(origin_gate.pargs[i].grads) < 1e-12
                     else grad * origin_gate.pargs[i].grads
                 )
                 index = origin_gate.pargs[i].index
-                variables.grads[index] += origin_gate.pargs[i].grads
+                variables.grads[index] += gate_grads

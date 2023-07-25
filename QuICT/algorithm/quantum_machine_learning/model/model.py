@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from numpy_ml.neural_nets.optimizers import *
+from typing import List, Union
 
 from QuICT.algorithm.quantum_machine_learning.differentiator import Differentiator
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
@@ -22,7 +23,7 @@ class Model(ABC):
         self,
         n_qubits: int,
         optimizer: OptimizerBase,
-        hamiltonian: Hamiltonian = None,
+        hamiltonian: Union[Hamiltonian, List] = None,
         params: np.ndarray = None,
         device: str = "GPU",
         gpu_device_id: int = 0,
@@ -44,5 +45,5 @@ class Model(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def _update():
+    def update():
         raise NotImplementedError
