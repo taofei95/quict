@@ -26,5 +26,5 @@ def schmidt_decompose(state_vector: np.ndarray, A_qubits: int):
     B_qubits = num_qubits - A_qubits
 
     state_vector = state_vector.reshape(1 << A_qubits, 1 << B_qubits)
-    U, d, V = np.linalg.svd(state_vector)
-    return d, U.T[:len(d)], V[:len(d)]
+    U, d, V = np.linalg.svd(state_vector, full_matrices=False)
+    return d, U.T, V
