@@ -32,6 +32,7 @@ class Model(ABC):
         self._n_qubits = n_qubits
         self._optimizer = optimizer
         self._params = params
+        self._params_grads = None
         self._hamiltonian = hamiltonian
         self._simulator = StateVectorSimulator(
             device=device, gpu_device_id=gpu_device_id
@@ -41,7 +42,11 @@ class Model(ABC):
         )
 
     @abstractmethod
-    def run_step():
+    def forward():
+        raise NotImplementedError
+
+    @abstractmethod
+    def backward():
         raise NotImplementedError
 
     @abstractmethod

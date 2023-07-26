@@ -5,6 +5,10 @@ import uuid
 
 class Variable(object):
     @property
+    def item(self):
+        return self._pargs[0]
+
+    @property
     def pargs(self):
         return self._pargs
 

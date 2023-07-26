@@ -1,9 +1,11 @@
 from numpy_ml.neural_nets.optimizers import *
+from typing import Union
 
 from ..model import Model
 
 from QuICT.algorithm.quantum_machine_learning.ansatz_library import *
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
+from QuICT.algorithm.quantum_machine_learning.utils import Loss
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 
 
@@ -46,27 +48,57 @@ class QAOA(Model):
         self._circuit = self._qaoa_builder.init_circuit(params=params)
         self._params = self._qaoa_builder.params
 
-    def run_step(self):
+    def run(self):
         """Train QAOA for one step.
 
         Returns:
-            np.ndarry: The state vector.
-            np.float: The loss for this step.
+            np.float: The loss for this iteration.
+        """
+        expectation = self.forward(train=True)
+        loss = -expectation
+        self.backward(loss)
+        self.update()
+        return loss.item
+
+    def forward(self, train=True):
+        """The forward propagation procedure for one step.
+
+        Args:
+            train (bool, optional): Whether it is a training step, that is, whether to calculate the gradients and update the parameters. Defaults to True.
+
+        Returns:
+            Variable: The expectation.
         """
         # FP
         state = self._simulator.run(self._circuit)
-        # BP
-        param_grads, loss = self._differentiator.run(
-            self._circuit, self._params, state, [-1 * self._hamiltonian]
-        )
-        # optimize
-        self._params.pargs = self._optimizer.update(
-            self._params.pargs, param_grads[0], "QAOA_params"
-        )
+        if train:
+            # BP
+            self._params_grads, expectation = self._differentiator.run(
+                self._circuit, self._params, state, [self._hamiltonian]
+            )
+        else:
+            expectation = self._differentiator.get_expectation(
+                state, [self._hamiltonian]
+            )
+        return Variable(expectation)
+
+    def backward(self, loss: Union[Variable, Loss]):
+        """The backward propagation procedure for one step.
+
+        Args:
+            loss (Union[Variable, Loss]): The loss for this iteration.
+        """
         self._params.zero_grad()
-        # update
-        self.update()
-        return state, loss
+        for params_grad, grad in zip(self._params_grads, loss.grads):
+            self._params.grads += grad * params_grad
+        self._params.pargs = self._optimizer.update(
+            self._params.pargs, self._params.grads, "params"
+        )
+
+    def update(self):
+        """Update the trainable parameters in the PQC."""
+        self._params.zero_grad()
+        self._circuit = self._qaoa_builder.init_circuit(self._params)
 
     def sample(self, shots: int):
         """Sample the measured result from current state vector.
@@ -79,7 +111,3 @@ class QAOA(Model):
         """
         sample = self._simulator.sample(shots)
         return sample
-
-    def update(self):
-        """Update the trainable parameters in the PQC."""
-        self._circuit = self._qaoa_builder.init_circuit(self._params)
