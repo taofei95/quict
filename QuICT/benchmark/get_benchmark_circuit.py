@@ -22,15 +22,14 @@ class BenchmarkCircuitBuilder:
         """
         Highly parallel applications place a large number of operations into a relatively small circuit depth.
         Example:
-                                                                          ┌────────────┐┌───┐            ┌────────────┐              
-            q_0: |0>──────────────────────────■─────────■─────────■───────┤ rz(3.9502) ├┤ h ├──■─────■───┤ rx(2.4012) ├──────────────
-                          ┌────────────┐    ┌─┴──┐    ┌─┴──┐    ┌─┴──┐    ├────────────┤└───┘┌─┴──┐┌─┴──┐└────────────┘┌────────────┐
-            q_1: |0>──■───┤ rz(2.5325) ├────┤ cx ├────┤ cx ├────┤ cx ├────┤ rz(5.1686) ├─────┤ cx ├┤ cx ├──────■───────┤ rx(1.4836) ├
-                    ┌─┴──┐└────────────┘┌───┴────┴───┐└────┘    ├───┬┘    └────────────┘     └────┘└────┘    ┌─┴──┐    ├───────────┬┘
-            q_2: |0>┤ cx ├──────■───────┤ rx(3.3735) ├──■───────┤ h ├────────────────────────────────────────┤ cx ├────┤ rx(4.649) ├─
-                    └────┘    ┌─┴──┐    ├────────────┤┌─┴──┐┌───┴───┴────┐                                   └────┘    └───────────┘ 
-            q_3: |0>──────────┤ cx ├────┤ ry(5.2412) ├┤ cx ├┤ rz(4.4042) ├───────────────────────────────────────────────────────────
-                              └────┘    └────────────┘└────┘└────────────┘                                                           
+            q_0: |0>───────■──────────────■─────────────────────────────────────────────────
+                         ┌─┴──┐         ┌─┴──┐    ┌────────────┐┌────────────┐┌────────────┐
+            q_1: |0>─────┤ cx ├─────────┤ cx ├────┤ rx(1.1137) ├┤ ry(5.7981) ├┤ ry(3.0596) ├
+                    ┌────┴────┴───┐┌────┴────┴───┐└────────────┘└────────────┘└────────────┘
+            q_2: |0>┤ rz(0.60045) ├┤ ry(0.25347) ├────────────────────■─────────────■───────
+                    ├─────────────┤└────┬───┬────┘┌────────────┐    ┌─┴──┐        ┌─┴──┐
+            q_3: |0>┤ rx(0.13725) ├─────┤ h ├─────┤ rz(1.0267) ├────┤ cx ├────────┤ cx ├────
+                    └─────────────┘     └───┘     └────────────┘    └────┘        └────┘
         """
         size = width * 10
 
@@ -40,40 +39,40 @@ class BenchmarkCircuitBuilder:
 
         qubits_indexes = list(range(width))
         based_2q_gates = int(width * 0.3)
-        flow_2q_gates = list(range(based_2q_gates // 2, int(based_2q_gates * 1.5)))
+        flow_2q_gates = list(range(based_2q_gates, int(based_2q_gates * 2)))
         cir = Circuit(width)
         curr_gate_size = 0
 
-        def _filter_index_obey_qubits(width, layout_list):
+        def _filter_index_obey_qubits(width, layout_list, two_qubit_gates):
             edges = []
             qubits_indexes = list(range(width))
-            for _ in range(width):
-                if len(qubits_indexes) < 2:
-                    continue
+            for _ in range(two_qubit_gates):
                 chosen_layout = random.choice(layout_list)
                 l = [chosen_layout.u, chosen_layout.v]
                 qubits_indexes = list(set(qubits_indexes) - set(l))
                 edges.append(l)
 
             return edges, qubits_indexes
-        for _ in range(normal_gate // width + 1):
+
+        for _ in range(normal_gate // width + 2):
             # random choice gate from gateset
             curr_2q_gates = random.choice(flow_2q_gates)
             if curr_gate_size + curr_2q_gates > normal_gate:
                 curr_2q_gates = normal_gate - curr_gate_size
 
             curr_gate_size += curr_2q_gates
-            biq_edges, normal_point = _filter_index_obey_qubits(width, layout_list)
+            biq_edges, rest_points = _filter_index_obey_qubits(width, layout_list, curr_2q_gates)
             for edge in biq_edges:
                 gate = gate_builder(gateset.two_qubit_gate, random_params=True)
                 gate | cir(edge)
-
-            rest_points = list(set(qubits_indexes) - set(normal_point))
             curr_1q_gates = min(normal_gate - curr_gate_size, len(rest_points))
             curr_gate_size += curr_1q_gates
-            for i in range(curr_1q_gates):
+            for _ in range(curr_1q_gates):
                 single_gate = gate_builder(random.choice(gateset.one_qubit_gates), random_params=True)
-                single_gate | cir(rest_points[i])
+                index = random.choice(rest_points)
+                single_gate | cir(index)
+            if cir.size() < normal_gate:
+                continue
 
         for _ in range(error_gate):
             insert_index = random.choice(list(range(size)))
@@ -99,15 +98,15 @@ class BenchmarkCircuitBuilder:
         """
         The number of two quantum bits interacting on the longest path of the circuit depth is close to the total number
             of doublets.
-        Example:                                    
+        Example:
             q_0: |0>──■─────■─────────────────■─────────────────────────────────────────■───
                     ┌─┴──┐┌─┴──┐            ┌─┴──┐                                    ┌─┴──┐
             q_1: |0>┤ cx ├┤ cx ├──■─────■───┤ cx ├──■─────■───────────■─────■─────■───┤ cx ├
                     └────┘└────┘┌─┴──┐┌─┴──┐└────┘┌─┴──┐┌─┴──┐      ┌─┴──┐┌─┴──┐┌─┴──┐└────┘
             q_2: |0>────────────┤ cx ├┤ cx ├──────┤ cx ├┤ cx ├──■───┤ cx ├┤ cx ├┤ cx ├──────
-                                └────┘└────┘      └────┘└────┘┌─┴──┐└────┘└────┘└────┘      
+                                └────┘└────┘      └────┘└────┘┌─┴──┐└────┘└────┘└────┘
             q_3: |0>──────────────────────────────────────────┤ cx ├────────────────────────
-                                                              └────┘                        
+                                                              └────┘
         """
         reset_list, normal_list = [], []
         layout_list = layout.edge_list
@@ -148,11 +147,11 @@ class BenchmarkCircuitBuilder:
     def entangled_circuit_build(width: int, level: int, gateset: InstructionSet, layout: Layout):
         """
         By calculating the two quantum bits interacting to a maximum value.
-        Example:                                                                         
+        Example:
             q_0: |0>────────────────────────────────────────────────────────────────────────
-                                                                                            
+
             q_1: |0>──■─────────────────────────────■─────■───────────────────────■─────────
-                    ┌─┴──┐                        ┌─┴──┐┌─┴──┐                  ┌─┴──┐      
+                    ┌─┴──┐                        ┌─┴──┐┌─┴──┐                  ┌─┴──┐
             q_2: |0>┤ cx ├──■─────■─────■─────■───┤ cx ├┤ cx ├──■─────■─────■───┤ cx ├──■───
                     └────┘┌─┴──┐┌─┴──┐┌─┴──┐┌─┴──┐└────┘└────┘┌─┴──┐┌─┴──┐┌─┴──┐└────┘┌─┴──┐
             q_3: |0>──────┤ cx ├┤ cx ├┤ cx ├┤ cx ├────────────┤ cx ├┤ cx ├┤ cx ├──────┤ cx ├
@@ -163,7 +162,7 @@ class BenchmarkCircuitBuilder:
         level_param = [0.4, 0.2, 0.0]
 
         cir = Circuit(width)
-        gates = width * 3
+        gates = width * 10
         qubits_indexes = list(range(width))
         reset_qubits = random.sample(qubits_indexes, int(width * level_param[level - 1]))  # Select a qubit to be in the idle state
         if len(reset_qubits) > 0:
@@ -193,15 +192,15 @@ class BenchmarkCircuitBuilder:
         For circuits consisting of multiple consecutive layers of gate operations, the measurement gates extract informa
             tion at different layers for the duration of and after the execution of the programme.
         Example:
-                    ┌─────────┐   ┌───┐       ┌─┐        ┌─┐       ┌───┐              
+                    ┌─────────┐   ┌───┐       ┌─┐        ┌─┐       ┌───┐
             q_0: |0>┤ ry(π/2) ├───┤ h ├───────┤M├────────┤M├───────┤ h ├──────────────
                     ├─────────┤┌──┴───┴──┐┌───┴─┴───┐┌───┴─┴───┐┌──┴───┴──┐┌─────────┐
             q_1: |0>┤ rz(π/2) ├┤ rz(π/2) ├┤ ry(π/2) ├┤ rz(π/2) ├┤ rx(π/2) ├┤ rz(π/2) ├
                     ├─────────┤├─────────┤├─────────┤└─────────┘└─────────┘└─────────┘
             q_2: |0>┤ rz(π/2) ├┤ rx(π/2) ├┤ rx(π/2) ├─────────────────────────────────
-                    └──┬───┬──┘└───┬─┬───┘├─────────┤    ┌─┐    ┌─────────┐   ┌───┐   
+                    └──┬───┬──┘└───┬─┬───┘├─────────┤    ┌─┐    ┌─────────┐   ┌───┐
             q_3: |0>───┤ h ├───────┤M├────┤ ry(π/2) ├────┤M├────┤ ry(π/2) ├───┤ h ├───
-                       └───┘       └─┘    └─────────┘    └─┘    └─────────┘   └───┘   
+                       └───┘       └─┘    └─────────┘    └─┘    └─────────┘   └───┘
         """
         cir = Circuit(wires=width, topology=layout)
         gates = width * 10
@@ -239,7 +238,6 @@ class BenchmarkCircuitBuilder:
             gateset(InstructionSet): The set of quantum gates which Quantum Machine supports.
             layout (Layout, optional): The description of physical topology of Quantum Machine.
             N (int, optional): The number of circuit repetitions. Defaults to 4.
-
         """
         cirs_list = []
         for _ in range(N):
