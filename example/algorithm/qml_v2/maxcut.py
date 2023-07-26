@@ -36,7 +36,7 @@ qaoa_net = QAOA(n_qubits=n, p=p, hamiltonian=H, optimizer=optim, device="CPU")
 # 开始训练
 loader = tqdm.trange(MAX_ITERS, desc="Training", leave=True)
 for it in loader:
-    state, loss = qaoa_net.run_step()
+    loss = qaoa_net.run()
     loader.set_postfix(loss=loss.item())
 
 prob = qaoa_net.sample(SHOTS)

@@ -19,7 +19,6 @@ class QuantumNet(Model):
         n_qubits: int,
         ansatz: Ansatz,
         optimizer: OptimizerBase,
-        loss_fun: Loss,
         data_qubits: list = None,
         hamiltonian: Union[Hamiltonian, List] = None,
         params: np.ndarray = None,
@@ -33,7 +32,6 @@ class QuantumNet(Model):
             n_qubits (int): The number of qubits.
             ansatz (Ansatz): The QNN ansatz used by the model.
             optimizer (OptimizerBase): The optimizer used to optimize the network.
-            loss_fun (Loss): The loss function used by the model.
             data_qubits (list, optional): List of qubits used by encoding. Defaults to None.
             hamiltonian (Union[Hamiltonian, List], optional): The hamiltonians for measurement. Defaults to None.
             params (np.ndarray, optional): Initialization parameters. Defaults to None.
@@ -51,7 +49,6 @@ class QuantumNet(Model):
             differentiator,
         )
         self._ansatz = ansatz
-        self._loss_fun = loss_fun
         self._data_qubits = (
             list(range(n_qubits - 1)) if data_qubits is None else data_qubits
         )
