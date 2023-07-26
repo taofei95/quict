@@ -60,7 +60,7 @@ class QuantumMachinebenchmark:
             if is_measure:
                 Measure | cir
             cir.name = "+".join(["random", "random", f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"])
-
+            cir = BenchCirData(cir)
             cir_list.append(cir)
         return cir_list
 
@@ -193,9 +193,6 @@ class QuantumMachinebenchmark:
         for i in range(len(bench_cir)):
             sim_result = simulator_interface(bench_cir[i].circuit)
             bench_cir[i].machine_amp = sim_result
-
-        # Step 3: evaluate each circuit
-        bench_cir.benchmark_score()
 
         # Step 4: show result
         self.show_result(bench_cir)

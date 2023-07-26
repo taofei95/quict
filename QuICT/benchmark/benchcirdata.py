@@ -26,6 +26,7 @@ class BenchCirData:
     def benchmark_score(self) -> float:
         """ Return the general benchmark score of each circuit. """
         self._evaluate_circuits_score()
+        return self._benchmark_score
 
     @property
     def type(self) -> str:
@@ -122,9 +123,9 @@ class BenchCirData:
                 self._level_score = split_list[0]
 
     def _evaluate_circuits_score(self):
-        cir_qv = self._qv
-        cir_fidelity = self._fidelity
-        cir_level_score = self._level_score
+        cir_qv = self.qv
+        cir_fidelity = self.fidelity
+        cir_level_score = self.level_score
         cir_score = round(cir_qv * cir_fidelity * cir_level_score, 4)
         self._benchmark_score = cir_score
 

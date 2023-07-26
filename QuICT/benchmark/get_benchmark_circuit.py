@@ -164,7 +164,8 @@ class BenchmarkCircuitBuilder:
         cir = Circuit(width)
         gates = width * 10
         qubits_indexes = list(range(width))
-        reset_qubits = random.sample(qubits_indexes, int(width * level_param[level - 1]))  # Select a qubit to be in the idle state
+        # Select a qubit to be in the idle state
+        reset_qubits = random.sample(qubits_indexes, int(width * level_param[level - 1]))
         if len(reset_qubits) > 0:
             for q in range(len(reset_qubits)):
                 for l in layout_list:
@@ -205,7 +206,7 @@ class BenchmarkCircuitBuilder:
         cir = Circuit(wires=width, topology=layout)
         gates = width * 10
         # build random circuit
-        pro_s = 0.8 # the probability of one qubit gate in all circuit
+        pro_s = 0.8  # the probability of one qubit gate in all circuit
         len_s, len_d = len(gateset.one_qubit_gates), len([gateset.two_qubit_gate])
         prob = [pro_s / len_s] * len_s + [(1 - pro_s) / len_d] * len_d
         cir.random_append(gates - width, gateset.one_qubit_gates + [gateset.two_qubit_gate], probabilities=prob)
