@@ -32,46 +32,49 @@ class BenchmarkCircuitBuilder:
             q_3: |0>┤ ry(1.5532) ├─────┤ cx ├─────────┤ h ├───────────────────┤ cx ├┤ h ├┤ cx ├┤ rx(4.7973) ├┤ cx ├┤ cx ├
                     └────────────┘     └────┘         └───┘                   └────┘└───┘└────┘└────────────┘└────┘└────┘
         """
-        prob = [0.8, 0.2]  # Probability of occurrence of single and double qubit gates
         size = width * 10
 
         layout_list = layout.edge_list
         error_gate = int(size * (1 / (level * 3)))
+        normal_gate = size - error_gate
 
-        gate_indexes = list(range(2))
         qubits_indexes = list(range(width))
-        shuffle_qindexes = qubits_indexes[:]
-        random.shuffle(shuffle_qindexes)
+        based_2q_gates = int(width * 0.2)
+        flow_2q_gates = list(range(based_2q_gates // 2, int(based_2q_gates * 1.5)))
 
         cir = Circuit(width)
-        while cir.size() < size - error_gate:
+        curr_gate_size = 0
+        for _ in range(normal_gate // width + 1):
             # random choice gate from gateset
-            typelist = [random.choice(gateset.one_qubit_gates), gateset.two_qubit_gate]
-            rand_type = np.random.choice(gate_indexes, p=prob)
-            gate_type = typelist[rand_type]
-            gate = gate_builder(gate_type, random_params=True)
-            gsize = gate.controls + gate.targets
-            insert_index = random.choice(list(range(width)))
+            curr_2q_gates = random.choice(flow_2q_gates)
+            if curr_gate_size + curr_2q_gates > normal_gate:
+                curr_2q_gates = normal_gate - curr_gate_size
 
-            if gsize > len(shuffle_qindexes):
-                continue
-            if gsize == 2:
-                inset_index = np.random.choice(layout_list)
-                cir.insert(gate & [inset_index.u, inset_index.v], insert_index)
-                shuffle_qindexes = list(set(shuffle_qindexes) - set([inset_index.u, inset_index.v]))
-            elif gsize == 1:
-                index = random.choice(shuffle_qindexes)
-                cir.insert(gate & index, insert_index)
-                shuffle_qindexes = list(set(shuffle_qindexes) - set([index]))
-            if len(shuffle_qindexes) == 0:
-                shuffle_qindexes = qubits_indexes[:]
-                random.shuffle(shuffle_qindexes)
+            curr_gate_size += curr_2q_gates
+            # TODO: Function: input(qubits, 2q-gates, edges) -> edges, points
+            biq_edges = [[1, 2]]
+            for edge in biq_edges:
+                gate = gate_builder(gateset.two_qubit_gate, random_params=True)
+                gate | cir(edge)
+
+            rest_points = set(qubits_indexes)
+            curr_1q_gates = min(normal_gate - curr_gate_size, len(rest_points))
+            curr_gate_size += curr_1q_gates
+            for i in range(curr_1q_gates):
+                single_gate = gate_builder(random.choice(gateset.one_qubit_gates), random_params=True)
+                single_gate | cir(rest_points[i])
 
         for _ in range(error_gate):
             insert_index = random.choice(list(range(size)))
-            gate_2q = gate_builder(gateset.two_qubit_gate, random_params=True)
-            inset_index = np.random.choice(layout_list)
-            cir.insert(gate_2q & [inset_index.u, inset_index.v], insert_index)
+            typelist = [random.choice(gateset.one_qubit_gates), gateset.two_qubit_gate]
+            rand_idx = np.random.randint(0, 2)
+            gate = gate_builder(typelist[rand_idx], random_params=True)
+            if gate.is_single():
+                bit_point = np.random.randint(0, width)
+                cir.insert(gate & bit_point, insert_index)
+            else:
+                inset_index = np.random.choice(layout_list)
+                cir.insert(gate & [inset_index.u, inset_index.v], insert_index)
 
         depth = cir.depth()
         cir.name = "+".join(
@@ -106,22 +109,22 @@ class BenchmarkCircuitBuilder:
                 r_list.append(layout_list[j])  # Associated topology nodes for identified qubits
         l_list = list(set(layout_list) - set(r_list))  # Associative topological nodes of uncertain qubits
 
-        gate_2q = gate_builder(gateset.two_qubit_gate, random_params=True)
-
         size = width * 10
         error_gate = int(size * (1 / (level * 3)))
 
         cir = Circuit(width)
-        while cir.size() < size - error_gate:
+        for _ in range(size - error_gate):
+            gate = gate_builder(gateset.two_qubit_gate, random_params=True)
             r_index = np.random.choice(r_list)
             index = [r_index.u, r_index.v]
-            insert_index = random.choice(list(range(width)))
-            cir.insert(gate_2q & index, insert_index)
-        for _ in range(error_gate):
+            gate | cir(index)
+
+        for i in range(error_gate):
+            gate = gate_builder(gateset.two_qubit_gate, random_params=True)
             l_index = np.random.choice(l_list)
             index = [l_index.u, l_index.v]
-            insert_index = random.choice(list(range(size)))
-            cir.insert(gate_2q & index, insert_index)
+            insert_index = np.random.randint(0, size - error_gate + i)
+            cir.insert(gate & index, insert_index)
 
         depth = cir.depth()
         cir.name = "+".join(
