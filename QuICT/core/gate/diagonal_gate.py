@@ -69,13 +69,67 @@ class DiagonalGate(object):
 
         # Stage 2: Gray Initial
 
-    def phase_shift(self, s, alpha, aux=None, j=None):
+    def binary_inner_prod(self, s, x, width):
         """
-        Implement the phase shift defined in Equation 5 as Figure 8
+        Calculate the binary inner product of s_bin and x_bin,
+        where s_bin and x_bin are binary representation of s and x respectively of width n
+
+        Args:
+            s(int): s in <s, x>
+            x(int): x in <s, x>
+            width(int): the width of s_bin and x_bin
+
+        Returns:
+            int: the binary inner product of s and x
+        """
+        s_bin = np.array(list(np.binary_repr(s, width=width)), dtype=int)
+        x_bin = np.array(list(np.binary_repr(x, width=width)), dtype=int)
+        return np.dot(s_bin, x_bin)
+
+    def phase_shift(self, theta, aux=None):
+        """
+        Implement the phase shift
+        |x> -> exp(i theta(x)) |x>
+        by solving Equation 6
+        \sum_s alpha_s <s, x> = theta(x)
+
+        Args:
+            theta(listLike): phase angles of the diagonal gate
+            aux(int, optional): key of auxiliary qubit (if exists)
+
+        Returns:
+            CompositeGate: CompositeGate of the diagonal gate
+        """
+        n = np.floor(np.log2(len(theta)))
+        if aux is not None:
+            assert aux >= n, ValueError('Invalid auxiliary qubit in phase_shift.')
+        # theta(0) = 0
+        global_phase = theta[0]
+        theta = theta - global_phase
+
+        gates = CompositeGate()
+        # Calculate A_inv row by row (i.e., for different s)
+        for s in range(1, 1 << n):
+            A = np.zeros(1 << n)
+            for x in range(1, 1 << n):
+                A[x] = self.binary_inner_prod(s, x, width=n)
+            # A_inv = 2^(1-n) (2A - J)
+            A_inv = (1 << (1 - n)) * (2 * A - 1)
+            alpha_s = np.dot(A_inv, theta)
+            if aux is not None:
+                gates.extend(self.phase_shift_s(s, n, alpha_s, aux=aux))
+            else:
+                gates.extend(self.phase_shift_s(s, n, alpha_s, j=0))
+        return gates
+
+    def phase_shift_s(self, s, n, alpha, aux=None, j=None):
+        """
+        Implement the phase shift for a certain s defined in Equation 5 as Figure 8
         |x> -> exp(i alpha_s <s, x>) |x>
 
         Args:
             s(int): whose binary representation stands for the 0-1 string s
+            n(int): the number of qubits in |x>
             alpha(float): alpha_s in the equation
             aux(int, optional): key of auxiliary qubit (if exists)
             j(int, optional): if no auxiliary qubit, the j-th smallest element in S would be the target qubit
@@ -83,19 +137,18 @@ class DiagonalGate(object):
         Returns:
             CompositeGate: CompositeGate for Equation 5 as Figure 8
         """
-        assert 1 <= s <= 1 << self.target, ValueError('Invalid controller in phase_shift.')
         gates = CompositeGate()
-        s_bin = np.binary_repr(s, width=self.target)
+        s_bin = np.binary_repr(s, width=n)
         S = []
-        for i in range(self.target):
+        for i in range(n):
             if s_bin[i] == '1':
                 S.append(i)
 
         # Figure 8 (a)
         if aux is not None:
             if j is not None:
-                self._logger.warn('With auxiliary qubit in phase_shift, no i_j is needed.')
-            assert aux >= self.target, ValueError('Invalid auxiliary qubit in phase_shift.')
+                self._logger.warn('With auxiliary qubit in phase_shift_s, no i_j is needed.')
+            assert aux >= n, ValueError('Invalid auxiliary qubit in phase_shift_s.')
             for i in S:
                 CX & [i, aux] | gates
             U1(alpha) & aux | gates
