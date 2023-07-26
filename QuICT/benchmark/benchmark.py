@@ -14,7 +14,7 @@ from QuICT.core.virtual_machine import VirtualQuantumMachine
 from QuICT.qcda import QCDA
 from QuICT.core import Circuit
 from QuICT.tools.circuit_library.circuitlib import CircuitLib
-from QuICT.tools.circuit_library.get_benchmark_circuit import BenchmarkCircuitBuilder
+from QuICT.benchmark.get_benchmark_circuit import BenchmarkCircuitBuilder
 
 
 class QuantumMachinebenchmark:
@@ -37,29 +37,26 @@ class QuantumMachinebenchmark:
         self._output_path = os.path.abspath(output_path)
         self._output_file_type = output_file_type
 
+    def _trans_cir_to_mirror(self, circuit):
+        composite_gate = circuit.to_compositegate()
+        mirror_circuit = composite_gate.inverse()
+        mirror_circuit | circuit
+
+        return circuit
+
     def _get_random_circuit(self, level: int, q_number: int, ins_set, layout, is_measure):
         cir_list = []
         gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
-        pro_s = 1 - level / 10
+        prob = [1 - level / 10, level / 10]
+
+        gate_type = [random.choice(ins_set.one_qubit_gates), ins_set.two_qubit_gate]
 
         for gates in gate_prob:
-            cir = Circuit(q_number)
-            # Single-qubit gates
-            size_s = int(q_number * gates * pro_s)
-            cir.random_append(size_s, ins_set.one_qubit_gates)
-
-            # Double-qubits gates
-            size_d = q_number * gates - size_s
-            layout_list = layout.edge_list
-            for _ in range(size_d):
-                biq_gate = gate_builder(ins_set.two_qubit_gate, random_params=True)
-                bgate_layout = np.random.choice(layout_list)
-                insert_idx = random.choice(list(range(q_number)))
-                cir.insert(biq_gate & [bgate_layout.u, bgate_layout.v], insert_idx)
-
+            cir = Circuit(wires=q_number, topology=layout)
+            cir_size = q_number * gates
+            cir.random_append(rand_size=cir_size, typelist=gate_type, random_params=True, probabilities=prob)
             # Build mirror circuit
-            inverse_gate = cir.to_compositegate().inverse()
-            inverse_gate | cir
+            cir = self._trans_cir_to_mirror(cir)
             if is_measure:
                 Measure | cir
             cir.name = "+".join(["random", "random", f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"])
@@ -104,8 +101,7 @@ class QuantumMachinebenchmark:
             split = cir.name.split("+")
             attribute = re.findall(r'\d+(?:\.\d+)?', split[2])
             field, void_gates = split[1], attribute[3]
-            inverse_cgate = cir.to_compositegate().inverse()
-            inverse_cgate | cir
+            cir = self._trans_cir_to_mirror(cir)
             if field != "mediate_measure" and is_measure:
                 Measure | cir
             cir.name = "+".join([
@@ -199,22 +195,10 @@ class QuantumMachinebenchmark:
             bench_cir[i].machine_amp = sim_result
 
         # Step 3: evaluate each circuit
-        self.evaluate(bench_cir)
+        bench_cir.benchmark_score()
 
         # Step 4: show result
         self.show_result(bench_cir)
-
-    def evaluate(self, circuits: Union[List[BenchCirData], BenchCirData]):
-        """ Evaluate all circuits. """
-        for bench_cir in circuits:
-            self._evaluate_circuits(bench_cir)
-
-    def _evaluate_circuits(self, bench_cir):
-        cir_qv = bench_cir.qv
-        cir_fidelity = bench_cir.fidelity
-        cir_level_score = bench_cir.level_score
-        cir_score = round(cir_qv * cir_fidelity * cir_level_score, 4)
-        bench_cir.benchmark_score = cir_score
 
     def show_result(self, bench_cir):
         """ show benchmark result. """
@@ -226,7 +210,6 @@ class QuantumMachinebenchmark:
 
         if self._output_file_type == "txt":
             self._txt_show(bench_cir)
-
         else:
             self._excel_show(bench_cir)
 

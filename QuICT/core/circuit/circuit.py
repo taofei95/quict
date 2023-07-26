@@ -497,9 +497,18 @@ class Circuit(CircuitBased):
         for _ in range(rand_size):
             gate_type = typelist[np.random.choice(gate_indexes, p=gate_prob)]
             r_gate = gate_builder(gate_type, random_params=random_params)
-            random_assigned_qubits = random.sample(range(self.width()), r_gate.controls + r_gate.targets)
-
-            self._gates.append((r_gate, random_assigned_qubits, 1))
+            gsize = r_gate.controls + r_gate.targets
+            random_assigned_qubits = random.sample(range(self.width()), gsize)
+            if gsize != 2:
+                self._gates.append((r_gate, random_assigned_qubits, 1))
+            elif gsize == 2:
+                if self._topology is not None:
+                    layout_list = self._topology.edge_list
+                    insert_layout = random.choice(layout_list)
+                    random_assigned_qubits = [insert_layout.u, insert_layout.v]
+                    self._gates.append((r_gate, random_assigned_qubits, 1))
+                else:
+                    self._gates.append((r_gate, random_assigned_qubits, 1))
 
     def supremacy_append(self, repeat: int = 1, pattern: str = "ABCDCDAB", random_parameters: bool = False):
         """
