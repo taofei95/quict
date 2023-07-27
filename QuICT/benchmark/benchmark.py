@@ -1,14 +1,13 @@
 import os
 import random
 import re
-from typing import List, Union
 import pandas as pd
 import prettytable as pt
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
 from QuICT.benchmark.benchcirdata import BenchCirData
-from QuICT.core.gate import Measure, gate_builder
+from QuICT.core.gate import Measure
 from QuICT.core.virtual_machine import VirtualQuantumMachine
 
 from QuICT.qcda import QCDA
