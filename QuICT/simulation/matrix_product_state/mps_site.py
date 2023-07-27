@@ -86,27 +86,30 @@ class MPSSiteStructure:
 
         if quantum_state is not None:
             self._mps = self._quantum_state_schmidt_decomposition(quantum_state)
-
-        if special_mode is None:
-            self._mps = [QubitTensor()]
-            if qubits > 1:
-                for _ in range(qubits - 1):
-                    self._mps.append(Normalize())
-                    self._mps.append(QubitTensor())
+            self.show()
+        else:
+            if special_mode is None:
+                self._mps = [QubitTensor()]
+                if qubits > 1:
+                    for _ in range(qubits - 1):
+                        self._mps.append(Normalize())
+                        self._mps.append(QubitTensor())
 
     def _quantum_state_schmidt_decomposition(self, quantum_state: np.ndarray) -> list:
         # TODO: Later refactoring schmidt_decompose
+        assert len(quantum_state.shape) == 1
+        quantum_state = quantum_state.reshape(1, -1)
         mp_state = []
-        for i in range(self.qubits - 1):
-            S, U, V = schmidt_decompose(quantum_state, 1)
-            mp_state.append(QubitTensor(U))
+        for _ in range(self.qubits - 1):
+            ldim = quantum_state.shape[0]
+            quantum_state = quantum_state.reshape(2 * ldim, -1)
+
+            U, S, VT = np.linalg.svd(quantum_state, full_matrices=False)
+            mp_state.append(QubitTensor(U.reshape(ldim, 2, -1)))
             mp_state.append(Normalize(S))
+            quantum_state = VT
 
-            if i == self.qubits - 2:
-                mp_state.append(QubitTensor(V))
-            else:
-                quantum_state = V.reshape(2 * V.shape[0], -1)
-
+        mp_state.append(QubitTensor(VT.reshape(-1, 2, 1)))
         return mp_state
 
     def apply_single_gate(self, qubit_index: int, gate_matrix: np.ndarray):

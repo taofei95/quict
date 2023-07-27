@@ -165,6 +165,7 @@ class Circuit(CircuitBased):
                 "Circuit.call", "int/list[int]/Qubit/Qureg", type(indexes)
             )
 
+        self._qubits_check(indexes)
         self._pointer = indexes
         return self
 
@@ -262,6 +263,12 @@ class Circuit(CircuitBased):
     ####################################################################
     ############          Circuit Build Operators           ############
     ####################################################################
+    def _qubits_check(self, qubit_indexes: list) -> bool:
+        for qidx in qubit_indexes:
+            assert qidx < self.width()
+
+        return True
+
     def extend(self, gates: Union[BasicGate, CompositeGate]):
         """ Add a CompositeGate/Circuit to the circuit.
 
@@ -293,6 +300,7 @@ class Circuit(CircuitBased):
         else:
             position = self.find_position(gates.checkpoint)
 
+        self._qubits_check(gate_qidxes)
         if position == -1:
             self._gates.append((gates, gate_qidxes, gates.size()))
         else:
@@ -408,6 +416,7 @@ class Circuit(CircuitBased):
             else:
                 qubit_index = gate_qargs
 
+        self._qubits_check(qubit_index)
         self._gates.append((gate, qubit_index, 1))
 
     def _add_gate_to_all_qubits(self, gate: BasicGate):
@@ -443,6 +452,7 @@ class Circuit(CircuitBased):
 
             op_qidxes = op.targs
 
+        self._qubits_check(op_qidxes)
         size = 1 if isinstance(op, NoiseGate) else 0
         self._gates.append((op, op_qidxes, size))
         self._logger.debug(f"Add an Operator {type(op)} with qubit indexes {op_qidxes}.")
