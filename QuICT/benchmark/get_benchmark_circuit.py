@@ -163,7 +163,7 @@ class BenchmarkCircuitBuilder:
         level_param = [0.4, 0.2, 0.0]
 
         cir = Circuit(width)
-        size = width * 3
+        size = width * 10
 
         # Select a qubit to be in the idle state
         normal_list, reset_qubits = [], []
