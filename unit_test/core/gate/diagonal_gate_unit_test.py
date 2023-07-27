@@ -1,6 +1,13 @@
+from itertools import permutations
+
 import numpy as np
 
 from QuICT.core.gate import DiagonalGate
+
+
+def test_gray_code():
+    for code in DiagonalGate.lucal_gray_code(0, 2):
+        print(code)
 
 
 def test_Ainv():
@@ -20,18 +27,21 @@ def test_Ainv():
 def test_phase_shift_no_aux():
     n = 3
     theta = 2 * np.pi * np.random.random(1 << n)
-    gates = DiagonalGate.phase_shift(theta)
+    seq = np.random.permutation(np.arange(1, 1 << n))
+    gates = DiagonalGate.phase_shift(theta, seq)
     assert np.allclose(theta, np.mod(np.angle(np.diagonal(gates.matrix())), 2 * np.pi))
 
 
 def test_phase_shift_with_aux():
     n = 3
     theta = 2 * np.pi * np.random.random(1 << n)
-    gates = DiagonalGate.phase_shift(theta, aux=n)
+    seq = np.random.permutation(np.arange(1, 1 << n))
+    gates = DiagonalGate.phase_shift(theta, seq, aux=n)
     assert np.allclose(theta, np.mod(np.angle(np.diagonal(gates.matrix()))[::2], 2 * np.pi))
 
 
 if __name__ == '__main__':
+    test_gray_code()
     # test_Ainv()
-    test_phase_shift_no_aux()
-    test_phase_shift_with_aux()
+    # test_phase_shift_no_aux()
+    # test_phase_shift_with_aux()

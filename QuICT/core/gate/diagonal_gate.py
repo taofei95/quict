@@ -71,6 +71,39 @@ class DiagonalGate(object):
         # Stage 2: Gray Initial
 
     @staticmethod
+    def lucal_gray_code(k, n):
+        """
+        Generate the (k, n)-Gray code defined in and following Lemma 7
+
+        Args:
+            k(int): start the circular modification from the k-th binary code
+            n(int): the length of binary code, that is, the length of Gray code would be 2^n
+
+        Returns:
+            iterable: the (k, n)-Gray code
+        """
+        def flip(bit):
+            if bit == '1':
+                return '0'
+            if bit == '0':
+                return '1'
+            raise ValueError('Invalid bit found in gray code generation.')
+
+        def zeta(x):
+            """
+            For integer x, zeta(x) = max{k: 2^k | x}
+            """
+            x_bin = np.binary_repr(x)
+            return len(x_bin) - len(x_bin.strip('0'))
+
+        gray_code = ['0' for _ in range(n)]
+        yield ''.join(gray_code)
+        for i in range(1, 1 << n):
+            bit = np.mod(zeta(i) + k, n)
+            gray_code[bit] = flip(gray_code[bit])
+            yield ''.join(reversed(gray_code))
+
+    @staticmethod
     def binary_inner_prod(s, x, width):
         """
         Calculate the binary inner product of s_bin and x_bin,
@@ -89,7 +122,7 @@ class DiagonalGate(object):
         return np.mod(np.dot(s_bin, x_bin), 2)
 
     @classmethod
-    def phase_shift(cls, theta, aux=None):
+    def phase_shift(cls, theta, seq=None, aux=None):
         """
         Implement the phase shift
         |x> -> exp(i theta(x)) |x>
@@ -98,12 +131,17 @@ class DiagonalGate(object):
 
         Args:
             theta(listLike): phase angles of the diagonal gate
+            seq(iterable, optional): sequence of s application, numerical order if not assigned
             aux(int, optional): key of auxiliary qubit (if exists)
 
         Returns:
             CompositeGate: CompositeGate of the diagonal gate
         """
         n = int(np.floor(np.log2(len(theta))))
+        if seq is None:
+            seq = range(1, 1 << n)
+        else:
+            assert sorted(list(seq)) == list(range(1, 1 << n)), ValueError('Invalid sequence of s in phase_shift')
         if aux is not None:
             assert aux >= n, ValueError('Invalid auxiliary qubit in phase_shift.')
         # theta(0) = 0
@@ -113,7 +151,7 @@ class DiagonalGate(object):
         gates = CompositeGate()
         GPhase(global_phase) & 0 | gates
         # Calculate A_inv row by row (i.e., for different s)
-        for s in range(1, 1 << n):
+        for s in seq:
             A = np.zeros(1 << n)
             for x in range(1, 1 << n):
                 A[x] = cls.binary_inner_prod(s, x, width=n)
