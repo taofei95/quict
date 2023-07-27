@@ -1,11 +1,12 @@
 import numpy as np
 
 from QuICT.core import Circuit
-from .schmidt_decompostion import schmidt_decompose
+from QuICT.core.gate import GateType
 from .mps_site import MPSSiteStructure
 
 
 class MatrixProductStateSimulator:
+    # TODO: currently do not support 3-qubits gate
     def __init__(self, device: str = "CPU", precision: str = "double"):
         self._device = device
         self._precision = precision
@@ -15,10 +16,13 @@ class MatrixProductStateSimulator:
         qubits = circuit.width()
         self._mps = MPSSiteStructure(qubits, quantum_state, device=self._device, precision=self._precision)
 
-        for gate in circuit.flatten_gates(True):
-            if gate.is_single():
-                self._mps.apply_single_gate(gate.targ, gate.matrix)
+        for gate, qindex, _ in circuit.fast_gates:
+            if len(qindex) == 1:
+                self._mps.apply_single_gate(qindex[0], gate.matrix)
+            elif len(qindex) == 2:
+                inverse = True if gate.type in [GateType.unitary, GateType.rzx] else False
+                self._mps.apply_double_gate(qindex, gate.matrix, inverse)
             else:
-                self._mps.apply_double_gate(gate.cargs + gate.targs, gate.matrix)
+                raise ValueError("MPS Simulation do not support 3-qubits+ quantum gates.")
 
         return self._mps

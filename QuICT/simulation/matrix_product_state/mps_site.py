@@ -1,5 +1,6 @@
 import numpy as np
 
+from QuICT.ops.linalg.cpu_calculator import MatrixPermutation
 from.schmidt_decompostion import schmidt_decompose
 
 
@@ -58,6 +59,13 @@ class Normalize:
 
 
 class MPSSiteStructure:
+    __SWAP_MATRIX = np.array([
+        [1, 0, 0, 0],
+        [0, 0, 1, 0],
+        [0, 1, 0, 0],
+        [0, 0, 0, 1]
+    ], dtype=np.complex128)
+
     @property
     def qubits(self) -> int:
         return self._qubits
@@ -105,7 +113,29 @@ class MPSSiteStructure:
         assert qubit_index < self.qubits
         self._mps[qubit_index * 2].apply_single_gate(gate_matrix)
 
-    def apply_double_gate(self, qubit_indexes: list, gate_matrix: np.ndarray):
+    def apply_double_gate(self, qubit_indexes: list, gate_matrix: np.ndarray, inverse: bool = False):
+        q0, q1 = qubit_indexes
+        if abs(q0 - q1) == 1:
+            self.apply_consecutive_double_gate(qubit_indexes, gate_matrix, inverse)
+        else:
+            min_q = min(qubit_indexes)
+            max_q = max(qubit_indexes)
+            for i in range(min_q, max_q - 1):
+                self.apply_consecutive_double_gate([i, i+1], self.__SWAP_MATRIX)
+
+            qubit_indexes = [max_q, max_q - 1] if q0 > q1 else [max_q - 1, max_q]
+            self.apply_consecutive_double_gate(qubit_indexes, gate_matrix, inverse)
+            for i in range(max_q - 1, min_q, -1):
+                self.apply_consecutive_double_gate([i-1, i], self.__SWAP_MATRIX)
+
+    def apply_consecutive_double_gate(self, qubit_indexes: list, gate_matrix: np.ndarray, inverse: bool = False):
+        if inverse:
+            gate_matrix = MatrixPermutation(gate_matrix, np.array([1, 0]))
+
+        if qubit_indexes[0] > qubit_indexes[1]:
+            qubit_indexes.sort()
+            gate_matrix = MatrixPermutation(gate_matrix, np.array([1, 0]))
+
         # Only support consecutive qubits gate
         qubit0 = self._mps[qubit_indexes[0] * 2]
         qubit1 = self._mps[qubit_indexes[1] * 2]
@@ -114,65 +144,52 @@ class MPSSiteStructure:
         # Combined two qubits together
         q0_data = qubit0.tensor_data
         q1_data = qubit1.tensor_data
-        # if qubit_indexes[0] != 0:
-        #     q0_data = np.tensordot(
-        #         self._mps[qubit_indexes[0] * 2 - 1].diagonal_matrix,
-        #         q0_data,
-        #         [1, 0]
-        #     )
-
+        q0_ldim, q1_rdim = q0_data.shape[0], q1_data.shape[2]
         bi_qubits_comb = np.tensordot(
             np.tensordot(q0_data, norm.diagonal_matrix, [2, 0]),
             q1_data,
             [2, 0]
         )
-        ldim, _, _, rdim = bi_qubits_comb.shape
-        bi_qubits_comb = bi_qubits_comb.reshape([ldim, -1, rdim])
-        # if qubit_indexes[1] != self.qubits - 1:
-        #     bi_qubits_comb = np.tensordot(
-        #         bi_qubits_comb,
-        #         self._mps[qubit_indexes[1] * 2 + 1].diagonal_matrix,
-        #         [2, 0]
-        #     )
+        bi_qubits_comb = bi_qubits_comb.reshape([q0_ldim, -1, q1_rdim])
 
         # Apply two qubit gate
         bi_qubits_comb = np.tensordot(
             bi_qubits_comb,
             gate_matrix,
-            [[1], [0]]
+            [[1], [1]]
         ).transpose([0, 2, 1])
-
         # schmidt decomposition
-        if ldim == 1 and rdim == 1:
-            bi_qubits_comb = bi_qubits_comb.reshape(2, -1)
-        else:
-            bi_qubits_comb = bi_qubits_comb.reshape(ldim * rdim, -1)
-
+        bi_qubits_comb = bi_qubits_comb.reshape(q0_ldim * 2, -1)
         U, S, VT = np.linalg.svd(bi_qubits_comb, full_matrices=False)
 
         # Put back to Qi, Ni, Qi+1
-        qubit0.tensor_data = VT.reshape(ldim, 2, -1)
-        qubit1.tensor_data = U.reshape(-1, 2, rdim)
+        qubit0.tensor_data = U.reshape(q0_ldim, 2, -1)
+        qubit1.tensor_data = VT.reshape(-1, 2, q1_rdim)
         norm.matrix_data = S
 
     # temp
-    def show(self):
+    def show(self, only_shape: bool = False):
         print(f"Qubits number: {self.qubits}.")
         idx = 0
         for site in self._mps:
             if isinstance(site, QubitTensor):
                 print(f"Qubit {idx}'s tensor:")
-                print(site.tensor_data)
+                if not only_shape:
+                    print(site.tensor_data)
                 print(site.tensor_data.shape)
             else:
                 print(f"Norm {idx}:")
-                print(site.matrix_data)
+                if not only_shape:
+                    print(site.matrix_data)
+                print(site.diagonal_matrix.shape)
                 idx += 1
 
     def to_statevector(self):
         state_vector = self._mps[0].tensor_data
         for i in range(1, self.qubits):
-            state_vector = np.tensordot(state_vector, self._mps[2 * i - 1].diagonal_matrix, [[-1], [0]]) # .transpose([1, 0, 2])
+            state_vector = np.tensordot(state_vector, self._mps[2 * i - 1].diagonal_matrix, [[-1], [0]])
             state_vector = np.tensordot(state_vector, self._mps[2 * i].tensor_data, [[-1], [0]])
+            ldim, rdim = state_vector.shape[0], state_vector.shape[-1]
+            state_vector = state_vector.reshape([ldim, -1, rdim])
 
-        return state_vector.flatten()
+        return state_vector.flatten('C')
