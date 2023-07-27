@@ -191,8 +191,9 @@ class BenchmarkCircuitBuilder:
                 gate_num += 1
 
                 if len(reset_qubits) > 0:
+                    gate = gate_builder(random.choice(gateset.one_qubit_gates), random_params=True)
                     insert_index = random.choice(list(range(width)))
-                    bit_point = np.random.randint(0, width)
+                    bit_point = random.choice(reset_qubits)
                     cir.insert(gate & bit_point, insert_index)
                     gate_num += 1
 
