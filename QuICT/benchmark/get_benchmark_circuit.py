@@ -37,26 +37,27 @@ class BenchmarkCircuitBuilder:
         error_gate = int(size * (1 / (level * 3)))
         normal_gate = size - error_gate
 
-        qubits_indexes = list(range(width))
         based_2q_gates = int(width * 0.3)
         flow_2q_gates = list(range(based_2q_gates, int(based_2q_gates * 2)))
         cir = Circuit(width)
-        curr_gate_size = 0
+        curr_gate_size, curr_2q_gates = 0, 0
 
         def _filter_index_obey_qubits(width, layout_list, two_qubit_gates):
             edges = []
             qubits_indexes = list(range(width))
-            for _ in range(two_qubit_gates):
-                chosen_layout = random.choice(layout_list)
-                l = [chosen_layout.u, chosen_layout.v]
-                qubits_indexes = list(set(qubits_indexes) - set(l))
-                edges.append(l)
+            if two_qubit_gates > 0:
+                for _ in range(two_qubit_gates):
+                    chosen_layout = random.choice(layout_list)
+                    l = [chosen_layout.u, chosen_layout.v]
+                    qubits_indexes = list(set(qubits_indexes) - set(l))
+                    edges.append(l)
 
             return edges, qubits_indexes
 
         for _ in range(normal_gate // width + 2):
             # random choice gate from gateset
-            curr_2q_gates = random.choice(flow_2q_gates)
+            if len(flow_2q_gates) > 0:
+                curr_2q_gates = random.choice(flow_2q_gates)
             if curr_gate_size + curr_2q_gates > normal_gate:
                 curr_2q_gates = normal_gate - curr_gate_size
 
@@ -131,10 +132,11 @@ class BenchmarkCircuitBuilder:
 
         for i in range(error_gate):
             gate = gate_builder(gateset.two_qubit_gate, random_params=True)
-            l_index = np.random.choice(reset_list)
-            index = [l_index.u, l_index.v]
-            insert_index = np.random.randint(0, size - error_gate + i)
-            cir.insert(gate & index, insert_index)
+            if len(reset_list) > 0:
+                l_index = random.choice(reset_list)
+                index = [l_index.u, l_index.v]
+                insert_index = np.random.randint(0, size - error_gate + i)
+                cir.insert(gate & index, insert_index)
 
         depth = cir.depth()
         cir.name = "+".join(
