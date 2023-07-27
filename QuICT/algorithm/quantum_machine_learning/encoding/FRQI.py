@@ -8,9 +8,9 @@ from QuICT.core.gate import *
 
 class FRQI:
     """FRQI encoding for encoding classical image data into quantum circuits.
-    
+
     For a 2^n x 2^n image, the number of qubits required for FRQI is 2n + 1 (2n position qubits + 1 color qubit).
-    
+
     References:
         https://link.springer.com/article/10.1007/s11128-010-0177-y
     """
@@ -178,7 +178,7 @@ class FRQI:
     def _get_cnf_qid(self, cnf_items):
         idx_list = []
         for item in cnf_items:
-            idx_list.append(int(item[item.index("_") + 1 :]))
+            idx_list.append(int(item[item.index("_") + 1:]))
         return idx_list
 
     def _split_dnf(self, dnf):

@@ -1,8 +1,11 @@
+from typing import Union
+
 import numpy as np
 
-from .ansatz import Ansatz
 from QuICT.core import Circuit
-from QuICT.core.gate import *
+from QuICT.core.gate import CX, CZ, Rx, Ry, Rz, Swap, Variable
+
+from .ansatz import Ansatz
 
 
 class HEAnsatz(Ansatz):
@@ -23,8 +26,8 @@ class HEAnsatz(Ansatz):
             n_qubits (int): The number of qubits.
             d (int): The depth of HE-ansatz.
             layers (list): The list of layers. Supported layers are "CX", "CZ", "SWAP", "RY", "RZ".
+            readout (list, optional): The readout qubits. Defaults to None.
         """
-
         super(HEAnsatz, self).__init__(n_qubits)
         self._d = d
         self._layers = layers
@@ -41,7 +44,6 @@ class HEAnsatz(Ansatz):
         Returns:
             Circuit: The HE-ansatz ansatz.
         """
-
         params = (
             np.random.randn(self._d, self._param_layers, self._n_qubits)
             if params is None

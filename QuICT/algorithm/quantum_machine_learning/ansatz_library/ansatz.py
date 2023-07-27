@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
+from typing import Union
+
 import numpy as np
 
-from QuICT.core.gate import *
+from QuICT.core.gate import Variable
 
 
 class Ansatz(ABC):

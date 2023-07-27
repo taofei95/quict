@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+from typing import List, Union
+
 import numpy as np
 from numpy_ml.neural_nets.optimizers import *
-from typing import List, Union
 
 from QuICT.algorithm.quantum_machine_learning.differentiator import Differentiator
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian

@@ -1,16 +1,15 @@
 import numpy as np
 
-from QuICT.core.gate import *
-from QuICT.core.circuit import Circuit
-from QuICT.simulation.utils import GateSimulator
-from QuICT.simulation.state_vector import StateVectorSimulator
-
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
+from QuICT.core.circuit import Circuit
+from QuICT.core.gate import *
+from QuICT.simulation.state_vector import StateVectorSimulator
+from QuICT.simulation.utils import GateSimulator
 
 
 class AdjointDifferentiator:
     """The differentiator using adjoint method.
-    
+
     References:
     https://arxiv.org/abs/1912.10877
     """
@@ -59,7 +58,8 @@ class AdjointDifferentiator:
 
         Args:
             device (str, optional): The device type, one of [CPU, GPU]. Defaults to "GPU".
-            precision (str, optional): The precision for the state vector, one of [single, double]. Defaults to "double".
+            precision (str, optional): The precision for the state vector, one of [single, double].
+                Defaults to "double".
             gpu_device_id (int, optional): The GPU device ID. Defaults to 0.
             sync (bool, optional): Sync mode or Async mode. Defaults to True.
         """

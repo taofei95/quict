@@ -1,15 +1,18 @@
+from typing import Union
+
 import numpy as np
 
-from .ansatz import Ansatz
 from QuICT.core import Circuit
-from QuICT.core.gate import *
+from QuICT.core.gate import Rxx, Rzz, Variable
+
+from .ansatz import Ansatz
 
 
 class CRADL(Ansatz):
     """Color-Readout-Alternating-Double-Layer architecture (CRADL) Ansatz.
-    
+
     **Only applicable to the encoding methods with only one color qubit.**
-    
+
     Reference:
         https://arxiv.org/abs/2110.05476
     """
@@ -25,7 +28,6 @@ class CRADL(Ansatz):
             n_qubits (int): The number of qubits.
             layers (int): The number of layers.
         """
-
         super(CRADL, self).__init__(n_qubits)
         self._color_qubit = n_qubits - 2
         self._readout = n_qubits - 1
@@ -40,7 +42,6 @@ class CRADL(Ansatz):
         Returns:
             Circuit: The CRADL ansatz.
         """
-
         n_pos_qubits = self._n_qubits - 2
         params = (
             np.random.randn(self._layers, n_pos_qubits * 2)

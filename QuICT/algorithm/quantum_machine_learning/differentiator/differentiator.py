@@ -1,12 +1,9 @@
 import numpy as np
 
-from QuICT.core.gate import *
-from QuICT.core import Circuit
-
+from QuICT.algorithm.quantum_machine_learning.differentiator.adjoint import AdjointDifferentiator
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
-from QuICT.algorithm.quantum_machine_learning.differentiator.adjoint import (
-    AdjointDifferentiator,
-)
+from QuICT.core import Circuit
+from QuICT.core.gate import *
 
 
 class Differentiator:
@@ -153,4 +150,3 @@ class Differentiator:
         return self._differentiator.get_expectations_batch(
             state_vector_list, expectation_ops
         )
-

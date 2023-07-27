@@ -1,12 +1,13 @@
 import os
-import shutil
-import numpy as np
 import random
+import shutil
+
+import numpy as np
 import numpy_ml
 
+from QuICT.algorithm.quantum_machine_learning.tools.exception import *
 from QuICT.core.utils import Variable
 from QuICT.tools.logger import *
-from QuICT.algorithm.quantum_machine_learning.tools.exception import *
 
 logger = Logger("ML_utils")
 

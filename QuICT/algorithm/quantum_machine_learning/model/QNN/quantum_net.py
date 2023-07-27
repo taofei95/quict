@@ -1,14 +1,14 @@
 from numpy_ml.neural_nets.optimizers import *
 
-from ..model import Model
-from QuICT.core import Circuit
-from QuICT.core.gate import *
-
 from QuICT.algorithm.quantum_machine_learning.ansatz_library import *
 from QuICT.algorithm.quantum_machine_learning.encoding import *
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.loss import *
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
+from QuICT.core import Circuit
+from QuICT.core.gate import *
+
+from ..model import Model
 
 
 class QuantumNet(Model):
@@ -37,7 +37,8 @@ class QuantumNet(Model):
             params (np.ndarray, optional): Initialization parameters. Defaults to None.
             device (str, optional): The device type, one of [CPU, GPU]. Defaults to "GPU".
             gpu_device_id (int, optional): The GPU device ID. Defaults to 0.
-            differentiator (str, optional): The differentiator type, one of ["adjoint", "parameter_shift]. Defaults to "adjoint".
+            differentiator (str, optional): The differentiator type, one of ["adjoint", "parameter_shift].
+                Defaults to "adjoint".
         """
         super(QuantumNet, self).__init__(
             n_qubits,
@@ -71,7 +72,8 @@ class QuantumNet(Model):
 
         Args:
             data_circuits (list): Data circuits after encoding.
-            train (bool, optional): Whether it is a training step, that is, whether to calculate the gradients and update the parameters. Defaults to True.
+            train (bool, optional): Whether it is a training step, that is,
+                whether to calculate the gradients and update the parameters. Defaults to True.
 
         Returns:
             Variable: The expectations.

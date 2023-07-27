@@ -2,10 +2,11 @@
 
 
 from abc import ABC, abstractmethod
-from sympy import *
+from typing import List, Union
+
 import autograd.numpy as np
 from autograd import grad
-from typing import List, Union
+from sympy import *
 
 from QuICT.core.gate import Variable
 
@@ -90,7 +91,7 @@ class MSELoss(LossFun):
 
 class BCELoss(LossFun):
     """Compute the Binary Cross Entropy Loss.
-    
+
     **Note that the target y should be numbers between 0 and 1.**
     """
 

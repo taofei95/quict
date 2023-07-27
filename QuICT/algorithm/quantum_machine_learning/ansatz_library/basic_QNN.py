@@ -1,13 +1,16 @@
+from typing import Union
+
 import numpy as np
 
-from .ansatz import Ansatz
 from QuICT.core import Circuit
-from QuICT.core.gate import *
+from QuICT.core.gate import H, Rxx, Ryy, Rzx, Rzz, Variable, X
+
+from .ansatz import Ansatz
 
 
 class BasicQNN(Ansatz):
     """Basic QNN ansatz.
-    
+
     References:
         https://arxiv.org/abs/1802.06002
     """
@@ -23,7 +26,6 @@ class BasicQNN(Ansatz):
             n_qubits (int): The number of qubits.
             layers (list): The list of PQC layers. Supported layers are "XX", "YY", "ZZ", "ZX".
         """
-
         super(BasicQNN, self).__init__(n_qubits)
         self._readout = n_qubits - 1
         self._data_qubits = list(range(n_qubits - 1))
@@ -39,7 +41,6 @@ class BasicQNN(Ansatz):
         Returns:
             Circuit: The basic QNN ansatz.
         """
-
         params = (
             np.random.randn(len(self._layers), self._n_qubits - 1)
             if params is None

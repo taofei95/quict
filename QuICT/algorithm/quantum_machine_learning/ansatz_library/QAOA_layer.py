@@ -1,17 +1,22 @@
+from typing import Union
+
 import numpy as np
 
-from .ansatz import Ansatz
-from QuICT.core import Circuit
-from QuICT.core.gate import *
-
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
+from QuICT.core import Circuit
+from QuICT.core.gate import CX, GPhase, H, Hy, Rx, Ry, Rz, Variable
+
+from .ansatz import Ansatz
 
 
 class QAOALayer(Ansatz):
     """The quantum approximate optimization algorithm (QAOA) ansatz."""
 
     def __init__(
-        self, n_qubits: int, p: int, hamiltonian: Hamiltonian,
+        self,
+        n_qubits: int,
+        p: int,
+        hamiltonian: Hamiltonian,
     ):
         """Initialize a QAOA ansatz instance.
 
@@ -97,11 +102,10 @@ class QAOALayer(Ansatz):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                CX | circuit(tar_idx[i : i + 2])
+                CX | circuit(tar_idx[i: i + 2])
             # Add RZ gate
             Rz(gamma) | circuit(tar_idx[-1])
             # Add CNOT gates
             for i in range(len(tar_idx) - 2, -1, -1):
-                CX | circuit(tar_idx[i : i + 2])
+                CX | circuit(tar_idx[i: i + 2])
         return circuit
-
