@@ -25,11 +25,8 @@ class BenchCirData:
     @property
     def benchmark_score(self) -> float:
         """ Return the general benchmark score of each circuit. """
+        self._evaluate_circuits_score()
         return self._benchmark_score
-
-    @benchmark_score.setter
-    def benchmark_score(self, benchmark_score: float):
-        self._benchmark_score = benchmark_score
 
     @property
     def type(self) -> str:
@@ -81,22 +78,23 @@ class BenchCirData:
         self._fidelity = round(self._fidelity, 4)
         return self._fidelity
 
+    def _calculate_entropy(self, p, q):
+        def normalization(data):
+            data = np.array(data)
+            data = data / np.sum(data)
+            return data
+
+        sum = 0.0
+        delta = 1e-7
+        p = abs(normalization(p))
+        q = abs(normalization(q))
+        for x in map(lambda y, p: (1 - y) * math.log(1 - p + delta) + y * math.log(p + delta), p, q):
+            sum += x
+        cross_entropy = 1 - (-sum / len(p))
+
+        return cross_entropy
+
     def _calculate_fidelity(self):
-        def calculate_entropy(p, q):
-            def normalization(data):
-                data = np.array(data)
-                data = data / np.sum(data)
-                return data
-
-            sum = 0.0
-            delta = 1e-7
-            p = abs(normalization(p))
-            q = abs(normalization(q))
-            for x in map(lambda y, p: (1 - y) * math.log(1 - p + delta) + y * math.log(p + delta), p, q):
-                sum += x
-            cross_entropy = 1 - (-sum / len(p))
-            return cross_entropy
-
         split_list = list(np.linspace(0.0, 1.0, num=6)[3:])
         if self._type != "algorithm":
             self._fidelity = self._machine_amp[0]
@@ -108,7 +106,7 @@ class BenchCirData:
                 self._level_score = split_list[1]
             elif self._field == "qft":
                 p, q = self._machine_amp, [float(1 / (2 ** int(width)))] * (2 ** int(width))
-                self._fidelity = calculate_entropy(p, q)
+                self._fidelity = self._calculate_entropy(p, q)
                 self._level_score = split_list[1]
             elif self._field == "cnf":
                 self._fidelity = self._machine_amp[8]
@@ -124,6 +122,13 @@ class BenchCirData:
                     index += '0' * int(width / 2)
                 self._fidelity = self._machine_amp[int(index, 2)]
                 self._level_score = split_list[0]
+
+    def _evaluate_circuits_score(self):
+        cir_qv = self.qv
+        cir_fidelity = self.fidelity
+        cir_level_score = self.level_score
+        cir_score = round(cir_qv * cir_fidelity * cir_level_score, 4)
+        self._benchmark_score = cir_score
 
     def __init__(
         self,
