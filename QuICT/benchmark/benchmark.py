@@ -36,13 +36,6 @@ class QuantumMachinebenchmark:
         self._output_path = os.path.abspath(output_path)
         self._output_file_type = output_file_type
 
-    def _trans_cir_to_mirror(self, circuit):
-        composite_gate = circuit.to_compositegate()
-        mirror_circuit = composite_gate.inverse()
-        mirror_circuit | circuit
-
-        return circuit
-
     def _get_random_circuit(self, level: int, q_number: int, ins_set, layout, is_measure):
         cir_list = []
         gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
@@ -55,7 +48,7 @@ class QuantumMachinebenchmark:
             cir_size = q_number * gates
             cir.random_append(rand_size=cir_size, typelist=gate_type, random_params=True, probabilities=prob)
             # Build mirror circuit
-            cir = self._trans_cir_to_mirror(cir)
+            cir.inverse() | cir
             if is_measure:
                 Measure | cir
             cir.name = "+".join(["random", "random", f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"])
@@ -100,7 +93,7 @@ class QuantumMachinebenchmark:
             split = cir.name.split("+")
             attribute = re.findall(r'\d+(?:\.\d+)?', split[2])
             field, void_gates = split[1], attribute[3]
-            cir = self._trans_cir_to_mirror(cir)
+            cir.inverse() | cir
             if field != "mediate_measure" and is_measure:
                 Measure | cir
             cir.name = "+".join([
@@ -193,7 +186,7 @@ class QuantumMachinebenchmark:
             sim_result = simulator_interface(bench_cir[i].circuit)
             bench_cir[i].machine_amp = sim_result
 
-        # Step 4: show result
+        # Step 3: show result
         self.show_result(bench_cir)
 
     def show_result(self, bench_cir):

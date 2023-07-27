@@ -150,41 +150,55 @@ class BenchmarkCircuitBuilder:
         """
         By calculating the two quantum bits interacting to a maximum value.
         Example:
-            q_0: |0>────────────────────────────────────────────────────────────────────────
-
-            q_1: |0>──■─────────────────────────────■─────■───────────────────────■─────────
-                    ┌─┴──┐                        ┌─┴──┐┌─┴──┐                  ┌─┴──┐
-            q_2: |0>┤ cx ├──■─────■─────■─────■───┤ cx ├┤ cx ├──■─────■─────■───┤ cx ├──■───
-                    └────┘┌─┴──┐┌─┴──┐┌─┴──┐┌─┴──┐└────┘└────┘┌─┴──┐┌─┴──┐┌─┴──┐└────┘┌─┴──┐
-            q_3: |0>──────┤ cx ├┤ cx ├┤ cx ├┤ cx ├────────────┤ cx ├┤ cx ├┤ cx ├──────┤ cx ├
-                          └────┘└────┘└────┘└────┘            └────┘└────┘└────┘      └────┘
+            q_0: |0>──■─────■─────────────────■───────────■─────■───
+                    ┌─┴──┐┌─┴──┐            ┌─┴──┐      ┌─┴──┐┌─┴──┐
+            q_1: |0>┤ cx ├┤ cx ├──■─────■───┤ cx ├──■───┤ cx ├┤ cx ├
+                    └────┘└────┘┌─┴──┐┌─┴──┐└────┘┌─┴──┐└────┘└────┘
+            q_2: |0>──■─────────┤ cx ├┤ cx ├──■───┤ cx ├──■─────■───
+                    ┌─┴──┐      └────┘└────┘┌─┴──┐└────┘┌─┴──┐┌─┴──┐
+            q_3: |0>┤ cx ├──────────────────┤ cx ├──────┤ cx ├┤ cx ├
+                    └────┘                  └────┘      └────┘└────┘
         """
-        normal_list = []
         layout_list = layout.edge_list
         level_param = [0.4, 0.2, 0.0]
 
         cir = Circuit(width)
-        gates = width * 10
-        qubits_indexes = list(range(width))
+        size = width * 3
+
         # Select a qubit to be in the idle state
-        reset_qubits = random.sample(qubits_indexes, int(width * level_param[level - 1]))
-        if len(reset_qubits) > 0:
-            for q in range(len(reset_qubits)):
-                for l in layout_list:
-                    if l.u != reset_qubits[q] and l.v != reset_qubits[q]:
-                        normal_list.append([l.u, l.v])
+        normal_list, reset_qubits = [], []
+        reset_qubits_num = int(width * level_param[level - 1])
+        if reset_qubits_num > 0:
+            rand_qubit = random.choice(list(range(width)))
+            for _ in range(reset_qubits_num):
+                reset_qubits.append(rand_qubit)
+                rand_qubit += 1
+
+        for q in range(len(reset_qubits)):
+            for l in layout_list:
+                if l.u != reset_qubits[q] and l.v != reset_qubits[q]:
+                    normal_list.append([l.u, l.v])
         else:
             for l in layout_list:
                 normal_list.append([l.u, l.v])
 
-        for _ in range(gates):
-            gate = gate_builder(gateset.two_qubit_gate, random_params=True)
-            index = random.choice(normal_list)
-            gate | cir(index)
+        gate_num = 0
+        for _ in range(size):
+            if size - gate_num > 0:
+                gate = gate_builder(gateset.two_qubit_gate, random_params=True)
+                index = random.choice(normal_list)
+                gate | cir(index)
+                gate_num += 1
+
+                if len(reset_qubits) > 0:
+                    insert_index = random.choice(list(range(width)))
+                    bit_point = np.random.randint(0, width)
+                    cir.insert(gate & bit_point, insert_index)
+                    gate_num += 1
 
         depth = cir.depth()
         cir.name = "+".join(
-            ["benchmark", "highly_entangled", f"w{width}_s{gates}_d{depth}_level{level}"]
+            ["benchmark", "highly_entangled", f"w{width}_s{size}_d{depth}_level{level}"]
         )
 
         return cir
@@ -206,21 +220,21 @@ class BenchmarkCircuitBuilder:
                        └───┘       └─┘    └─────────┘    └─┘    └─────────┘   └───┘
         """
         cir = Circuit(wires=width, topology=layout)
-        gates = width * 10
+        size = width * 10
         # build random circuit
         pro_s = 0.8  # the probability of one qubit gate in all circuit
         len_s, len_d = len(gateset.one_qubit_gates), len([gateset.two_qubit_gate])
         prob = [pro_s / len_s] * len_s + [(1 - pro_s) / len_d] * len_d
-        cir.random_append(gates - width, gateset.one_qubit_gates + [gateset.two_qubit_gate], probabilities=prob)
+        cir.random_append(size - width, gateset.one_qubit_gates + [gateset.two_qubit_gate], probabilities=prob)
         # insert measure to circuit
         for _ in range(width):
             index = random.choice(list(range(width)))
-            mea_index = random.choice(list(range(int(gates * 0.25), int(gates * 0.75))))
+            mea_index = random.choice(list(range(int(size * 0.25), int(size * 0.75))))
             cir.insert(Measure & index, mea_index)
 
         depth = cir.depth()
         cir.name = "+".join(
-            ["benchmark", "mediate_measure", f"w{width}_s{gates}_d{depth}_level{level}"]
+            ["benchmark", "mediate_measure", f"w{width}_s{size}_d{depth}_level{level}"]
         )
 
         return cir

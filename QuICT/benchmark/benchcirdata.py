@@ -78,22 +78,23 @@ class BenchCirData:
         self._fidelity = round(self._fidelity, 4)
         return self._fidelity
 
+    def _calculate_entropy(self, p, q):
+        def normalization(data):
+            data = np.array(data)
+            data = data / np.sum(data)
+            return data
+
+        sum = 0.0
+        delta = 1e-7
+        p = abs(normalization(p))
+        q = abs(normalization(q))
+        for x in map(lambda y, p: (1 - y) * math.log(1 - p + delta) + y * math.log(p + delta), p, q):
+            sum += x
+        cross_entropy = 1 - (-sum / len(p))
+
+        return cross_entropy
+
     def _calculate_fidelity(self):
-        def calculate_entropy(p, q):
-            def normalization(data):
-                data = np.array(data)
-                data = data / np.sum(data)
-                return data
-
-            sum = 0.0
-            delta = 1e-7
-            p = abs(normalization(p))
-            q = abs(normalization(q))
-            for x in map(lambda y, p: (1 - y) * math.log(1 - p + delta) + y * math.log(p + delta), p, q):
-                sum += x
-            cross_entropy = 1 - (-sum / len(p))
-            return cross_entropy
-
         split_list = list(np.linspace(0.0, 1.0, num=6)[3:])
         if self._type != "algorithm":
             self._fidelity = self._machine_amp[0]
@@ -105,7 +106,7 @@ class BenchCirData:
                 self._level_score = split_list[1]
             elif self._field == "qft":
                 p, q = self._machine_amp, [float(1 / (2 ** int(width)))] * (2 ** int(width))
-                self._fidelity = calculate_entropy(p, q)
+                self._fidelity = self._calculate_entropy(p, q)
                 self._level_score = split_list[1]
             elif self._field == "cnf":
                 self._fidelity = self._machine_amp[8]

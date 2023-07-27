@@ -32,6 +32,7 @@ class TestBenchmark(unittest.TestCase):
         # level3, and qcda for algorithm circuit
         circuits_list = benchmark.get_circuits(quantum_machine_info=vqm, level=3, enable_qcda_for_alg_cir=True)
         assert len(circuits_list) == 23  # random4 + benchmark16 + alg3
+        # measure all circuit
         circuits_list = benchmark.get_circuits(quantum_machine_info=vqm, is_measure=True)
         random_test_cir = random.choice(circuits_list)
         assert random_test_cir.circuit.gates[-1].type == GateType.measure
