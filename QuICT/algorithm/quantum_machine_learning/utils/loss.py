@@ -2,13 +2,13 @@
 
 
 from abc import ABC, abstractmethod
-from typing import List, Union
 
 import autograd.numpy as np
 from autograd import grad
 from sympy import *
 
 from QuICT.core.gate import Variable
+from typing import List, Union
 
 
 class Loss:
