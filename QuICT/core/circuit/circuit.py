@@ -504,7 +504,6 @@ class Circuit(CircuitBased):
                 insert_layout = random.choice(layout_list)
                 random_assigned_qubits = [insert_layout.u, insert_layout.v] if np.random.randint(0, 2) else \
                     [insert_layout.v, insert_layout.u]
-                self._gates.append((r_gate, random_assigned_qubits, 1))
             else:
                 random_assigned_qubits = random.sample(range(self.width()), gsize)
             self._gates.append((r_gate, random_assigned_qubits, 1))
