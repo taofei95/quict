@@ -1,7 +1,7 @@
 import numpy as np
+from typing import Union
 
 from QuICT.ops.linalg.cpu_calculator import MatrixPermutation
-from.schmidt_decompostion import schmidt_decompose
 
 
 class QubitTensor:
@@ -55,7 +55,7 @@ class Normalize:
         if norm_coeff is not None:
             self._matrix_data = norm_coeff
         else:
-            self._matrix_data = np.array([1,], dtype=np.complex128)
+            self._matrix_data = np.array([1, ], dtype=np.complex128)
 
 
 class MPSSiteStructure:
@@ -72,31 +72,27 @@ class MPSSiteStructure:
 
     def __init__(
         self,
-        qubits: int,
-        quantum_state: np.ndarray = None,
-        special_mode: str = None,
         device: str = "CPU",
         precision: str = "double"
     ):
-        self._qubits = qubits
         assert device in ["CPU", "GPU"]
         self._device = device
         assert precision in ["double", "single"]
         self._precision = precision
 
+    def initial_mps(self, qubits: int, quantum_state: Union[str, np.ndarray] = None):
+        self._qubits = qubits
         if quantum_state is not None:
-            self._mps = self._quantum_state_schmidt_decomposition(quantum_state)
-            self.show()
+            if not isinstance(quantum_state, str):
+                self._mps = self._quantum_state_schmidt_decomposition(quantum_state)
         else:
-            if special_mode is None:
-                self._mps = [QubitTensor()]
-                if qubits > 1:
-                    for _ in range(qubits - 1):
-                        self._mps.append(Normalize())
-                        self._mps.append(QubitTensor())
+            self._mps = [QubitTensor()]
+            if qubits > 1:
+                for _ in range(qubits - 1):
+                    self._mps.append(Normalize())
+                    self._mps.append(QubitTensor())
 
     def _quantum_state_schmidt_decomposition(self, quantum_state: np.ndarray) -> list:
-        # TODO: Later refactoring schmidt_decompose
         assert len(quantum_state.shape) == 1
         quantum_state = quantum_state.reshape(1, -1)
         mp_state = []
@@ -124,12 +120,12 @@ class MPSSiteStructure:
             min_q = min(qubit_indexes)
             max_q = max(qubit_indexes)
             for i in range(min_q, max_q - 1):
-                self.apply_consecutive_double_gate([i, i+1], self.__SWAP_MATRIX)
+                self.apply_consecutive_double_gate([i, i + 1], self.__SWAP_MATRIX)
 
             qubit_indexes = [max_q, max_q - 1] if q0 > q1 else [max_q - 1, max_q]
             self.apply_consecutive_double_gate(qubit_indexes, gate_matrix, inverse)
             for i in range(max_q - 1, min_q, -1):
-                self.apply_consecutive_double_gate([i-1, i], self.__SWAP_MATRIX)
+                self.apply_consecutive_double_gate([i - 1, i], self.__SWAP_MATRIX)
 
     def apply_consecutive_double_gate(self, qubit_indexes: list, gate_matrix: np.ndarray, inverse: bool = False):
         if inverse:
