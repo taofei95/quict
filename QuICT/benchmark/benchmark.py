@@ -6,14 +6,15 @@ import prettytable as pt
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
-from QuICT.benchmark.benchcirdata import BenchCirData
+
+from QuICT.core import Circuit
 from QuICT.core.gate import Measure
 from QuICT.core.virtual_machine import VirtualQuantumMachine
-
 from QuICT.qcda import QCDA
-from QuICT.core import Circuit
 from QuICT.tools.circuit_library.circuitlib import CircuitLib
-from QuICT.benchmark.get_benchmark_circuit import BenchmarkCircuitBuilder
+
+from .benchcirdata import BenchCirData
+from .get_benchmark_circuit import BenchmarkCircuitBuilder
 
 
 class QuantumMachinebenchmark:
@@ -88,7 +89,7 @@ class QuantumMachinebenchmark:
 
     def _get_benchmark_circuit(self, level: int, q_number: int, ins_set, layout, is_measure):
         cir_list = []
-        cirs = BenchmarkCircuitBuilder().get_benchmark_circuit(q_number, level, ins_set, layout)
+        cirs = BenchmarkCircuitBuilder.get_benchmark_circuit(q_number, level, ins_set, layout)
         for cir in cirs:
             split = cir.name.split("+")
             attribute = re.findall(r'\d+(?:\.\d+)?', split[2])

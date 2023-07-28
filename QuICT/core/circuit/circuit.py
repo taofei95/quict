@@ -499,10 +499,11 @@ class Circuit(CircuitBased):
             r_gate = gate_builder(gate_type, random_params=random_params)
             gsize = r_gate.controls + r_gate.targets
             random_assigned_qubits = random.sample(range(self.width()), gsize)
-            if gsize== 2 and self._topology is not None:
+            if gsize == 2 and self._topology is not None:
                 layout_list = self._topology.edge_list
                 insert_layout = random.choice(layout_list)
-                random_assigned_qubits = [insert_layout.u, insert_layout.v]
+                random_assigned_qubits = [insert_layout.u, insert_layout.v] if np.random.randint(0, 2) else \
+                    [insert_layout.v, insert_layout.u]
                 self._gates.append((r_gate, random_assigned_qubits, 1))
             else:
                 random_assigned_qubits = random.sample(range(self.width()), gsize)
