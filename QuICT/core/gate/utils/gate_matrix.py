@@ -142,8 +142,8 @@ class GateMatrixGenerator:
         elif gate_type == GateType.sqiswap:
             return np.array([
                 [1, 0, 0, 0],
-                [0, 0, (1 + 1j) / np.sqrt(2), 0],
-                [0, (1 + 1j) / np.sqrt(2), 0, 0],
+                [0, 1 / np.sqrt(2), 1j / np.sqrt(2), 0],
+                [0, 1j / np.sqrt(2), 1 / np.sqrt(2), 0, 0],
                 [0, 0, 0, 1]
             ], dtype=precision)
         else:
