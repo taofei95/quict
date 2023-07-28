@@ -59,14 +59,16 @@ class DiagonalGate(object):
         Returns:
             CompositeGate: diagonal gate with auxiliary qubit at the end of qubits
         """
+        n = self.target
+        m = self.aux
         gates = CompositeGate()
 
         # Stage 1: Prefix Copy
-        t = np.floor(np.log2(self.aux / 2))
-        copies = np.floor(self.aux / (2 * t))
+        t = int(np.floor(np.log2(m / 2)))
+        copies = int(np.floor(m / (2 * t)))
         for j in range(copies):
             for i in range(t):
-                CX & [i, self.target + i * copies + j] | gates
+                CX & [i, n + i + j * t] | gates
 
         # Stage 2: Gray Initial
 
