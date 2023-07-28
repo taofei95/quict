@@ -32,8 +32,7 @@ class Thouless(Ansatz):
             Circuit: thouless ansatz
         """
         if angles is None:
-            # angles = np.zeros(self.electrons * (self.orbitals - self.electrons))
-            angles = np.random.randn(self.electrons * (self.orbitals - self.electrons))
+            angles = np.zeros(self.electrons * (self.orbitals - self.electrons))
         angles = Variable(pargs=angles) if isinstance(angles, np.ndarray) else angles
         assert angles.shape == (self.electrons * (self.orbitals - self.electrons),), \
             ValueError("Incorrect number of parameters")
