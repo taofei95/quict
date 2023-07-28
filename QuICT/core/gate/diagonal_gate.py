@@ -28,33 +28,33 @@ class DiagonalGate(object):
             aux = aux - 1
         self.aux = aux
 
-    def __call__(self, angles):
+    def __call__(self, theta):
         """
         Args:
-            angles(listLike): list of (2 ** target) angles of rotation in the diagonal gate
+            theta(listLike): list of (2 ** target) angles of rotation in the diagonal gate
 
         Returns:
             CompositeGate: diagonal gate
         """
-        assert len(angles) == 1 << self.target, ValueError('Incorrect number of angles')
+        assert len(theta) == 1 << self.target, ValueError('Incorrect number of angles')
         if self.aux == 0:
-            return self.no_aux_qubit(angles)
+            return self.no_aux_qubit(theta)
         else:
-            return self.with_aux_qubit(angles)
+            return self.with_aux_qubit(theta)
 
-    def no_aux_qubit(self, angles):
+    def no_aux_qubit(self, theta):
         """
         Args:
-            angles(listLike): list of (2 ** target) angles of rotation in the diagonal gate
+            theta(listLike): list of (2 ** target) angles of rotation in the diagonal gate
 
         Returns:
             CompositeGate: diagonal gate without auxiliary qubit
         """
 
-    def with_aux_qubit(self, angles):
+    def with_aux_qubit(self, theta):
         """
         Args:
-            angles(listLike): list of (2 ** target) angles of rotation in the diagonal gate
+            theta(listLike): list of (2 ** target) angles of rotation in the diagonal gate
 
         Returns:
             CompositeGate: diagonal gate with auxiliary qubit at the end of qubits
@@ -101,7 +101,26 @@ class DiagonalGate(object):
         for i in range(1, 1 << n):
             bit = np.mod(zeta(i) + k, n)
             gray_code[bit] = flip(gray_code[bit])
-            yield ''.join(reversed(gray_code))
+            yield ''.join(gray_code)
+
+    @classmethod
+    def partitioned_gray_code(cls, n, t):
+        """
+        Lemma 15 by the construction in Appendix E
+
+        Args:
+            n(int): length of 0-1 string to be partitioned
+            t(int): length of the shared prefix of each row
+
+        Returns:
+            list[list[str]]: partitioned gray code
+        """
+        s = [[] for _ in range(1 << t)]
+        for j in range(1 << t):
+            prefix = np.binary_repr(j, width=t)[::-1]
+            for suffix in cls.lucal_gray_code(np.mod(j, n - t), n - t):
+                s[j].append(prefix + suffix)
+        return s
 
     @staticmethod
     def binary_inner_prod(s, x, width):
@@ -120,6 +139,27 @@ class DiagonalGate(object):
         s_bin = np.array(list(np.binary_repr(s, width=width)), dtype=int)
         x_bin = np.array(list(np.binary_repr(x, width=width)), dtype=int)
         return np.mod(np.dot(s_bin, x_bin), 2)
+
+    @classmethod
+    def alpha_s(cls, theta, s, n):
+        """
+        Solve Equation 6
+        \sum_s alpha_s <s, x> = theta(x)
+
+        Args:
+            theta(listLike): phase angles of the diagonal gate
+            s(int): key of the solution component
+            n(int): number of qubits in the diagonal gate
+
+        Returns:
+            float: alpha_s in Equation 6
+        """
+        A = np.zeros(1 << n)
+        for x in range(1, 1 << n):
+            A[x] = cls.binary_inner_prod(s, x, width=n)
+        # A_inv = 2^(1-n) (2A - J)
+        A_inv = (2 * A[1:] - 1) / (1 << (n - 1))
+        return np.dot(A_inv, theta)
 
     @classmethod
     def phase_shift(cls, theta, seq=None, aux=None):
@@ -152,16 +192,11 @@ class DiagonalGate(object):
         GPhase(global_phase) & 0 | gates
         # Calculate A_inv row by row (i.e., for different s)
         for s in seq:
-            A = np.zeros(1 << n)
-            for x in range(1, 1 << n):
-                A[x] = cls.binary_inner_prod(s, x, width=n)
-            # A_inv = 2^(1-n) (2A - J)
-            A_inv = (2 * A[1:] - 1) / (1 << (n - 1))
-            alpha_s = np.dot(A_inv, theta)
+            alpha = cls.alpha_s(theta, s, n)
             if aux is not None:
-                gates.extend(cls.phase_shift_s(s, n, alpha_s, aux=aux))
+                gates.extend(cls.phase_shift_s(s, n, alpha, aux=aux))
             else:
-                gates.extend(cls.phase_shift_s(s, n, alpha_s, j=0))
+                gates.extend(cls.phase_shift_s(s, n, alpha, j=0))
         return gates
 
     @classmethod

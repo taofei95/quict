@@ -6,8 +6,9 @@ from QuICT.core.gate import DiagonalGate
 
 
 def test_gray_code():
-    for code in DiagonalGate.lucal_gray_code(0, 2):
+    for code in DiagonalGate.lucal_gray_code(0, 3):
         print(code)
+    print(DiagonalGate.partitioned_gray_code(4, 2))
 
 
 def test_Ainv():
