@@ -58,7 +58,8 @@ class BenchmarkCircuitBuilder:
         for _ in range(normal_gate):
             layout_list = layout.edge_list
             if len(flow_2q_gates) > 0:
-                curr_2q_gates = random.choice(flow_2q_gates) # the number of two qubits gate in a layer
+                # the number of two qubits gate in a layer
+                curr_2q_gates = random.choice(flow_2q_gates)
             if curr_gate_size + curr_2q_gates > normal_gate:
                 curr_2q_gates = normal_gate - curr_gate_size
 
@@ -68,6 +69,7 @@ class BenchmarkCircuitBuilder:
             for edge in biq_edges:
                 gate = gate_builder(gateset.two_qubit_gate, random_params=True)
                 gate | cir(edge)
+            # the number of one qubit gate in a layer
             curr_1q_gates = min(normal_gate - curr_gate_size, len(rest_points))
             if curr_gate_size + curr_1q_gates > normal_gate:
                 curr_1q_gates = normal_gate - curr_gate_size

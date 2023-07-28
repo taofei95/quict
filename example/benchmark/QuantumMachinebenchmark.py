@@ -54,7 +54,7 @@ def step_benchmark():
         circuit.machine_amp = simulation(circuit.circuit)
 
     # Step3: Enter the evalute system
-    benchmark.evaluate(circuits_list)
+    benchmark.show_result(circuits_list)
 
     print(os.listdir("./benchmark"))
 
