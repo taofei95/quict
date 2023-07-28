@@ -6,4 +6,4 @@ IonQSet = InstructionSet(
     GateType.rxx,
     [GateType.rx, GateType.ry, GateType.rz]
 )
-IonQSet.register_one_qubit_rule("xyx_rule")
+IonQSet.register_one_qubit_rule("zyz_rule")
