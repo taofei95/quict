@@ -3,8 +3,6 @@ from random import sample
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.core.virtual_machine.quantum_machine import OriginalKFC6130
-from QuICT.qcda.utility.circuit_cost import FidelityCircuitCost
-from QuICT.tools.circuit_library import CircuitLib
 from QuICT.qcda.optimization.template_optimization.template_matching import (
     ForwardMatch, MatchingDAGCircuit)
 from QuICT.qcda.optimization.template_optimization.template_optimization import \
@@ -88,12 +86,11 @@ def test_fidelity_circuit_cost():
              GateType.sdg, GateType.tdg]
 
     n_qubits = 4
-    circ_cost = FidelityCircuitCost(OriginalKFC6130)
 
     for n_gates in range(20, 101, 20):
         circ = Circuit(n_qubits)
         circ.random_append(n_gates, typelist=gates)
-        TO = TemplateOptimization(cost_measure=circ_cost)
+        TO = TemplateOptimization(backend=OriginalKFC6130)
         circ_optim = TO.execute(circ)
 
         mat_1 = circ.matrix()

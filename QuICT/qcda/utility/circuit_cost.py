@@ -1,4 +1,3 @@
-from abc import abstractmethod, ABC
 from collections import deque
 from functools import reduce
 
@@ -17,17 +16,7 @@ except ImportError:
 from QuICT.core.utils import GateType
 
 
-class CircuitCost(ABC):
-    @abstractmethod
-    def evaluate(self, circuit: Circuit):
-        pass
-
-
-class StaticCircuitCost(CircuitCost):
-    """
-    Static cost of quantum circuit.
-    """
-
+class CircuitCost:
     NISQ_GATE_COST = {
         GateType.id: 0, GateType.x: 1, GateType.y: 1, GateType.z: 1, GateType.h: 1,
         GateType.t: 1, GateType.tdg: 1, GateType.s: 1, GateType.sdg: 1, GateType.u1: 1,
@@ -37,10 +26,14 @@ class StaticCircuitCost(CircuitCost):
         GateType.cu3: 10, GateType.ccx: 21, GateType.measure: 9
     }
 
-    def __init__(self, cost_dict=None):
-        if cost_dict is None:
-            cost_dict = self.NISQ_GATE_COST
-        self.cost_dict = cost_dict
+    def __init__(self, backend=None):
+        """
+        Args:
+            backend(VirtualQuantumMachine): the target quantum machine. If None, CircuitCost
+                will evaluate the cost of a circuit by static weights in NISQ_GATE_COST.
+        """
+        self.cost_dict = self.NISQ_GATE_COST
+        self.backend = backend
 
     def __getitem__(self, gate_type):
         """
@@ -60,30 +53,11 @@ class StaticCircuitCost(CircuitCost):
         else:
             return 0
 
-    def evaluate(self, circuit: Circuit):
+    def _get_static_cost(self, circuit: Circuit):
         """
-        Evaluate cost of a circuit.
-
-        Args:
-            circuit(Circuit): Circuit to evaluate
-
-        Returns:
-            int: Cost of the circuit
+        Compute the cost of a circuit by adding up static weight of gates.
         """
         return sum(self[n.type] for n in circuit.gates)
-
-
-class FidelityCircuitCost(CircuitCost):
-    """
-    Measure of gate cost in quantum circuit.
-    """
-
-    def __init__(self, backend: VirtualQuantumMachine = None):
-        """
-        Args:
-            backend(VirtualQuantumMachine): Backend machine.
-        """
-        self.backend = backend
 
     @staticmethod
     def from_quest_data(model_info):
@@ -141,10 +115,12 @@ class FidelityCircuitCost(CircuitCost):
         backend.qubit_fidelity = qubit_fidelity
         backend.gate_fidelity = gate_fidelity
 
-        return FidelityCircuitCost(backend)
-
+        return CircuitCost(backend=backend)
 
     def _gate_fidelity(self, gate: BasicGate):
+        """
+        Compute gate fidelity of a gate.
+        """
         qubits = tuple(gate.cargs + gate.targs)
         if gate.type not in self.backend.instruction_set.one_qubit_gates and \
                 gate.type != self.backend.instruction_set.two_qubit_gate:
@@ -167,6 +143,9 @@ class FidelityCircuitCost(CircuitCost):
         return gate_f
 
     def _qubit_avg_relax_time(self, q):
+        """
+        Compute average relaxation time of a qubit.
+        """
         tot_time, cnt = 0, 0
         if self.backend.qubits[q].T1:
             tot_time += self.backend.qubits[q].T1
@@ -177,6 +156,9 @@ class FidelityCircuitCost(CircuitCost):
         return tot_time / cnt
 
     def _get_shortest_path(self, u, v):
+        """
+        Compute shortest path between two qubits in topology.
+        """
         prev = {u: -1}
         que = deque([u])
         while len(que) > 0 and v not in prev:
@@ -235,9 +217,10 @@ class FidelityCircuitCost(CircuitCost):
 
         return circ_f
 
-    def evaluate(self, circuit: Circuit):
+    def evaluate_cost(self, circuit: Circuit):
         """
-        Estimate the cost of a circuit.
+        Estimate the cost of a circuit. If self.backend == None, compute static cost. Otherwise compute
+        cost based on estimated fidelity.
 
         Args:
             circuit(Circuit): Circuit to evaluate.
@@ -245,4 +228,7 @@ class FidelityCircuitCost(CircuitCost):
         Returns:
             float: Estimated cost of the circuit.
         """
-        return -np.log(self.evaluate_fidelity(circuit))
+        if self.backend is None:
+            return self._get_static_cost(circuit)
+        else:
+            return -np.log(self.evaluate_fidelity(circuit))

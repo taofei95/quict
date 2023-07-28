@@ -47,7 +47,7 @@ class Substitution:
         circ_old = self.matching
         circ_new = self.substitution
 
-        return self.measure.evaluate(circ_old) - self.measure.evaluate(circ_new)
+        return self.measure.evaluate_cost(circ_old) - self.measure.evaluate_cost(circ_new)
 
     @cached_property
     def pred(self):
