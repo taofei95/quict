@@ -1,49 +1,66 @@
-import os
+import random
 import unittest
 
-from QuICT.benchmark.benchmark import QuICTBenchmark
-from QuICT.core.layout.layout import Layout
+from QuICT.benchmark.benchmark import QuantumMachinebenchmark
+from QuICT.core.layout import Layout
 from QuICT.core.utils.gate_type import GateType
-from QuICT.core.virtual_machine import InstructionSet
-from QuICT.simulation.state_vector import StateVectorSimulator
+from QuICT.core.virtual_machine import InstructionSet, VirtualQuantumMachine
+from QuICT.simulation.state_vector.statevector_simulator import StateVectorSimulator
 
 
 class TestBenchmark(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        print("The QuICT benchmark unit test start!")
+        print("The quantum machine benchmark unit test start!")
 
     @classmethod
     def tearDownClass(cls) -> None:
-        print("The QuICT benchmark unit test finished!")
+        print("The quantum machine benchmark unit test finished!")
 
-    def test_validate_circuits(self):
-        benchmark = QuICTBenchmark()
-        circuits_list = benchmark.get_circuits(quantum_machine_info={"qubits_number": 5})
-        amp_results_list = []
-        for circuit in circuits_list:
-            simulator = StateVectorSimulator()
-            sim_results = simulator.run(circuit)
-            amp_results_list.append(sim_results)
-
-        entropy_QV_score = benchmark._entropy_QV_score(circuits_list, amp_results_list)
-        valid_circuits_list = benchmark._filter_system(entropy_QV_score)
-
-        assert len(circuits_list) == len(valid_circuits_list)
-        assert circuits_list[5].name == valid_circuits_list[5]
-
-    def test_circuits_number(self):
-        layout = Layout.load_file(os.path.dirname(os.path.abspath(__file__)) + "/../../example/layout/grid_3x3.json")
-        Inset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
-
-        benchmark = QuICTBenchmark()
-        circuits_list = benchmark.get_circuits(
-            quantum_machine_info={"qubits_number": 2, "layout_file": layout, "Instruction_Set": Inset},
-            level=1,
-            mapping=True,
-            gate_transform=True
+    def test_circuit_number(self):
+        iset = InstructionSet(GateType.cx, [GateType.h, GateType.rx, GateType.ry, GateType.rz])
+        layout = Layout.linear_layout(5)
+        vqm = VirtualQuantumMachine(
+            qubits=5,
+            instruction_set=iset,
+            layout=layout,
         )
-        assert len(circuits_list) == 84
+        benchmark = QuantumMachinebenchmark()
+        # level1, no qcda for algorithm circuit
+        circuits_list = benchmark.get_circuits(quantum_machine_info=vqm)
+        assert len(circuits_list) == 20  # random4 + benchmark16
+        # level3, and qcda for algorithm circuit
+        circuits_list = benchmark.get_circuits(quantum_machine_info=vqm, level=3, enable_qcda_for_alg_cir=True)
+        assert len(circuits_list) == 23  # random4 + benchmark16 + alg3
+        # measure all circuit
+        circuits_list = benchmark.get_circuits(quantum_machine_info=vqm, is_measure=True)
+        random_test_cir = random.choice(circuits_list)
+        assert random_test_cir.circuit.gates[-1].type == GateType.measure
+
+    def test_benchlib(self):
+        def sim_interface(cir):
+            sim = StateVectorSimulator()
+            sim.run(cir)
+            amp_list = sim.sample(1)
+            return amp_list
+
+        iset = InstructionSet(GateType.cx, [GateType.h])
+        layout = Layout.linear_layout(5)
+        vqm = VirtualQuantumMachine(
+            qubits=5,
+            instruction_set=iset,
+            layout=layout,
+        )
+        benchmark = QuantumMachinebenchmark()
+        circuits_list = benchmark.get_circuits(quantum_machine_info=vqm)
+        assert len(circuits_list) == 20
+
+        for cir in circuits_list:
+            circuit = cir.circuit
+            circuit.name = f"{cir.type}+{cir.field}+w{cir.width}_s{cir.size}_d{cir.depth}+level{cir.level}"
+            cir.machine_amp = sim_interface(cir.circuit)
+            assert cir.fidelity == cir.machine_amp[0]
+            assert cir.benchmark_score <= cir.qv * cir.fidelity
 
 
 if __name__ == "__main__":
