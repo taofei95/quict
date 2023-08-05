@@ -95,8 +95,8 @@ class Variable(object):
             return False
 
     def __add__(self, other):
-        if isinstance(other, (int, float, np.float64, np.ndarry)):
-            if isinstance(other, np.ndarry) and other.shape != self.pargs.shape:
+        if isinstance(other, (int, float, np.float64, np.ndarray)):
+            if isinstance(other, np.ndarray) and other.shape != self.pargs.shape:
                 raise ValueError
             return Variable(
                 pargs=self.pargs + other,
@@ -153,7 +153,7 @@ class Variable(object):
                 grads = self.grads * grad
                 grads[abs(grads) < 1e-12] = grad
             return Variable(
-                pargs=self.pargs ** other,
+                pargs=self.pargs**other,
                 grads=grads,
                 identity=self.identity,
                 origin_shape=self.origin_shape,
