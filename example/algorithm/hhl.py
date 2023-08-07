@@ -31,11 +31,11 @@ def MSE(x, y):
     return min(res0, res1)
 
 
-# A = matrix(2, 8)
-# b = vector(2)
-# print("start")
-# slt = np.linalg.solve(A, b)
-# slt /= np.linalg.norm(slt)
+A = matrix(2, 8)
+b = vector(2)
+print("start")
+slt = np.linalg.solve(A, b)
+slt /= np.linalg.norm(slt)
 
 hhl = HHL(StateVectorSimulator())
 hhl.circuit(
