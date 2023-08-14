@@ -29,6 +29,9 @@ class FRQI:
         self._n_color_qubits = 1
         self._q_state = None
 
+    def __str__(self):
+        return "FRQI(n_qubits={}, grayscale={})".format(self._n_qubits, self._grayscale)
+
     def __call__(self, img, use_qic=False):
         """Call FRQI for a given image.
 
@@ -178,7 +181,7 @@ class FRQI:
     def _get_cnf_qid(self, cnf_items):
         idx_list = []
         for item in cnf_items:
-            idx_list.append(int(item[item.index("_") + 1:]))
+            idx_list.append(int(item[item.index("_") + 1 :]))
         return idx_list
 
     def _split_dnf(self, dnf):

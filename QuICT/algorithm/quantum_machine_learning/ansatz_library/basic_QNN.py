@@ -32,6 +32,9 @@ class BasicQNN(Ansatz):
         self._layers = layers
         self._validate_layers()
 
+    def __str__(self):
+        return "BasicQNN(n_qubits={}, layers={})".format(self._n_qubits, self._layers)
+
     def init_circuit(self, params: Union[Variable, np.ndarray] = None):
         """Initialize a basic QNN ansatz with trainable parameters.
 

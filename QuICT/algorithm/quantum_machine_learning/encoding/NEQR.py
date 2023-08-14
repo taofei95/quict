@@ -27,6 +27,11 @@ class NEQR(FRQI):
         self._n_color_qubits = int(np.log2(grayscale))
         assert 1 << self._n_color_qubits == grayscale
 
+    def __str__(self):
+        return "NEQR(n_qubits={}, color qubits={}, grayscale={})".format(
+            self._n_qubits, self._n_color_qubits, self._grayscale
+        )
+
     def __call__(self, img, use_qic=False):
         """Call NEQR for a given image.
 

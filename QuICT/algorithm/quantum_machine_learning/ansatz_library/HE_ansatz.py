@@ -35,6 +35,11 @@ class HEAnsatz(Ansatz):
         self._readout = [0] if readout is None else readout
         self._validate_layers()
 
+    def __str__(self):
+        return "HEAnsatz(n_qubits={}, d={}, layers={})".format(
+            self._n_qubits, self._d, self._layers
+        )
+
     def init_circuit(self, params: Union[Variable, np.ndarray] = None):
         """Initialize an HE-ansatz with trainable parameters.
 

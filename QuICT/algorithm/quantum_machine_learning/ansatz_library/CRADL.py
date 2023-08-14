@@ -33,6 +33,9 @@ class CRADL(Ansatz):
         self._readout = n_qubits - 1
         self._layers = layers
 
+    def __str__(self):
+        return "CRADL(n_qubits={}, layers={})".format(self._n_qubits, self._layers)
+
     def init_circuit(self, params: Union[Variable, np.ndarray] = None):
         """Initialize a CRADL ansatz with trainable parameters.
 

@@ -77,6 +77,9 @@ class HingeLoss(LossFun):
         loss = np.clip(1 - pred * target, a_min=0.0, a_max=None)
         return np.mean(loss)
 
+    def __str__(self):
+        return "HingeLoss"
+
 
 class MSELoss(LossFun):
     """Compute the Mean Squared Error Loss."""
@@ -87,6 +90,9 @@ class MSELoss(LossFun):
     def _get_loss(self, pred: np.ndarray, target: np.ndarray):
         loss = (pred - target) ** 2
         return np.mean(loss)
+
+    def __str__(self):
+        return "MSELoss"
 
 
 class BCELoss(LossFun):
@@ -101,3 +107,6 @@ class BCELoss(LossFun):
     def _get_loss(self, pred: np.ndarray, target: np.ndarray):
         loss = -target * np.log(pred + 1e-12) - (1 - target) * np.log(1 - pred + 1e-12)
         return np.mean(loss)
+
+    def __str__(self):
+        return "BCELoss"
