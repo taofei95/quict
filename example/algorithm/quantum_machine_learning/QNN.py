@@ -1,7 +1,6 @@
 import collections
 import tqdm
 from torchvision import datasets, transforms
-import sys
 import numpy_ml
 import yaml
 import time
@@ -188,18 +187,16 @@ if __name__ == "__main__":
 
     # save settings
     config = {
-        "encoding": encoding,
-        "model circuit": ansatz,
+        "encoding": str(encoding),
+        "ansatz": str(ansatz),
         "grayscale": GRAYSCALE,
-        "resize": RESIZE,
+        "resize": str(RESIZE),
         "LR": LR,
-        "loss_fun": loss_fun,
+        "loss_fun": str(loss_fun),
     }
     config_file = open(model_path + "config.yaml", "w")
     config_file.write(yaml.dump(config))
     config_file.close()
-
-    # ep_start, it_start, optimizer = restore_checkpoint(net, model_path, restore_optim=True)
 
     for ep in range(ep_start, EPOCH):
         train(loss_fun, ep, it_start, net, tb)
