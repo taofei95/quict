@@ -1,3 +1,5 @@
+from typing import List, Union
+
 from numpy_ml.neural_nets.optimizers import *
 
 from QuICT.algorithm.quantum_machine_learning.ansatz_library import *

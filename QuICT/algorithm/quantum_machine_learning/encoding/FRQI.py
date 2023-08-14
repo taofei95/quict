@@ -181,7 +181,7 @@ class FRQI:
     def _get_cnf_qid(self, cnf_items):
         idx_list = []
         for item in cnf_items:
-            idx_list.append(int(item[item.index("_") + 1 :]))
+            idx_list.append(int(item[item.index("_") + 1:]))
         return idx_list
 
     def _split_dnf(self, dnf):

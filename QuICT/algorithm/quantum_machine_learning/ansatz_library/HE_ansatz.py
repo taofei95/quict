@@ -3,7 +3,7 @@ from typing import Union
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import CX, CZ, Ry, Rz, CRy, Variable
+from QuICT.core.gate import CX, CZ, CRy, Ry, Rz, Variable
 
 from .ansatz import Ansatz
 

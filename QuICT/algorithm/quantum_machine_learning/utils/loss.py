@@ -6,9 +6,9 @@ from abc import ABC, abstractmethod
 import autograd.numpy as np
 from autograd import grad
 from sympy import *
+from typing import Union
 
 from QuICT.core.gate import Variable
-from typing import List, Union
 
 
 class Loss:
