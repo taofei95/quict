@@ -45,7 +45,6 @@ class LossFun(ABC):
         Returns:
             Loss: The loss.
         """
-        assert pred is not None and target is not None
         assert pred.shape == target.shape
         self._pred = pred
         self._target = target

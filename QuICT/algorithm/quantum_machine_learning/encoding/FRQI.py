@@ -4,6 +4,7 @@ from sympy.logic.boolalg import to_dnf
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.tools.exception.algorithm import *
 
 
 class FRQI:
@@ -67,10 +68,12 @@ class FRQI:
             np.unique(img).shape[0] <= self._grayscale
             and np.max(img) <= self._grayscale
             and img.shape[0] == img.shape[1]
-        )
+        ), EncodingError("Invalid image.")
         self._N = img.shape[0] * img.shape[1]
         self._n_pos_qubits = int(np.log2(self._N))
-        assert 1 << self._n_pos_qubits == self._N
+        assert 1 << self._n_pos_qubits == self._N, EncodingError(
+            "The image size should be 2^n x 2^n."
+        )
         self._q_state = [0] * self._n_pos_qubits
         self._n_qubits = self._n_pos_qubits + self._n_color_qubits
         if flatten:

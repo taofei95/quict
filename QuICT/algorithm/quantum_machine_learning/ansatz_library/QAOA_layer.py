@@ -5,6 +5,7 @@ import numpy as np
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.core import Circuit
 from QuICT.core.gate import CX, GPhase, H, Hy, Rx, Ry, Rz, Variable
+from QuICT.tools.exception.algorithm import *
 
 from .ansatz import Ansatz
 
@@ -13,10 +14,7 @@ class QAOALayer(Ansatz):
     """The quantum approximate optimization algorithm (QAOA) ansatz."""
 
     def __init__(
-        self,
-        n_qubits: int,
-        p: int,
-        hamiltonian: Hamiltonian,
+        self, n_qubits: int, p: int, hamiltonian: Hamiltonian,
     ):
         """Initialize a QAOA ansatz instance.
 
@@ -43,7 +41,7 @@ class QAOALayer(Ansatz):
         if params.shape == (2, self._p):
             self._params = params
         else:
-            raise ValueError
+            raise AnsatzShapeError(str((2, self._p)), str(params.shape))
 
         circuit = Circuit(self._n_qubits)
         # initialize state vector

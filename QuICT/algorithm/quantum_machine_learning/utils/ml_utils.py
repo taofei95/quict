@@ -5,8 +5,8 @@ import shutil
 import numpy as np
 import numpy_ml
 
-from QuICT.algorithm.quantum_machine_learning.tools.exception import *
 from QuICT.core.utils import Variable
+from QuICT.tools.exception.algorithm import *
 from QuICT.tools.logger import *
 
 logger = Logger("ML_utils")
@@ -92,7 +92,9 @@ def restore_checkpoint(model, model_path, restore_optim=True):
         grads = circuit_dict["grads"]
         identity = circuit_dict["identity"]
         params = Variable(pargs, grads, identity=identity)
-        assert params.shape == model.params.shape
+        assert params.shape == model.params.shape, ModelRestoreError(
+            "Model does not match the network."
+        )
         model.params = params
         model.update()
         optim = None

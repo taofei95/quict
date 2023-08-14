@@ -106,7 +106,6 @@ class AdjointDifferentiator:
         """
 
         self._initial_circuit(circuit)
-        assert state_vector is not None
         self._vector = state_vector.copy()
 
         # Calculate d(L)/d(|psi_t>)
@@ -270,7 +269,6 @@ class AdjointDifferentiator:
         gates = [gate & targs for gate, targs, _ in circuit.fast_gates][::-1]
         self._pipeline = gates
         self._bp_pipeline = self._bp_circuit.fast_gates
-        assert len(self._pipeline) == len(self._bp_pipeline)
 
     def _initial_grad_vector(
         self, state_vector, qubits: int, expectation_op: Hamiltonian

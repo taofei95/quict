@@ -4,6 +4,7 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import H, Rxx, Ryy, Rzx, Rzz, Variable, X
+from QuICT.tools.exception.algorithm import *
 
 from .ansatz import Ansatz
 
@@ -53,7 +54,9 @@ class BasicQNN(Ansatz):
         if params.shape == (len(self._layers), self._n_qubits - 1):
             self._params = params
         else:
-            raise ValueError
+            raise AnsatzShapeError(
+                str((len(self._layers), self._n_qubits - 1)), str(params.shape)
+            )
 
         gate_dict = {"XX": Rxx, "YY": Ryy, "ZZ": Rzz, "ZX": Rzx}
         circuit = Circuit(self._n_qubits)
@@ -61,7 +64,7 @@ class BasicQNN(Ansatz):
         H | circuit(self._readout)
         for l, gate in zip(range(len(self._layers)), self._layers):
             if gate not in gate_dict.keys():
-                raise ValueError
+                raise AnsatzValueError('["XX", "YY", "ZZ", "ZX"]', gate)
 
             for i in range(self._n_qubits - 1):
                 gate_dict[gate](params[l][i]) | circuit(
@@ -74,4 +77,4 @@ class BasicQNN(Ansatz):
     def _validate_layers(self):
         for layer in self._layers:
             if layer not in ["XX", "YY", "ZZ", "ZX"]:
-                raise ValueError
+                raise AnsatzValueError('["XX", "YY", "ZZ", "ZX"]', layer)

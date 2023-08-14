@@ -2,6 +2,7 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.tools.exception.algorithm import *
 
 from .FRQI import FRQI
 
@@ -25,7 +26,9 @@ class NEQR(FRQI):
 
         super(NEQR, self).__init__(grayscale)
         self._n_color_qubits = int(np.log2(grayscale))
-        assert 1 << self._n_color_qubits == grayscale
+        assert 1 << self._n_color_qubits == grayscale, EncodingError(
+            "The gray scale of the image should be 2^q"
+        )
 
     def __str__(self):
         return "NEQR(n_qubits={}, color qubits={}, grayscale={})".format(

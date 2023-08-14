@@ -4,6 +4,7 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import CX, CZ, CRy, Ry, Rz, Variable
+from QuICT.tools.exception.algorithm import *
 
 from .ansatz import Ansatz
 
@@ -58,7 +59,9 @@ class HEAnsatz(Ansatz):
         if params.shape == (self._d, self._param_layers, self._n_qubits):
             self._params = params
         else:
-            raise ValueError
+            raise AnsatzShapeError(
+                str(self._d, self._param_layers, self._n_qubits), str(params.shape)
+            )
 
         gate_dict = {"CX": CX, "CZ": CZ, "CRy": CRy, "RY": Ry, "RZ": Rz}
         circuit = Circuit(self._n_qubits)
@@ -90,4 +93,4 @@ class HEAnsatz(Ansatz):
             if layer in ["RY", "RZ", "CRy"]:
                 self._param_layers += 1
             elif layer not in ["CX", "CZ"]:
-                raise ValueError
+                raise AnsatzValueError('["RY", "RZ", "CRy", "CX", "CZ"]', layer)

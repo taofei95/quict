@@ -2,6 +2,8 @@ import random
 
 import numpy as np
 
+from QuICT.tools.exception.algorithm import *
+
 
 class Dataset:
     """An abstract class representing a dataset."""
@@ -11,9 +13,9 @@ class Dataset:
 
         This method accepts multiple lists of data and returns an iterable dataset.
         """
-        assert all(
-            len(datas[0]) == len(data) for data in datas
-        ), "Length mismatch between datas"
+        assert all(len(datas[0]) == len(data) for data in datas), DatasetError(
+            "Length mismatch between datas."
+        )
         self._datas = datas
 
     def __getitem__(self, index):

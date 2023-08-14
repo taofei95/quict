@@ -4,6 +4,7 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import Rxx, Rzz, Variable
+from QuICT.tools.exception.algorithm import *
 
 from .ansatz import Ansatz
 
@@ -55,7 +56,9 @@ class CRAML(Ansatz):
         if params.shape == (self._layers, n_pos_qubits * 2):
             self._params = params
         else:
-            raise ValueError
+            raise AnsatzShapeError(
+                str(self._layers, n_pos_qubits * 2), str(params.shape)
+            )
 
         circuit = Circuit(self._n_qubits)
         for l in range(self._layers):

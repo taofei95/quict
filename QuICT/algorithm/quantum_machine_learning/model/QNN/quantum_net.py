@@ -9,6 +9,7 @@ from QuICT.algorithm.quantum_machine_learning.utils.loss import *
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.tools.exception.algorithm import *
 
 from ..model import Model
 
@@ -67,7 +68,9 @@ class QuantumNet(Model):
             self._hamiltonian = [self._hamiltonian]
         for h in self._hamiltonian:
             if not isinstance(h, Hamiltonian):
-                raise ValueError
+                raise ModelError(
+                    "The input parameter hamiltonian should be a list of Hamiltonians for measurement."
+                )
 
     def forward(self, data_circuits, train: bool = True):
         """The forward propagation procedure for one step.
