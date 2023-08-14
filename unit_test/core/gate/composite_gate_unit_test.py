@@ -6,6 +6,7 @@
 import unittest
 
 from QuICT.core.gate import *
+from QuICT.algorithm.qft import QFT, IQFT
 
 
 class TestCompositeGate(unittest.TestCase):

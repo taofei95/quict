@@ -58,10 +58,6 @@ class GateType(Enum):
     perm = "Permutation gate"
     perm_fx = "Perm-Fx gate"
 
-    # Composite gate
-    qft = "QFT gate"
-    iqft = "IQFT gate"
-
 
 class MatrixType(Enum):
     """ Different Type of quantum gates' matrix

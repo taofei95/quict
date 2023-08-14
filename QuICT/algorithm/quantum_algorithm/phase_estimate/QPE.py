@@ -1,5 +1,6 @@
 from QuICT.core import Circuit
-from QuICT.core.gate import CompositeGate, H, Swap, IQFT
+from QuICT.core.gate import CompositeGate, H, Swap
+from QuICT.algorithm.qft import IQFT
 from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.tools import Logger
 import numpy as np
