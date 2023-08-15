@@ -98,13 +98,16 @@ class BCELoss(LossFun):
     """Compute the Binary Cross Entropy Loss.
 
     **Note that the target y should be numbers between 0 and 1.**
+    BCELoss clamps its log function outputs to be greater than
+    or equal to -100 to avoid an infinite term in the loss equation.
     """
 
     def __init__(self):
         super().__init__()
 
     def _get_loss(self, pred: np.ndarray, target: np.ndarray):
-        loss = -target * np.log(pred + 1e-12) - (1 - target) * np.log(1 - pred + 1e-12)
+        # loss = -target * np.log(pred + 1e-12) - (1 - target) * np.log(1 - pred + 1e-12)
+        loss = np.clip(-target * np.log(pred) - (1 - target) * np.log(1 - pred), 0, 100)
         return np.mean(loss)
 
     def __str__(self):
