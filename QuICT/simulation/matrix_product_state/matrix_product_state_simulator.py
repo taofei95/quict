@@ -6,13 +6,35 @@ from .mps_site import MPSSiteStructure
 
 
 class MatrixProductStateSimulator:
-    # TODO: currently do not support 3-qubits gate
+    @property
+    def device(self) -> str:
+        return self._device
+
+    @property
+    def precision(self) -> str:
+        return self._precision
+
     def __init__(self, device: str = "CPU", precision: str = "double"):
+        """ Initial MPS Simulator
+
+        Args:
+            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
+            precision (str, optional): The precision type, one of [single, double]. Defaults to "double".
+        """
         self._device = device
         self._precision = precision
         self._mps = MPSSiteStructure(device, precision)
 
     def run(self, circuit: Circuit, quantum_state: np.ndarray = None) -> MPSSiteStructure:
+        """ Start Simulator with given circuit
+
+        Args:
+            circuit (Circuit): The quantum circuits.
+            quantum_state (np.ndarray, optional): The initial quantum state vector. Defaults to None.
+
+        Returns:
+            MPSSiteStructure: The Matrix Product State
+        """
         qubits = circuit.width()
         self._mps.initial_mps(qubits, quantum_state)
 

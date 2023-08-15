@@ -374,7 +374,7 @@ class GateSimulator:
         if gate.type != GateType.unitary:
             matrix = self._get_gate_matrix(gate) if fp else self._get_gate_param_grad(gate, parg_id)
         else:
-            matrix = gate.matrix
+            matrix = self._array_helper.array(gate.matrix)
 
         if isinstance(gate, MultiControlGate):
             if len(targs) == 1:
