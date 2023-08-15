@@ -3,10 +3,12 @@ from numpy.polynomial.polynomial import Polynomial
 from QuICT.core.gate import Rz, Rx
 from QuICT.core.gate import CompositeGate
 #######################################################
+
 """
+Reference: https://arxiv.org/abs/1806.01838
 In this file, we achieve this motivation.
 given an input x in the domain[-1,1], and polynomial p(x)
-We find the SIGNAL MATRIX
+We find the SIGNAL MATRIX.
 [p(x), iQ(x) * sqrt(1-x^2)]
 [i*Q*(x)*sqrt(1-x^2), P*(x)]
 
