@@ -173,7 +173,6 @@ def multicontrol_unitary(unitary_matrix_array):
     c_n_x = mct(num_control_bits)
 
     for i in range(len(unitary_matrix_array)):
-        print(f"test{i}")
         identity_matrix = np.identity(2 ** matrix_dimension).astype('complex128')
         project_zero = np.array([[1, 0], [0, 0]], dtype='complex128')
         project_one = np.array([[0, 0], [0, 1]], dtype='complex128')
@@ -183,13 +182,12 @@ def multicontrol_unitary(unitary_matrix_array):
 
 
         if num_ancilla_qubits==1:
-            for j in range(len(binary_string[i])):
-                if binary_string[j] == "0":
-                    unitary_gate | composite_gate([i for i in range(matrix_dimension+1)])
-                elif binary_string[j] == "1":
-                    X | composite_gate(0)
-                    unitary_gate | composite_gate([i for i in range(matrix_dimension+1)])
-                    X | composite_gate(0)
+            if binary_string[i] == "0":
+                unitary_gate | composite_gate([i for i in range(matrix_dimension+1)])
+            elif binary_string[i] == "1":
+                X | composite_gate(0)
+                unitary_gate | composite_gate([i for i in range(matrix_dimension+1)])
+                X | composite_gate(0)
         if num_ancilla_qubits==2:
             for j in range(len(binary_string[i])):
                 if binary_string[i][j] == "1":
