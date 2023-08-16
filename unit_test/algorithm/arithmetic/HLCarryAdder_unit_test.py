@@ -6,105 +6,105 @@ from QuICT.tools.exception.core import CircuitAppendError
 from QuICT.core import Circuit
 from QuICT.core.gate.gate import X
 from QuICT.simulation.state_vector import StateVectorSimulator
-from QuICT.algorithm.arithmetic.adder.quantum_adder import ADD
+from QuICT.algorithm.arithmetic.adder.hl_adder import HLCarryAdder
 
-ADD_logger = Logger("test_ADD_gates(adder)")
+HLCarryAdder_logger = Logger("test_HLCarryAdder_gates(adder)")
 
 
-class TestADDGates(unittest.TestCase):
-    """Test the Quantum Adder Gates named ADD"""
+class TestHLCarryAdderGates(unittest.TestCase):
+    """Test the Quantum Adder Gates named HLCarryAdder"""
 
-    def test_ADD_unsigned(self):
+    def test_HLCarryAdder_unsigned(self):
         """
-            Test using the ADD gates to do unsigned addition on two qregs
+            Test using the HLCarryAdder gates to do unsigned addition on two qregs
             and reserve the carry qubit in the result.
         """
 
         # regular case
-        self.assertEqual(self._get_ADD_result(5, 8, 14), 8 + 14)
+        self.assertEqual(self._get_HLCarryAdder_result(5, 8, 14), 8 + 14)
         # one qubit case
-        self.assertEqual(self._get_ADD_result(1, 1, 1), 1 + 1)
+        self.assertEqual(self._get_HLCarryAdder_result(1, 1, 1), 1 + 1)
         # random inputs of one qubit case
         x, y = np.random.randint(2, size=2)
-        self.assertEqual(self._get_ADD_result(1, x, y), x + y)
+        self.assertEqual(self._get_HLCarryAdder_result(1, x, y), x + y)
         # random inputs
         qreg_size = np.random.randint(1, 11)
         x, y = np.random.randint(2 ** qreg_size, size=2)
-        self.assertEqual(self._get_ADD_result(qreg_size, x, y), x + y)
+        self.assertEqual(self._get_HLCarryAdder_result(qreg_size, x, y), x + y)
 
-    def test_ADD_signed(self):
+    def test_HLCarryAdder_signed(self):
         """
-            Test using the ADD gates to do signed addition on two qregs
+            Test using the HLCarryAdder gates to do signed addition on two qregs
             and ignore the carry qubit in the result.
         """
 
         # regular case
         self.assertEqual(
-            self._get_ADD_result(5, 6, 7, signed=True),
+            self._get_HLCarryAdder_result(5, 6, 7, signed=True),
             6 + 7
         )
         self.assertEqual(
-            self._get_ADD_result(5, 15, -4, signed=True),
+            self._get_HLCarryAdder_result(5, 15, -4, signed=True),
             15 - 4
         )
         self.assertEqual(
-            self._get_ADD_result(5, -8, 14, signed=True),
+            self._get_HLCarryAdder_result(5, -8, 14, signed=True),
             -8 + 14
         )
         self.assertEqual(
-            self._get_ADD_result(5, -2, -3, signed=True),
+            self._get_HLCarryAdder_result(5, -2, -3, signed=True),
             -2 - 3
         )
         # one qubit case
         self.assertEqual(
-            self._get_ADD_result(1, 0, -1, signed=True),
+            self._get_HLCarryAdder_result(1, 0, -1, signed=True),
             0 - 1
         )
         self.assertEqual(
-            self._get_ADD_result(1, -1, 0, signed=True),
+            self._get_HLCarryAdder_result(1, -1, 0, signed=True),
             -1 - 0
         )
-        self.assertEqual(self._get_ADD_result(1, 0, 0, signed=True), 0)
+        self.assertEqual(self._get_HLCarryAdder_result(1, 0, 0, signed=True), 0)
         # overflow
         self.assertEqual(
-            self._get_ADD_result(5, 15, 7, signed=True),
+            self._get_HLCarryAdder_result(5, 15, 7, signed=True),
             (15 + 7 + 2 ** (5 - 1)) % (2 ** 5) - 2 ** (5 - 1)
         )
         # underflow
         self.assertEqual(
-            self._get_ADD_result(5, -7, -13, signed=True),
+            self._get_HLCarryAdder_result(5, -7, -13, signed=True),
             (-7 - 13 + 2 ** (5 - 1)) % (2 ** 5) - 2 ** (5 - 1)
         )
         # underflow of one qubit case
-        self.assertEqual(self._get_ADD_result(1, -1, -1, signed=True), 0)
+        self.assertEqual(self._get_HLCarryAdder_result(1, -1, -1, signed=True), 0)
         # random inputs
         reg_size = np.random.randint(1, 11)
         x, y = np.random.randint(-2 ** (reg_size - 1), 2 ** (reg_size - 1), size=2)
         self.assertEqual(
-            self._get_ADD_result(reg_size, x, y, signed=True),
+            self._get_HLCarryAdder_result(reg_size, x, y, signed=True),
             (x + y + 2 ** (reg_size - 1)) % (2 ** reg_size) - 2 ** (reg_size - 1)
         )
 
-    def test_ADD_error_case(self):
+    def test_HLCarryAdder_error_case(self):
         """
-            Test using the ADD gates to do addition on two qregs
+            Test using the HLCarryAdder gates to do addition on two qregs
             with the first qubit being set to |1> by mistake,
             and the carry bit will be reversed.
         """
 
         self.assertEqual(
-            self._get_ADD_error_input_result(5, 1, 3),
+            self._get_HLCarryAdder_error_input_result(5, 1, 3),
             (1 + 3) ^ (1 << 5)
         )
         # random inputs
         qreg_size = np.random.randint(1, 11)
         x, y = np.random.randint(2 ** qreg_size, size=2)
         self.assertEqual(
-            self._get_ADD_error_input_result(qreg_size, x, y),
+            self._get_HLCarryAdder_error_input_result(qreg_size, x, y),
             (x + y) ^ (1 << qreg_size)
         )
 
-    def _get_ADD_result(
+    def _get_HLCarryAdder_result(
         self,
         qreg_size: int,
         q_x: int,
@@ -125,12 +125,12 @@ class TestADDGates(unittest.TestCase):
         try:
             q_x_bin = np.binary_repr(q_x, qreg_size)
         except CircuitAppendError as e:
-            ADD_logger.error(e("Not enough register size to hold q_x"))
+            HLCarryAdder_logger.error(e("Not enough register size to hold q_x"))
             raise
         try:
             q_y_bin = np.binary_repr(q_y, qreg_size)
         except CircuitAppendError as e:
-            ADD_logger.error(e("Not enough register size to hold q_y"))
+            HLCarryAdder_logger.error(e("Not enough register size to hold q_y"))
 
         # Construct Circuit #
 
@@ -143,8 +143,8 @@ class TestADDGates(unittest.TestCase):
             if bit == '1':
                 X | adder_circ([i])
 
-        # apply ADD
-        ADD(qreg_size) | adder_circ
+        # apply HLCarryAdder
+        HLCarryAdder(qreg_size) | adder_circ
 
         # Decode #
         sv_sim = StateVectorSimulator()
@@ -161,7 +161,7 @@ class TestADDGates(unittest.TestCase):
                 if val != 0:
                     return idx
 
-    def _get_ADD_error_input_result(
+    def _get_HLCarryAdder_error_input_result(
         self,
         qreg_size: int,
         q_x: int,
@@ -183,12 +183,12 @@ class TestADDGates(unittest.TestCase):
         try:
             q_x_bin = np.binary_repr(q_x, qreg_size)
         except CircuitAppendError as e:
-            ADD_logger.error(e("Not enough register size to hold q_x"))
+            HLCarryAdder_logger.error(e("Not enough register size to hold q_x"))
             raise
         try:
             q_y_bin = np.binary_repr(q_y, qreg_size)
         except CircuitAppendError as e:
-            ADD_logger.error(e("Not enough register size to hold q_y"))
+            HLCarryAdder_logger.error(e("Not enough register size to hold q_y"))
 
         # init circuit with q_x and q_y
         adder_circ = Circuit(2 * qreg_size + 1)
@@ -202,8 +202,8 @@ class TestADDGates(unittest.TestCase):
         # set error case
         X | adder_circ([0])
 
-        # apply ADD
-        ADD(qreg_size) | adder_circ
+        # apply HLCarryAdder
+        HLCarryAdder(qreg_size) | adder_circ
 
         # Decode #
         sv_sim = StateVectorSimulator()
