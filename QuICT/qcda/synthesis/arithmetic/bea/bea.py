@@ -1,6 +1,7 @@
 import numpy as np
 
-from QuICT.core.gate import CompositeGate, CX, CCX, CSwap, X, QFT, IQFT, CU1, U1, CCRz, Phase
+from QuICT.core.gate import CompositeGate, CX, CCX, CSwap, X, CU1, U1, CCRz, Phase
+from QuICT.algorithm.qft import QFT, IQFT
 
 
 def ex_gcd(a, b, arr):
