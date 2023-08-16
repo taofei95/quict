@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial as P
-import numpy.polynomial.chebyshev as C
+from numpy.polynomial.chebyshev import Chebyshev as C
 import scipy.special as sp
 def cheby_poly(order, input_value):
     poly_array = []
@@ -31,6 +31,6 @@ class Poly:
             return P(C.cheb2poly(exp_to_poly(time, order)))
 
 
-    def chevbyshev_basis(self):
+    def chevbyshev_basis(self, time, order):
         if self.polynomial =="exp":
             return C(exp_to_poly(time, order))
