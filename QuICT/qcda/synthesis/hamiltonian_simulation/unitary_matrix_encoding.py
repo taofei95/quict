@@ -1,6 +1,7 @@
 import numpy as np
 from QuICT.core.gate import *
 from QuICT.qcda.synthesis import QuantumStatePreparation
+import itertools
 ##########################################
 #Following code do stardard-form encoding of a linear combination of Unitaries
 def check_hermitian(input_matrix):
@@ -55,9 +56,9 @@ def check_hamiltonian(coefficient_array, unitary_matrix_array):
 def padding_coefficient_array(coefficient_array):
     length = len(coefficient_array)
     n = 0
-    while 2**n!=length:
+    while (2**n-1)<length:
         n+=1
-        coefficient_array = np.pad(coefficient_array,(0,2**n-length))
+    coefficient_array = np.pad(coefficient_array,(0,2**n-length))
     return coefficient_array, n
 def permute_bit_string(max_int):
     """
@@ -68,11 +69,11 @@ def permute_bit_string(max_int):
     """
     # find max bound of max_int
     num_qubits = 0
-    while 2 ** num_qubits - 1 < max_int:
+    while 2 ** num_qubits-1 < max_int:
         num_qubits += 1
     bit_string_array = np.arange(0, max_int, 1)
     permute_list = []
-    for i in range(len(bit_string_array)):
+    for i in range(len(bit_string_array)+1):
         permute_list.append(format(i, f"0{num_qubits}b"))
     return permute_list, num_qubits
 
@@ -89,16 +90,78 @@ def prepare_G_state(coefficient_array, summed_coefficient):
 
     for i in range(len(coefficient_array)):
         state_vector.append(np.sqrt(coefficient_array[i]/np.abs(summed_coefficient)))
+    state_vector = np.sqrt(coefficient_array/summed_coefficient)
     QSP = QuantumStatePreparation('uniformly_gates')
     oracle_G = QSP.execute(state_vector)
     return  oracle_G
+
+def product_gates(coefficient_array: np.array, hamiltonian_array: np.array, order: int, time: float, time_step: int):
+    """
+    We permute the combination of matrix multiplication.
+
+    The permutation execute in the following order
+    1. If an input_array has following form A = np.array([matrix_1, matrix_2 ... ,matrix_n])
+    We write this in short-hand [1,2,3,4,...,n]
+        We want to calcualte A^k. This imply we want to permute
+        [1..n][1..n][1..n]...[1..n]_{k_th}
+
+       We multiply matrix in the order of
+       1 * 1...1_{k_th}
+       1 * 1...2_{k_th}
+       .
+       .
+       .
+       1 * 1...n_{k_th}
+    2. after the last term reach maximum index of the input_array,
+    we set the last term index into 1 and set the second last term index into 2(1+1)
+    3. we repeat step 1 and step 2 to find all posible combinations
+
+
+    Parameters
+    ----------
+    input_array : np.array
+        The input_array contain all of information of hamiltonian
+    order : int
+        The maximum order that remain in the truncated taylor expansion of a hamiltonian operator.
+
+    Returns
+    -------
+    np.array
+        The permutated elements.
+        From left to right [1...1, 1...2, ..., 1...k, ..., 1... 21, ..., k...k ]
+
+    """
+    matrix_list = []
+    coefficient_list = []
+    matrix_list.append(np.identity(len(hamiltonian_array[0][0])).astype('complex128'))
+    coefficient_list.append(1)
+    for k in range(1, order + 1):
+        permute_array = list(itertools.product(range(len(hamiltonian_array)), repeat=k))
+        for i in range(len(permute_array)):
+            temp_matrix = []
+            temp_coefficient = 1
+            for j in range(len(permute_array[i])):
+                temp_matrix.append(hamiltonian_array[permute_array[i][j]])
+                temp_coefficient = temp_coefficient * coefficient_array[permute_array[i][j]]
+            temp_matrix[0] = temp_matrix[0] * (-1j)**k
+            ###################################
+            #to save running time
+            matrix_list.append(temp_matrix)
+            ####################################
+            coefficient_list.append((((time / time_step) ** k) / np.math.factorial(k)) * temp_coefficient)
+
+    coefficient_array = np.array(coefficient_list)
+
+    return coefficient_array, matrix_list
+
 def multicontrol_unitary(unitary_matrix_array):
     """
     Find composite gates generates matrix = sum_{i} |i><i| tensor U_{i}
 
     :return: Composite gates
+
     """
-    binary_string, num_ancilla_qubits = permute_bit_string(len(unitary_matrix_array))
+    binary_string, num_ancilla_qubits = permute_bit_string(len(unitary_matrix_array)-1)
 
     matrix_dimension = 0
     while 2**matrix_dimension!=len(unitary_matrix_array[0][0]):
@@ -110,6 +173,7 @@ def multicontrol_unitary(unitary_matrix_array):
     c_n_x = mct(num_control_bits)
 
     for i in range(len(unitary_matrix_array)):
+        print(f"test{i}")
         identity_matrix = np.identity(2 ** matrix_dimension).astype('complex128')
         project_zero = np.array([[1, 0], [0, 0]], dtype='complex128')
         project_one = np.array([[0, 0], [0, 1]], dtype='complex128')
@@ -121,7 +185,7 @@ def multicontrol_unitary(unitary_matrix_array):
         if num_ancilla_qubits==1:
             for j in range(len(binary_string[i])):
                 if binary_string[j] == "0":
-                    unitary_gate | composite_gate(0)
+                    unitary_gate | composite_gate([i for i in range(matrix_dimension+1)])
                 elif binary_string[j] == "1":
                     X | composite_gate(0)
                     unitary_gate | composite_gate([i for i in range(matrix_dimension+1)])
@@ -142,9 +206,9 @@ def multicontrol_unitary(unitary_matrix_array):
                 if binary_string[i][j] == "1":
                     X | composite_gate(j)
 
-            c_n_x | composite_gate([i for i in range(num_control_bits)])
+            c_n_x | composite_gate([i for i in range(num_control_bits+1)])
             unitary_gate | composite_gate([num_control_bits+i for i in range(matrix_dimension+1)])
-            c_n_x | composite_gate([i for i in range(num_control_bits)])
+            c_n_x | composite_gate([i for i in range(num_control_bits+1)])
 
             for j in range(len(binary_string[i])):
                 if binary_string[i][j] == "1":
@@ -171,13 +235,5 @@ class  UnitaryMatrixEncoding:
             return   cg
         elif not complete:
             return G, G_inverse, unitary_encoding
-
-
-
-
-
-
-
-
 
 
