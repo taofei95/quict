@@ -20,6 +20,7 @@ from warnings import warn
 import numpy as np
 
 from QuICT.core.gate import *
+from QuICT.core.utils import Variable
 
 
 MAX_FRAC = 16
@@ -179,6 +180,8 @@ def pi_check(inpt, eps=1e-6, output='text', ndigits=5):
         str_out = '{:.{}g}'.format(single_inpt, ndigits)
         return str_out
 
+    if isinstance(inpt, Variable):
+        inpt = inpt.pargs
     complex_inpt = complex(inpt)
     real, imag = map(normalize, [complex_inpt.real, complex_inpt.imag])
 
