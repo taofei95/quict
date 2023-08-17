@@ -2,7 +2,23 @@ from numpy import binary_repr
 from typing import List
 
 
-def decode_counts(count_list: List[int], partition: List[int], count_thresh: int = 0):
+def decode_counts(count_list: List[int], partition: List[int], count_thresh: int = 0) -> List[List[str]]:
+    """
+        Given a partition, decode and partition the sampling result from a simulator into a list of
+        binary strings.
+
+        Args:
+            count_list (List[int]): list of sampling result from a simulator.
+
+            partition (List[int]): a list of integer representing the lengths of individual
+            binary string. The sum requires to be equal to the length of the count_list.
+
+            count_thresh (int): only the index with count larger than count_thresh will be
+            processed. Default to be 0.
+
+        Return:
+            A list of partitioned binary string.
+    """
     bin_size = len(binary_repr(len(count_list))) - 1
     sum_of_parts = sum(partition)
 
@@ -30,7 +46,23 @@ def decode_counts(count_list: List[int], partition: List[int], count_thresh: int
     return res
 
 
-def decode_counts_int(count_list: List[int], partition: List[int], count_thresh: int = 0):
+def decode_counts_int(count_list: List[int], partition: List[int], count_thresh: int = 0) -> List[List[int]]:
+    """
+        Given a partition, decode and partition the sampling result from a simulator into a list of
+        binary strings then converting into decimal number.
+
+        Args:
+            count_list (List[int]): list of sampling result from a simulator.
+
+            partition (List[int]): a list of integer representing the lengths of individual
+            binary string. The sum requires to be equal to the length of the count_list.
+
+            count_thresh (int): only the index with count larger than count_thresh will be
+            processed. Default to be 0.
+
+        Return:
+            A list of partitioned binary strings converted into decimal integers.
+    """
     bin_size = len(binary_repr(len(count_list))) - 1
     sum_of_parts = sum(partition)
 

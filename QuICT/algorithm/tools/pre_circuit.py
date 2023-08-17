@@ -10,12 +10,12 @@ def circuit_init(qcircuit: Circuit, qreg_list: List[int], init_val: int):
         Init circuit with a classically given vale using basic/computational encoding in big edian convention.
 
         Args:
-            qcircuit (Circuit): circuit to be inited
+            qcircuit (Circuit): circuit to be initialized.
 
-            qreg_list (List[int]): the list representing the quantum register to be inited,
+            qreg_list (List[int]): the list representing the quantum register to be initialized,
             from the most to the least siginificant bit.
 
-            init_val (int): the value used for initialization
+            init_val (int): the integer value used for initialization
     """
     reg_size = len(qreg_list)
     try:

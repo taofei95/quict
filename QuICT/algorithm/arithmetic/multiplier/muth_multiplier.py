@@ -34,13 +34,13 @@ class MuThMultiplier(CompositeGate):
                 qreg_size_b (int | None): Register size for the second input register, will be
                 the same as the first input register if not given.
         """
-        if qreg_size < 1:
-            raise GateParametersAssignedError("Input register size must be larger than 0.")
+        if qreg_size < 2:
+            raise GateParametersAssignedError("Input register size must be larger than 1.")
 
         if qreg_size_b is None:
             qreg_size_b = qreg_size
-        elif qreg_size_b < 1:
-            raise GateParametersAssignedError("Input register size must be larger than 0.")
+        elif qreg_size_b < 2:
+            raise GateParametersAssignedError("Input register size must be larger than 1.")
 
         self._reg_a_list = list(range(qreg_size))
         self._reg_b_list = list(range(qreg_size, qreg_size + qreg_size_b))
