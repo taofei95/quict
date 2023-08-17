@@ -1,11 +1,12 @@
 import math
-from unitary_matrix_encoding import permute_bit_string, check_hamiltonian, UnitaryMatrixEncoding, product_gates, padding_coefficient_array
-from quict_polynomial import Poly
+from .unitary_matrix_encoding import permute_bit_string, check_hamiltonian, UnitaryMatrixEncoding, product_gates, padding_coefficient_array
+from .polynomial import Poly
+from .quantum_signal_processing import QuantumSignalProcessing, SignalAngleFinder
+
 from QuICT.qcda.synthesis import QuantumStatePreparation
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 import numpy as np
-from quantum_signal_processing import QuantumSignalProcessing, SignalAngleFinder
 
 
 def prepare_eigenvector_gate(input_eigenvector):
@@ -43,22 +44,11 @@ def int_reflection(binary_string):
     elif m == 3:
         CCZ | composite_gate([0, 1, 2])
     elif m > 3:
-
-        my_ccx = CCX & [0, 1, m]
-        my_ccx | composite_gate
-        for i in range(2, m):
-            my_ccx = CCX & [i, i + m - 2, i + m - 1]
-            my_ccx | composite_gate
-
-        H | composite_gate(2*m-1)
-        CX | composite_gate([2*m-2, 2*m-1])
-        H | composite_gate(2*m-1)
-
-        for i in range(0, m - 2):
-            my_ccx = CCX & [m - i - 1, 2 * (m - 1) - i - 1, 2 * (m - 1) - i]
-            my_ccx | composite_gate
-        my_ccx = CCX & [0, 1, m]
-        my_ccx | composite_gate
+        mct = MultiControlToffoli('no_aux')
+        m_c_t = mct(m-1)
+        H | composite_gate(m-1)
+        m_c_t|composite_gate([i for i in range(m)])
+        H | composite_gate(m-1)
     x_composite_gate | composite_gate
 
     return composite_gate
@@ -146,7 +136,7 @@ class HamiltonianSimulation():
         assert order < max_order, f"The max order exceed {max_order}. Adjust max allowed taylor expansion order."
         # Algorithm
         coefficient_array, hamilton_list = product_gates(coefficient_array, matrix_array, order, time,
-                                                         1)
+                                                         times_steps)
         bit_string_array, num_ancilla_qubit = permute_bit_string(
             len(coefficient_array) - 1)
         # make B gates, select V gates, ancilla reflection gates
