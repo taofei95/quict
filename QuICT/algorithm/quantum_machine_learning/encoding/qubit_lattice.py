@@ -3,7 +3,7 @@ from QuICT.core.gate import *
 from QuICT.tools.exception.algorithm import *
 
 
-class Qubit:
+class QubitLattice:
     """Qubit encoding for encoding classical image data into quantum circuits."""
 
     def __init__(self, data_qubits: int):
