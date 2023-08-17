@@ -121,26 +121,30 @@ class Differentiator:
             circuit, variables, state_vector_list, expectation_ops
         )
 
-    def get_expectation(
-        self, state_vector: np.ndarray, expectation_ops: list,
+    def get_expectations(
+        self, circuit: Circuit, state_vector: np.ndarray, expectation_ops: list,
     ):
         """Calculate the expectation of a PQC.
 
         Args:
+            circuit (Circuit): The PQC.
             state_vector (np.ndarray): The state vector output from forward propagation.
             expectation_ops (list): The hamiltonians that need to get expectations.
 
         Returns:
             np.ndarray: The expectations.
         """
-        return self._differentiator.get_expectation(state_vector, expectation_ops)
+        return self._differentiator.get_expectations(
+            circuit, state_vector, expectation_ops
+        )
 
     def get_expectations_batch(
-        self, state_vector_list: list, expectation_ops: list,
+        self, circuit: Circuit, state_vector_list: list, expectation_ops: list,
     ):
         """Calculate the expectations of a batch of PQCs.
 
         Args:
+            circuit (Circuit): The PQC.
             state_vector_list (list): The state vectors output from multiple FP process.
             expectation_ops (list): The hamiltonians that need to get expectations.
 
@@ -148,5 +152,5 @@ class Differentiator:
             np.ndarray: The expectations.
         """
         return self._differentiator.get_expectations_batch(
-            state_vector_list, expectation_ops
+            circuit, state_vector_list, expectation_ops
         )

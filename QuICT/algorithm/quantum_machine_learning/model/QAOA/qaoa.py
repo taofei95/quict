@@ -79,8 +79,8 @@ class QAOA(Model):
                 self._circuit, self._params, state, [self._hamiltonian]
             )
         else:
-            expectation = self._differentiator.get_expectation(
-                state, [self._hamiltonian]
+            expectation = self._differentiator.get_expectations(
+                self._circuit, state, [self._hamiltonian]
             )
         return Variable(expectation)
 

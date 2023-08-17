@@ -200,17 +200,20 @@ class AdjointDifferentiator:
         return np.array(params_grad_list), np.array(expectation_list)
 
     def _get_one_expectation(
-        self, state_vector: np.ndarray, expectation_op: Hamiltonian,
+        self, circuit: Circuit, state_vector: np.ndarray, expectation_op: Hamiltonian,
     ):
         """Calculate the expectation of a PQC.
 
         Args:
+            circuit (Circuit): The PQC.
             state_vector (np.ndarray): The state vector output from forward propagation.
             expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
 
         Returns:
             np.float: The expectation.
         """
+        self._initial_circuit(circuit)
+
         # Calculate d(L)/d(|psi_t>)
         self._grad_vector = self._initial_grad_vector(
             state_vector.copy(), self._qubits, expectation_op
@@ -224,11 +227,12 @@ class AdjointDifferentiator:
         return expectation
 
     def get_expectations(
-        self, state_vector: np.ndarray, expectation_ops: list,
+        self, circuit: Circuit, state_vector: np.ndarray, expectation_ops: list,
     ):
         """Calculate the expectation of a PQC.
 
         Args:
+            circuit (Circuit): The PQC.
             state_vector (np.ndarray): The state vector output from forward propagation.
             expectation_ops (list): The hamiltonians that need to get expectations.
 
@@ -237,16 +241,17 @@ class AdjointDifferentiator:
         """
         expectation_list = []
         for op in expectation_ops:
-            expectation = self._get_one_expectation(state_vector, op)
+            expectation = self._get_one_expectation(circuit, state_vector, op)
             expectation_list.append(expectation)
         return np.array(expectation_list)
 
     def get_expectations_batch(
-        self, state_vector_list: list, expectation_ops: list,
+        self, circuit: Circuit, state_vector_list: list, expectation_ops: list,
     ):
         """Calculate the expectations of a batch of PQCs.
 
         Args:
+            circuit (Circuit): The PQC.
             state_vector_list (list): The state vectors output from multiple FP process.
             expectation_ops (list): The hamiltonians that need to get expectations.
 
@@ -255,7 +260,7 @@ class AdjointDifferentiator:
         """
         expectation_list = []
         for state_vector in state_vector_list:
-            expectations = self.get_expectations(state_vector, expectation_ops)
+            expectations = self.get_expectations(circuit, state_vector, expectation_ops)
             expectation_list.append(expectations)
         return np.array(expectation_list)
 

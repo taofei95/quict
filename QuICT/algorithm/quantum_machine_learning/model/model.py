@@ -20,6 +20,14 @@ class Model(ABC):
     def params(self, params):
         self._params = params
 
+    @property
+    def optimizer(self):
+        return self._optimizer
+
+    @optimizer.setter
+    def optimizer(self, optimizer):
+        self._optimizer = optimizer
+
     def __init__(
         self,
         n_qubits: int,

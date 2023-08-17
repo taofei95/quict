@@ -99,7 +99,7 @@ class QuantumNet(Model):
             )
         else:
             expectations = self._differentiator.get_expectations_batch(
-                state_list, self._hamiltonian
+                circuit, state_list, self._hamiltonian
             )
         return Variable(expectations)
 
