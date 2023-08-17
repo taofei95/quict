@@ -26,7 +26,7 @@ class MuThCtrlAdder(CompositeGate):
 
             |ctrl>|a>|0>|b>|0> ---> |ctrl>|a>|(ctrl * a) + b>|0>
 
-            Total circuit requires `2 * qreg_size + 3` qubits.
+            Total requires `2 * qreg_size + 3` qubits.
 
             Args:
                 qreg_size (int): Input register size for both addends. >= 2.

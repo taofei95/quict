@@ -21,7 +21,7 @@ class TestMuThCtrlAdder(unittest.TestCase):
         decoded_counts = self._run_and_decode_adder_circuit(ctrl_adder_circ, n)
 
         # expect exactly 2 outputs
-        self.assertEqual(len(decoded_counts), 2, "decoded_counts: {decoded_counts}")
+        self.assertEqual(len(decoded_counts), 2, f"decoded_counts: {decoded_counts}")
         for count in decoded_counts:
             ctrl_bit, _, output_sum, ancilla = count
             # check correctness
@@ -59,9 +59,9 @@ class TestMuThCtrlAdder(unittest.TestCase):
         reg_size: int,
         ctrl_bit: Optional[bool] = None,
         init_reg1: Optional[int] = None,
-        init_reg2: Optional[int] = None,
+        init_reg2: Optional[int] = None
     ) -> Circuit:
-
+        """ contruct control adder circuit """
         cAdder_circ = Circuit(2 * reg_size + 3)
 
         # init control bit
@@ -94,6 +94,7 @@ class TestMuThCtrlAdder(unittest.TestCase):
         circuit: Circuit,
         reg_size: int
     ) -> List:
+        """ run the circuit and decode the simulation result """
         sv_sim = StateVectorSimulator()
         sv_sim.run(circuit=circuit)
         counts = sv_sim.sample(shots=2**(reg_size + 3))

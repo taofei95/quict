@@ -26,6 +26,8 @@ class MuThMultiplier(CompositeGate):
 
             |a(n)>|b(m)>|0(n+m)>|0(1)> ---> |a(n)>|b(m)>|a*b(n+m)>|0(1)>
 
+            Total requires `2 * (qreg_size + qreg_size_b) + 1` qubits.
+
             Args:
                 qreg_size (int): Register size for the first input register
 
