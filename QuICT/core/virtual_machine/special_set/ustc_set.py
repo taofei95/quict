@@ -6,4 +6,4 @@ USTCSet = InstructionSet(
     GateType.cx,
     [GateType.rx, GateType.ry, GateType.rz, GateType.h, GateType.x]
 )
-USTCSet.register_one_qubit_rule("xyx_rule")
+USTCSet.register_one_qubit_rule("zyz_rule")
