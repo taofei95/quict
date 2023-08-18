@@ -60,6 +60,14 @@ def check_hamiltonian(coefficient_array, unitary_matrix_array):
     assert check_hermitian(hamiltonian), "The hamiltonian is not hermitian."
     return hamiltonian, coefficient_array, unitary_matrix_array, summed_coefficient
 
+def padding_coefficient_array(coefficient_array):
+    length = len(coefficient_array)
+    n = 0
+    while (2**n-1) < length:
+        n += 1
+    coefficient_array = np.pad(coefficient_array, (0, 2**n-length))
+    return coefficient_array, n
+
 def permute_bit_string(max_int):
     """
     Given max int calculate bit string from 0 to this num.
@@ -164,7 +172,7 @@ def product_gates(coefficient_array: np.array, hamiltonian_array: np.array, orde
 
     return coefficient_array, matrix_list
 
-ddef multicontrol_unitary(unitary_matrix_array):
+def multicontrol_unitary(unitary_matrix_array):
     """
     Find composite gates generates matrix = sum_{i} |i><i| tensor U_{i}
 
@@ -221,6 +229,10 @@ class UnitaryMatrixEncoding:
         pass
 
     def execute(self, coefficient_array: np.ndarray, matrix_array: np.ndarray, complete: bool = False):
+
+
+        "Encoding any linear combination of unitary matrices. For example, M = sum_{k} c_{k} * U_{k}."
+        "C and U are in complex space."
         (hamiltonian,
          coefficient_array,
          unitary_matrix_array,
