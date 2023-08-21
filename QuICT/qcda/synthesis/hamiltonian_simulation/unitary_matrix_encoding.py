@@ -62,9 +62,12 @@ def check_hamiltonian(coefficient_array, unitary_matrix_array):
 
 def padding_coefficient_array(coefficient_array):
     length = len(coefficient_array)
+    assert length!=0, f"The input coefficient_array can't has length {length}."
     n = 0
-    while (2**n-1) < length:
+    while (2**n) < length:
         n += 1
+    if n==0 and length!=0:
+        n=1
     coefficient_array = np.pad(coefficient_array, (0, 2**n-length))
     return coefficient_array, n
 
@@ -243,9 +246,9 @@ class UnitaryMatrixEncoding:
 
         if complete:
             cg = CompositeGate()
-            G | cg
-            unitary_encoding | cg
             G_inverse | cg
+            unitary_encoding | cg
+            G | cg
 
             return cg
         elif not complete:
