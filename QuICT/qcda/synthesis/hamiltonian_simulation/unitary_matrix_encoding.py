@@ -1,6 +1,7 @@
 import numpy as np
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis import QuantumStatePreparation
+from QuICT.qcda.synthesis import QuantumStatePreparation, UniformlyControlGate
+
 import itertools
 ##########################################
 # Following code do stardard-form encoding of a linear combination of Unitaries
@@ -27,7 +28,7 @@ def check_unitary(input_matrix):
     return False
 
 
-def check_hamiltonian(coefficient_array, unitary_matrix_array):
+def read_unitary_matrix(coefficient_array, unitary_matrix_array):
     """
     Read hamiltonian and check if input unitary matrix satisfies necassary conditions.
     1. elements in unitary matrix array must be unitary
@@ -51,25 +52,25 @@ def check_hamiltonian(coefficient_array, unitary_matrix_array):
     hamiltonian_array = []
     summed_coefficient = 0
     for i in range(len(coefficient_array)):
-        # print(unitary_matrix_array[i],coefficient_array[i])
         hamiltonian_array.append(unitary_matrix_array[i]*coefficient_array[i])
         summed_coefficient = coefficient_array[i] + summed_coefficient
 
     hamiltonian_array = np.array(hamiltonian_array)
     hamiltonian = np.sum(hamiltonian_array, axis=0)
-    assert check_hermitian(hamiltonian), "The hamiltonian is not hermitian."
     return hamiltonian, coefficient_array, unitary_matrix_array, summed_coefficient
+
 
 def padding_coefficient_array(coefficient_array):
     length = len(coefficient_array)
-    assert length!=0, f"The input coefficient_array can't has length {length}."
+    assert length != 0, f"The input coefficient_array can't has length {length}."
     n = 0
     while (2**n) < length:
         n += 1
-    if n==0 and length!=0:
-        n=1
+    if n == 0 and length != 0:
+        n = 1
     coefficient_array = np.pad(coefficient_array, (0, 2**n-length))
     return coefficient_array, n
+
 
 def permute_bit_string(max_int):
     """
@@ -91,7 +92,6 @@ def permute_bit_string(max_int):
     return permute_list, num_qubits
 
 
-
 def prepare_G_state(coefficient_array, summed_coefficient):
     """
     Prepare |G> = sum_{i}(sqrt(coeffcient{i})/summed_coefficient* | i>)
@@ -102,7 +102,6 @@ def prepare_G_state(coefficient_array, summed_coefficient):
     state_vector = []
     # The coefficient array are in length 2**n.
     coefficient_array, _ = padding_coefficient_array(coefficient_array)
-
     for i in range(len(coefficient_array)):
         state_vector.append(
             np.sqrt(coefficient_array[i]/np.abs(summed_coefficient)))
@@ -159,6 +158,7 @@ def product_gates(coefficient_array: np.array, hamiltonian_array: np.array, orde
         for i in range(len(permute_array)):
             temp_matrix = []
             temp_coefficient = 1
+
             for j in range(len(permute_array[i])):
                 temp_matrix.append(hamiltonian_array[permute_array[i][j]])
                 temp_coefficient = temp_coefficient * \
@@ -175,6 +175,7 @@ def product_gates(coefficient_array: np.array, hamiltonian_array: np.array, orde
 
     return coefficient_array, matrix_list
 
+
 def multicontrol_unitary(unitary_matrix_array):
     """
     Find composite gates generates matrix = sum_{i} |i><i| tensor U_{i}
@@ -184,47 +185,54 @@ def multicontrol_unitary(unitary_matrix_array):
     """
     binary_string, num_ancilla_qubits = permute_bit_string(
         len(unitary_matrix_array)-1)
-
     matrix_dimension = 0
     while 2**matrix_dimension != len(unitary_matrix_array[0][0]):
         matrix_dimension += 1
-
+    # initialize multicontrol toffoli
     composite_gate = CompositeGate()
+    composite_gate_inverse = CompositeGate()
+
     mct = MultiControlToffoli('no_aux')
-    num_control_bits = num_ancilla_qubits - 1
+    num_control_bits = num_ancilla_qubits
     c_n_x = mct(num_control_bits)
 
+    if num_ancilla_qubits == 1:
+        c_n_x = mct(0)
+    c_n_x_width = c_n_x.width()
+
     for i in range(len(unitary_matrix_array)):
+
+        def add_X():
+            for j in range(len(binary_string[i])):
+                if binary_string[i][j] == "0":
+                    X | composite_gate(j)
+                    X | composite_gate_inverse(j)
+
         identity_matrix = np.identity(
             2 ** matrix_dimension).astype('complex128')
         project_zero = np.array([[1, 0], [0, 0]], dtype='complex128')
         project_one = np.array([[0, 0], [0, 1]], dtype='complex128')
         unitary_matrix = np.kron(
             project_zero, identity_matrix) + np.kron(project_one, unitary_matrix_array[i])
+        unitary_matrix_inverse = np.conj(unitary_matrix.T)
         unitary_gate = Unitary(unitary_matrix)
+        Unitary_gate_inverse = Unitary(unitary_matrix_inverse)
 
-        cg_x = CompositeGate()
-        for j in range(len(binary_string[i])):
-            if binary_string[i][j] == "1":
-                X | cg_x(j)
-        if not cg_x.width() == 0:
-            cg_x | composite_gate
-        if num_ancilla_qubits == 1:
-            unitary_gate | composite_gate(
-                [i for i in range(matrix_dimension+1)])
-        if num_ancilla_qubits == 2:
-            CX | composite_gate([0, 1])
-            unitary_gate | composite_gate(
-                [i+1 for i in range(matrix_dimension+1)])
-            CX | composite_gate([0, 1])
-        if num_ancilla_qubits > 2:
-            c_n_x | composite_gate([i for i in range(num_control_bits+1)])
-            unitary_gate | composite_gate(
-                [num_control_bits+i for i in range(matrix_dimension+1)])
-            c_n_x | composite_gate([i for i in range(num_control_bits+1)])
-        if not cg_x.width() == 0:
-            cg_x | composite_gate
-    return composite_gate
+        add_X()
+        if c_n_x_width != 1:
+            c_n_x | composite_gate([k for k in range(num_control_bits+1)])
+            c_n_x | composite_gate_inverse(
+                [k for k in range(num_control_bits+1)])
+        unitary_gate | composite_gate(
+            [c_n_x_width+k-1 for k in range(matrix_dimension+1)])
+        Unitary_gate_inverse | composite_gate_inverse(
+            [c_n_x_width+k-1 for k in range(matrix_dimension+1)])
+        if c_n_x_width != 1:
+            c_n_x | composite_gate([k for k in range(num_control_bits + 1)])
+            c_n_x | composite_gate_inverse(
+                [k for k in range(num_control_bits + 1)])
+        add_X()
+    return composite_gate, composite_gate_inverse
 
 
 class UnitaryMatrixEncoding:
@@ -232,24 +240,21 @@ class UnitaryMatrixEncoding:
         pass
 
     def execute(self, coefficient_array: np.ndarray, matrix_array: np.ndarray, complete: bool = False):
-
-
-        "Encoding any linear combination of unitary matrices. For example, M = sum_{k} c_{k} * U_{k}."
-        "C and U are in complex space."
         (hamiltonian,
          coefficient_array,
          unitary_matrix_array,
-         summed_coefficient) = check_hamiltonian(coefficient_array, matrix_array)
+         summed_coefficient) = read_unitary_matrix(coefficient_array, matrix_array)
         G = prepare_G_state(coefficient_array, summed_coefficient)
         G_inverse = G.inverse()
-        unitary_encoding = multicontrol_unitary(unitary_matrix_array)
+        unitary_encoding, unitary_encoding_inverse = multicontrol_unitary(
+            unitary_matrix_array)
 
         if complete:
             cg = CompositeGate()
-            G_inverse | cg
-            unitary_encoding | cg
             G | cg
+            unitary_encoding | cg
+            G_inverse | cg
 
             return cg
         elif not complete:
-            return G, G_inverse, unitary_encoding
+            return G, G_inverse, unitary_encoding, unitary_encoding_inverse
