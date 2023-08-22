@@ -235,7 +235,7 @@ class MPSSiteStructure:
                 print(f"Norm {idx}:")
                 if not only_shape:
                     print(site.matrix_data)
-                print(site.diagonal_matrix.shape)
+                print(site.matrix_data.shape)
                 idx += 1
 
     def to_statevector(self) -> np.ndarray:
