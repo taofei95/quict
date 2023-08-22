@@ -1,0 +1,54 @@
+from QuICT.qcda.synthesis.hamiltonian_simulation import HamiltonianSimulation
+from QuICT.qcda.synthesis.hamiltonian_simulation import UnitaryMatrixEncoding, multicontrol_unitary, prepare_G_state, product_gates
+from QuICT.core.gate import *
+
+x = X.matrix
+y = Y.matrix
+matrix_array = np.array([y])
+coef_array = np.array([0.5]).astype('complex128')
+
+def test_multicontrol_unitary():
+    matrix_array = np.array([x, y, x])
+    gates, gates_inverse = multicontrol_unitary(matrix_array)
+    print(gates.matrix())
+    print(gates_inverse.matrix())
+    cg = CompositeGate()
+    gates | cg
+    gates_inverse | cg
+    #expect identity matrix
+    print(cg.matrix())
+def test_prepare_G_state():
+    coefficient_array = np.array([0.5,0.5,0.5,0.5])
+    expected_array = 1/np.sum(coefficient_array)*coefficient_array
+    gates = prepare_G_state(coefficient_array, np.sum(coefficient_array))
+    print(expected_array)
+    print(gates.matrix())
+def test_product_gates():
+    coefficient_array = np.array([0.5, 0.5, 0.5, 0.5])
+    matrix_array = np.array([x, y, x, x])
+
+    coef_array, matrix_array = product_gates(coefficient_array, matrix_array,3,1,1)
+    print(coef_array)
+    print(matrix_array)
+def test_unitary_encoding():
+    coefficient_array = np.array([0.5, 0.5, 0.5, 0.5])
+    matrix_array = np.array([x, y, x, x])
+    UME = UnitaryMatrixEncoding()
+    gates = UME.execute(coefficient_array, matrix_array, complete=True)
+    print(gates.matrix())
+    G, G_inverse, unitary_encoding, unitary_encoding_inverse = UME.execute(coefficient_array, matrix_array, complete=False)
+    print(G.matrix())
+    print(G_inverse.matrix())
+    print(unitary_encoding_inverse.matrix())
+    print(unitary_encoding.matrix())
+def test_hamiltonian_simulation():
+    hs = HamiltonianSimulation()
+    gates = hs.TS_method(coef_array, matrix_array, 1)
+    print(gates.matrix())
+    print(gates.draw(method="command"))
+
+test_multicontrol_unitary()
+test_prepare_G_state()
+test_product_gates()
+test_unitary_encoding()
+test_hamiltonian_simulation()
