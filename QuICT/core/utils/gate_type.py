@@ -20,7 +20,6 @@ class GateType(Enum):
     rx = "Rx gate"
     ry = "Ry gate"
     rz = "Rz gate"
-    ri = "Ri gate"
     t = "T gate"
     tdg = "The conjugate transpose of T gate"
     phase = "Phase gate"

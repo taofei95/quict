@@ -539,13 +539,17 @@ class GateSimulator:
     def apply_control_matrix(
         self, value, args_num: int, cargs: list, targs: list, state_vector, qubits
     ):
-        if args_num == 1:  # Deal with 1-qubit control gate, e.g. S
+        if args_num == 1:    # Deal with 1-qubit control gate, e.g. S
             self._algorithm.control_targ(
                 targs[0], value, state_vector, qubits, self._sync
             )
         elif args_num == 2:  # Deal with 2-qubit control gate, e.g. CZ
             self._algorithm.control_ctargs(
                 cargs[0], targs[0], value, state_vector, qubits, self._sync
+            )
+        elif args_num == 3:  # Deal with 3-qubits control gate, e.g. CCZ
+            self._algorithm.control_cctarg(
+                cargs, targs[0], value, state_vector, qubits, self._sync
             )
         else:
             raise GateAlgorithmNotImplementError(
