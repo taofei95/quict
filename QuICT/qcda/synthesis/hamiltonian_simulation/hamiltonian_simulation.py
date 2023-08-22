@@ -1,8 +1,5 @@
 import math
-from .unitary_matrix_encoding import permute_bit_string, check_hamiltonian, UnitaryMatrixEncoding, product_gates, padding_coefficient_array
-from .polynomial import Poly
-from .quantum_signal_processing import QuantumSignalProcessing, SignalAngleFinder
-
+from .unitary_matrix_encoding import *
 from QuICT.qcda.synthesis import QuantumStatePreparation
 from QuICT.core import Circuit
 from QuICT.core.gate import *
@@ -47,7 +44,7 @@ def int_reflection(binary_string):
         mct = MultiControlToffoli('no_aux')
         m_c_t = mct(m-1)
         H | composite_gate(m-1)
-        m_c_t|composite_gate([i for i in range(m)])
+        m_c_t | composite_gate([i for i in range(m)])
         H | composite_gate(m-1)
     x_composite_gate | composite_gate
 
@@ -68,20 +65,19 @@ def gates_B(coefficient_array):
     return B, B_dagger
 
 
-def gates_R(num_qubit):
+def gates_R(num_reflection_qubit, num_qubit):
     """
     generate R = I - 2P gate
     """
     bit_string_array, _ = permute_bit_string(2**num_qubit-1)
-    print(bit_string_array)
     R = CompositeGate()
-    for binary_string in bit_string_array:
-        reflection_gate = int_reflection(binary_string)
+    for i in range(2**num_reflection_qubit):
+        reflection_gate = int_reflection(bit_string_array[i])
         reflection_gate | R
     return R
 
 
-def find_order(times_steps, error):
+def find_order(summed_coefficient, times_steps, error):
     """
     Find the minimum order makes the |summed_coefficient-2|<=2
     :param times_steps: int
@@ -94,7 +90,7 @@ def find_order(times_steps, error):
     order = 0
     range_min = 2-error/times_steps
     range_max = 2+error/times_steps
-    s = 1/math.factorial(order)*np.log(2)**order
+    s = 1/math.factorial(order)*np.log(summed_coefficient)**order
 
     while not (range_min < s and s < range_max):
         order += 1
@@ -103,11 +99,21 @@ def find_order(times_steps, error):
     return order
 
 
+def calculate_expected_matrix(hamiltonian, coef):
+    eigenvalue, eigenbasis = np.linalg.eig(hamiltonian)
+    matrix = np.exp(-1j*eigenvalue[0])*np.kron(
+        eigenbasis[0].reshape(len(eigenbasis[0]), 1), eigenbasis[0])
+    for i in range(1, len(eigenvalue)):
+        matrix = matrix + np.exp(-1j*eigenvalue[i]*coef)*np.kron(
+            eigenbasis[i].reshape(len(eigenbasis[i]), 1), eigenbasis[i])
+    return matrix
+
+
 class HamiltonianSimulation():
     def __init__(self):
         pass
 
-    def TS_method(self, coefficient_array, matrix_array, time, times_steps, error: float = 0.001, max_order=20):
+    def TS_method(self, coefficient_array, matrix_array, time, error: float = 0.01, max_order=20):
         """
         https://arxiv.org/abs/1412.4687
         Let hamiltonian satisfy:
@@ -126,20 +132,32 @@ class HamiltonianSimulation():
         (hamiltonian,
          coefficient_array,
          matrix_array,
-         summed_coefficent) = check_hamiltonian(coefficient_array, matrix_array)
+         summed_coefficent) = read_unitary_matrix(coefficient_array, matrix_array)
+        # calcualte time steps:
+        T = np.sum(coefficient_array)*time
+        r = T/np.log(2)
+        # use upper r
+        time_steps = 0
+        while time_steps < r:
+            time_steps += 1
+        assert check_hermitian(
+            hamiltonian), "The hamiltonian is not hermitian."
 
         matrix_dimension = 0
         while 2 ** matrix_dimension != len(matrix_array[0][0]):
             matrix_dimension += 1
         # calculate order based on the error given
-        order = find_order(times_steps, error)
+        order = find_order(summed_coefficent, time_steps, error)
+        # reshape coefficient array
         assert order < max_order, f"The max order exceed {max_order}. Adjust max allowed taylor expansion order."
         # Algorithm
         coefficient_array, hamilton_list = product_gates(coefficient_array, matrix_array, order, time,
-                                                         times_steps)
+                                                         time_steps)
+
         bit_string_array, num_ancilla_qubit = permute_bit_string(
             len(coefficient_array) - 1)
         # make B gates, select V gates, ancilla reflection gates
+
         UME = UnitaryMatrixEncoding()
         matrix_array = []
         matrix_array.append(hamilton_list[0])
@@ -149,22 +167,31 @@ class HamiltonianSimulation():
                 temp_matrix = np.matmul(temp_matrix, hamilton_list[i][j])
             matrix_array.append(temp_matrix)
         matrix_array = np.array(matrix_array)
-        B, B_dagger, select_v = UME.execute(coefficient_array, matrix_array)
-        R = gates_R(num_ancilla_qubit)
 
-        circuit = Circuit(num_ancilla_qubit + matrix_dimension)
+        B, B_dagger, select_v, select_v_inverse = UME.execute(
+            coefficient_array, matrix_array)
+        expected_matrix = coefficient_array[0]*matrix_array[0]
+        for i in range(1, len(coefficient_array)):
+            expected_matrix = expected_matrix + \
+                coefficient_array[i]*matrix_array[i]
+        R = gates_R(matrix_dimension, num_ancilla_qubit +
+                    matrix_dimension+1)  # +1ancilla qubit for control-v
+        circuit = Circuit(num_ancilla_qubit +
+                          matrix_dimension+1)  # same as above
         # W
         B | circuit
         select_v | circuit
         B_dagger | circuit
 
+        standard_vector = np.array([1])
+        standard_vector = np.pad(
+            standard_vector, (0, 2 ** (num_ancilla_qubit + matrix_dimension+1) - 1))
+
         # R
         R | circuit
-
         # W dagger
-
         B | circuit
-        select_v.inverse() | circuit
+        select_v_inverse | circuit
         B_dagger | circuit
         # R
         R | circuit
@@ -173,8 +200,7 @@ class HamiltonianSimulation():
         select_v | circuit
         B_dagger | circuit
         # -1
-
         whole_circuit_reflection = gates_R(
-            num_ancilla_qubit + matrix_dimension)
+            num_ancilla_qubit + matrix_dimension+1, num_ancilla_qubit + matrix_dimension+1)
         whole_circuit_reflection | circuit
         return circuit
