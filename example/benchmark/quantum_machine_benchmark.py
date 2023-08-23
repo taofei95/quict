@@ -1,6 +1,6 @@
 import os
 
-from QuICT.benchmark.benchmark import QuantumMachinebenchmark
+from QuICT.benchmark import QuantumMachinebenchmark
 from QuICT.core.layout import Layout
 from QuICT.core.utils.gate_type import GateType
 from QuICT.core.virtual_machine import InstructionSet, VirtualQuantumMachine
