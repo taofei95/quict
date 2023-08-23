@@ -13,7 +13,7 @@ class QCDAbenchmark:
     
     _qubit_list = [2, 4, 6, 8, 10, 15, 20]
 
-    def _get_alg_circuit(self, bench_func):
+    def _alg_circuit(self, bench_func):
         cirs_group = []
         alg_fields_list = ["adder", "clifford", "qft", "grover", "cnf", "maxcut", "qnn", "quantum_walk", "vqe"]
         for field in alg_fields_list:
@@ -25,7 +25,7 @@ class QCDAbenchmark:
                     cirs_group.append(cir)
         return cirs_group
 
-    def _get_machine_circuit(self, bench_func):
+    def _machine_circuit(self, bench_func):
         cirs_group = []
         machine_fields_list = ["aspen-4", "ourense", "rochester", "sycamore", "tokyo"]
         for field in machine_fields_list:
@@ -107,10 +107,10 @@ class QCDAbenchmark:
     def _mapping_bench(self, bench_func):
         circuits_list = []
         # algorithm circuit
-        circuits_list.extend(self._get_alg_circuit(bench_func))
+        circuits_list.extend(self._alg_circuit(bench_func))
 
         # instruction set circuit
-        circuits_list.extend(self._get_machine_circuit(bench_func))
+        circuits_list.extend(self._machine_circuit(bench_func))
 
         # quantum machine circuit
         qmc = QuantumMachineCircuitBuilder()
@@ -123,10 +123,10 @@ class QCDAbenchmark:
         circuits_list = []
 
         # algorithm circuit
-        circuits_list.extend(self._get_alg_circuit(bench_func))
+        circuits_list.extend(self._alg_circuit(bench_func))
 
         # instruction set circuit
-        circuits_list.extend(self._get_machine_circuit(bench_func))
+        circuits_list.extend(self._machine_circuit(bench_func))
 
         # circuits with different probabilities of cnot
         circuits_list.extend(self._random_prob_circuit(bench_func))
