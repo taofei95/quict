@@ -23,7 +23,7 @@ class RCFourierAdderWired(CompositeGate):
         controlled: bool = False,
         in_fourier: bool = False,
         out_fourier: bool = False,
-        name: str = None
+        name: str = "RCAdder"
     ):
         """
             Construct the adder circuit that adds 'addend' to a quantum
