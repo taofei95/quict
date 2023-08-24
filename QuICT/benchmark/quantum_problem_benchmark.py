@@ -39,7 +39,7 @@ class QuantumProblemBenchmark:
     @property
     def gatetransformbenchmark(self):
         return self._qcda_run("gatetransform")
-    
+
     @property
     def unitarydecompositionbenchmark(self):
         return self._qcda_run("unitarydecomposition")
@@ -78,8 +78,10 @@ class QuantumProblemBenchmark:
         for data in data_list:
             data_update = self._run_interface(data)
             data_update_list.append(data_update)
-
-        self.evaluate(bench_func, data_list, data_update_list)
+        if bench_func in ["quantumstatepreparation"]:
+            self.evaluate(bench_func=bench_func, data_update_list=data_update_list)
+        else:
+            self.evaluate(bench_func, data_list, data_update_list)
     
     def _sim_run(self, bench_func):
         """Connect real-time benchmarking to the sub-physical machine to be measured.
@@ -122,18 +124,16 @@ class QuantumProblemBenchmark:
                 result_list.append(bench_data)
                 tb.field_names = index
                 tb.add_row(bench_data)
-
-        if bench_func in ["optimization", "unitarydecomposition", "quantumstatepreparation"]:
+        if bench_func in ["quantumstatepreparation", "unitarydecomposition"]:
             result_list = []
             index = ["size", "depth"]
-            for i in range(len(data_list)):
-                cir = data_list[i]
+            for i in range(len(data_update_list)):
                 cir_opt = data_update_list[i]
-                bench_data = [cir.size() - cir_opt.size(), cir.depth() - cir_opt.depth()]
+                bench_data = [cir_opt.size(), cir_opt.depth()]
                 result_list.append(bench_data)
                 tb.field_names = index
                 tb.add_row(bench_data)
-        elif bench_func == "gatetransform":
+        elif bench_func in ["gatetransform", "optimization"]:
             result_list = []
             index = ["size", "depth", "1-qubit gate number", "2-qubit gate number"]
             for i in range(len(data_list)):

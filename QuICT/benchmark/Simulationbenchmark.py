@@ -4,7 +4,7 @@ from QuICT.core.utils.gate_type import GateType
 
 
 class Simulationbenchmark:
-    """ A benchmarking framework for quantum circuits automated design."""
+    """ A benchmarking framework for quantum simulation."""
 
     def _random_circuit(self, bench_scale):
         cirs_group = []
@@ -29,13 +29,21 @@ class Simulationbenchmark:
         return cirs_group
 
     def get_data(self):
-        """Get the data to be benchmarked.
-        """
+        """Get the data to be benchmarked."""
         circuits_list = []
 
         _bench_scale = ["small", "medium", "large"]
-        for scale in _bench_scale:
+        # range time
+        import time
+        d_time = time.time()
+
+        for index in range(len(_bench_scale)):
+            scale = _bench_scale[index]
             # circuits with different probabilities of cnot
             circuits_list.extend(self._random_circuit(scale))
-
-        return circuits_list
+            n_time = time.time()
+            # determine if the current time is within the range time
+            if n_time - d_time > 10:
+                return circuits_list
+            else:
+                continue

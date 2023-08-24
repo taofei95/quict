@@ -71,35 +71,22 @@ class QCDAbenchmark:
                 cirs_group.append(cir)
         return cirs_group
 
-    def _unitary_matrix(self, bench_func):
+    def _unitary_matrix(self):
         bench_data = []
-        for q in self._qubit_list:
+        for q in self._qubit_list[:3]:
             U = unitary_group.rvs(2 ** q)
-            U.name = "+".join([bench_func, "umatrix", q])
             bench_data.append(U)
         return bench_data
 
-    def _QSP(self, bench_func):
+    def _QSP(self):
         bench_data = []
-        for q in self._qubit_list:
-            SV = np.random.random(1 << q).astype(np.complex128)
-            SV.name = "+".join([bench_func, "statevector", q])
+        for q in self._qubit_list[:5]:
+            bench_data.append(np.random.random(1 << q).astype(np.complex128))
 
-            real = np.random.random(q)
-            imag = np.random.random(q)
-            SV = (real + 1j * imag) / np.linalg.norm(real + 1j * imag)
-            SV.name = "+".join([bench_func, "standard", q])
+            real = np.random.random(1 << q)
+            imag = np.random.random(1 << q)
+            bench_data.append((real + 1j * imag) / np.linalg.norm(real + 1j * imag))
 
-            SV = np.zeros(shape=(3, 3))
-            SV.name = "+".join([bench_func, "zeros", q])
-
-            SV = np.ones(shape=(3, 3))
-            SV.name = "+".join([bench_func, "ones", q])
-
-            SV = np.linspace(0.0, 10, num=q * q)
-            SV.name = "+".join([bench_func, "degree_of_disparity", q])
-
-            bench_data.append(SV)
         return bench_data
 
     def _mapping_bench(self, bench_func):
@@ -121,19 +108,19 @@ class QCDAbenchmark:
         circuits_list = []
 
         # algorithm circuit
-        # circuits_list.extend(self._alg_circuit(bench_func))
+        circuits_list.extend(self._alg_circuit(bench_func))
 
         # instruction set circuit
-        # circuits_list.extend(self._machine_circuit(bench_func))
+        circuits_list.extend(self._machine_circuit(bench_func))
 
         # circuits with different probabilities of cnot
         circuits_list.extend(self._random_prob_circuit(bench_func))
 
-        # # clifford / pauli instruction set circuit
-        # circuits_list.extend(self._clifford_pauli_circuit(bench_func))
+        # clifford / pauli instruction set circuit
+        circuits_list.extend(self._clifford_pauli_circuit(bench_func))
 
-        # # Approaching the known optimal mapping circuit
-        # circuits_list.extend(self._template_circuit(bench_func))
+        # Approaching the known optimal mapping circuit
+        circuits_list.extend(self._template_circuit(bench_func))
 
         return circuits_list
 
@@ -143,15 +130,15 @@ class QCDAbenchmark:
 
         return circuits_list
     
-    def _unitarydecomposition_bench(self, bench_func):
+    def _unitarydecomposition_bench(self):
         # completely random circuits
-        circuits_list = self._unitary_matrix(bench_func)
+        circuits_list = self._unitary_matrix()
 
         return circuits_list
 
-    def _quantumstatepreparation_bench(self, bench_func):
+    def _quantumstatepreparation_bench(self):
         # completely random circuits
-        circuits_list = self._QSP(bench_func)
+        circuits_list = self._QSP()
 
         return circuits_list
 
@@ -172,9 +159,9 @@ class QCDAbenchmark:
         elif bench_func == "gatetransform":
             circuits_list = self._gatetransform_bench(bench_func)
         elif bench_func == "unitarydecomposition":
-            circuits_list = self._unitarydecomposition_bench(bench_func)
+            circuits_list = self._unitarydecomposition_bench()
         elif bench_func == "quantumstatepreparation":
-            circuits_list = self._quantumstatepreparation_bench(bench_func)
+            circuits_list = self._quantumstatepreparation_bench()
 
         return circuits_list
 
