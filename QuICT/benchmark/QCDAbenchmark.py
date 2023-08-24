@@ -17,23 +17,21 @@ class QCDAbenchmark:
         cirs_group = []
         alg_fields_list = ["adder", "clifford", "qft", "grover", "cnf", "maxcut", "qnn", "quantum_walk", "vqe"]
         for field in alg_fields_list:
-            for q in self._qubit_list:
-                cirs = CircuitLib().get_circuit("algorithm", str(field), qubits_interval=q)
-                for cir in cirs:
-                    cir.gate_decomposition()
-                    cir.name = "+".join([bench_func, field, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}"])
-                    cirs_group.append(cir)
+            cirs = CircuitLib().get_circuit("algorithm", str(field), qubits_interval=self._qubit_list[-1])
+            for cir in cirs:
+                cir.gate_decomposition()
+                cir.name = "+".join([bench_func, field, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}"])
+                cirs_group.append(cir)
         return cirs_group
 
     def _machine_circuit(self, bench_func):
         cirs_group = []
         machine_fields_list = ["aspen-4", "ourense", "rochester", "sycamore", "tokyo"]
         for field in machine_fields_list:
-            for q in self._qubit_list:
-                cirs = CircuitLib().get_circuit("machine", str(field), qubits_interval=q)
-                for cir in cirs:
-                    cir.name = "+".join([bench_func, field, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}"])
-                    cirs_group.append(cir)
+            cirs = CircuitLib().get_circuit("machine", str(field), qubits_interval=self._qubit_list[-1])
+            for cir in cirs:
+                cir.name = "+".join([bench_func, field, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}"])
+                cirs_group.append(cir)
         return cirs_group
 
     def _random_prob_circuit(self, bench_func):
@@ -123,19 +121,19 @@ class QCDAbenchmark:
         circuits_list = []
 
         # algorithm circuit
-        circuits_list.extend(self._alg_circuit(bench_func))
+        # circuits_list.extend(self._alg_circuit(bench_func))
 
         # instruction set circuit
-        circuits_list.extend(self._machine_circuit(bench_func))
+        # circuits_list.extend(self._machine_circuit(bench_func))
 
         # circuits with different probabilities of cnot
         circuits_list.extend(self._random_prob_circuit(bench_func))
 
-        # clifford / pauli instruction set circuit
-        circuits_list.extend(self._clifford_pauli_circuit(bench_func))
+        # # clifford / pauli instruction set circuit
+        # circuits_list.extend(self._clifford_pauli_circuit(bench_func))
 
-        # Approaching the known optimal mapping circuit
-        circuits_list.extend(self._template_circuit(bench_func))
+        # # Approaching the known optimal mapping circuit
+        # circuits_list.extend(self._template_circuit(bench_func))
 
         return circuits_list
 

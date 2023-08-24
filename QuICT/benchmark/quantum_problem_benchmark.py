@@ -61,9 +61,9 @@ class QuantumProblemBenchmark:
         if bench_func in ["optimization", "mapping", "gatetransform", "unitarydecomposition", "quantumstatepreparation"]:
             bench = QCDAbenchmark()
             bench_data_list = bench.get_circuits(bench_func)
-        if bench_func in ["simulation"]:
+        if bench_func == "simulation":
             bench = Simulationbenchmark()
-            bench_data_list = bench.get_data(bench_func)
+            bench_data_list = bench.get_data()
 
         return bench_data_list
 
@@ -89,6 +89,8 @@ class QuantumProblemBenchmark:
         """
         data_list = self._get_bench_data(bench_func)
         data_update_list = []
+        # first simulation
+        self._run_interface(data_list[0])
         for data in data_list:
             stime = time.time()
             self._run_interface(data)
@@ -97,53 +99,74 @@ class QuantumProblemBenchmark:
         self.evaluate(bench_func=bench_func, data_update_list=data_update_list)
 
     def evaluate(self, bench_func, data_list:list=None, data_update_list:list=None):
+        ##### init framework ######
         import matplotlib.pyplot as plt
         import pandas as pd
+        import prettytable as pt
 
+        #init table
+        result_file = open(self._output_path + f'/{bench_func}_benchmark_txt_show.txt', mode='w+', encoding='utf-8')
+        tb = pt.PrettyTable()
+
+        ###### line graph ######
         if bench_func == "mapping":
             result_list = []
             index = ["width", "size", "depth", "swap gate number"]
             for i in range(len(data_list)):
                 cir = data_list[i]
                 cir_opt = data_update_list[i]
-                result_list.append(
-                    [cir.width() - cir_opt.width(), cir.size() - cir_opt.size(), cir.depth() - cir_opt.depth(),
-                    cir.count_gate_by_gatetype("swap") - cir_opt.count_gate_by_gatetype("swap")]
-                )
+                bench_data = [
+                    cir.width() - cir_opt.width(), cir.size() - cir_opt.size(), cir.depth() - cir_opt.depth(),
+                    cir.count_gate_by_gatetype("swap") - cir_opt.count_gate_by_gatetype("swap")
+                ]
+                result_list.append(bench_data)
+                tb.field_names = index
+                tb.add_row(bench_data)
+
         if bench_func in ["optimization", "unitarydecomposition", "quantumstatepreparation"]:
             result_list = []
             index = ["size", "depth"]
             for i in range(len(data_list)):
                 cir = data_list[i]
                 cir_opt = data_update_list[i]
-                result_list.append(
-                    [cir.size() - cir_opt.size(), cir.depth() - cir_opt.depth()]
-                )
+                bench_data = [cir.size() - cir_opt.size(), cir.depth() - cir_opt.depth()]
+                result_list.append(bench_data)
+                tb.field_names = index
+                tb.add_row(bench_data)
         elif bench_func == "gatetransform":
             result_list = []
             index = ["size", "depth", "1-qubit gate number", "2-qubit gate number"]
             for i in range(len(data_list)):
                 cir = data_list[i]
                 cir_opt = data_update_list[i]
-                result_list.append(
-                    [cir.size() - cir_opt.size(), cir.depth() - cir_opt.depth(),
-                    cir.count_1qubit_gate() - cir_opt.count_1qubit_gate(), cir.count_2qubit_gate() - cir_opt.count_2qubit_gate()]
-                )
+                bench_data = [
+                    cir.size() - cir_opt.size(), cir.depth() - cir_opt.depth(),
+                    cir.count_1qubit_gate() - cir_opt.count_1qubit_gate(), cir.count_2qubit_gate() - cir_opt.count_2qubit_gate()
+                ]
+                result_list.append(bench_data)
+                tb.field_names = index
+                tb.add_row(bench_data)
         elif bench_func == "simulation":
             result_list = data_update_list
             index = ["simulation speed"]
+            for i in range(len(data_update_list)):
+                bench_data = [data_update_list[i]]
+                tb.field_names = index
+                tb.add_row(bench_data)
 
         df = pd.DataFrame(result_list, columns = index)
-        df.plot(kind = 'bar', grid = True, colormap = 'summer_r')
+        df.plot(kind = 'bar', grid = True, colormap = 'summer_r', stacked = True) # 堆叠图：stacked = True
 
+        # init line graph
         plt.title(f"quantum circuit {bench_func} benchmark")
         plt.xlabel('circuit type')
         plt.ylabel('bench data')
+        plt.savefig(self._output_path + f'/{bench_func}benchmark.jpg')
         plt.show()
 
-        plt.savefig(self._output_path + f"/{bench_func}benchmark.jpg")
-        plt.show()
-
+        ###### table txt ######
+        result_file.write(str(tb))
+        result_file.close()
 
 
 

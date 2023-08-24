@@ -8,22 +8,22 @@ class Simulationbenchmark:
 
     def _random_circuit(self, bench_scale):
         cirs_group = []
-        qubit_list = [5, 10, 15, 20, 25, 30]
         gate_prob_list = {
-            "small": [5, 10, 50, 100,],
-            "medium": [500, 1000, 5000],
-            "large": [10000, 50000, 100000]
+            "small": [[3, 5, 10], [10, 50, 100]],
+            "medium": [[10, 15, 20], [500, 1000, 5000]],
+            "large": [[20, 25, 30], [10000, 50000, 100000]]
         }
         one_qubit = [GateType.h, GateType.rx, GateType.ry, GateType.rz, GateType.x, GateType.y, GateType.z]
         two_qubits = [GateType.cx, GateType.cz]
+        prob = 0.8
 
-        for gate_prob in gate_prob_list[bench_scale]:
-            for qubit in qubit_list:
-                prob = 0.8
+        scale_index = gate_prob_list[bench_scale]
+        for qubit in scale_index[0]:
+            for gate_prob in scale_index[1]:
                 len_s, len_d = len(one_qubit), len(two_qubits)
-                prob = [prob / len_s] * len_s + [(1 - prob) / len_d] * len_d
+                prob_list = [prob / len_s] * len_s + [(1 - prob) / len_d] * len_d
                 cir = Circuit(qubit)
-                cir.random_append(qubit * gate_prob, typelist=one_qubit+two_qubits, probabilities=prob, seed=10)
+                cir.random_append(qubit * gate_prob, typelist=one_qubit+two_qubits, probabilities=prob_list, seed=10)
                 cir.name = "+".join(["simbench", bench_scale, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}"])
                 cirs_group.append(cir)
         return cirs_group
