@@ -7,10 +7,9 @@ from QuICT.tools.circuit_library import CircuitLib
 from scipy.stats import unitary_group
 
 
-
 class QCDAbenchmark:
     """ A benchmarking framework for quantum circuits automated design."""
-    
+
     _qubit_list = [2, 4, 6, 8, 10, 15, 20]
 
     def _alg_circuit(self, bench_func):
@@ -45,7 +44,7 @@ class QCDAbenchmark:
                 len_s, len_d = len(one_qubit), len(two_qubits)
                 prob_list = [prob / len_s] * len_s + [(1 - prob) / len_d] * len_d
                 cir = Circuit(q)
-                cir.random_append(q * 10, typelist=one_qubit+two_qubits, probabilities=prob_list, seed=10)
+                cir.random_append(q * 10, typelist=one_qubit + two_qubits, probabilities=prob_list, seed=10)
                 cir.name = "+".join([bench_func, "probrandom", f"w{cir.width()}_s{cir.size()}_d{cir.depth()}"])
                 cirs_group.append(cir)
         return cirs_group
@@ -129,7 +128,7 @@ class QCDAbenchmark:
         circuits_list = self._random_prob_circuit(bench_func)
 
         return circuits_list
-    
+
     def _unitarydecomposition_bench(self):
         # completely random circuits
         circuits_list = self._unitary_matrix()
@@ -164,4 +163,3 @@ class QCDAbenchmark:
             circuits_list = self._quantumstatepreparation_bench()
 
         return circuits_list
-

@@ -15,7 +15,7 @@ class QuantumProblemBenchmark:
     ):
         """
         Args:
-            run_interface(optional): this is an interface that makes a series of optimizations to the original circuit 
+            run_interface(optional): this is an interface that makes a series of optimizations to the original circuit
                 provided and returns the optimized circuit.
                 input and output for example:
 
@@ -58,7 +58,9 @@ class QuantumProblemBenchmark:
         Returns:
             (List[Circuit]): Return the list of output data order by output_type.
         """
-        if bench_func in ["optimization", "mapping", "gatetransform", "unitarydecomposition", "quantumstatepreparation"]:
+        if bench_func in [
+            "optimization", "mapping", "gatetransform", "unitarydecomposition", "quantumstatepreparation"
+        ]:
             bench = QCDAbenchmark()
             bench_data_list = bench.get_circuits(bench_func)
         if bench_func == "simulation":
@@ -82,7 +84,7 @@ class QuantumProblemBenchmark:
             self.evaluate(bench_func=bench_func, data_update_list=data_update_list)
         else:
             self.evaluate(bench_func, data_list, data_update_list)
-    
+
     def _sim_run(self, bench_func):
         """Connect real-time benchmarking to the sub-physical machine to be measured.
 
@@ -100,13 +102,13 @@ class QuantumProblemBenchmark:
 
         self.evaluate(bench_func=bench_func, data_update_list=data_update_list)
 
-    def evaluate(self, bench_func, data_list:list=None, data_update_list:list=None):
+    def evaluate(self, bench_func, data_list: list = None, data_update_list: list = None):
         ##### init framework ######
         import matplotlib.pyplot as plt
         import pandas as pd
         import prettytable as pt
 
-        #init table
+        # init table
         result_file = open(self._output_path + f'/{bench_func}_benchmark_txt_show.txt', mode='w+', encoding='utf-8')
         tb = pt.PrettyTable()
 
@@ -141,7 +143,8 @@ class QuantumProblemBenchmark:
                 cir_opt = data_update_list[i]
                 bench_data = [
                     cir.size() - cir_opt.size(), cir.depth() - cir_opt.depth(),
-                    cir.count_1qubit_gate() - cir_opt.count_1qubit_gate(), cir.count_2qubit_gate() - cir_opt.count_2qubit_gate()
+                    cir.count_1qubit_gate() - cir_opt.count_1qubit_gate(),
+                    cir.count_2qubit_gate() - cir_opt.count_2qubit_gate()
                 ]
                 result_list.append(bench_data)
                 tb.field_names = index
@@ -154,8 +157,8 @@ class QuantumProblemBenchmark:
                 tb.field_names = index
                 tb.add_row(bench_data)
 
-        df = pd.DataFrame(result_list, columns = index)
-        df.plot(kind = 'bar', grid = True, colormap = 'summer_r', stacked = True) # 堆叠图：stacked = True
+        df = pd.DataFrame(result_list, columns=index)
+        df.plot(kind='bar', grid=True, colormap='summer_r', stacked=True)  # 堆叠图：stacked = True
 
         # init line graph
         plt.title(f"quantum circuit {bench_func} benchmark")
@@ -167,6 +170,3 @@ class QuantumProblemBenchmark:
         ###### table txt ######
         result_file.write(str(tb))
         result_file.close()
-
-
-

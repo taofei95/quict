@@ -23,7 +23,7 @@ class Simulationbenchmark:
                 len_s, len_d = len(one_qubit), len(two_qubits)
                 prob_list = [prob / len_s] * len_s + [(1 - prob) / len_d] * len_d
                 cir = Circuit(qubit)
-                cir.random_append(qubit * gate_prob, typelist=one_qubit+two_qubits, probabilities=prob_list, seed=10)
+                cir.random_append(qubit * gate_prob, typelist=one_qubit + two_qubits, probabilities=prob_list, seed=10)
                 cir.name = "+".join(["simbench", bench_scale, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}"])
                 cirs_group.append(cir)
         return cirs_group

@@ -57,26 +57,6 @@ class BenchCirData:
     def depth(self) -> int:
         """ Return the depth of circuit. """
         return self._depth
-    
-    @property
-    def matrix(self) -> int:
-        """ Return the number of two qubits gate. """
-        return self._matrix
-
-    @property
-    def one_qubit_gate(self) -> int:
-        """ Return the number of one qubit gate. """
-        return self._one_qubit_gate
-
-    @property
-    def two_qubit_gate(self) -> int:
-        """ Return the number of two qubits gate. """
-        return self._two_qubit_gate
-
-    @property
-    def swap_count_gate(self) -> int:
-        """ Return the number of two qubits gate. """
-        return self._swap_count_gate
 
     @property
     def qv(self) -> int:
@@ -156,7 +136,7 @@ class BenchCirData:
     ):
         """
         Args:
-            circuit(CompositeGate/Circuit): the CompositeGate or Circuit.
+            circuits (list, optional): The list of circuit which from QuantumMachinebenchmark.
         """
         assert isinstance(circuit, Circuit)
         self._circuit = circuit
@@ -179,7 +159,3 @@ class BenchCirData:
         self._width = int(circuit_info[0])
         self._size = int(circuit_info[1])
         self._depth = int(circuit_info[2])
-        self._matrix = self._circuit.matrix
-        self._one_qubit_gate = int(self._circuit.count_1qubit_gate())
-        self._two_qubit_gate = int(self._circuit.count_2qubit_gate())
-        self._swap_count_gate = int(self._circuit.count_gate_by_gatetype("swap"))
