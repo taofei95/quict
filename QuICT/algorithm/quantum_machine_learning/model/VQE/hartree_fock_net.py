@@ -33,7 +33,13 @@ class HartreeFockVQENet(Model):
             hamiltonian (Hamiltonian): The hamiltonian for a specific task.
         """
         super(HartreeFockVQENet, self).__init__(
-            orbitals, optimizer, hamiltonian, angles, device, gpu_device_id, differentiator
+            orbitals,
+            optimizer,
+            hamiltonian,
+            angles,
+            device,
+            gpu_device_id,
+            differentiator
         )
         self.orbitals = orbitals
         self.electrons = electrons
@@ -42,26 +48,66 @@ class HartreeFockVQENet(Model):
         self._circuit = self.ansatz.init_circuit(angles)
         self._params = self.ansatz.params
 
-    def run_step(self):
+    def run(self):
+        """Train HFVQE for one step.
+
+        Returns:
+            np.float: The loss for this iteration.
+        """
+        loss = self.forward(train=True)
+        self.backward(loss)
+        self.update()
+        return loss.item
+
+    def forward(self, train=True):
+        """The forward propagation procedure for one step.
+
+        Args:
+            train (bool, optional): Whether it is a training step, that is,
+                whether to calculate the gradients and update the parameters. Defaults to True.
+
+        Returns:
+            Variable: The expectation.
+        """
         # FP
         state = self._simulator.run(self._circuit)
-        # BP
-        _, loss = self._differentiator.run(
-            self._circuit, self._params, state, self._hamiltonian
-        )
-        # optimize
+        if train:
+            # BP
+            self._params_grads, expectation = self._differentiator.run(
+                self._circuit, self._params, state, [self._hamiltonian]
+            )
+        else:
+            expectation = self._differentiator.get_expectations(
+                self._circuit, state, [self._hamiltonian]
+            )
+        return Variable(expectation)
+
+    def backward(self, loss: Union[Variable, Loss]):
+        """The backward propagation procedure for one step.
+
+        Args:
+            loss (Union[Variable, Loss]): The loss for this iteration.
+        """
+        self._params.zero_grad()
+        for params_grad, grad in zip(self._params_grads, loss.grads):
+            self._params.grads += grad * params_grad
         self._params.pargs = self._optimizer.update(
             self._params.pargs, self._params.grads, "params"
         )
+
+    def update(self):
+        """Update the trainable parameters in the PQC."""
         self._params.zero_grad()
-
-        # update
-        self._update()
-        return state, loss
-
-    def _update(self):
         self._circuit = self.ansatz.init_circuit(self._params)
 
-    def sample(self, shots):
+    def sample(self, shots: int):
+        """Sample the measured result from current state vector.
+
+        Args:
+            shots (int): The sample times for current state vector.
+
+        Returns:
+             List[int]: The measured result list.
+        """
         sample = self._simulator.sample(shots)
         return sample
