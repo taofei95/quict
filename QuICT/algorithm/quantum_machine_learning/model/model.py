@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from typing import List, Union
+
 import numpy as np
 from numpy_ml.neural_nets.optimizers import *
 
@@ -18,11 +20,19 @@ class Model(ABC):
     def params(self, params):
         self._params = params
 
+    @property
+    def optimizer(self):
+        return self._optimizer
+
+    @optimizer.setter
+    def optimizer(self, optimizer):
+        self._optimizer = optimizer
+
     def __init__(
         self,
         n_qubits: int,
         optimizer: OptimizerBase,
-        hamiltonian: Hamiltonian = None,
+        hamiltonian: Union[Hamiltonian, List] = None,
         params: np.ndarray = None,
         device: str = "GPU",
         gpu_device_id: int = 0,
@@ -31,6 +41,7 @@ class Model(ABC):
         self._n_qubits = n_qubits
         self._optimizer = optimizer
         self._params = params
+        self._params_grads = None
         self._hamiltonian = hamiltonian
         self._simulator = StateVectorSimulator(
             device=device, gpu_device_id=gpu_device_id
@@ -40,9 +51,13 @@ class Model(ABC):
         )
 
     @abstractmethod
-    def run_step():
+    def forward():
         raise NotImplementedError
 
     @abstractmethod
-    def _update():
+    def backward():
+        raise NotImplementedError
+
+    @abstractmethod
+    def update():
         raise NotImplementedError

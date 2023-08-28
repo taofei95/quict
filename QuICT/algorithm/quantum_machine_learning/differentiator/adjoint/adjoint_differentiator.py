@@ -1,16 +1,15 @@
 import numpy as np
 
-from QuICT.core.gate import *
-from QuICT.core.circuit import Circuit
-from QuICT.simulation.utils import GateSimulator
-from QuICT.simulation.state_vector import StateVectorSimulator
-
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
+from QuICT.core.circuit import Circuit
+from QuICT.core.gate import *
+from QuICT.simulation.state_vector import StateVectorSimulator
+from QuICT.simulation.utils import GateSimulator
 
 
 class AdjointDifferentiator:
     """The differentiator using adjoint method.
-    
+
     References:
     https://arxiv.org/abs/1912.10877
     """
@@ -59,7 +58,8 @@ class AdjointDifferentiator:
 
         Args:
             device (str, optional): The device type, one of [CPU, GPU]. Defaults to "GPU".
-            precision (str, optional): The precision for the state vector, one of [single, double]. Defaults to "double".
+            precision (str, optional): The precision for the state vector, one of [single, double].
+                Defaults to "double".
             gpu_device_id (int, optional): The GPU device ID. Defaults to 0.
             sync (bool, optional): Sync mode or Async mode. Defaults to True.
         """
@@ -85,7 +85,7 @@ class AdjointDifferentiator:
             self._device, self._precision, self._device_id, self._sync
         )
 
-    def run(
+    def _run_one_op(
         self,
         circuit: Circuit,
         variables: Variable,
@@ -101,12 +101,11 @@ class AdjointDifferentiator:
             expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
 
         Returns:
-            Variable: The parameters with gradients.
+            np.ndarry: The gradients of parameters (params_shape).
             np.float: The expectation.
         """
 
         self._initial_circuit(circuit)
-        assert state_vector is not None
         self._vector = state_vector.copy()
 
         # Calculate d(L)/d(|psi_t>)
@@ -122,7 +121,7 @@ class AdjointDifferentiator:
 
         for idx in range(len(self._bp_pipeline)):
             if self._remain_training_gates == 0:
-                return variables, expectation
+                return variables.grads, expectation
             origin_gate = self._pipeline[idx]
             gate, qidxes, _ = self._bp_pipeline[idx]
             if isinstance(gate, BasicGate):
@@ -138,14 +137,44 @@ class AdjointDifferentiator:
                 raise TypeError(
                     "AdjointDifferentiator.run.circuit", "BasicGate".type(gate)
                 )
-        return variables, expectation
+        return variables.grads, expectation
+
+    def run(
+        self,
+        circuit: Circuit,
+        variables: Variable,
+        state_vector: np.ndarray,
+        expectation_ops: list,
+    ):
+        """Calculate the gradients and expectation of a Parameterized Quantum Circuit (PQC).
+
+        Args:
+            circuit (Circuit): PQC that needs to calculate gradients.
+            variables (Variable): The parameters of the circuit.
+            state_vector (np.ndarray): The state vector output from forward propagation.
+            expectation_ops (list): The hamiltonians that need to get expectations.
+
+        Returns:
+            np.ndarray: The gradients of parameters (ops_num, params_shape).
+            np.ndarray: The expectations (ops_num, ).
+        """
+        params_grad_list = []
+        expectation_list = []
+        for op in expectation_ops:
+            params_grad, expectation = self._run_one_op(
+                circuit, variables.copy(), state_vector, op
+            )
+            params_grad_list.append(params_grad)
+            expectation_list.append(expectation)
+
+        return np.array(params_grad_list), np.array(expectation_list)
 
     def run_batch(
         self,
         circuit: Circuit,
         variables: Variable,
         state_vector_list: list,
-        expectation_op: Hamiltonian,
+        expectation_ops: list,
     ):
         """Calculate the gradients and expectations of a batch of PQCs.
 
@@ -153,35 +182,38 @@ class AdjointDifferentiator:
             circuit (Circuit): PQC that needs to calculate gradients.
             variables (Variable): The parameters of the circuit.
             state_vector_list (list): The state vectors output from multiple FP process.
-            expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
+            expectation_ops (list): The hamiltonians that need to get expectations.
 
         Returns:
-            list: The list of parameters with gradients.
-            np.ndarray: The expectations.
+            np.ndarray: The gradients of parameters (batch_size, ops_num, params_shape).
+            np.ndarray: The expectations (batch_size, ops_num).
         """
         params_grad_list = []
         expectation_list = []
         for state_vector in state_vector_list:
-            params, expectation = self.run(
-                circuit, variables.copy(), state_vector, expectation_op
+            params_grads, expectations = self.run(
+                circuit, variables.copy(), state_vector, expectation_ops
             )
-            params_grad_list.append(params.grads)
-            expectation_list.append(expectation)
+            params_grad_list.append(params_grads)
+            expectation_list.append(expectations)
 
-        return params_grad_list, np.array(expectation_list)
+        return np.array(params_grad_list), np.array(expectation_list)
 
-    def get_expectation(
-        self, state_vector: np.ndarray, expectation_op: Hamiltonian,
+    def _get_one_expectation(
+        self, circuit: Circuit, state_vector: np.ndarray, expectation_op: Hamiltonian,
     ):
         """Calculate the expectation of a PQC.
 
         Args:
+            circuit (Circuit): The PQC.
             state_vector (np.ndarray): The state vector output from forward propagation.
             expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
 
         Returns:
             np.float: The expectation.
         """
+        self._initial_circuit(circuit)
+
         # Calculate d(L)/d(|psi_t>)
         self._grad_vector = self._initial_grad_vector(
             state_vector.copy(), self._qubits, expectation_op
@@ -194,22 +226,42 @@ class AdjointDifferentiator:
         )
         return expectation
 
+    def get_expectations(
+        self, circuit: Circuit, state_vector: np.ndarray, expectation_ops: list,
+    ):
+        """Calculate the expectation of a PQC.
+
+        Args:
+            circuit (Circuit): The PQC.
+            state_vector (np.ndarray): The state vector output from forward propagation.
+            expectation_ops (list): The hamiltonians that need to get expectations.
+
+        Returns:
+            np.ndarray: The expectations.
+        """
+        expectation_list = []
+        for op in expectation_ops:
+            expectation = self._get_one_expectation(circuit, state_vector, op)
+            expectation_list.append(expectation)
+        return np.array(expectation_list)
+
     def get_expectations_batch(
-        self, state_vector_list: list, expectation_op: Hamiltonian,
+        self, circuit: Circuit, state_vector_list: list, expectation_ops: list,
     ):
         """Calculate the expectations of a batch of PQCs.
 
         Args:
+            circuit (Circuit): The PQC.
             state_vector_list (list): The state vectors output from multiple FP process.
-            expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
+            expectation_ops (list): The hamiltonians that need to get expectations.
 
         Returns:
             np.ndarray: The expectations.
         """
         expectation_list = []
         for state_vector in state_vector_list:
-            expectation = self.get_expectation(state_vector, expectation_op)
-            expectation_list.append(expectation)
+            expectations = self.get_expectations(circuit, state_vector, expectation_ops)
+            expectation_list.append(expectations)
         return np.array(expectation_list)
 
     def _initial_circuit(self, circuit: Circuit):
@@ -222,7 +274,6 @@ class AdjointDifferentiator:
         gates = [gate & targs for gate, targs, _ in circuit.fast_gates][::-1]
         self._pipeline = gates
         self._bp_pipeline = self._bp_circuit.fast_gates
-        assert len(self._pipeline) == len(self._bp_pipeline)
 
     def _initial_grad_vector(
         self, state_vector, qubits: int, expectation_op: Hamiltonian
@@ -261,10 +312,10 @@ class AdjointDifferentiator:
                 grad = np.float64((self._grad_vector @ vector.conj()).real)
 
                 # write gradient
-                origin_gate.pargs[i].grads = (
+                gate_grads = (
                     grad
                     if abs(origin_gate.pargs[i].grads) < 1e-12
                     else grad * origin_gate.pargs[i].grads
                 )
                 index = origin_gate.pargs[i].index
-                variables.grads[index] += origin_gate.pargs[i].grads
+                variables.grads[index] += gate_grads

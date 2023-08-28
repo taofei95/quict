@@ -1,12 +1,13 @@
 import os
-import shutil
-import numpy as np
 import random
+import shutil
+
+import numpy as np
 import numpy_ml
 
 from QuICT.core.utils import Variable
+from QuICT.tools.exception.algorithm import *
 from QuICT.tools.logger import *
-from QuICT.algorithm.quantum_machine_learning.tools.exception import *
 
 logger = Logger("ML_utils")
 
@@ -21,12 +22,11 @@ def set_seed(seed: int):
     random.seed(seed)
 
 
-def save_checkpoint(model, optim, model_path: str, ep: int, it: int, latest=False):
+def save_checkpoint(model, model_path: str, ep: int, it: int, latest=False):
     """Save the model and optimizer as a checkpoint.
 
     Args:
         model (Model): The network that to be saved.
-        optim (OptimizerBase): The optimizer that to be saved.
         model_path (str): The path to the saved checkpoint.
         ep (int): The number of the saved epoch.
         it (int): The number of the saved iteration.
@@ -39,6 +39,7 @@ def save_checkpoint(model, optim, model_path: str, ep: int, it: int, latest=Fals
         identity=model.params.identity,
         shape=model.params.shape,
     )
+    optim = model.optimizer
     optim_dict = dict(cache=optim.cache, hyperparameters=optim.hyperparameters)
     checkpoint = dict(epoch=ep, iter=it, circuit=circuit_dict, optimizer=optim_dict)
     np.save("{0}/model.npy".format(model_path), checkpoint)
@@ -91,10 +92,11 @@ def restore_checkpoint(model, model_path, restore_optim=True):
         grads = circuit_dict["grads"]
         identity = circuit_dict["identity"]
         params = Variable(pargs, grads, identity=identity)
-        assert params.shape == model.params.shape
+        assert params.shape == model.params.shape, ModelRestoreError(
+            "Model does not match the network."
+        )
         model.params = params
         model.update()
-        optim = None
 
         if restore_optim:
             optim_dict = checkpoint.item()["optimizer"]
@@ -102,6 +104,7 @@ def restore_checkpoint(model, model_path, restore_optim=True):
                 optim_dict
             )
             optim = optim_lodeder()
+            model.optimizer = optim
     except:
         raise ModelRestoreError("Cannot load the model correctly.")
 
@@ -109,4 +112,4 @@ def restore_checkpoint(model, model_path, restore_optim=True):
     it = checkpoint.item()["iter"]
 
     logger.info(f"Successfully restored checkpoint at ep: {ep} it: {it}")
-    return ep, it, optim
+    return ep, it + 1

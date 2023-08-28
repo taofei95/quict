@@ -1,10 +1,9 @@
-import numpy as np
-
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.tools.exception.algorithm import *
 
 
-class Qubit:
+class QubitLattice:
     """Qubit encoding for encoding classical image data into quantum circuits."""
 
     def __init__(self, data_qubits: int):
@@ -27,7 +26,9 @@ class Qubit:
         """
 
         img = img.flatten()
-        assert img.shape[0] == self._data_qubits
+        assert img.shape[0] == self._data_qubits, EncodingError(
+            "The number of pixels should be equal to the number of data qubits."
+        )
         circuit = Circuit(self._data_qubits)
         for i in range(img.shape[0]):
             if img[i] == 1:

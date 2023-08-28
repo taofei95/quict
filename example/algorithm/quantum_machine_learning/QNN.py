@@ -1,7 +1,6 @@
 import collections
 import tqdm
 from torchvision import datasets, transforms
-import sys
 import numpy_ml
 import yaml
 import time
@@ -56,21 +55,7 @@ def encoding_img(X, encoding):
     return data_circuits
 
 
-def train_iteration(it, net, tb, loader, x_train, y_train, optimizer, loss_fun):
-    loss, correct = net.run_step(x_train, y_train)
-    accuracy = correct / len(y_train)
-    loader.set_postfix(
-        it=it, loss="{:.3f}".format(loss), accuracy="{:.3f}".format(accuracy)
-    )
-    tb.add_scalar("train/loss", loss, ep * len(loader) + it)
-    tb.add_scalar("train/accuracy", accuracy, ep * len(loader) + it)
-    # Save checkpoint
-    latest = (ep + 1) == EPOCH and (it + 1) == len(loader)
-    if (it != 0 and it % 30 == 0) or latest:
-        save_checkpoint(net, optimizer, model_path, ep, it, latest)
-
-
-def train(ep, it_start, net, tb):
+def train(loss_fun, ep, it_start, net, tb):
     loader = tqdm.tqdm(
         train_loader, desc="Training epoch {}".format(ep + 1), leave=True
     )
@@ -78,23 +63,47 @@ def train(ep, it_start, net, tb):
         if it < it_start:
             continue
         it_start = 0
-        train_iteration(it, net, tb, loader, x_train, y_train, optimizer, loss_fun)
+        expectations = net.forward(x_train)  # (32, 1)
+        y_true = (2 * y_train - 1.0).reshape(expectations.shape)
+        y_pred = -expectations
+        loss = loss_fun(y_pred, y_true)
+        # optimize
+        net.backward(loss)
+        # update
+        net.update()
+
+        correct = np.where(y_true * y_pred.pargs > 0)[0].shape[0]
+        accuracy = correct / len(y_train)
+        loader.set_postfix(
+            it=it, loss="{:.3f}".format(loss.item), accuracy="{:.3f}".format(accuracy)
+        )
+        tb.add_scalar("train/loss", loss.item, ep * len(loader) + it)
+        tb.add_scalar("train/accuracy", accuracy, ep * len(loader) + it)
+        # Save checkpoint
+        latest = (ep + 1) == EPOCH and (it + 1) == len(loader)
+        if (it != 0 and it % 30 == 0) or latest:
+            save_checkpoint(net, optimizer, model_path, ep, it, latest)
 
 
-def validate(ep, net, tb):
+def validate(loss_fun, ep, net, tb):
     loader_val = tqdm.tqdm(
         test_loader, desc="Validating epoch {}".format(ep + 1), leave=True
     )
     loss_val_list = []
     total_correct = 0
     for it, (x_test, y_test) in enumerate(loader_val):
-        loss_val, correct_val = net.run_step(x_test, y_test, train=False)
-        loss_val_list.append(loss_val)
+        expectations_val = net.forward(x_test, train=False)
+        y_true_val = (2 * y_test - 1.0).reshape(expectations_val.shape)
+        y_pred_val = -expectations_val
+        loss_val = loss_fun(y_pred_val, y_true_val)
+
+        loss_val_list.append(loss_val.item)
+        correct_val = np.where(y_true_val * y_pred_val.pargs > 0)[0].shape[0]
         total_correct += correct_val
         accuracy_val = correct_val / len(y_test)
         loader_val.set_postfix(
             it=it,
-            loss="{:.3f}".format(loss_val),
+            loss="{:.3f}".format(loss_val.item),
             accuracy="{:.3f}".format(accuracy_val),
         )
 
@@ -134,7 +143,7 @@ if __name__ == "__main__":
     bin_train_X = binary_img(nocon_train_X, threshold)
     bin_test_X = binary_img(nocon_test_X, threshold)
 
-    EPOCH = 10
+    EPOCH = 3
     BATCH_SIZE = 32
     LR = 0.001
     SEED = 17
@@ -167,7 +176,6 @@ if __name__ == "__main__":
         n_qubits=n_qubits,
         ansatz=ansatz,
         optimizer=optimizer,
-        loss_fun=loss_fun,
         device="CPU",
     )
 
@@ -179,19 +187,17 @@ if __name__ == "__main__":
 
     # save settings
     config = {
-        "encoding": encoding,
-        "model circuit": ansatz,
+        "encoding": str(encoding),
+        "ansatz": str(ansatz),
         "grayscale": GRAYSCALE,
-        "resize": RESIZE,
+        "resize": str(RESIZE),
         "LR": LR,
-        "loss_fun": loss_fun,
+        "loss_fun": str(loss_fun),
     }
     config_file = open(model_path + "config.yaml", "w")
     config_file.write(yaml.dump(config))
     config_file.close()
 
-    # ep_start, it_start, optimizer = restore_checkpoint(net, model_path, restore_optim=True)
-
     for ep in range(ep_start, EPOCH):
-        train(ep, it_start, net, tb)
-        validate(ep, net, tb)
+        train(loss_fun, ep, it_start, net, tb)
+        validate(loss_fun, ep, net, tb)

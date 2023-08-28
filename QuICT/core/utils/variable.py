@@ -2,8 +2,14 @@ import numpy as np
 from typing import Union
 import uuid
 
+from QuICT.tools.exception.core import TypeError
+
 
 class Variable(object):
+    @property
+    def item(self):
+        return self._pargs[0]
+
     @property
     def pargs(self):
         return self._pargs
@@ -91,15 +97,19 @@ class Variable(object):
             return False
 
     def __add__(self, other):
-        if isinstance(other, (int, float, np.float64)):
-            if isinstance(self.pargs, np.float64):
-                return Variable(
-                    pargs=self.pargs + other,
-                    grads=self.grads,
-                    identity=self.identity,
-                    origin_shape=self.origin_shape,
-                )
-        raise TypeError
+        assert isinstance(other, (int, float, np.float64, np.ndarray)), TypeError(
+            "Variable.__add__.other", "int/float/np.float64/np.ndarray", type(other)
+        )
+        if isinstance(other, np.ndarray):
+            assert (
+                other.shape == self.pargs.shape
+            ), "Shape mismatch in variables addition."
+        return Variable(
+            pargs=self.pargs + other,
+            grads=self.grads,
+            identity=self.identity,
+            origin_shape=self.origin_shape,
+        )
 
     def __radd__(self, other):
         return self.__add__(other)
@@ -111,16 +121,20 @@ class Variable(object):
         return self.__mul__(-1.0).__add__(other)
 
     def __mul__(self, other):
-        if isinstance(other, (int, float, np.float64)):
-            if isinstance(self.pargs, np.float64):
-                grads = other if abs(self.grads) < 1e-12 else self.grads * other
-                return Variable(
-                    pargs=self.pargs * other,
-                    grads=grads,
-                    identity=self.identity,
-                    origin_shape=self.origin_shape,
-                )
-        raise TypeError
+        assert isinstance(other, (int, float, np.float64)), TypeError(
+            "Variable.__mul__.other", "int/float/np.float64", type(other)
+        )
+        if isinstance(self.pargs, np.float64):
+            grads = other if abs(self.grads) < 1e-12 else self.grads * other
+        else:
+            grads = self.grads * other
+            grads[abs(grads) < 1e-12] = other
+        return Variable(
+            pargs=self.pargs * other,
+            grads=grads,
+            identity=self.identity,
+            origin_shape=self.origin_shape,
+        )
 
     def __rmul__(self, other):
         return self.__mul__(other)
@@ -137,22 +151,24 @@ class Variable(object):
         return self.__pow__(-1.0).__mul__(other)
 
     def __pow__(self, other):
-        if isinstance(other, (int, float, np.float64)):
-            if isinstance(self.pargs, np.float64):
-                grad = other * self.pargs ** (other - 1.0)
-                grads = grad if abs(self.grads) < 1e-12 else self.grads * grad
-                return Variable(
-                    pargs=self.pargs ** other,
-                    grads=grads,
-                    identity=self.identity,
-                    origin_shape=self.origin_shape,
-                )
-        raise TypeError
+        assert isinstance(other, (int, float, np.float64)), TypeError(
+            "Variable.__pow__.other", "int/float/np.float64", type(other)
+        )
+        grad = other * self.pargs ** (other - 1.0)
+        if isinstance(self.pargs, np.float64):
+            grads = grad if abs(self.grads) < 1e-12 else self.grads * grad
+        else:
+            grads = self.grads * grad
+            grads[abs(grads) < 1e-12] = grad
+        return Variable(
+            pargs=self.pargs ** other,
+            grads=grads,
+            identity=self.identity,
+            origin_shape=self.origin_shape,
+        )
 
     def __str__(self):
-        return "Variable(pargs={}, grads={}, identity={}, shape={})".format(
-            self.pargs, self.grads, self.identity, self.shape
-        )
+        return "Variable(pargs={}, grads={})".format(self.pargs, self.grads)
 
     def copy(self):
         return Variable(
@@ -165,9 +181,10 @@ class Variable(object):
     def zero_grad(self):
         self._grads = np.zeros(self._shape, dtype=np.float64)
 
-
-if __name__ == "__main__":
-    pargs = Variable(np.array([[0, 1, 2], [0.1, 0.2, 0.3]]))
-    print(pargs[0, 2].pargs)
-    print((pargs[0, 2] ** 3 + 2.3).pargs, (pargs[0, 2] ** 3 + 2.3).grads)
-    print((3 / pargs[0, 2]).pargs, (3 / pargs[0, 2]).grads)
+    def flatten(self):
+        return Variable(
+            pargs=self._pargs.flatten(),
+            grads=self._grads.flatten(),
+            identity=self.identity,
+            origin_shape=self._pargs.shape,
+        )

@@ -4,13 +4,14 @@ from sympy.logic.boolalg import to_dnf
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.tools.exception.algorithm import *
 
 
 class FRQI:
     """FRQI encoding for encoding classical image data into quantum circuits.
-    
+
     For a 2^n x 2^n image, the number of qubits required for FRQI is 2n + 1 (2n position qubits + 1 color qubit).
-    
+
     References:
         https://link.springer.com/article/10.1007/s11128-010-0177-y
     """
@@ -28,6 +29,9 @@ class FRQI:
         self._n_pos_qubits = None
         self._n_color_qubits = 1
         self._q_state = None
+
+    def __str__(self):
+        return "FRQI(n_qubits={}, grayscale={})".format(self._n_qubits, self._grayscale)
 
     def __call__(self, img, use_qic=False):
         """Call FRQI for a given image.
@@ -64,10 +68,12 @@ class FRQI:
             np.unique(img).shape[0] <= self._grayscale
             and np.max(img) <= self._grayscale
             and img.shape[0] == img.shape[1]
-        )
+        ), EncodingError("Invalid image.")
         self._N = img.shape[0] * img.shape[1]
         self._n_pos_qubits = int(np.log2(self._N))
-        assert 1 << self._n_pos_qubits == self._N
+        assert 1 << self._n_pos_qubits == self._N, EncodingError(
+            "The image size should be 2^n x 2^n."
+        )
         self._q_state = [0] * self._n_pos_qubits
         self._n_qubits = self._n_pos_qubits + self._n_color_qubits
         if flatten:
@@ -178,7 +184,7 @@ class FRQI:
     def _get_cnf_qid(self, cnf_items):
         idx_list = []
         for item in cnf_items:
-            idx_list.append(int(item[item.index("_") + 1 :]))
+            idx_list.append(int(item[item.index("_") + 1:]))
         return idx_list
 
     def _split_dnf(self, dnf):

@@ -1,10 +1,13 @@
+from typing import Union
+
 import numpy as np
 
-from .ansatz import Ansatz
-from QuICT.core import Circuit
-from QuICT.core.gate import *
-
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
+from QuICT.core import Circuit
+from QuICT.core.gate import CX, GPhase, H, Hy, Rx, Ry, Rz, Variable
+from QuICT.tools.exception.algorithm import *
+
+from .ansatz import Ansatz
 
 
 class QAOALayer(Ansatz):
@@ -38,7 +41,7 @@ class QAOALayer(Ansatz):
         if params.shape == (2, self._p):
             self._params = params
         else:
-            raise ValueError
+            raise AnsatzShapeError(str((2, self._p)), str(params.shape))
 
         circuit = Circuit(self._n_qubits)
         # initialize state vector
@@ -97,11 +100,10 @@ class QAOALayer(Ansatz):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                CX | circuit(tar_idx[i : i + 2])
+                CX | circuit(tar_idx[i: i + 2])
             # Add RZ gate
             Rz(gamma) | circuit(tar_idx[-1])
             # Add CNOT gates
             for i in range(len(tar_idx) - 2, -1, -1):
-                CX | circuit(tar_idx[i : i + 2])
+                CX | circuit(tar_idx[i: i + 2])
         return circuit
-

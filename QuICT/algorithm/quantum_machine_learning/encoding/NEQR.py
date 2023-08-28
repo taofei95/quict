@@ -1,15 +1,18 @@
 import numpy as np
 
-from .FRQI import FRQI
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.tools.exception.algorithm import *
+
+from .FRQI import FRQI
 
 
 class NEQR(FRQI):
     """NEQR encoding for encoding classical image data into quantum circuits.
-    
-    For a 2^n x 2^n image with a gray scale of 2^q, the number of qubits required for FRQI is 2n + q (2n position qubits + q color qubits).
-    
+
+    For a 2^n x 2^n image with a gray scale of 2^q, the number of qubits required for FRQI is
+        2n + q (2n position qubits + q color qubits).
+
     References:
         https://link.springer.com/article/10.1007/s11128-013-0567-z
     """
@@ -23,7 +26,14 @@ class NEQR(FRQI):
 
         super(NEQR, self).__init__(grayscale)
         self._n_color_qubits = int(np.log2(grayscale))
-        assert 1 << self._n_color_qubits == grayscale
+        assert 1 << self._n_color_qubits == grayscale, EncodingError(
+            "The gray scale of the image should be 2^q"
+        )
+
+    def __str__(self):
+        return "NEQR(n_qubits={}, color qubits={}, grayscale={})".format(
+            self._n_qubits, self._n_color_qubits, self._grayscale
+        )
 
     def __call__(self, img, use_qic=False):
         """Call NEQR for a given image.

@@ -1,5 +1,8 @@
-import numpy as np
 import random
+
+import numpy as np
+
+from QuICT.tools.exception.algorithm import *
 
 
 class Dataset:
@@ -7,12 +10,12 @@ class Dataset:
 
     def __init__(self, *datas: list):
         """Initialize a Dataset.
-        
+
         This method accepts multiple lists of data and returns an iterable dataset.
         """
-        assert all(
-            len(datas[0]) == len(data) for data in datas
-        ), "Length mismatch between datas"
+        assert all(len(datas[0]) == len(data) for data in datas), DatasetError(
+            "Length mismatch between datas."
+        )
         self._datas = datas
 
     def __getitem__(self, index):
@@ -42,7 +45,8 @@ class DataLoader:
             dataset (Dataset): Dataset from which to load the data.
             batch_size (int, optional): The number of samples per batch to load. Defaults to 1.
             shuffle (bool, optional): Whether shuffle the data at every epoch. Defaults to True.
-            drop_last (bool, optional): Whether to drop the last incomplete batch when the dataset size is not divisible by the batch size. Defaults to True.
+            drop_last (bool, optional): Whether to drop the last incomplete batch when the dataset size is not divisible
+                by the batch size. Defaults to True.
         """
         self._dataset = dataset
         self._shuffle = shuffle
@@ -70,7 +74,7 @@ class DataLoader:
     def __next__(self):
         if self._it < self._end:
             ret_data = self._dataset[
-                self._it * self._batch_size : (self._it + 1) * self._batch_size
+                self._it * self._batch_size: (self._it + 1) * self._batch_size
             ]
             self._it += 1
             return ret_data

@@ -37,6 +37,5 @@ unit_test/**/*.jpg
 /QNN_MNIST*
 /docs_
 /QNN2.0_MNIST*
-/hiq_qnn/data
 /MaxCut_*
 /QuICT/algorithm/qml_v1
