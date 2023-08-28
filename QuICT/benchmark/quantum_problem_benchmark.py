@@ -2,6 +2,7 @@ import os
 import time
 from QuICT.benchmark.Simulationbenchmark import Simulationbenchmark
 from QuICT.benchmark.QCDAbenchmark import QCDAbenchmark
+from QuICT.core import Circuit
 from QuICT.core.gate import *
 
 
@@ -66,7 +67,6 @@ class QuantumProblemBenchmark:
         if bench_func == "simulation":
             bench = Simulationbenchmark()
             bench_data_list = bench.get_data()
-
         return bench_data_list
 
     def _qcda_run(self, bench_func):
@@ -80,10 +80,17 @@ class QuantumProblemBenchmark:
         for data in data_list:
             data_update = self._run_interface(data)
             data_update_list.append(data_update)
+
+        data_update_list2 = self._filter_system(bench_func, data_update_list)
+
         if bench_func in ["quantumstatepreparation"]:
-            self.evaluate(bench_func=bench_func, data_update_list=data_update_list)
+            self.evaluate(bench_func=bench_func, data_update_list=data_update_list2)
         else:
-            self.evaluate(bench_func, data_list, data_update_list)
+            del_bench_list = data_update_list - data_update_list2
+            for i in del_bench_list:
+                index = data_update_list.index(i)
+                data_list.remove(data_list[index])
+            self.evaluate(bench_func, data_list, data_update_list2)
 
     def _sim_run(self, bench_func):
         """Connect real-time benchmarking to the sub-physical machine to be measured.
@@ -99,8 +106,17 @@ class QuantumProblemBenchmark:
             stime = time.time()
             self._run_interface(data)
             data_update_list.append(round(time.time() - stime, 4))
+        data_update_list = self._filter_system(bench_func, data_update_list)
 
         self.evaluate(bench_func=bench_func, data_update_list=data_update_list)
+
+    def _filter_system(self, bench_func, bench_result):
+        bench_result_update = []
+        if bench_func != "simulation":
+            bench_result_update = list(c for c in bench_result if min(c.width(), c.depth) >= c.width())
+        elif bench_func == "simulation":
+            bench_result_update = list(t for t in bench_result if t > 0)
+        return bench_result_update
 
     def evaluate(self, bench_func, data_list: list = None, data_update_list: list = None):
         ##### init framework ######
@@ -150,10 +166,11 @@ class QuantumProblemBenchmark:
                 tb.field_names = index
                 tb.add_row(bench_data)
         elif bench_func == "simulation":
-            result_list = data_update_list
+            result_list = []
             index = ["simulation speed"]
             for i in range(len(data_update_list)):
                 bench_data = [data_update_list[i]]
+                result_list.append(bench_data)
                 tb.field_names = index
                 tb.add_row(bench_data)
 
@@ -170,3 +187,4 @@ class QuantumProblemBenchmark:
         ###### table txt ######
         result_file.write(str(tb))
         result_file.close()
+
