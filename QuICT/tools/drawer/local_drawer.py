@@ -18,6 +18,7 @@ from QuICT.core.operator import Operator
 
 from .ibmq_style import DefaultStyle
 
+
 LINE_WIDTH = 1.5
 FOLD = 26
 cir_len = 0
@@ -219,7 +220,10 @@ class PhotoDrawer(object):
     @staticmethod
     def get_parameter_str(params):
         strings = []
+        
         for p in params:
+            if isinstance(p, Variable):
+                p = p.pargs
             strings.append(pi_check(p))
         return ', '.join(strings)
 

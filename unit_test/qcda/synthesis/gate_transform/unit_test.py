@@ -76,6 +76,17 @@ def test_origin():
         assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
 
 
+def test_quafu():
+    for i in range(2, 4):
+        circuit = Circuit(i)
+        circuit.random_append(10, random_params=True)
+        gates = CompositeGate(gates=circuit.gates)
+        GT = GateTransform(QuafuSet, keep_phase=True)
+        circuit_tran = GT.execute(circuit)
+        gates_tran = CompositeGate(gates=circuit_tran.gates)
+        assert np.allclose(gates.matrix(), gates_tran.matrix(), rtol=1e-7, atol=1e-7)
+
+
 def test_buildZyz():
     buildSet = InstructionSet(GateType.cy, [GateType.rz, GateType.ry])
     for i in range(2, 4):

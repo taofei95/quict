@@ -316,6 +316,7 @@ class CircuitBased(object):
                 if isinstance(gate.pargs[i], Variable):
                     index = gate.pargs[i].index
                     gate.pargs[i].pargs = variables.pargs[index]
+                    gate.pargs[i].grads = variables.grads[index]
 
     def show_detail(self):
         """

@@ -60,7 +60,6 @@ class StateVectorSimulator:
         self._circuit = circuit if self._quantum_machine is None else self._quantum_machine.transpile(circuit)
         self._qubits = int(circuit.width())
         self._pipeline = circuit.fast_gates
-
         self._gate_calculator.gate_matrix_combined(self._circuit)
 
     def initial_state_vector(self, all_zeros: bool = False):
