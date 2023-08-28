@@ -1,2 +1,2 @@
-from .quafu import QuafuSimulator
-from .origin import OriginSimulator
+from .quafu_simulator import QuafuSimulator
+from .origin_simulator import OriginSimulator
