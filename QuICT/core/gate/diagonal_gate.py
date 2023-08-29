@@ -212,39 +212,39 @@ class DiagonalGate(object):
             n(int): the number of qubits in |x>
             alpha(float): alpha_s in the equation
             aux(int, optional): key of auxiliary qubit (if exists)
-            j(int, optional): if no auxiliary qubit, the j-th smallest element in S would be the target qubit
+            j(int, optional): if no auxiliary qubit, the j-th smallest element in s_idx would be the target qubit
 
         Returns:
             CompositeGate: CompositeGate for Equation 5 as Figure 8
         """
         gates = CompositeGate()
         s_bin = np.binary_repr(s, width=n)
-        S = []
+        s_idx = []
         for i in range(n):
             if s_bin[i] == '1':
-                S.append(i)
+                s_idx.append(i)
 
         # Figure 8 (a)
         if aux is not None:
             if j is not None:
                 cls._logger.warn('With auxiliary qubit in phase_shift_s, no i_j is needed.')
             assert aux >= n, ValueError('Invalid auxiliary qubit in phase_shift_s.')
-            for i in S:
+            for i in s_idx:
                 CX & [i, aux] | gates
             U1(alpha) & aux | gates
-            for i in reversed(S):
+            for i in reversed(s_idx):
                 CX & [i, aux] | gates
             return gates
         # Figure 8 (b)
         else:
-            assert j < len(S), ValueError('Invalid target in phase_shift without auxiliary qubit.')
-            for i in S:
-                if i == S[j]:
+            assert j < len(s_idx), ValueError('Invalid target in phase_shift without auxiliary qubit.')
+            for i in s_idx:
+                if i == s_idx[j]:
                     continue
-                CX & [i, S[j]] | gates
-            U1(alpha) & S[j] | gates
-            for i in S:
-                if i == S[j]:
+                CX & [i, s_idx[j]] | gates
+            U1(alpha) & s_idx[j] | gates
+            for i in s_idx:
+                if i == s_idx[j]:
                     continue
-                CX & [i, S[j]] | gates
+                CX & [i, s_idx[j]] | gates
             return gates
