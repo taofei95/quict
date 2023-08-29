@@ -1,12 +1,13 @@
 from .TS_method import *
 from .Trotter import *
+from .unitary_matrix_encoding import *
 from QuICT.core.gate import *
 class HamiltonianSimulation():
     def __init__(self, method):
         self.method = method
-        assert self.method != ("TS" or "Trotter" or "QSP"), "Please select 'Trotter', 'TS' or 'QSP' method."
+        assert self.method == ("TS" or "Trotter" or "QSP"), "Please select 'Trotter', 'TS' or 'QSP' method."
     def execute(self, hamiltonian, time, initial_state, error = 0.01, max_order = 20):
-        initial_state_gate, _ = gates_B(initial_state)
+        initial_state_gate = prepare_G_state(initial_state, np.sum(initial_state))
         initial_state_gate_width = initial_state_gate.width()
         cg = CompositeGate()
         if self.method == "TS":
