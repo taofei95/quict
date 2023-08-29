@@ -4,6 +4,7 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+import os
 
 
 OPTIONS = {
@@ -111,5 +112,7 @@ def draw_maxcut_result(
     ax.margins(0.20)
     plt.axis("off")
     if save_path:
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
         plt.savefig(save_path + "/{}.png".format(title), transparent=True)
     plt.show()

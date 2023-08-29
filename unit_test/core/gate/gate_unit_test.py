@@ -59,6 +59,12 @@ class TestGate(unittest.TestCase):
                 elif gate_index == 5:
                     assert gate.is_special() and gate.matrix_type == MatrixType.special
 
+        # test special gate
+        assert Measure.is_special() and not X.is_special()
+
+        # test identity gate
+        assert ID.is_identity() and not H.is_identity()
+
         # test unitary gate diagonal
         amatrix = np.array([
             [1j, 0],
