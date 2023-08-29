@@ -10,16 +10,21 @@ np.set_printoptions(suppress=True)
 
 class Trotter:
 
-    def __init__(self, pauli_string, t, eps, i_circuit=False, iterations=1):
+    def __init__(self,
+                  pauli_string,
+                    t,
+                      eps,
+                        initial_state=False,
+                          iterations=1):
 
         self.pauli_string = pauli_string
         self.h = Hamiltonian(pauli_string)
         self.n = max(max((self.h)._qubit_indexes)) + 1  # total qubits needed
         self.t = t  # Simulation time
         self.eps = eps  # error
-        self.i_circuit = i_circuit  # initial state circuit
+        self.i_circuit = initial_state  # initial state circuit
         self.iterations = iterations  # required iterations
-        
+
     def gate(self):
         # construct the single step composite gate for H simu
         cgate = CompositeGate()
@@ -27,9 +32,11 @@ class Trotter:
 
         gate_dict = {"X": X, "Y": Y, "Z": Z}
 
-        for qbt_index, pauli_gate, ceoff in zip((self.h)._qubit_indexes, (self.h)._pauli_gates, (self.h)._coefficients):
+        for qbt_index, pauli_gate, ceoff in \
+                zip((self.h)._qubit_indexes, (self.h)._pauli_gates, (self.h)._coefficients):
 
-            for gateindex, gate in zip(qbt_index, pauli_gate):  # left bracket gatew
+            for gateindex, gate in \
+                    zip(qbt_index, pauli_gate):  # left bracket gate
                 if gate_dict[gate] == X:
                     H | cgate(gateindex)
                 elif gate_dict[gate] == Y:
@@ -40,12 +47,12 @@ class Trotter:
             for i in range(CN, RZ):  # left CNOT gates
                 CX | cgate([i, i + 1])
 
-            Rz(2 * (self.t / self.iterations) * ceoff) | cgate(RZ)  # central Rz gate
+            Rz(2 * (self.t / self.iterations) * ceoff) | cgate(RZ)  # Rz
 
             for i in reversed(range(CN, RZ)):  # right CNOT gates
                 CX | cgate([i, i + 1])
 
-            for gateindex, gate in (zip(qbt_index, pauli_gate)):  # right bracket gate
+            for gateindex, gate in (zip(qbt_index, pauli_gate)):  # rgt gts
                 if gate_dict[gate] == X:
                     H | cgate(gateindex)
 
@@ -61,7 +68,8 @@ class Trotter:
             gate | cir
         return cir
 
-    def initialstate(self, random=False):  # Prepare the initial circuit and state (choose from random, 0s, given)
+    # Prepare the initial circuit and state (choose from random, 0s, given)
+    def initialstate(self, random=False):
         if random is False:
             if self.i_circuit is False:
                 icircuit = Circuit(self.n)
@@ -101,8 +109,7 @@ class Trotter:
         mask = np.abs(H_fstate) < threshold
         H_fstate[mask] = 0
         return H_fstate
-    
-    
+
     def error(self):  # find theh absolute error between circuit
         distance = 0
         diff = self.accurate_finalstate() - self.simulation_finalstate()
@@ -131,17 +138,30 @@ class Trotter:
                 print(a)
                 print("iteration = ", self.iterations, "with error", b)
 
+    def output_gate(self):
+        ccgate = CompositeGate()
+        self.iteration()
+        for i in range(self.iterations):
+            gt = self.gate()
+            gt | ccgate
+        return ccgate
+
+
+'''
 
 # example
 
-c = Circuit(4)  # prepare initial state |111>
+c = Circuit(3)  # prepare initial state |111>
 X | c
-i_circuit = c
+initial_state = c
 
-Hmtn = [[1, 'Z3', 'Z2', 'Z1', 'Z0'],[5, 'Y0']]  # hamiltonian string
+Hmtn = [[1, 'Z2', 'Z1', 'Z0'],[5, 'Y0']]
 
-Trotter(Hmtn, 1, 0.05, i_circuit=c).Trotter_circuit().draw("command", flatten=True)
-print(Trotter(Hmtn, 1, 0.05, i_circuit=c).initialstate()[0])
-print(Trotter(Hmtn, 1, 0.05, i_circuit=c).accurate_finalstate())
-print(Trotter(Hmtn, 1, 0.05, i_circuit=c).simulation_finalstate())
-print(Trotter(Hmtn, 1, 0.05, i_circuit=c).iteration())
+Trotter(Hmtn, 1, 0.05, initial_state = c).Trotter_circuit()\
+    .draw("command", flatten=True)
+print(Trotter(Hmtn, 1, 0.05, initial_state = c).initialstate()[0])
+print(Trotter(Hmtn, 1, 0.05, initial_state = c).accurate_finalstate())
+print(Trotter(Hmtn, 1, 0.05, initial_state = c).simulation_finalstate())
+print(Trotter(Hmtn, 1, 0.05, initial_state = c).iteration())
+
+'''

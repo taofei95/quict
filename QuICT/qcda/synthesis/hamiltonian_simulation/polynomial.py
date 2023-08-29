@@ -79,16 +79,17 @@ class Poly:
 
     def normal_basis(self, time, order: int):
         """
-        Given input time and highest order. generate taylor expansion of e(i*time).
+        Given input time and max order. generate taylor expansion of e(i*t).
 
         """
         if self.polynomial == "exp":
-            return P(np.polynomial.chebyshev.cheb2poly(exp_to_poly(time, order)))
+            return P(np.polynomial.chebyshev.
+                     cheb2poly(exp_to_poly(time, order)))
 
     def chevbyshev_basis(self, time, order):
         """
-        Given input time 
-        generate polynomial expansion of e(i*time) in chevbyshev first kind basis
+        Given input time
+        generate polynomial expansion of e(i*time) in chevbyshev  kind basis
 
         """
         if self.polynomial == "exp":
