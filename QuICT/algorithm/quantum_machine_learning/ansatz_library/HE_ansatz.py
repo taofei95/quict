@@ -3,7 +3,7 @@ from typing import Union
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import CX, CZ, CRy, Ry, Rz, Variable
+from QuICT.core.gate import CX, CZ, CH, CRy, Ry, Rz, Variable
 from QuICT.tools.exception.algorithm import *
 
 from .ansatz import Ansatz
@@ -25,7 +25,7 @@ class HEAnsatz(Ansatz):
         n_qubits: int,
         d: int,
         layers: list,
-        entangler: str = "downstair",
+        entangler: str = "downstairs",
         readout: list = None,
     ):
         """Initialize an HE-ansatz instance.
@@ -34,13 +34,13 @@ class HEAnsatz(Ansatz):
             n_qubits (int): The number of qubits.
             d (int): The depth of HE-ansatz.
             layers (list): The list of layers. Supported layers are "CX", "CZ", "CRy", "RY", "RZ".
-            entangler (str): The type of entangler. Supported types are "downstair" and "full".Defaults to "downstair".
+            entangler (str): The type of entangler. Supported types are "downstairs" and "full". Defaults to "downstair".
             readout (list, optional): The readout qubits. Defaults to None.
         """
         super(HEAnsatz, self).__init__(n_qubits)
         self._d = d
         self._layers = layers
-        assert entangler in ["downstair", "full"]
+        assert entangler in ["downstairs", "full", "last_target", "last_control"]
         self._entangler = entangler
         self._n_params = 0
         self._readout = [0] if readout is None else readout
@@ -67,7 +67,7 @@ class HEAnsatz(Ansatz):
         else:
             raise AnsatzShapeError(str(self._d, self._n_params), str(params.shape))
 
-        gate_dict = {"CX": CX, "CZ": CZ, "CRy": CRy, "RY": Ry, "RZ": Rz}
+        gate_dict = {"CX": CX, "CZ": CZ, "CH": CH, "CRy": CRy, "RY": Ry, "RZ": Rz}
         circuit = Circuit(self._n_qubits)
         for i in range(self._d):
             param_id = 0
@@ -77,7 +77,7 @@ class HEAnsatz(Ansatz):
                         gate_dict[gate](params[i][param_id]) | circuit(qid)
                         param_id += 1
                 elif gate in ["CRy"]:
-                    if self._entangler == "downstair":
+                    if self._entangler == "downstairs":
                         for qid in range(self._n_qubits - 1):
                             gate_dict[gate](params[i][param_id]) | circuit(
                                 [qid, qid + 1]
@@ -98,10 +98,16 @@ class HEAnsatz(Ansatz):
                                 invert = not invert
                                 param_id += 1
                 else:
-                    if self._entangler == "downstair":
+                    if self._entangler == "downstairs":
                         for qid in range(self._n_qubits - 1):
                             gate_dict[gate] | circuit([qid, qid + 1])
                         gate_dict[gate] | circuit([self._n_qubits - 1, 0])
+                    elif self._entangler == "last_target":
+                        for qid in range(self._n_qubits - 1):
+                            gate_dict[gate] | circuit([qid, self._n_qubits - 1])
+                    elif self._entangler == "last_control":
+                        for qid in range(self._n_qubits - 2, -1, -1):
+                            gate_dict[gate] | circuit([self._n_qubits - 1, qid])
                     else:
                         for qid1 in range(self._n_qubits - 1):
                             invert = False
@@ -119,8 +125,8 @@ class HEAnsatz(Ansatz):
             elif layer in ["CRy"]:
                 self._n_params += (
                     self._n_qubits
-                    if self._entangler == "downstair"
+                    if self._entangler == "downstairs"
                     else int(self._n_qubits * (self._n_qubits - 1) / 2)
                 )
-            elif layer not in ["CX", "CZ"]:
-                raise AnsatzValueError('["RY", "RZ", "CRy", "CX", "CZ"]', layer)
+            elif layer not in ["CX", "CZ", "CH"]:
+                raise AnsatzValueError('["RY", "RZ", "CRy", "CX", "CZ", "CH"]', layer)
