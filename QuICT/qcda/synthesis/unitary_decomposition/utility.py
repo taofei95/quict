@@ -8,8 +8,9 @@ from QuICT.core.gate import *
 
 def add_factor_shift_into_phase(gates: CompositeGate, shift: complex) -> CompositeGate:
     phase = np.angle(shift)
-    phase_gate = GPhase(phase) & 0
-    gates.append(phase_gate)
+    if not np.isclose(phase, 0):
+        phase_gate = GPhase(phase) & 0
+        gates.append(phase_gate)
     return gates
 
 
