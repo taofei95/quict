@@ -1,5 +1,5 @@
 # ----------------------------
-# Origin Quantum
+# Origin
 # https://qcloud.originqc.com.cn/
 # ----------------------------
 import numpy as np
@@ -22,9 +22,5 @@ class OriginSimulator:
         # Call quantum chip
         result = self.qm.real_chip_measure(prog, shots, chip_id)
         self.qm.finalize()
-        origin_amp = [0] * (2 ** circuit.width())
-        for key, value in result.items():
-            origin_amp[int(key, 2)] = value
-        amp_result = np.array(origin_amp)
 
-        return amp_result
+        return result
