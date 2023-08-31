@@ -2,7 +2,6 @@ import os
 import time
 from QuICT.benchmark.Simulationbenchmark import Simulationbenchmark
 from QuICT.benchmark.QCDAbenchmark import QCDAbenchmark
-from QuICT.core import Circuit
 from QuICT.core.gate import *
 
 
@@ -63,11 +62,11 @@ class QuantumProblemBenchmark:
             "optimization", "mapping", "gatetransform", "unitarydecomposition", "quantumstatepreparation"
         ]:
             bench = QCDAbenchmark()
-            bench_data_list = bench.get_circuits(bench_func)
+            bench_data = bench.get_circuits(bench_func)
         if bench_func == "simulation":
             bench = Simulationbenchmark()
-            bench_data_list = bench.get_data()
-        return bench_data_list
+            bench_data = bench.get_data()
+        return bench_data
 
     def _qcda_run(self, bench_func):
         """Connect real-time benchmarking to the sub-physical machine to be measured.
@@ -76,21 +75,26 @@ class QuantumProblemBenchmark:
             Return the analysis of QCDAbenchmarking.
         """
         data_list = self._get_bench_data(bench_func)
-        data_update_list = []
-        for data in data_list:
+        data_update_list1, data_update_list2 = [], []
+        for data in data_list[0]:
             data_update = self._run_interface(data)
-            data_update_list.append(data_update)
+            data_update_list1.append(data_update)
+        for data in data_list[1]:
+            data_update = self._run_interface(data)
+            data_update_list2.append(data_update)
 
-        data_update_list2 = self._filter_system(bench_func, data_update_list)
+        self._validate_system(bench_func, [data_list[0], data_update_list1])
+        data_valid = self._filter_system(bench_func, data_update_list2)
 
         if bench_func in ["quantumstatepreparation"]:
-            self.evaluate(bench_func=bench_func, data_update_list=data_update_list2)
+            self.evaluate(bench_func=bench_func, data_update_list=data_valid)
         else:
-            del_bench_list = data_update_list - data_update_list2
-            for i in del_bench_list:
-                index = data_update_list.index(i)
-                data_list.remove(data_list[index])
-            self.evaluate(bench_func, data_list, data_update_list2)
+            data_list_update = []
+            for i in data_valid:
+                index = data_update_list2.index(i)
+                data_list_update.append(data_list[1][index])
+            print(len(data_valid), len(data_list_update))
+            self.evaluate(bench_func, data_list_update, data_valid)
 
     def _sim_run(self, bench_func):
         """Connect real-time benchmarking to the sub-physical machine to be measured.
@@ -99,21 +103,40 @@ class QuantumProblemBenchmark:
             Return the analysis of QCDAbenchmarking.
         """
         data_list = self._get_bench_data(bench_func)
-        data_update_list = []
+        bench_result = []
+        data_update_list1, data_update_list2 = [], []
+
         # first simulation
-        self._run_interface(data_list[0])
-        for data in data_list:
+        for data in data_list[0]:
+            data_update_list1.append(self._run_interface(data))
+        for data in data_list[1]:
             stime = time.time()
-            self._run_interface(data)
-            data_update_list.append(round(time.time() - stime, 4))
-        data_update_list = self._filter_system(bench_func, data_update_list)
+            bench_result.append(round(time.time() - stime, 4))
+
+        self._validate_system(bench_func, [data_list[0], data_update_list1])
+        data_update_list = self._filter_system(bench_func, bench_result)
 
         self.evaluate(bench_func=bench_func, data_update_list=data_update_list)
+
+    def _validate_system(self, bench_func, data_list):
+        if bench_func == "simulation":
+            for j in range(len(data_list)):
+                if data_list[0][j] == data_list[1][j]:
+                    print("Successful analogue amplitude correctness test for this circuit!")
+                else:
+                    print("Failed analogue amplitude correctness test for this circuit!")
+        else:
+            for j in range(len(data_list[0])):
+                print(data_list[0][j].matrix(), data_list[1][j].matrix())
+                if np.allclose(data_list[0][j].matrix(), data_list[1][j].matrix(), atol=1e-8):
+                    print("Correctness test of matrix information for this circuit was successful!")
+                else:
+                    print("Matrix message correctness test failed for this circuit!")
 
     def _filter_system(self, bench_func, bench_result):
         bench_result_update = []
         if bench_func != "simulation":
-            bench_result_update = list(c for c in bench_result if min(c.width(), c.depth) >= c.width())
+            bench_result_update = list(c for c in bench_result if min(c.width(), c.depth()) >= c.width())
         elif bench_func == "simulation":
             bench_result_update = list(t for t in bench_result if t > 0)
         return bench_result_update
