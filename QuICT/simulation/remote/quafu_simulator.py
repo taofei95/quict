@@ -2,8 +2,6 @@
 # Quafu
 # http://quafu.baqis.ac.cn/
 # ----------------------------
-import numpy as np
-
 from quafu import User, Task, QuantumCircuit
 
 
@@ -20,14 +18,7 @@ class QuafuSimulator:
 
         assert backend in self.__BACKEND
         task = Task()
-        task.load_account()
         task.config(backend=backend, shots=shots, compile=compile)
         res = task.send(qc)
 
-        quafu_dict = res.amplitudes
-        quafu_amp = [0] * (2 ** circuit.width())
-        for key, value in quafu_dict.items():
-            quafu_amp[int(key, 2)] = value
-        sample_result = np.array(quafu_amp)
-
-        return sample_result
+        return res.counts
