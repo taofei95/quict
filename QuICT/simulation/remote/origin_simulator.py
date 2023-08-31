@@ -2,8 +2,6 @@
 # Origin
 # https://qcloud.originqc.com.cn/
 # ----------------------------
-import numpy as np
-
 from pyqpanda import *
 
 
