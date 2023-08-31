@@ -3,7 +3,7 @@ from typing import Union
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import CX, CZ, CH, CRy, Ry, Rz, Variable
+from QuICT.core.gate import CX, CZ, CH, CRy, Rx, Ry, Rz, Variable
 from QuICT.tools.exception.algorithm import *
 
 from .ansatz import Ansatz
@@ -40,7 +40,13 @@ class HEAnsatz(Ansatz):
         super(HEAnsatz, self).__init__(n_qubits)
         self._d = d
         self._layers = layers
-        assert entangler in ["downstairs", "full", "last_target", "last_control"]
+        assert entangler in [
+            "downstairs",
+            "full",
+            "last_target",
+            "last_control",
+            "square",
+        ]
         self._entangler = entangler
         self._n_params = 0
         self._readout = [0] if readout is None else readout
@@ -87,6 +93,18 @@ class HEAnsatz(Ansatz):
                             [self._n_qubits - 1, 0]
                         )
                         param_id += 1
+                    elif self._entangler == "last_target":
+                        for qid in range(self._n_qubits - 1):
+                            gate_dict[gate](params[i][param_id]) | circuit(
+                                [qid, self._n_qubits - 1]
+                            )
+                            param_id += 1
+                    elif self._entangler == "last_control":
+                        for qid in range(self._n_qubits - 2, -1, -1):
+                            gate_dict[gate](params[i][param_id]) | circuit(
+                                [self._n_qubits - 1, qid]
+                            )
+                            param_id += 1
                     else:
                         for qid1 in range(self._n_qubits - 1):
                             invert = False
@@ -97,6 +115,40 @@ class HEAnsatz(Ansatz):
                                 )
                                 invert = not invert
                                 param_id += 1
+                elif gate in ["Rx_CZ", "Rz_CX"]:
+                    assert self._entangler == "square"
+                    if gate == "Rx_CZ":
+                        for qid in range(self._n_qubits):
+                            Rx(params[i][param_id]) | circuit(qid)
+                            param_id += 1
+                        for qid in range(0, self._n_qubits - 1, 2):
+                            CZ | circuit([qid, qid + 1])
+                        for qid in range(self._n_qubits):
+                            Rx(params[i][param_id]) | circuit(qid)
+                            param_id += 1
+                        for qid in range(1, self._n_qubits - 1, 2):
+                            CZ | circuit([qid, qid + 1])
+                        for qid in range(self._n_qubits):
+                            Rx(params[i][param_id]) | circuit(qid)
+                            param_id += 1
+                        for qid in range(0, self._n_qubits - 1, 2):
+                            CZ | circuit([qid, qid + 1])
+                    else:
+                        for qid in range(self._n_qubits):
+                            Rz(params[i][param_id]) | circuit(qid)
+                            param_id += 1
+                        for qid in range(0, self._n_qubits - 1, 2):
+                            CX | circuit([qid, qid + 1])
+                        for qid in range(self._n_qubits):
+                            Rz(params[i][param_id]) | circuit(qid)
+                            param_id += 1
+                        for qid in range(1, self._n_qubits - 1, 2):
+                            CX | circuit([qid, qid + 1])
+                        for qid in range(self._n_qubits):
+                            Rz(params[i][param_id]) | circuit(qid)
+                            param_id += 1
+                        for qid in range(0, self._n_qubits - 1, 2):
+                            CX | circuit([qid, qid + 1])
                 else:
                     if self._entangler == "downstairs":
                         for qid in range(self._n_qubits - 1):
@@ -123,10 +175,13 @@ class HEAnsatz(Ansatz):
             if layer in ["RY", "RZ"]:
                 self._n_params += self._n_qubits
             elif layer in ["CRy"]:
-                self._n_params += (
-                    self._n_qubits
-                    if self._entangler == "downstairs"
-                    else int(self._n_qubits * (self._n_qubits - 1) / 2)
-                )
+                if self._entangler == "downstairs":
+                    self._n_params += self._n_qubits
+                elif self._entangler == "full":
+                    self._n_params += int(self._n_qubits * (self._n_qubits - 1) / 2)
+                else:
+                    self._n_params += self._n_qubits - 1
+            elif layer in ["Rx_CZ", "Rz_CX"] and self._entangler == "square":
+                self._n_params += 3 * self._n_qubits
             elif layer not in ["CX", "CZ", "CH"]:
                 raise AnsatzValueError('["RY", "RZ", "CRy", "CX", "CZ", "CH"]', layer)
