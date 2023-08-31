@@ -1,62 +1,5 @@
-from QuICT.core.gate import H, CX, T, T_dagger, CompositeGate
-
-
-class PG1(CompositeGate):
-    """ Implement a PG1 Gate which is a component of the following adders. """
-
-    def __init__(self, name: str = None):
-        """
-        Args:
-            name (str, optional): The name of PG1 gate. Defaults to None.
-        """
-        super().__init__(name)
-        self.pg1_build()
-
-    def pg1_build(self):
-        H | self(0)
-        CX | self([1, 0])
-        CX | self([0, 2])
-        T | self(0)
-        T_dagger | self(1)
-        T_dagger | self(2)
-        CX | self([1, 2])
-        CX | self([1, 0])
-        T | self(2)
-        CX | self([0, 2])
-        CX | self([2, 1])
-        T_dagger | self(0)
-        T | self(1)
-        T_dagger | self(2)
-        H | self(0)
-
-
-class TR2(CompositeGate):
-    """ Implement a TR2 Gate which is a component of the following adders. """
-
-    def __init__(self, name: str = None):
-        """
-        Args:
-            name (str, optional): The name of TR2 gate. Defaults to None.
-        """
-        super().__init__(name)
-        self.tr2_build()
-
-    def tr2_build(self):
-        H | self(0)
-        T_dagger | self(0)
-        T | self(1)
-        T_dagger | self(2)
-        CX | self([1, 2])
-        CX | self([2, 0])
-        CX | self([0, 1])
-        T | self(0)
-        T | self(1)
-        T_dagger | self(2)
-        CX | self([2, 1])
-        T_dagger | self(1)
-        CX | self([2, 0])
-        CX | self([0, 1])
-        H | self(0)
+from QuICT.core.gate import CX, CompositeGate
+from .utils import HLPeres, HLTR2
 
 
 class HLCarryAdder(CompositeGate):
@@ -94,18 +37,18 @@ class HLCarryAdder(CompositeGate):
         self.add_build(figures)
 
     def add_build(self, figures):
-        pg1_gate = PG1()
-        tr2_gate = TR2()
+        pg1_gate = HLPeres()
+        tr2_gate = HLTR2()
         CX | self([1 + figures, 1])
         CX | self([1 + figures, 0])
         for i in range(2 + figures, 2 * figures):
             CX | self([i, i - figures])
             CX | self([i, i - 1])
         for i in range(2 * figures, figures + 1, -1):
-            pg1_gate | self([i - 1, i - figures, i])
-        pg1_gate | self([0, 1, figures + 1])
+            pg1_gate | self([i, i - figures, i - 1])
+        pg1_gate | self([figures + 1, 1, 0])
         for i in range(1 + figures, 2 * figures):
-            tr2_gate | self([i, i - figures + 1, i + 1])
+            tr2_gate | self([i - figures + 1, i + 1, i])
         for i in range(2, figures + 1):
             CX | self([i, i + figures])
         for i in range(2 * figures - 1, figures + 1, -1):
@@ -148,8 +91,8 @@ class HLModAdder(CompositeGate):
         self.madd_build(figures)
 
     def madd_build(self, figures):
-        pg1_gate = PG1()
-        tr2_gate = TR2()
+        pg1_gate = HLPeres()
+        tr2_gate = HLTR2()
         if figures == 1:
             CX | self([1, 0])
         elif figures == 2:
@@ -163,11 +106,11 @@ class HLModAdder(CompositeGate):
         for i in range(figures + 1, 2 * figures - 2):
             CX | self([i + 1, i])
         for i in range(2 * figures - 1, figures + 1, -1):
-            pg1_gate | self([i - 1, i - figures, i])
+            pg1_gate | self([i, i - figures, i - 1])
         if figures >= 2:
-            pg1_gate | self([0, 1, figures + 1])
+            pg1_gate | self([figures + 1, 1, 0])
         for i in range(figures + 1, 2 * figures - 1):
-            tr2_gate | self([i, i - figures + 1, i + 1])
+            tr2_gate | self([i - figures + 1, i + 1, i])
         for i in range(2, figures):
             CX | self([i, i + figures])
         for i in range(2 * figures - 2, figures + 1, -1):
