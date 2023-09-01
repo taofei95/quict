@@ -66,9 +66,9 @@ def exp_to_poly(time, order):
     coefficient_array.append(bessel_poly(0, time))
     for i in range(1, order):
         if i % 2 == 0:
-            coefficient_array.append(2*(-1)**(i/2)*bessel_poly(i, time))
+            coefficient_array.append(2 * (-1)**(i / 2) * bessel_poly(i, time))
         elif i % 2 == 1:
-            coefficient_array.append(2j*(-1)**((i-1)/2)*bessel_poly(i, time))
+            coefficient_array.append(2j * (-1)**((i - 1) / 2) * bessel_poly(i, time))
 
     return coefficient_array
 

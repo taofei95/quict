@@ -5,6 +5,7 @@ from QuICT.core.gate import CompositeGate, X, Z, CZ, CCZ, MultiControlToffoli
 from QuICT.core import Circuit
 from .unitary_matrix_encoding import *
 
+
 def int_reflection(binary_string):
     """
     In the standard basis, reflect the matrix elements |binary_string><binary_string|
@@ -28,10 +29,10 @@ def int_reflection(binary_string):
         CCZ | composite_gate([0, 1, 2])
     elif m > 3:
         mct = MultiControlToffoli('no_aux')
-        m_c_t = mct(m-1)
-        H | composite_gate(m-1)
+        m_c_t = mct(m - 1)
+        H | composite_gate(m - 1)
         m_c_t | composite_gate([i for i in range(m)])
-        H | composite_gate(m-1)
+        H | composite_gate(m - 1)
     x_composite_gate | composite_gate
 
     return composite_gate
@@ -43,7 +44,7 @@ def gates_R(num_reflection_qubit, num_qubit):
     """
     generate R = I - 2P gate
     """
-    bit_string_array, _ = permute_bit_string(2**num_qubit-1)
+    bit_string_array, _ = permute_bit_string(2**num_qubit - 1)
     R = CompositeGate()
     for i in range(2**num_reflection_qubit):
         reflection_gate = int_reflection(bit_string_array[i])
@@ -63,33 +64,35 @@ def find_order(times_steps, error):
     """
     temp_poly = []
     for i in range(30):
-        temp_poly.append(np.log(2)**i/math.factorial(i))
+        temp_poly.append(np.log(2)**i / math.factorial(i))
     temp_poly = np.array(temp_poly)
     order = 0
-    while np.sum(temp_poly) > error/times_steps:
+    while np.sum(temp_poly) > error / times_steps:
         temp_poly = np.delete(temp_poly, 0, axis=0)
         order += 1
-    order = order-1
+    order = order - 1
     return order
 
 
 def calculate_expected_matrix(hamiltonian, time):
     eigenvalue, eigenbasis = np.linalg.eig(hamiltonian)
-    matrix = np.exp(-1j*eigenvalue[0])*np.kron(
+    matrix = np.exp(-1j * eigenvalue[0]) * np.kron(
         eigenbasis[0].reshape(len(eigenbasis[0]), 1), eigenbasis[0])
     for i in range(1, len(eigenvalue)):
-        matrix = matrix + np.exp(-1j*eigenvalue[i]*time)*np.kron(
+        matrix = matrix + np.exp(-1j * eigenvalue[i] * time) * np.kron(
             eigenbasis[i].reshape(len(eigenbasis[i]), 1), eigenbasis[i])
     return matrix
 
+
 def find_time_steps(coef_array, time):
-    T = np.sum(coef_array)*time
-    r = T/np.log(2)
+    T = np.sum(coef_array) * time
+    r = T / np.log(2)
     # use upper r
     time_steps = 0
     while time_steps < r:
         time_steps += 1
     return time_steps
+
 
 def find_matrix_dimension(matrix_array):
     matrix_dimension = 0
@@ -102,12 +105,14 @@ def calculate_approxiamate_matrix(hamiltonian, order, time, time_order):
     approximate_matrix = np.identity(len(hamiltonian[0]))
     for i in range(1, order):
         temp_matrix = hamiltonian
-        for _ in range(i-1):
+        for _ in range(i - 1):
             temp_matrix = np.matmul(temp_matrix, hamiltonian)
-        temp_matrix = 1/math.factorial(i)*(-1j*time/time_order)**i*temp_matrix
+        temp_matrix = 1 / math.factorial(i) * (-1j * time / time_order)**i * temp_matrix
         approximate_matrix = np.sum((approximate_matrix, temp_matrix), axis=0)
     approximate_hamiltonian = approximate_matrix
     return approximate_hamiltonian
+
+
 def TS_method(coefficient_array, matrix_array, time, error, max_order, initial_state):
     """
     https://arxiv.org/abs/1412.4687
@@ -166,8 +171,8 @@ def TS_method(coefficient_array, matrix_array, time, error, max_order, initial_s
     print("Truncate order:", order)
     print("Time steps:", time_steps)
     print("Summed coefficient:", summed_coefficient)
-    print("Expected error:", np.abs(summed_coefficient-2))
-    print("Amplification size:", summed_coefficient/2)
+    print("Expected error:", np.abs(summed_coefficient - 2))
+    print("Amplification size:", summed_coefficient / 2)
     print("Approximate time evolution operator:",
           calculate_approxiamate_matrix(hamiltonian, order, time, time_steps))
     ###########################################################################################

@@ -7,7 +7,7 @@ from QuICT.qcda.synthesis.hamiltonian_simulation.unitary_matrix_encoding import 
 import numpy as np
 
 
-def trotter(hmtn, t, eps, init_statevec = None, iterations = None):
+def trotter(hmtn, t, eps, init_statevec=None, iterations=None):
     '''
     This major function returns the trotter splitting circuit
     hmtn is input pauli string with coeff, gate and gate index
@@ -58,7 +58,7 @@ def trotter(hmtn, t, eps, init_statevec = None, iterations = None):
     return cir
 
 
-def accfinalstate(hmtn, t, init_statevec = None):  # accurate final state 
+def accfinalstate(hmtn, t, init_statevec=None):  # accurate final state
     '''
     This can check the accurate final state vector by using matrix multiplication
     NB: this only applys to circuits with small number of qubits(n), due to matrix size is 2^n
@@ -67,7 +67,7 @@ def accfinalstate(hmtn, t, init_statevec = None):  # accurate final state
     H = UDU^-1, U is unitary matrix of eigenvectors, D is diagonal matrix of eigenvalues
     exp(-iHt) = exp(-i UDU^(-1) t) = U * exp(-iDt) * U^(-1) = U * exp(-i Dkk t) * U^(-1)
 
-    '''    
+    '''
     h = Hamiltonian(hmtn)
     n = max(max(h._qubit_indexes)) + 1
     matrix = Hamiltonian.get_hamiton_matrix(h, n)
@@ -87,5 +87,4 @@ def accfinalstate(hmtn, t, init_statevec = None):  # accurate final state
         fvec = np.matmul(time_evolution_operator, ivec)
     else:
         fvec = np.matmul(time_evolution_operator, init_statevec)
-        
     return fvec

@@ -17,8 +17,7 @@ Define a sequence of angle phi = {phi_0, phi_1..... phi_k} include in R_{k+1}
 This matrix is yield by computing sequence of matrix
 e^(i*phi_{0}*pauli_z) *product{k}_{j=1} [ W(x) * e^i*phi_{j}_pauli_z]
 
-That means if we know the sequence of angle, we can block encode x and polynomial p(x) in 
-
+That means if we know the sequence of angle, we can block encode x and polynomial p(x) in
 This file provide following functionalities.
 Given x and P(x)
 1. find out Q(x)
@@ -65,14 +64,14 @@ class QuantumSignalProcessing:
         return signal_matrix
 
     def signal_circuit(self, input_x):
-        signal_x = -2*np.arccos(input_x)
+        signal_x = -2 * np.arccos(input_x)
         signal_composite_gate = CompositeGate()
         WX = Rx(signal_x)
-        signal_gates = Rz(-2*self.angle_sequence[0])
+        signal_gates = Rz(-2 * self.angle_sequence[0])
         signal_gates | signal_composite_gate(0)
         for i in range(1, len(self.angle_sequence)):
             WX | signal_composite_gate(0)
-            signal_gates = Rz(-2*self.angle_sequence[i])
+            signal_gates = Rz(-2 * self.angle_sequence[i])
             signal_gates | signal_composite_gate(0)
         return signal_composite_gate
 
@@ -105,8 +104,8 @@ def W_X_marix(input_signal: float):
              [isqrt(1-x^2), x]
     """
     assert (-1 <= input_signal <= 1), "input_signal must be in domain[-1,1]"
-    return np.array([[input_signal, np.sqrt(1-input_signal**2)*1j],
-                     [np.sqrt(1-input_signal**2)*1j, input_signal]])
+    return np.array([[input_signal, np.sqrt(1 - input_signal**2) * 1j],
+                     [np.sqrt(1 - input_signal**2) * 1j, input_signal]])
 
 
 def exp_pauli_z_matrix(angle_phi: float):
@@ -116,8 +115,8 @@ def exp_pauli_z_matrix(angle_phi: float):
     :return: [e^i*angle_phi, 0]
              [0, e^-i*angle_phi]
     """
-    return np.array([[np.exp(angle_phi*1j), 0],
-                     [0, np.exp(angle_phi*-1j)]])
+    return np.array([[np.exp(angle_phi * 1j), 0],
+                     [0, np.exp(angle_phi * -1j)]])
 
 
 def block_encoding_matrix(signal_x: float, polynomial_p: Polynomial, polynomial_q: Polynomial):
@@ -132,9 +131,9 @@ def block_encoding_matrix(signal_x: float, polynomial_p: Polynomial, polynomial_
     polynomial_p_conjugate = Polynomial(np.conj(polynomial_p.ceof))
     return np.array([
         [polynomial_p(signal_x),
-         1j*polynomial_q(signal_x)*np.sqrt(1-signal_x**2)],
+         1j * polynomial_q(signal_x) * np.sqrt(1 - signal_x**2)],
 
-        [1j*polynomial_q_conjugate(signal_x)*np.sqrt(1-signal_x**2),
+        [1j * polynomial_q_conjugate(signal_x) * np.sqrt(1 - signal_x**2),
          polynomial_p_conjugate(signal_x)]])
 
 
@@ -147,14 +146,14 @@ def check_polynomial_normalization(p: Polynomial, q: Polynomial, steps: int = 10
     :param tolerance: Max deviation from 1.
     :return: True if Theorem 3 satisfied, false if not satisfied.
     """
-    summed_poly = p*Polynomial(np.conj(p.coef)) + \
-        Polynomial([1, 0, -1])*q*Polynomial(np.conj(q.coef))
+    summed_poly = p * Polynomial(np.conj(p.coef)) + \
+        Polynomial([1, 0, -1]) * q * Polynomial(np.conj(q.coef))
     x = np.linspace(-1, 1, steps)
     print(summed_poly(x))
-    print(np.abs(np.abs(summed_poly(x))-1))
-    max_deviation = np.max(np.abs(np.abs(summed_poly(x))-1))
+    print(np.abs(np.abs(summed_poly(x)) - 1))
+    max_deviation = np.max(np.abs(np.abs(summed_poly(x)) - 1))
     if max_deviation > tolerance:
-        return False,  max_deviation
+        return False, max_deviation
     return True, max_deviation
 
 
@@ -173,8 +172,8 @@ def check_angle_phi_quality(angle_phi: float,
         new_matrix = np.matmul(new_matrix, exp_pauli_z_matrix(angle_phi))
         test_polynomial_p = new_matrix[0][0]
 
-        if np.abs(test_polynomial_p-polynomial_p(x[i])) > tolerance:
-            print(np.abs(test_polynomial_p-polynomial_p(x[i])))
+        if np.abs(test_polynomial_p - polynomial_p(x[i])) > tolerance:
+            print(np.abs(test_polynomial_p - polynomial_p(x[i])))
             return False
     return True
 
@@ -200,9 +199,9 @@ def complete_check(phi_list: np.ndarray, poly_p: Polynomial, tolerance=1e-6):
             temp = np.matmul(temp, np.matmul(WX[i], rz_sequence[j]))
         calculated_poly_p.append(temp[0][0])
 
-    largest_error = np.max(np.abs(target_poly_p-np.array(calculated_poly_p)))
+    largest_error = np.max(np.abs(target_poly_p - np.array(calculated_poly_p)))
     if largest_error > tolerance:
-        return False,  largest_error
+        return False, largest_error
     elif largest_error < tolerance:
         return True, largest_error
 
@@ -218,7 +217,7 @@ def generate_A_tilt(polynomial_p: Polynomial):
     :return: A(y)
     """
     polynomial_p_conjugate = Polynomial(np.conj(polynomial_p.coef))
-    A = 1-polynomial_p*polynomial_p_conjugate
+    A = 1 - polynomial_p * polynomial_p_conjugate
     A_coefficient = A.coef
     A_tilt = Polynomial(A_coefficient[0::2])
 
@@ -238,16 +237,16 @@ def generate_A_tilt_root(A_tilt: Polynomial, tolerance: float = 1e-12):
     # To avoid degeneracy root, we remove zero as well
 
     # get rid of 0 and 1.
-    temp_roots = np.array([root for root in A_tilt.roots() if not ((np.abs(np.real(root)-1) < tolerance
+    temp_roots = np.array([root for root in A_tilt.roots() if not ((np.abs(np.real(root) - 1) < tolerance
                                                                     and np.abs(np.imag(root) < tolerance))
                                                                    or np.abs(root) < tolerance)])
     for i in range(len(temp_roots)):
         for j in range(len(temp_roots)):
-            if (np.abs(np.real(temp_roots[i])-np.real(temp_roots[j])) < tolerance) and i != j:
+            if (np.abs(np.real(temp_roots[i]) - np.real(temp_roots[j])) < tolerance) and i != j:
                 temp_roots = np.delete(temp_roots, j)
                 break
 
-        if len(temp_roots) == i+1:
+        if len(temp_roots) == i + 1:
             break
     return temp_roots
 
@@ -269,9 +268,9 @@ def generate_poly_q(polynomial_p: Polynomial, k: int):
     # print(np.sqrt(nomalization_constant))
 
     # algorithm find Q
-    polynomial_q = Polynomial([np.sqrt(-1*A_tilt_leading_coefficient)])
+    polynomial_q = Polynomial([np.sqrt(-1 * A_tilt_leading_coefficient)])
     for roots in A_tilt_roots:
-        polynomial_q = polynomial_q*Polynomial([-1*roots, 0, 1])
+        polynomial_q = polynomial_q * Polynomial([-1 * roots, 0, 1])
     if k % 2 == 0:
         polynomial_q = polynomial_q * Polynomial([0, 1])
     return polynomial_q
@@ -309,33 +308,33 @@ def generate_phase_angle(polynomial_p: Polynomial, polynomial_q: Polynomial, k: 
         polynomial_p, polynomial_q)
     assert degree_p <= k, "The degree of polynomial p must lower or equal to k."
     assert degree_q <= (
-        k-1), "The degree of polynomial q must lower or equal to k-1."
+        k - 1), "The degree of polynomial q must lower or equal to k-1."
     assert check_poly_parity(
         polynomial_p, k), "The parity of polynomial p is not satisfied."
     assert check_poly_parity(
-        polynomial_q, k-1), f"The parity of polynomial q is not satisfied.{polynomial_q.coef}"
+        polynomial_q, k - 1), f"The parity of polynomial q is not satisfied.{polynomial_q.coef}"
     assert bool_function, f"The polynomial p and polynomial q are not normalized with max deviation {deviation}."
 
-    phase_angle = np.zeros([k+1])
+    phase_angle = np.zeros([k + 1])
 
     # following is non-trivial case.
     while degree_p > 0:
         # e^(2i*phi_k) = poly_p_{l} / poly_q{l-1}
         phase_angle[k] = np.log(
-            polynomial_p.coef[degree_p]/polynomial_q.coef[degree_q]) / (2*1j)
+            polynomial_p.coef[degree_p] / polynomial_q.coef[degree_q]) / (2 * 1j)
         if phase_angle[k] == 0:
             phase_angle[k] = np.pi
 
         polynomial_p, polynomial_q = update_polynomial(
             phase_angle[k], polynomial_p, polynomial_q)
-        k = k-1
+        k = k - 1
         degree_p = polynomial_p.degree()
         degree_q = polynomial_q.degree()
     # following is trivial case. If polynomial p degree is zero(constant function)
     # 1. phi_{0} = log(p)/i
     # 2. The order k must be even
 
-    for i in range(1, k+1):
-        phase_angle[i] = (-1)**(i+1)*np.pi/2
-    phase_angle[0] = np.log(polynomial_p.coef[0])/(1j)
+    for i in range(1, k + 1):
+        phase_angle[i] = (-1)**(i + 1) * np.pi / 2
+    phase_angle[0] = np.log(polynomial_p.coef[0]) / (1j)
     return phase_angle
