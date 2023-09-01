@@ -10,43 +10,15 @@ from QuICT.core.gate import *
 
 class HamiltonianSimulation():
 
-    def __init__(self, method):
-
+      def __init__(self, method):
         self.method = method
-
-        assert self.method == "TS" or self.method == "Trotter" or \
-            self.method == "QSP", "Please select 'Trotter', 'TS' or 'QSP' method."
-
-    def execute(self,
-                 hamiltonian,
-                   time,
-                     initial_state,
-                       error=0.01, max_order=20):
-
-        initial_state_gate = \
-            prepare_G_state(initial_state, np.sum(initial_state))
-
-        initial_state_gate_width = initial_state_gate.width()
-
-        cg = CompositeGate()
-
+        assert self.method == "TS" or self.method ==  "Trotter" or self.method ==  "QSP", "Please select 'Trotter', 'TS' or 'QSP' method."
+    def execute(self, hamiltonian, time, initial_state, error = 0.1, max_order = 20):
+        coefficient_array, hamiltonian_array = hamiltonian
+        assert len(initial_state) == len(hamiltonian_array[0][0]), "The initial state size must equal to hamiltonian row number."
         if self.method == "TS":
-
-            coefficient_array, hamiltonian_array = hamiltonian
-
-            TS_method_gate = \
-                TS_method(coefficient_array, hamiltonian_array,
-                          time, error, max_order)
-
-            TS_method_gate_width = TS_method_gate.width()
-
-            TS_method_gate | cg([i for i in range(TS_method_gate_width)])
-
-            initial_state_gate | cg([TS_method_gate_width+i
-                                     for i in range(initial_state_gate_width)])
-
-            return cg
-
+            TS_method_circuit, TS_method_gate_width, steps = TS_method(coefficient_array, hamiltonian_array, time, error, max_order, initial_state)
+            return TS_method_circuit, steps
         elif self.method == "Trotter":
 
             trotter_method_gate = Trotter(
