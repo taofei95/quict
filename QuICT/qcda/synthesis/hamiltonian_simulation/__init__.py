@@ -1,5 +1,7 @@
 
-from .polynomial import Poly
-from .unitary_matrix_encoding import UnitaryMatrixEncoding
-from .TS_method import *
+from .hamiltonian_simulation import HamiltonianSimulation
+from .polynomial import *
+from .unitary_matrix_encoding import *
+from .QSP_method import *
 from .Trotter import *
+from .TS_method import *
