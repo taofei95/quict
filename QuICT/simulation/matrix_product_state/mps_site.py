@@ -146,7 +146,26 @@ class MPSSiteStructure:
             quantum_state = VT
 
         self._product_state.append(QubitTensor(VT.reshape(-1, 2, 1)))
+        self._groups = [0, self._qubits - 1]
 
+    def _update_groups(self):
+        self._groups = []
+        start = 0
+        for idx, norm in enumerate(self._norms):
+            if norm.ldim == 1:
+                self._groups.append([start, idx])
+                start = idx + 1
+            elif idx == self._qubits - 2:
+                self._groups.append([start, idx + 1])
+
+    def _check_groups(self, index: int):
+        for start, end in self._groups:
+            if start <= index and end >= index:
+                return [start, end]
+
+        return index
+
+    ### Gate Related Functions ###
     def apply_single_gate(self, qubit_index: int, gate_matrix: np.ndarray):
         """ Apply single gate into MPS
 
@@ -171,20 +190,22 @@ class MPSSiteStructure:
         q0, q1 = qubit_indexes
         if abs(q0 - q1) == 1:
             # Apply consecutive bi-qubits gate
-            self.apply_consecutive_double_gate(qubit_indexes, gate_matrix, inverse)
+            self._apply_consecutive_double_gate(qubit_indexes, gate_matrix, inverse)
         else:
             # Apply swap gate for un-consecutive bi-qubits gate
             min_q = min(qubit_indexes)
             max_q = max(qubit_indexes)
             for i in range(min_q, max_q - 1):
-                self.apply_consecutive_double_gate([i, i + 1], self.__SWAP_MATRIX)
+                self._apply_consecutive_double_gate([i, i + 1], self.__SWAP_MATRIX)
 
             qubit_indexes = [max_q, max_q - 1] if q0 > q1 else [max_q - 1, max_q]
-            self.apply_consecutive_double_gate(qubit_indexes, gate_matrix, inverse)
+            self._apply_consecutive_double_gate(qubit_indexes, gate_matrix, inverse)
             for i in range(max_q - 1, min_q, -1):
-                self.apply_consecutive_double_gate([i - 1, i], self.__SWAP_MATRIX)
+                self._apply_consecutive_double_gate([i - 1, i], self.__SWAP_MATRIX)
 
-    def apply_consecutive_double_gate(self, qubit_indexes: list, gate_matrix: np.ndarray, inverse: bool = False):
+        self._update_groups()
+
+    def _apply_consecutive_double_gate(self, qubit_indexes: list, gate_matrix: np.ndarray, inverse: bool = False):
         """ Apply bi-qubits quantum gate with consecutive qubits' indexes into MPS.
 
         Args:
@@ -233,14 +254,17 @@ class MPSSiteStructure:
     def apply_measure_gate(self, qubit_index: int):
         target_site = self._product_state[qubit_index * 2]
         if target_site.ldim == 1 and target_site.rdim == 1:
-            self._measured_single_site(qubit_index)
-            return 
+            prob = self._normalize_state_vector(target_site.tensor_data)
+            print(prob) 
 
         if target_site.ldim != 1:
             pass
 
-    def _measured_single_site(self, qubit_index):
-        pass
+    def _normalize_state_vector(self, state_vector: np.ndarray):
+        state_vector = state_vector.flatten('C')
+        measured_prob = self._array_helper.square(self._array_helper.abs(state_vector))
+
+        return measured_prob
 
     # temp
     def show(self, only_shape: bool = False):
@@ -251,7 +275,9 @@ class MPSSiteStructure:
             if not only_shape:
                 print(site.tensor_data)
             print(site.tensor_data.shape)
+            idx += 1
 
+        idx = 0
         for norm in self._norms:
             print(f"Norm {idx}:")
             if not only_shape:
