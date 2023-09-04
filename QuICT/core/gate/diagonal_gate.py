@@ -59,18 +59,52 @@ class DiagonalGate(object):
         Returns:
             CompositeGate: diagonal gate with auxiliary qubit at the end of qubits
         """
+        #Pay attention:
+        #All arrays and qubit is 0 as the starting point, but begins with 1 in the paper.
+        #There exits a problem.The whole process is for a fix bias |x>.
+        #So we add a loop from 0 -> 2^n-1.
+
         n = self.target
         m = self.aux
         gates = CompositeGate()
 
-        # Stage 1: Prefix Copy
-        t = int(np.floor(np.log2(m / 2)))
-        copies = int(np.floor(m / (2 * t)))
-        for j in range(copies):
-            for i in range(t):
-                CX & [i, n + i + j * t] | gates
+        for x in range(2 ^ n):
+            # Stage 1: Prefix Copy
+            t = int(np.floor(np.log2(m / 2)))
+            copies = int(np.floor(m / (2 * t)))
+            for j in range(copies):
+                for i in range(t):
+                    CX & [i, n + i + j * t] | gates
 
-        # Stage 2: Gray Initial
+            # Stage 2: Gray Initial
+            ell = 2^t
+            ini_star = n + t * copies
+
+                #1.implement U1
+            for i in range(ini_star,ini_star+ell):
+                self.ket_fj1(n,t,i) | gates
+
+                #2.implement R1
+            s = self.partitioned_gray_code(n, t)
+            for j in range(1,1+ell):
+                phase=(self.linear_fj1(j,x,n,t)) * (self.alpha_s(theta,s[j-1][0],n,t))
+                s_int = int(s[j-1][0],2)
+                gates.extend(self.phase_shift_s(s_int, n, phase, aux=self.aux))
+
+            #Stage 3:Suffix Copy
+
+                #1.U^{\dagger}_{copy,1}
+            for j in range(copies):
+                for i in range(t):
+                    CX & [i, n + i + j * t] | gates
+
+                #2.U_{copy,2}
+            copies3 = int(np.floor(m / (2 * (n-t))))
+
+            for j in range(copies3):
+                for i in range(n-t):
+                    CX & [i + t, n + i + j * t] | gates
+
 
     @staticmethod
     def lucal_gray_code(k, n):
@@ -248,3 +282,53 @@ class DiagonalGate(object):
                     continue
                 CX & [i, s_idx[j]] | gates
             return gates
+
+    @classmethod
+    def linear_fj1(cls,j,x,n,t):
+        """
+        implement the linear functions f_{j1}(x) =<s(j,1),x>
+
+        Args:
+            j(int):j is the label of n-bit strings s(j,1)
+            n(int): length of 0-1 string to be partitioned
+            t(int): length of the shared prefix of each row
+            x(int):the independent variables of the function f_{j1}
+        """
+        s = cls.partitioned_gray_code(n, t)
+        decimal_integer = int(s[j - 1][0], 2)  # Convert the binary string s[j - 1][0] to an integer
+        return cls.binary_inner_prod(decimal_integer, x, width=n)
+
+    @classmethod
+    def ket_fj1(cls,n,t,target_num):
+        """
+        implement the part of unitary U1 for every j:
+        |0> -> |<s(j,1),x>> by adding the CNOT gates
+
+        Args:
+            j(int):j is the label of n-bit strings s(j,1)
+            n(int): length of 0-1 string to be partitioned
+            t(int): length of the shared prefix of each row
+            target_num(int):the target label connecting the CNOT gate
+
+        return:
+            CompositeGate
+        """
+
+        s=cls.partitioned_gray_code(n, t)
+        st=s[j-1][0]
+        st_idx = []
+
+        for i in range(len(st)):
+            if st[i] == '1':
+                st_idx.append(i)
+
+        gates = CompositeGate()
+
+        for i in range(st_idx):
+            CX & [i,target_num] | gates
+
+        return gates
+
+
+
+
