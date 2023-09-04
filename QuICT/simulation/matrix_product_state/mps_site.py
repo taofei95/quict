@@ -73,12 +73,20 @@ class MPSSiteStructure:
             device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
             precision (str, optional): The precision type, one of [single, double]. Defaults to "double".
         """
+        # based properties
         assert device in ["CPU", "GPU"]
         self._device = device
         assert precision in ["double", "single"]
         self._precision = precision
         self._dtype = np.complex128 if self._precision == "double" else np.complex64
+        self._qubits = 0
 
+        # matrix product state structure
+        self._product_state = []
+        self._norms = []
+        self._groups = []   # List of the interval of entangle states, e.g. [(0, 3), (5, 7)]
+
+        # algorithm Module
         self._linear_algorithm = LinAlgLoader(device=device)
         if self._device == "GPU":
             import cupy as cp
@@ -99,13 +107,11 @@ class MPSSiteStructure:
             # TODO: add special quantum state like GHZ or ... later
             if not isinstance(quantum_state, str):
                 quantum_state = self._array_helper.array(quantum_state)
-                self._mps = self._quantum_state_schmidt_decomposition(quantum_state)
+                self._quantum_state_schmidt_decomposition(quantum_state)
         else:
-            self._mps = [QubitTensor(self._initial_qtensor())]
-            if qubits > 1:
-                for _ in range(qubits - 1):
-                    self._mps.append(Normalize(self._initial_normalize()))
-                    self._mps.append(QubitTensor(self._initial_qtensor()))
+            self._product_state = [QubitTensor(self._initial_qtensor()) for _ in range(self._qubits)]
+            self._norms = [Normalize(self._initial_normalize())for _ in range(1, self._qubits)] if qubits > 1 else []
+            self._groups = []
 
     def _initial_qtensor(self):
         return self._array_helper.array([1, 0], dtype=self._dtype).reshape(1, 2, 1)
@@ -122,21 +128,24 @@ class MPSSiteStructure:
         Returns:
             list: The MPS list
         """
-
         assert len(quantum_state.shape) == 1
         quantum_state = quantum_state.reshape(1, -1)
-        mp_state = []
+        self._product_state = []
+        self._norms = []
+        if self._qubits == 1:
+            self._product_state.append(QubitTensor(quantum_state.reshape(1, 2, 1)))
+            return
+
         for _ in range(self.qubits - 1):
             ldim = quantum_state.shape[0]
             quantum_state = quantum_state.reshape(2 * ldim, -1)
 
             U, S, VT = self._array_helper.linalg.svd(quantum_state, full_matrices=False)
-            mp_state.append(QubitTensor(U.reshape(ldim, 2, -1)))
-            mp_state.append(Normalize(S))
+            self._product_state.append(QubitTensor(U.reshape(ldim, 2, -1)))
+            self._norms.append(Normalize(S))
             quantum_state = VT
 
-        mp_state.append(QubitTensor(VT.reshape(-1, 2, 1)))
-        return mp_state
+        self._product_state.append(QubitTensor(VT.reshape(-1, 2, 1)))
 
     def apply_single_gate(self, qubit_index: int, gate_matrix: np.ndarray):
         """ Apply single gate into MPS
@@ -146,7 +155,7 @@ class MPSSiteStructure:
             gate_matrix (np.ndarray): The matrix of the quantum gate
         """
         assert qubit_index < self.qubits
-        target_qubit = self._mps[qubit_index * 2]
+        target_qubit = self._product_state[qubit_index]
         target_qubit.tensor_data = self._array_helper.tensordot(
             target_qubit.tensor_data, self._array_helper.array(gate_matrix, dtype=self._dtype), [[1], [1]]
         ).transpose([0, 2, 1])
@@ -191,9 +200,9 @@ class MPSSiteStructure:
             gate_matrix = self._linear_algorithm.MatrixPermutation(gate_matrix, np.array([1, 0]))
 
         # Only support consecutive qubits gate
-        qubit0 = self._mps[qubit_indexes[0] * 2]
-        qubit1 = self._mps[qubit_indexes[1] * 2]
-        norm = self._mps[qubit_indexes[1] * 2 - 1]
+        qubit0 = self._product_state[qubit_indexes[0]]
+        qubit1 = self._product_state[qubit_indexes[1]]
+        norm = self._norms[qubit_indexes[0]]
 
         # Combined two qubits together
         q0_data = qubit0.tensor_data
@@ -221,37 +230,73 @@ class MPSSiteStructure:
         qubit1.tensor_data = VT.reshape(-1, 2, q1_rdim)
         norm.matrix_data = S
 
+    def apply_measure_gate(self, qubit_index: int):
+        target_site = self._product_state[qubit_index * 2]
+        if target_site.ldim == 1 and target_site.rdim == 1:
+            self._measured_single_site(qubit_index)
+            return 
+
+        if target_site.ldim != 1:
+            pass
+
+    def _measured_single_site(self, qubit_index):
+        pass
+
     # temp
     def show(self, only_shape: bool = False):
         print(f"Qubits number: {self.qubits}.")
         idx = 0
-        for site in self._mps:
-            if isinstance(site, QubitTensor):
-                print(f"Qubit {idx}'s tensor:")
-                if not only_shape:
-                    print(site.tensor_data)
-                print(site.tensor_data.shape)
-            else:
-                print(f"Norm {idx}:")
-                if not only_shape:
-                    print(site.matrix_data)
-                print(site.matrix_data.shape)
-                idx += 1
+        for site in self._product_state:
+            print(f"Qubit {idx}'s tensor:")
+            if not only_shape:
+                print(site.tensor_data)
+            print(site.tensor_data.shape)
 
-    def to_statevector(self) -> np.ndarray:
+        for norm in self._norms:
+            print(f"Norm {idx}:")
+            if not only_shape:
+                print(norm.matrix_data)
+            print(norm.matrix_data.shape)
+            idx += 1
+
+    def to_statevector(self, interval: list = None) -> np.ndarray:
         """ Transfer MPS into State Vector. WARNING: it will generate an vector with size 2**n, where n is the
          number of qubits.
 
         Returns:
             np.ndarray: The state vector from MPS
         """
-        state_vector = self._mps[0].tensor_data
-        for i in range(1, self.qubits):
+        if not interval:
+            start, end = 0, self.qubits
+        else:
+            assert len(interval) == 2
+            start, end = interval
+
+        state_vector = self._product_state[start].tensor_data
+        for i in range(start + 1, end):
             state_vector = self._array_helper.tensordot(
-                state_vector, self._array_helper.diag(self._mps[2 * i - 1].matrix_data), [[-1], [0]]
+                state_vector, self._array_helper.diag(self._norms[i - 1].matrix_data), [[-1], [0]]
             )
-            state_vector = self._array_helper.tensordot(state_vector, self._mps[2 * i].tensor_data, [[-1], [0]])
+            state_vector = self._array_helper.tensordot(state_vector, self._product_state[i].tensor_data, [[-1], [0]])
             ldim, rdim = state_vector.shape[0], state_vector.shape[-1]
             state_vector = state_vector.reshape([ldim, -1, rdim])
 
         return state_vector.flatten('C')
+
+    def measure(self) -> float:
+        measured_state = self._array_helper.tensordot(self._product_state[0].tensor_data.conj(), self._product_state[0].tensor_data, [1, 1])
+        print(measured_state)
+        print(measured_state.shape)
+
+        for i in range(1, self.qubits):
+            shot_state = self._array_helper.tensordot(
+                self._array_helper.diag(self._norms[i - 1].matrix_data), self._product_state[i].tensor_data, [[-1], [0]]
+            )
+            shot_state = self._array_helper.tensordot(shot_state.conj(), shot_state, [1, 1])
+            print(shot_state.shape)
+            measured_state = self._array_helper.tensordot(measured_state, shot_state, [[2], [0]])
+            ldim, rdim = measured_state.shape[0], measured_state.shape[-1]
+            measured_state = measured_state.reshape([ldim, -1, rdim])
+
+        return measured_state.flatten('C')
+ 
