@@ -50,7 +50,7 @@ class MatrixProductStateSimulator:
 
     def _apply_basic_gate(self, gate: BasicGate, qindexes: list):
         if gate.type == GateType.measure:
-            self._mps.apply_measure_gate(qindexes[0])
+            self._mps.apply_measure_gate(qindexes)
             return
 
         if len(qindexes) == 1:

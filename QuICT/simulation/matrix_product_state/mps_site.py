@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Union
+from collections import defaultdict
 
 from QuICT.ops.utils import LinAlgLoader
 
@@ -251,20 +252,54 @@ class MPSSiteStructure:
         qubit1.tensor_data = VT.reshape(-1, 2, q1_rdim)
         norm.matrix_data = S
 
-    def apply_measure_gate(self, qubit_index: int):
-        target_site = self._product_state[qubit_index * 2]
-        if target_site.ldim == 1 and target_site.rdim == 1:
-            prob = self._normalize_state_vector(target_site.tensor_data)
-            print(prob) 
+    ### Measure Gate Related ###
+    def apply_measure_gate(self, qubit_indexes: list):
+        internal_groups = defaultdict(list)
+        for qidx in qubit_indexes:
+            group_idx = self._check_groups(qidx)
+            if isinstance(group_idx, int):
+                self._apply_mgate(qidx)
+            else:
+                if len(internal_groups[group_idx[0]]) == 0:
+                    internal_groups[group_idx[0]].append(group_idx[1])
 
-        if target_site.ldim != 1:
-            pass
+                internal_groups[group_idx[0]].append(qidx)
 
-    def _normalize_state_vector(self, state_vector: np.ndarray):
+        for key, value in internal_groups.items():
+            self._apply_mgate([key] + value)
+
+    def _apply_mgate(self, qubit_indexes: Union[list, int]):
+        if isinstance(qubit_indexes, int):
+            target_site = self._product_state[qubit_indexes]
+            result = self._measured_from_state_vector(target_site.tensor_data, 1)
+            self._measured_back_for_individual_shot(result, qubit_indexes)
+        else:
+            interval = qubit_indexes[:2]
+            qidxes = qubit_indexes[2:]
+            statevector = self.to_statevector(interval)
+            result = self._measured_from_state_vector(statevector, interval[1] - interval[0] + 1)
+
+            self._measured_back_for_group(result, interval, qidxes)
+
+    def _measured_from_state_vector(self, state_vector: np.ndarray, qubits: int):
         state_vector = state_vector.flatten('C')
         measured_prob = self._array_helper.square(self._array_helper.abs(state_vector))
 
-        return measured_prob
+        result = self._array_helper.random.choice(
+            self._array_helper.arange(1 << qubits),
+            p=measured_prob
+        )
+
+        return result
+
+    def _measured_back_for_individual_shot(self, result: int, qubit_index: int):
+        result_array = [0, 1] if result == 1 else [1, 0] 
+        self._product_state[qubit_index] = QubitTensor(
+            self._array_helper.array(result_array, dtype=self._dtype).reshape(1, 2, 1)
+        )
+
+    def _measured_back_for_group(self, result: int, group: list, qubit_indexes: Union[list, int]):
+        pass
 
     # temp
     def show(self, only_shape: bool = False):
