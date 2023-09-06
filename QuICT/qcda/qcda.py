@@ -148,7 +148,7 @@ class QCDA(object):
     def _choice_opt_algorithm(self, gate_types: list):
         clifford_only, extra_rz = True, False
         for gtype in gate_types:
-            if gtype == GateType.rz:
+            if gtype in (GateType.rz, GateType.ccx, GateType.ccz):
                 extra_rz = True
             elif gtype not in CLIFFORD_GATE_SET:
                 clifford_only = False
