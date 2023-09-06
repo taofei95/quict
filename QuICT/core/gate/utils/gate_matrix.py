@@ -337,7 +337,7 @@ class GateMatrixGenerator:
             )
             grad2 = np.array(
                 [
-                    [np.cos(pargs[0] / 2), -np.exp(1j * pargs[2]) * np.sin(pargs[0] / 2),],
+                    [np.cos(pargs[0] / 2), -np.exp(1j * pargs[2]) * np.sin(pargs[0] / 2), ],
                     [
                         1j * np.exp(1j * pargs[1]) * np.sin(pargs[0] / 2),
                         1j * np.exp(1j * (pargs[1] + pargs[2])) * np.cos(pargs[0] / 2),

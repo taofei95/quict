@@ -162,12 +162,11 @@ class DensityMatrixSimulator:
 
         self._origin_circuit.qubits[index].measured = _1
 
-    def sample(self, shots: int, target_qubits: list = None) -> list:
+    def sample(self, shots: int) -> list:
         """ Sample the current circuit and return the sample result of measured, please call simulator.run() before.
 
         Args:
             shots (int): The sample times.
-            target_qubits (list, optional): The indexes of qubits which want to be sample. Defaults to None.
 
         Returns:
             list: The list of counts of measured result.
@@ -177,7 +176,7 @@ class DensityMatrixSimulator:
         if self._accumulated_mode or self._quantum_machine is None:
             original_dm = self._density_matrix.copy()
 
-        target_qubits = target_qubits if target_qubits is not None else list(range(self._qubits))
+        target_qubits = list(range(self._qubits))
         state_list = [0] * (1 << len(target_qubits))
         for _ in range(shots):
             final_state = 0

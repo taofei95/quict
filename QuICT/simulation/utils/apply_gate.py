@@ -224,6 +224,17 @@ class GateSimulator:
         if len(matrix_list_for_gpu_only) > 0:
             self._concentrate_gate_matrixs(matrix_list_for_gpu_only, total_matrix_size)
 
+    def sample_for_statevector(self, shots: int, qubits: int, state_vector):
+        measured_prob = self._array_helper.square(self._array_helper.abs(state_vector))
+        if self._device == "GPU":
+            measured_prob = measured_prob.get()
+
+        result = np.random.choice(
+            np.arange(1 << qubits), shots, p=measured_prob
+        )
+
+        return result
+
     def _generate_gate_name_for_matrix_stored(self, gate_type, gate_pargs: list = None):
         """ Generate special name [type + parameters] for store Quantum Gates' matrix. """
         gate_name = str(gate_type)
