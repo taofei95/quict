@@ -7,6 +7,7 @@ from quafu import User, Task, QuantumCircuit
 
 class QuafuSimulator:
     __BACKEND = ["ScQ-P10", "ScQ-P18", "ScQ-P136"]
+
     def __init__(self, token: str):
         self.user = User()
         self.user.save_apitoken(token)

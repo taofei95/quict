@@ -220,7 +220,7 @@ class PhotoDrawer(object):
     @staticmethod
     def get_parameter_str(params):
         strings = []
-        
+
         for p in params:
             if isinstance(p, Variable):
                 p = p.pargs
