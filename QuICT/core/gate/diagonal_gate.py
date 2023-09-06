@@ -77,19 +77,21 @@ class DiagonalGate(object):
                     CX & [i, n + i + j * t] | gates
 
             # Stage 2: Gray Initial
+            t = int(np.floor(np.log2(m / 2)))
             ell = 2^t
             ini_star = n + t * copies
 
                 #1.implement U1
-            for i in range(ini_star,ini_star+ell):
-                self.ket_fj1(n,t,i) | gates
+            for j in range(1, 1 + ell):
+                for i in range(ini_star,ini_star+ell):
+                    self.ket_fjk(j,1,n,t,i) | gates
 
                 #2.implement R1
             s = self.partitioned_gray_code(n, t)
             for j in range(1,1+ell):
-                phase=(self.linear_fj1(j,x,n,t)) * (self.alpha_s(theta,s[j-1][0],n,t))
-                s_int = int(s[j-1][0],2)
-                gates.extend(self.phase_shift_s(s_int, n, phase, aux=self.aux))
+                sj1_int = int(s[j - 1][0], 2)
+                phase= (self.linear_fjk(j,1,x,n,t)) * (self.alpha_s(theta,sj1_int,n))
+                gates.extend(self.phase_shift_s(sj1_int, n, phase, aux=self.aux))
 
             #Stage 3:Suffix Copy
 
@@ -104,6 +106,44 @@ class DiagonalGate(object):
             for j in range(copies3):
                 for i in range(n-t):
                     CX & [i + t, n + i + j * t] | gates
+
+            #Stage 4: Gray Path
+            num_phases = int((2^n)/ell)
+            for k in range(2,num_phases+1):
+
+                    #Step k.1: U_k
+                for j in range(1,ell+1):
+                    s = self.partitioned_gray_code(n,t)
+                    s1 = s[j-1][k-2]
+                    s2 = s[j-1][k-1]
+                    for i in range(len(s1)):
+                        if s1[i] != s2[i]:
+                            y = n+n-t-1+(copies3-1)*t
+                            CX & [i,y+j] | gates
+                            break
+
+                   #Step k.2: R_k
+                for j in range(1,ell+1):
+                    s = self.partitioned_gray_code(n, t)
+                    sjk_int = int(s[j-1][k-1],2)
+                    phase_k = (self.linear_fjk(j,k,x,n,t)) * (self.alpha_s(theta,sjk_int,n))
+                    gates.extend(self.phase_shift_s(sjk_int, n, phase_k, aux=self.aux))
+
+            #Stage 5:Inverse
+
+            for j in range(copies3):
+                for i in range(n-t):
+                    CX & [i + t, n + i + j * t] | gates
+
+            for j in range(1, ell + 1):
+                s = self.partitioned_gray_code(n, t)
+                s1 = s[j - 1][num_phases - 2]
+                s2 = s[j - 1][num_phases - 1]
+                for i in range(len(s1)):
+                    if s1[i] != s2[i]:
+                        y = n + n - t - 1 + (copies3 - 1) * t
+                        CX & [i, y + j] | gates
+                        break
 
 
     @staticmethod
@@ -284,28 +324,30 @@ class DiagonalGate(object):
             return gates
 
     @classmethod
-    def linear_fj1(cls,j,x,n,t):
+    def linear_fjk(cls,j,k,x,n,t):
         """
-        implement the linear functions f_{j1}(x) =<s(j,1),x>
+        implement the linear functions f_{jk}(x) =<s(j,k),x>
 
         Args:
-            j(int):j is the label of n-bit strings s(j,1)
+            j(int):j is the label of n-bit strings s(j,k)
+            k(int):k is the label of n-bit strings s(j,k)
             n(int): length of 0-1 string to be partitioned
             t(int): length of the shared prefix of each row
-            x(int):the independent variables of the function f_{j1}
+            x(int):the independent variables of the function f_{jk}
         """
         s = cls.partitioned_gray_code(n, t)
-        decimal_integer = int(s[j - 1][0], 2)  # Convert the binary string s[j - 1][0] to an integer
+        decimal_integer = int(s[j - 1][k - 1], 2)  # Convert the binary string s[j - 1][k-1] to an integer
         return cls.binary_inner_prod(decimal_integer, x, width=n)
 
     @classmethod
-    def ket_fj1(cls,n,t,target_num):
+    def ket_fjk(cls,j,k,n,t,target_num):
         """
         implement the part of unitary U1 for every j:
-        |0> -> |<s(j,1),x>> by adding the CNOT gates
+        |0> -> |<s(j,k),x>> by adding the CNOT gates
 
         Args:
-            j(int):j is the label of n-bit strings s(j,1)
+            j(int):j is the label of n-bit strings s(j,k)
+            k(int):k is the label of n-bit strings s(j,k)
             n(int): length of 0-1 string to be partitioned
             t(int): length of the shared prefix of each row
             target_num(int):the target label connecting the CNOT gate
@@ -315,7 +357,7 @@ class DiagonalGate(object):
         """
 
         s=cls.partitioned_gray_code(n, t)
-        st=s[j-1][0]
+        st=s[j-1][k-1]
         st_idx = []
 
         for i in range(len(st)):
