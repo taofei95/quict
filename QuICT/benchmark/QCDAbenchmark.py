@@ -89,7 +89,7 @@ class QCDAbenchmark:
     def _mapping_bench(self, bench_func, qubits_number):
         circuits_list = []
         # algorithm circuit
-        circuits_list.extend(self._alg_circuit(bench_func, qubits_number))
+        circuits_list.extend(self._alg_circuit(bench_func, [qubits_number[0], qubits_number[-1]]))
 
         # instruction set circuit
         circuits_list.extend(self._machine_circuit(bench_func, qubits_number))
@@ -105,7 +105,7 @@ class QCDAbenchmark:
         circuits_list = []
 
         # # algorithm circuit
-        # circuits_list.extend(self._alg_circuit(bench_func, qubits_number))
+        # circuits_list.extend(self._alg_circuit(bench_func, [qubits_number[0], qubits_number[-1]))
 
         # # instruction set circuit
         # circuits_list.extend(self._machine_circuit(bench_func, qubits_number))

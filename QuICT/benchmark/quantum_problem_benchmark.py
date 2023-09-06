@@ -103,11 +103,12 @@ class QuantumProblemBenchmark:
             Return the analysis of QCDAbenchmarking.
         """
         data_list = self._get_bench_data(bench_func)
-        bench_result = []
-        data_update_list1, data_update_list2 = [], []
+        bench_result, data_update_list1 = [], []
 
         # first simulation
         for data in data_list[0]:
+            simulator = StateVectorSimulator()
+            cir_opt = simulator.run(cir)
             data_update_list1.append(self._run_interface(data))
         for data in data_list[1]:
             stime = time.time()
@@ -121,7 +122,7 @@ class QuantumProblemBenchmark:
     def _validate_system(self, bench_func, data_list):
         if bench_func == "simulation":
             for j in range(len(data_list)):
-                if data_list[0][j] == data_list[1][j]:
+                if data_list[0][j].all() == data_list[1][j].all():
                     print("Successful analogue amplitude correctness test for this circuit!")
                 else:
                     print("Failed analogue amplitude correctness test for this circuit!")

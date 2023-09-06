@@ -172,9 +172,11 @@ class BenchmarkCircuitBuilder:
         if rest_qubits_number > 0:
             a = random.choice(normal_qubits)
             target_qubits = [edge.v for edge in layout.out_edges(a)]
+            if len(target_qubits) == 0:
+                a = random.choice(normal_qubits)
+                target_qubits = [edge.v for edge in layout.out_edges(a)]
             rest_qubits.append(a)
             normal_qubits.remove(a)
-
             for _ in range(rest_qubits_number - 1):
                 a = random.choice(target_qubits)
                 rest_qubits.append(a)

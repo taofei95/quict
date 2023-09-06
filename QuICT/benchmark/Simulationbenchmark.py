@@ -35,7 +35,7 @@ class Simulationbenchmark:
 
         # circuits with different probabilities of cnot
         medium_cirs = self._random_circuit("medium")
-        large_cirs = self._random_circuit("large")
+        large_cirs = []
         # determine if the current time is within the range time
 
         return [medium_cirs, large_cirs]

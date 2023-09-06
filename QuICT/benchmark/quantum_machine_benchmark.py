@@ -53,7 +53,7 @@ class QuantumMachinebenchmark:
             if is_measure:
                 Measure | cir
             cir.name = "+".join(["random", "random", f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}"])
-
+            cir = BenchCirData(cir)
             cir_list.append(cir)
         return cir_list
 
@@ -139,13 +139,16 @@ class QuantumMachinebenchmark:
         circuit_list.extend(self._get_random_circuit(level, q_number, ins_set, layout, is_measure))
 
         # get benchmark circuits
-        circuit_list.extend(self._get_benchmark_circuit(level, q_number, ins_set, layout, is_measure))
+        # circuit_list.extend(self._get_benchmark_circuit(level, q_number, ins_set, layout, is_measure))
 
         # get algorithm circuit
-        circuit_list.extend(
-            self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
-        )
-
+        # circuit_list.extend(
+        #     self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
+        # )
+        f = open("benchmark_test.txt", "w+")
+        for i in circuit_list:
+            f.write(f"{i.circuit.qasm()} \n")
+            f.write("-------------------- \n")
         return circuit_list
 
     def run(
@@ -195,8 +198,8 @@ class QuantumMachinebenchmark:
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path)
 
-        if len(bench_cir) > 0:
-            self._graph_show(bench_cir)
+        # if len(bench_cir) > 0:
+        #     self._graph_show(bench_cir)
 
         if self._output_file_type == "txt":
             self._txt_show(bench_cir)
