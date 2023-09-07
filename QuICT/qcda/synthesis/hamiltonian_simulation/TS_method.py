@@ -1,18 +1,20 @@
 import math
 import numpy as np
+import logging
 from QuICT.qcda.synthesis import QuantumStatePreparation
 from QuICT.core.gate import CompositeGate, X, Z, CZ, CCZ, MultiControlToffoli
 from QuICT.core import Circuit
 from .unitary_matrix_encoding import *
 
-
 def int_reflection(binary_string):
     """
-    In the standard basis, reflect the matrix elements |binary_string><binary_string|
-    generate control z composite gates.
+    Compute |binary><binary| reflection
+    For example if |01><01| reflection, generate [[1,0,0,0],[0,-1,0,0],[0,0,1,0],[0,0,0,1]]
+    Args:
+        binary_string: binary representation of a positive integer.
 
-    :param binary_string: input binary string.
-    :return: Composite gate
+    Returns:
+        A composite gate
     """
     m = len(binary_string)
     composite_gate = CompositeGate()
@@ -29,10 +31,10 @@ def int_reflection(binary_string):
         CCZ | composite_gate([0, 1, 2])
     elif m > 3:
         mct = MultiControlToffoli('no_aux')
-        m_c_t = mct(m - 1)
-        H | composite_gate(m - 1)
+        m_c_t = mct(m-1)
+        H | composite_gate(m-1)
         m_c_t | composite_gate([i for i in range(m)])
-        H | composite_gate(m - 1)
+        H | composite_gate(m-1)
     x_composite_gate | composite_gate
 
     return composite_gate
@@ -43,8 +45,16 @@ def int_reflection(binary_string):
 def gates_R(num_reflection_qubit, num_qubit):
     """
     generate R = I - 2P gate
+
+    Args:
+    num_reflection_qubit: The selected number of qubit are reflected in there subspace.
+    num_qubit: Total number of qubits.
+
+    Returns:
+        A composite gate
     """
-    bit_string_array, _ = permute_bit_string(2**num_qubit - 1)
+    assert num_qubit >= num_reflection_qubit, "The num qubits must greater or equal to num reflection qubit."
+    bit_string_array, _ = permute_bit_string(2**num_qubit-1)
     R = CompositeGate()
     for i in range(2**num_reflection_qubit):
         reflection_gate = int_reflection(bit_string_array[i])
@@ -55,65 +65,102 @@ def gates_R(num_reflection_qubit, num_qubit):
 def find_order(times_steps, error):
     """
     Find the minimum order makes the |summed_coefficient-2|<=2
-    :param times_steps: int
-                        num of time steps
-    :param error: float
+
+    Args:
+    times_steps: num of time steps
+    error: float
                     accuracy of the algorithm
-    :return: int
-            minimum order of taylor expansion
+
+    Returns: minimum order of taylor expansion
     """
     temp_poly = []
     for i in range(30):
-        temp_poly.append(np.log(2)**i / math.factorial(i))
+        temp_poly.append(np.log(2)**i/math.factorial(i))
     temp_poly = np.array(temp_poly)
     order = 0
-    while np.sum(temp_poly) > error / times_steps:
+    while np.sum(temp_poly) > error/times_steps:
         temp_poly = np.delete(temp_poly, 0, axis=0)
         order += 1
-    order = order - 1
+    order = order-1
     return order
 
 
 def calculate_expected_matrix(hamiltonian, time):
+    """
+    calculate expected time evolution matrix e^-iHt
+
+    Args:
+    hamiltonian: A hermitian matrix.
+    time: time setted.
+
+    Returns:
+        A composite gate
+    """
+    assert check_hermitian(hamiltonian), "Hamiltonian is not hermitian"
     eigenvalue, eigenbasis = np.linalg.eig(hamiltonian)
-    matrix = np.exp(-1j * eigenvalue[0]) * np.kron(
+    matrix = np.exp(-1j*eigenvalue[0])*np.kron(
         eigenbasis[0].reshape(len(eigenbasis[0]), 1), eigenbasis[0])
     for i in range(1, len(eigenvalue)):
-        matrix = matrix + np.exp(-1j * eigenvalue[i] * time) * np.kron(
+        matrix = matrix + np.exp(-1j*eigenvalue[i]*time)*np.kron(
             eigenbasis[i].reshape(len(eigenbasis[i]), 1), eigenbasis[i])
     return matrix
 
-
 def find_time_steps(coef_array, time):
-    T = np.sum(coef_array) * time
-    r = T / np.log(2)
+    """
+    find the suitable time steps such that make summed coefficient close to 2.
+
+    Args:
+    coef_array: A array of coefficient assign infront of matrix V. (U = SUM coef * V )
+    time: evolution time
+
+    Returns:
+        time steps: A positive integer.
+    """
+    T = np.sum(coef_array)*time
+    r = T/np.log(2)
     # use upper r
     time_steps = 0
     while time_steps < r:
         time_steps += 1
     return time_steps
 
-
 def find_matrix_dimension(matrix_array):
-    matrix_dimension = 0
-    while 2 ** matrix_dimension != len(matrix_array[0][0]):
-        matrix_dimension += 1
+    """
+    Find the matrix dimension.
+
+    Args:
+    matrix_array: Array of matrix([matrix, matrix, matrix])
+
+    Returns:
+        time steps: A positive integer.
+    """
+    matrix_dimension = int(np.log2(len(matrix_array[0][0])))
     return matrix_dimension
 
 
-def calculate_approxiamate_matrix(hamiltonian, order, time, time_order):
+def calculate_approximate_matrix(hamiltonian, order, time, time_order):
+    """
+    calculate the approximated e^-iHt/r
+
+    Args:
+    hamiltonian: A numpy 2D array (H)
+    order: hamiltonian highest truncated order
+    time: the evolution time(t)
+    time_order: positive integer (r)
+
+    Returns:
+        approximate_hamiltonian: approximated hamiltonian
+    """
     approximate_matrix = np.identity(len(hamiltonian[0]))
     for i in range(1, order):
         temp_matrix = hamiltonian
-        for _ in range(i - 1):
+        for _ in range(i-1):
             temp_matrix = np.matmul(temp_matrix, hamiltonian)
-        temp_matrix = 1 / math.factorial(i) * (-1j * time / time_order)**i * temp_matrix
+        temp_matrix = 1/math.factorial(i)*(-1j*time/time_order)**i*temp_matrix
         approximate_matrix = np.sum((approximate_matrix, temp_matrix), axis=0)
     approximate_hamiltonian = approximate_matrix
     return approximate_hamiltonian
-
-
-def TS_method(coefficient_array, matrix_array, time, error, max_order, initial_state):
+def TS_method(coefficient_array, matrix_array, time, error, max_order, initial_state, complete=False):
     """
     https://arxiv.org/abs/1412.4687
     Let hamiltonian satisfy:
@@ -129,7 +176,7 @@ def TS_method(coefficient_array, matrix_array, time, error, max_order, initial_s
     :param max_order: Maximum degree of taylor expansion allowed.
     :return: Quantum circuit
     """
-    print("Algorithm start")
+    logging.info("Algorithm start")
     (hamiltonian,
      coefficient_array,
      matrix_array,
@@ -158,29 +205,25 @@ def TS_method(coefficient_array, matrix_array, time, error, max_order, initial_s
         len(coefficient_array) - 1)
     # make B gates, select V gates, ancilla reflection gates
     initial_state_gate = prepare_G_state(initial_state, np.sum(initial_state))
-    print("Finding B gate")
+    logging.info("Finding B gate")
     B = prepare_G_state(coefficient_array, np.sum(coefficient_array))
     B_dagger = B.inverse()
-    print("Finding select-V gate")
+    logging.info("Finding select-V gate")
     select_v, select_v_inverse = multicontrol_unitary(control_hamilton_list)
     # reflection gate
-    print("Finding reflection gate")
+    logging.info("Finding reflection gate")
     R = gates_R(matrix_dimension, num_ancilla_qubit +
                 matrix_dimension + 1)  # +1ancilla qubit for control-v
     summed_coefficient = np.sum(coefficient_array)
-    print("Truncate order:", order)
-    print("Time steps:", time_steps)
-    print("Summed coefficient:", summed_coefficient)
-    print("Expected error:", np.abs(summed_coefficient - 2))
-    print("Amplification size:", summed_coefficient / 2)
-    print("Approximate time evolution operator:",
-          calculate_approxiamate_matrix(hamiltonian, order, time, time_steps))
+    expected_error = np.abs(summed_coefficient-2)
+    amplification_size = summed_coefficient/2
+    approximate_time_evolution_operator = calculate_approximate_matrix(hamiltonian, order, time, time_steps)
     ###########################################################################################
     # completing circuit
-    print("Completing circuit")
+    logging.info("Completing circuit")
     cg_width = num_ancilla_qubit + matrix_dimension + 1
     circuit = Circuit(cg_width)
-    initial_state_gate | circuit([num_ancilla_qubit + 1 for i in range(matrix_dimension)])
+    initial_state_gate | circuit([num_ancilla_qubit + 1 + i for i in range(matrix_dimension)])
     # W
     B | circuit
     select_v | circuit
@@ -199,5 +242,6 @@ def TS_method(coefficient_array, matrix_array, time, error, max_order, initial_s
     B_dagger | circuit
     # -1
     R | circuit
-    print("Circuit generation completes.")
+    if complete == True:
+        return circuit, cg_width, time_steps, order, time_steps, summed_coefficient, expected_error, amplification_size, approximate_time_evolution_operator
     return circuit, cg_width, time_steps
