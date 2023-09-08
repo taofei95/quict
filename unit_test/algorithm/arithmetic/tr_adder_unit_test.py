@@ -141,7 +141,6 @@ class TestTRIOCarryAdder(unittest.TestCase):
         """
         add_circuit = Circuit(2 * qreg_size + 2)
 
-        out_carry = [0]
         b_list = list(range(1, qreg_size + 1))
         a_list = list(range(qreg_size + 1, 2 * qreg_size + 1))
         in_carry = [2 * qreg_size + 1]
