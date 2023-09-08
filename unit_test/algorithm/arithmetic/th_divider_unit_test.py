@@ -6,6 +6,7 @@ from QuICT.algorithm.arithmetic.divider import THRestoreDivider
 from QuICT.algorithm.tools import circuit_init, decode_counts_int
 from QuICT.core.circuit import Circuit
 from QuICT.simulation.state_vector import StateVectorSimulator
+from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError
 
 
 class TestTHRestoringDivider(unittest.TestCase):
@@ -31,6 +32,14 @@ class TestTHRestoringDivider(unittest.TestCase):
             self.assertEqual(quotient, b // a)
             self.assertEqual(remainder, b % a)
             self.assertEqual(re_a, a)
+
+    def test_THRestoringDivider_invalid_size(self):
+        """ Test using THRestoringDivider with invalid input size. """
+        # circuit size
+        n = randint(1, 3)
+
+        with self.assertRaises(GateParametersAssignedError):
+            self._construct_circuit(n, 0, 1)
 
     def _construct_circuit(
         self,

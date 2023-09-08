@@ -228,7 +228,6 @@ class THRestoreDivider(CompositeGate):
             iteration.extend(self._qreg_a_list)
             self._build_normal_iteration(qreg_size) | self(iteration)
 
-
     def _build_normal_iteration(self, qreg_size) -> CompositeGate:
         """
             Construct the circuit generation of iteration of quantum restoring division circuit.
