@@ -139,7 +139,7 @@ class CtrlAddNopModule(CompositeGate):
 
         Output:
             The first qubit id reserved for 'Ctrl' qubit.
-            The following "n" qubits are the result of "b+a" or reserved for the first addend.
+            The following "n" qubits are the result of "b + a" or reserved for the first addend.
             The last "n" qubits are reserved for the second addend.
     """
 
@@ -185,8 +185,8 @@ class THRestoreDivider(CompositeGate):
 
         Input:
             The first 'n' qubits are set to |0>.
-            The following 'n' qubits are the dividend.
-            The last 'n' qubits are the divisor.
+            The following 'n' qubits are the dividend of which the higher digit in lower lines.
+            The last 'n' qubits are the divisor of which the higher digit in lower lines.
 
         Output:
             The first 'n' qubits are the quotient.
@@ -205,7 +205,7 @@ class THRestoreDivider(CompositeGate):
             stores quotient and remainder. For both operands, the highest digit must set to |0>
             due to 2’s complement positive binary.
 
-            |0>|b>|a> ---> |b//a>|b%a>|a>
+            |0...0>|b>|a> ---> |b//a>|b%a>|a>
 
             Circuit width: '3 * qreg_size'.
             Args:
@@ -245,3 +245,67 @@ class THRestoreDivider(CompositeGate):
             X & [0]
 
         return iteration
+
+
+class THNonRestDivider(CompositeGate):
+    """
+        Implement a divider using Non-Restoring Division Algorithm.
+
+        Input:
+            The first 'n - 1' qubits are set to |0>.
+            The following 'n' qubits are the dividend of which the higher digit in lower lines.
+            The last 'n' qubits are the divisor of which the higher digit in lower lines.
+
+        Output:
+            The first 'n' qubits are the quotient.
+            The following 'n - 1' qubits are the remainder.
+            The last 'n' qubits are reserved for divisor
+
+        Based on paper "Quantum Circuit Designs of Integer Division Optimizing T-count and T-depth"
+        by Himanshu Thapliyal, Edgard Muñoz-Coreas, T.S.S.Varun and Travis S.Humble[1]
+
+        [1]: https://ieeexplore.ieee.org/document/8691552
+    """
+
+    def __init__(self, qreg_size: int, name: str = None):
+        """
+            Construct a divider using Non-Restoring Division Algorithm, which calculates "b/a" and
+            stores quotient and remainder. For both operands, the highest digit must set to |0>
+            due to 2’s complement positive binary.
+
+            |0...bn-1>|bn-1...b0>|a> ---> |b//a>|b%a>|a>
+
+            Circuit width: '3 * qreg_size - 1'.
+            Args:
+                qreg_size (int): The input quantum register size for divisor and dividend.
+                name (str): The name of CtrlAddNopModule. Default to None.
+        """
+        if qreg_size < 3:
+            raise GateParametersAssignedError(
+                f"Register size must be greater than or equal to 3 but given {qreg_size}"
+            )
+        super().__init__(name)
+
+        self._qreg_q_list = list(range(qreg_size))
+        self._qreg_r_list = list(range(qreg_size, 2 * qreg_size - 1))
+        self._qreg_a_list = list(range(2 * qreg_size - 1, 3 * qreg_size - 1))
+
+        # step 1
+        sub_list = self._qreg_q_list.copy()
+        sub_list.extend(self._qreg_a_list)
+        SubtractionModule(qreg_size) | self(sub_list)
+
+        # step 2
+        for i in range(qreg_size - 1):
+            iteration = self._qreg_q_list[i::].copy()
+            iteration.extend(self._qreg_r_list[:i + 1:])
+            iteration.extend(self._qreg_a_list)
+            X | self([self._qreg_q_list[i]])
+            CtrlAddSubModule(qreg_size) | self(iteration)
+
+        # step 3
+        add_nop_list = [self._qreg_q_list[qreg_size - 1]]
+        add_nop_list.extend(self._qreg_r_list)
+        add_nop_list.extend(self._qreg_a_list[1::])
+        CtrlAddNopModule(qreg_size - 1) | self(add_nop_list)
+        X | self([self._qreg_q_list[qreg_size - 1]])

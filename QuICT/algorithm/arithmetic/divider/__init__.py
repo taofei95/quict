@@ -1,1 +1,1 @@
-from .th_divider import THRestoreDivider
+from .th_divider import THRestoreDivider, THNonRestDivider
