@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
-from QuICT.core.gate import X, Rz, Rx, CompositeGate, MultiControlToffoli
+from QuICT.core.gate import H, Z, X, Rz, Rx, GPhase, CompositeGate, MultiControlToffoli
 from QuICT.core import Circuit
 from QuICT.qcda.synthesis.hamiltonian_simulation.unitary_matrix_encoding import UnitaryMatrixEncoding
 #######################################################
@@ -94,8 +94,9 @@ class QuantumSignalProcessing:
 
     def signal_processing_circuit(self, coefficient_array, matrix_array):
         """
-        generate the circuit depict in the figure 2 of paper；
+        generate the circuit depict in the figure 16 of paper;
         https://arxiv.org/abs/2002.11649
+        This is the generalized circuit that use one less ancilla qubit
         Args:
            coefficient_array: array of coefficient of linear combination  of hamiltonian.
            matrix_array: array of matrix of linear combination of hamiltonian.
@@ -106,14 +107,20 @@ class QuantumSignalProcessing:
 
         UME = UnitaryMatrixEncoding("LCU")
         U = UME.execute(coefficient_array, matrix_array, complete=True)
-
         circuit_width = U.width()
         cir = Circuit(circuit_width + 1)
         k = len(self.angle_sequence)
+        H | cir(0)
         for i in range(k - 1):
+            if i != 0:
+                Z | cir(0)
             projector_controller(int(circuit_width - matrix_dimension), self.angle_sequence[-i - 1]) | cir
             U | cir([i + 1 for i in range(circuit_width)])
+        Z | cir(0)
         projector_controller(int(circuit_width - matrix_dimension), self.angle_sequence[0]) | cir
+        H | cir(0)
+        for i in range(int(circuit_width - matrix_dimension)):
+            GPhase(np.pi/2)|cir(i)
         return cir
 
 
@@ -421,9 +428,8 @@ def projector_controller(ancilla_size, angle):
     #make cg gates to do e^(-iphi |0><0|^tensor n) where n is the ancilla size.
     cg_x | cg([i+1 for i in range(ancilla_size)])
     CNX | cg([i+1 for i in range(ancilla_size)]+[0])
-    cg_x | cg([i+1 for i in range(ancilla_size)])
     Rz(2*angle) | cg(0)
-    cg_x | cg([i+1 for i in range(ancilla_size)])
     CNX | cg([i+1 for i in range(ancilla_size)]+[0])
     cg_x | cg([i+1 for i in range(ancilla_size)])
     return cg
+
