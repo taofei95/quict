@@ -370,7 +370,3 @@ class DiagonalGate(object):
             CX & [i,target_num] | gates
 
         return gates
-
-
-
-
