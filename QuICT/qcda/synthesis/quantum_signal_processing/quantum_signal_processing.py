@@ -360,13 +360,12 @@ def generate_phase_angle(polynomial_p:Polynomial, polynomial_q:Polynomial, k:int
     bool_function, deviation = check_polynomial_normalization(polynomial_p, polynomial_q)
     # check Theorem 3.1
     assert degree_p<=k,"The degree of polynomial p must lower or equal to k."
-    assert degree_q <=(k-1), "The degree of polynomial q must lower or equal to k-1."
+    assert degree_q <=max(0, k-1), "The degree of polynomial q must lower or equal to k-1."
     # check Theorem 3.2
     assert check_poly_parity(polynomial_p, k ), "The parity of polynomial p is not satisfied."
     assert check_poly_parity(polynomial_q, k-1), f"The parity of polynomial q is not satisfied.{polynomial_q.coef}"
     # check Theorem 3.3
     assert bool_function, f"The polynomial p and polynomial q are not normalized with max deviation {deviation}."
-
     phase_angle = np.zeros([k+1]).astype("complex128")
 
     # following is non-trivial case.
@@ -384,14 +383,14 @@ def generate_phase_angle(polynomial_p:Polynomial, polynomial_q:Polynomial, k:int
     # 1. phi_{0} = log(p)/i
     # 2. The order k must be even
 
-    for i in range(1, k+1):
+    for i in range(1, k):
         phase_angle[i] = (-1)**(i+1)*np.pi/2
     phase_angle[0] = np.log(polynomial_p.coef[0])/(1j)
     return  phase_angle
-#################################Following code convert angle sequence to another conventino
+#################################Following code convert angle sequence to another convention
+#https://arxiv.org/abs/2002.11649
 def convert_phase_sequence(phase_sequence):
     """
-    https://arxiv.org/abs/2002.11649
     Convert the phase sequence in equation 13 to equation 15.
 
     Args:
@@ -406,6 +405,23 @@ def convert_phase_sequence(phase_sequence):
             new_phase.append(phase_sequence[i] + np.pi / 4)
         else:
             new_phase.append(phase_sequence[i] + np.pi / 2)
+    return new_phase
+def negative_phase_sequence(Phase_sequence):
+    """
+    Convert the phase sequence in equation 13 to equation 18.
+    Hence, generate -phi sequence used for U_(-phi)
+    Args:
+    phase_sequence: sequence of Rz rotation angle
+
+    Returns:
+        new_phase: new phase
+    """
+    new_phase = []
+    for i in range(len(phase_sequence)):
+        if i == 0 or i == len(phase_sequence) - 1:
+            new_phase.append(-1 * phase_sequence[i] + 3 * np.pi / 4)
+        else:
+            new_phase.append(-1 * phase_sequence[i] + np.pi / 2)
     return new_phase
 
 def projector_controller(ancilla_size, angle):
@@ -427,9 +443,9 @@ def projector_controller(ancilla_size, angle):
     CNX = ini(ancilla_size)
     #make cg gates to do e^(-iphi |0><0|^tensor n) where n is the ancilla size.
     cg_x | cg([i+1 for i in range(ancilla_size)])
-    CNX | cg([i+1 for i in range(ancilla_size)]+[0])
+    CNX | cg([ancilla_size - i for i in range(ancilla_size + 1)])
     Rz(2*angle) | cg(0)
-    CNX | cg([i+1 for i in range(ancilla_size)]+[0])
+    CNX | cg([ancilla_size - i for i in range(ancilla_size + 1)])
     cg_x | cg([i+1 for i in range(ancilla_size)])
     return cg
 
