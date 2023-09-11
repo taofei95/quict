@@ -88,14 +88,6 @@ class BasicGate(object):
             self._is_matrix_update = False
 
         return self._target_matrix
-    
-    @property
-    def grad_matrix(self):
-        if self._grad_matrix is None or self._is_matrix_update:
-            self._grad_matrix = GateMatrixGenerator().get_matrix(self, is_get_grad=True)
-            self._is_matrix_update = False
-
-        return self._grad_matrix
 
     @property
     def grad_matrix(self):
@@ -156,10 +148,6 @@ class BasicGate(object):
     @property
     def params(self) -> int:
         return self._params
-    
-    @property
-    def variables(self) -> int:
-        return self._variables
 
     @property
     def variables(self) -> int:
