@@ -22,7 +22,7 @@ def check_unitary(input_matrix, tolerance=1e-9):
     Check if input matrix unitary
     """
     matrix_transpose = np.transpose(np.conj(input_matrix))
-    if (np.abs(np.matmul(input_matrix, matrix_transpose).trace()-len(input_matrix)) < tolerance).all():
+    if (np.abs(np.matmul(input_matrix, matrix_transpose).trace() - len(input_matrix)) < tolerance).all():
         return True
     return False
 
@@ -45,7 +45,7 @@ def read_unitary_matrix(coefficient_array, unitary_matrix_array):
     hamiltonian_array = []
     summed_coefficient = 0
     for i in range(len(coefficient_array)):
-        hamiltonian_array.append(unitary_matrix_array[i]*coefficient_array[i])
+        hamiltonian_array.append(unitary_matrix_array[i] * coefficient_array[i])
         summed_coefficient = coefficient_array[i] + summed_coefficient
     hamiltonian_array = np.array(hamiltonian_array)
     hamiltonian = np.sum(hamiltonian_array, axis=0)
@@ -69,7 +69,7 @@ def padding_coefficient_array(coefficient_array):
         n += 1
     if n == 0 and length != 0:
         n = 1
-    coefficient_array = np.pad(coefficient_array, (0, 2**n-length))
+    coefficient_array = np.pad(coefficient_array, (0, 2**n - length))
     return coefficient_array, n
 
 
@@ -83,13 +83,13 @@ def permute_bit_string(max_int):
     """
     # find max bound of max_int
     num_qubits = 0
-    while 2 ** num_qubits-1 < max_int:
+    while 2 ** num_qubits - 1 < max_int:
         num_qubits += 1
     if max_int == 0:
         num_qubits = 1
     bit_string_array = np.arange(0, max_int, 1)
     permute_list = []
-    for i in range(len(bit_string_array)+1):
+    for i in range(len(bit_string_array) + 1):
         permute_list.append(format(i, f"0{num_qubits}b"))
     return permute_list, num_qubits
 
@@ -110,8 +110,8 @@ def prepare_G_state(coefficient_array, summed_coefficient):
     coefficient_array, _ = padding_coefficient_array(coefficient_array)
     for i in range(len(coefficient_array)):
         state_vector.append(
-            np.sqrt(coefficient_array[i]/np.abs(summed_coefficient)))
-    state_vector = np.sqrt(coefficient_array/summed_coefficient)
+            np.sqrt(coefficient_array[i] / np.abs(summed_coefficient)))
+    state_vector = np.sqrt(coefficient_array / summed_coefficient)
     QSP = QuantumStatePreparation('uniformly_gates', keep_phase=True)
     oracle_G = QSP.execute(state_vector)
     return oracle_G
@@ -196,11 +196,11 @@ def product_gates(coefficient_array: np.array, matrix_array, order: int, time: f
     global_phase_gate_positive = matrix_to_control_gate(
         [1j*np.identity(2**(matrix_dimension))])[0][0]
     global_phase_gate_negative = matrix_to_control_gate(
-        [-1j*np.identity(2**(matrix_dimension))])[0][0]
+        [-1j * np.identity(2**(matrix_dimension))])[0][0]
     global_phase_gate_minus = matrix_to_control_gate(
-        [-1*np.identity(2**(matrix_dimension))])[0][0]
+        [-1 * np.identity(2**(matrix_dimension))])[0][0]
     global_phase_gate_identity = matrix_to_control_gate(
-        [1*np.identity(2**(matrix_dimension))])[0][0]
+        [1 * np.identity(2**(matrix_dimension))])[0][0]
 
     # generate control gate list
     gate_list = []
@@ -227,7 +227,7 @@ def product_gates(coefficient_array: np.array, matrix_array, order: int, time: f
                 temp_coefficient = temp_coefficient * \
                     coefficient_array[permute_array[i][j]]
                 cg = stretch_gates(
-                    control_gates[permute_array[i][length_permute_array-j-1]], cg)
+                    control_gates[permute_array[i][length_permute_array - j - 1]], cg)
             if (-1j)**k == -1j:
                 cg = stretch_gates(global_phase_gate_negative, cg)
             elif (-1j)**k == 1j:
@@ -254,7 +254,7 @@ def multicontrol_unitary(unitary_gate_array):
         composite_gate_inverse: inversed control gates
     """
     binary_string, num_ancilla_qubits = permute_bit_string(
-        len(unitary_gate_array)-1)
+        len(unitary_gate_array) - 1)
     # initialize multicontrol toffoli
     composite_gate = CompositeGate()
     composite_gate_inverse = CompositeGate()
@@ -274,14 +274,14 @@ def multicontrol_unitary(unitary_gate_array):
                     X | composite_gate_inverse(j)
         add_X()
         if cnx_width != 1:
-            cnx | composite_gate([k for k in range(num_control_bits+1)])
+            cnx | composite_gate([k for k in range(num_control_bits + 1)])
             cnx | composite_gate_inverse(
-                [k for k in range(num_control_bits+1)])
+                [k for k in range(num_control_bits + 1)])
 
         unitary_gate_array[i] | composite_gate(
-            [cnx_width+k-1 for k in range(unitary_gate_array[i].width())])
+            [cnx_width + k - 1 for k in range(unitary_gate_array[i].width())])
         unitary_gate_array[i].inverse() | composite_gate_inverse(
-            [cnx_width+k-1 for k in range(unitary_gate_array[i].width())])
+            [cnx_width + k - 1 for k in range(unitary_gate_array[i].width())])
         if cnx_width != 1:
             cnx | composite_gate([k for k in range(num_control_bits + 1)])
             cnx | composite_gate_inverse(
@@ -305,7 +305,7 @@ def conjugation_encoding(hamiltonian):
     for i in range(len(eigenvalue)):
         transpose_eigenvector = eigenvector[i].reshape(len(eigenvector[i]), 1)
         conj_matrix.append(
-            np.sqrt(1-eigenvalue[i]**2) * np.kron(transpose_eigenvector, eigenvector[i]))
+            np.sqrt(1 - eigenvalue[i]**2) * np.kron(transpose_eigenvector, eigenvector[i]))
     conj_matrix = np.sum(np.array(conj_matrix), axis=0)
     temp_matrix = np.hstack((conj_matrix, -1 * hamiltonian))
     block_encoding_matrix = np.hstack((hamiltonian, conj_matrix))
