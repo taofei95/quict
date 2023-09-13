@@ -3,7 +3,6 @@ from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.tools.exception.core import *
 from QuICT.simulation.state_vector import StateVectorSimulator
-from QuICT.qcda.synthesis.hamiltonian_simulation.unitary_matrix_encoding import prepare_G_state
 import numpy as np
 
 
@@ -85,7 +84,7 @@ def accurate_final_state(hamiltonian, t, init_statevec=None):  # accurate final 
         exp_D[i][i] = np.exp(a)
     time_evolution_operator = np.matmul(np.matmul(U, exp_D), U_inverse)
 
-    if init_statevec == None:
+    if init_statevec is None:
         ivec = np.zeros(n)
         ivec[0] = 1
         fvec = np.matmul(time_evolution_operator, ivec)
