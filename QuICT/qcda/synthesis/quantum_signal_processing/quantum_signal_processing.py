@@ -193,7 +193,7 @@ def block_encoding_matrix(signal_x: float, polynomial_p: Polynomial, polynomial_
     polynomial_q_conjugate = Polynomial(np.conj(polynomial_q.coef))
     polynomial_p_conjugate = Polynomial(np.conj(polynomial_p.ceof))
     return np.array([[polynomial_p(signal_x), 1j * polynomial_q(signal_x) * np.sqrt(1 - signal_x**2)],
-        [1j * polynomial_q_conjugate(signal_x) * np.sqrt(1 - signal_x**2),polynomial_p_conjugate(signal_x)]])
+                    [1j * polynomial_q_conjugate(signal_x) * np.sqrt(1 - signal_x**2), polynomial_p_conjugate(signal_x)]])
 
 
 def check_polynomial_normalization(p: Polynomial, q: Polynomial, steps: int = 10, tolerance: float = 1e-4):
@@ -211,11 +211,15 @@ def check_polynomial_normalization(p: Polynomial, q: Polynomial, steps: int = 10
     x = np.linspace(-1, 1, steps)
     max_deviation = np.max(np.abs(np.abs(summed_poly(x)) - 1))
     if max_deviation > tolerance:
-        return False,  max_deviation
+        return False, max_deviation
     return True, max_deviation
 
 
-def check_angle_phi_quality(angle_phi: float, polynomial_p: Polynomial, polynomial_q: Polynomial, steps: int = 100, tolerance: float = 1e-4):
+def check_angle_phi_quality(angle_phi: float,
+                            polynomial_p: Polynomial,
+                            polynomial_q: Polynomial,
+                            steps: int = 100,
+                            tolerance: float = 1e-4):
     """
     check angle phi quality while updating polynomial as illustrated by equation 4.
     Arg:
@@ -263,7 +267,7 @@ def complete_check(phi_list: np.ndarray, poly_p: Polynomial, tolerance=1e-6):
 
     largest_error = np.max(np.abs(target_poly_p - np.array(calculated_poly_p)))
     if largest_error > tolerance:
-        return False,  largest_error
+        return False, largest_error
     elif largest_error < tolerance:
         return True, largest_error
 
@@ -354,9 +358,9 @@ def update_polynomial(phi: float, polynomial_p: Polynomial, polynomial_q: Polyno
                   np.exp(1j * phi) * Polynomial([1, 0, -1]) * polynomial_q)
     new_poly_q = (np.exp(1j * phi) * Polynomial([0, 1])
                   * polynomial_q - np.exp(-1j * phi) * polynomial_p)
-    #highest order of poly p and poly q must be canceled out,
-    #however, the numerical unstability can't gaurantee the gradual reduced order during deduction hence need
-    #manually remove last two terms of new poly p and new poly q.
+    # highest order of poly p and poly q must be canceled out,
+    # however, the numerical unstability can't gaurantee the gradual reduced order during deduction hence need
+    # manually remove last two terms of new poly p and new poly q.
     if new_poly_p.degree() >= polynomial_p.degree():
         new_poly_p.coef = np.delete(np.delete(new_poly_p.coef, -1), -1)
     if new_poly_q.degree() >= polynomial_q.degree():
@@ -399,17 +403,18 @@ def generate_phase_angle(polynomial_p: Polynomial, polynomial_q: Polynomial, k: 
         degree_p = polynomial_p.degree()
         degree_q = polynomial_q.degree()
 
-    #This is the trivial case, When degree p = 0, due to condition 3, we must have |p(1)| = 1
-    #This also imply Q = 0.
-    #Thus (phi_0, pi/2, -pi/2..., pi/2, -pi/2) is a solution.
+    # This is the trivial case, When degree p = 0, due to condition 3, we must have |p(1)| = 1
+    # This also imply Q = 0.
+    # Thus (phi_0, pi/2, -pi/2..., pi/2, -pi/2) is a solution.
     for i in range(1, k):
         phase_angle[i] = (-1)**(i + 1) * np.pi / 2
     phase_angle[0] = np.log(polynomial_p.coef[0]) / (1j)
     return phase_angle
 
+
 # Following code convert angle sequence to another convention
 # https://arxiv.org/abs/2002.11649
-def convert_phase_sequence(phase_sequence:list[float]):
+def convert_phase_sequence(phase_sequence: list[float]):
     """
     Convert the phase sequence in equation 13 to equation 15.
 
