@@ -234,7 +234,9 @@ class DiagonalGate(object):
         for x in range(1, 1 << n):
             A[x] = cls.binary_inner_prod(s, x, width=n)
         # A_inv = 2^(1-n) (2A - J)
-        A_inv = (2 * A[1:] - 1) / (1 << (n - 1))
+        #A_inv = (2 * A[1:] - 1) / (1 << (n - 1))
+        # As size should be matched,we change the code
+        A_inv = (2 * A[0:] - 1) / (1 << (n - 1))
         return np.dot(A_inv, theta)
 
     @classmethod
@@ -366,7 +368,7 @@ class DiagonalGate(object):
 
         gates = CompositeGate()
 
-        for i in range(st_idx):
+        for i in st_idx:
             CX & [i,target_num] | gates
 
         return gates
