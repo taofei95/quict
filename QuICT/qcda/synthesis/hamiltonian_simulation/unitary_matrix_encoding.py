@@ -1,5 +1,5 @@
 import numpy as np
-from QuICT.core.gate import *
+from QuICT.core.gate import MultiControlToffoli, X, CompositeGate
 from QuICT.qcda.synthesis import QuantumStatePreparation, UnitaryDecomposition, GateTransform
 import itertools
 ##########################################
@@ -12,17 +12,17 @@ def check_hermitian(input_matrix):
     """
     # H = H*
     matrix_conjugate = np.transpose(np.conj(input_matrix))
-    if (matrix_conjugate == input_matrix).any():
+    if np.allclose(matrix_conjugate, input_matrix):
         return True
     return False
 
 
-def check_unitary(input_matrix):
+def check_unitary(input_matrix, tolerance=1e-9):
     """
     Check if input matrix unitary
     """
-    matrix_inverse = np.linalg.inv(input_matrix)
-    if (input_matrix == matrix_inverse).any():
+    matrix_transpose = np.transpose(np.conj(input_matrix))
+    if (np.abs(np.matmul(input_matrix, matrix_transpose).trace()-len(input_matrix)) < tolerance).all():
         return True
     return False
 
@@ -36,7 +36,10 @@ def read_unitary_matrix(coefficient_array, unitary_matrix_array):
         coefficient_array: array of coefficient
         unitary_matrix_array: array of unitary matrix
     """
-    assert check_unitary(unitary_matrix_array), f"The matrix is not unitary."
+    unitary_matrix = unitary_matrix_array[0]
+    assert len(unitary_matrix[:, 0]) == len(
+        unitary_matrix[0]), "Not a square matrix"
+
     coefficient_array = coefficient_array.astype('complex128')
     unitary_matrix_array = unitary_matrix_array.astype('complex128')
     hamiltonian_array = []
@@ -60,12 +63,12 @@ def padding_coefficient_array(coefficient_array):
             to represent this coefficient array.
     """
     length = len(coefficient_array)
-    assert length!=0, f"The input coefficient_array can't has length {length}."
+    assert length != 0, f"The input coefficient_array can't has length {length}."
     n = 0
     while (2**n) < length:
         n += 1
-    if n==0 and length!=0:
-        n=1
+    if n == 0 and length != 0:
+        n = 1
     coefficient_array = np.pad(coefficient_array, (0, 2**n-length))
     return coefficient_array, n
 
@@ -91,7 +94,6 @@ def permute_bit_string(max_int):
     return permute_list, num_qubits
 
 
-
 def prepare_G_state(coefficient_array, summed_coefficient):
     """
     Prepare |G> = sum_{i}(sqrt(coeffcient{i})/summed_coefficient* | i>)
@@ -110,11 +112,12 @@ def prepare_G_state(coefficient_array, summed_coefficient):
         state_vector.append(
             np.sqrt(coefficient_array[i]/np.abs(summed_coefficient)))
     state_vector = np.sqrt(coefficient_array/summed_coefficient)
-    QSP = QuantumStatePreparation('uniformly_gates')
+    QSP = QuantumStatePreparation('uniformly_gates', keep_phase=True)
     oracle_G = QSP.execute(state_vector)
     return oracle_G
 
-def matrix_to_control_gate(matrix_array,control_bit = 1):
+
+def matrix_to_control_gate(matrix_array, control_bit=1):
     """
     make a array of matrix to control matrix.
     if control bits set to 1. Then do the math |1><1| tensor matrix + |0><0| tensor I
@@ -133,13 +136,12 @@ def matrix_to_control_gate(matrix_array,control_bit = 1):
         2 ** matrix_dimension).astype('complex128')
     project_zero = np.array([[1, 0], [0, 0]], dtype='complex128')
     project_one = np.array([[0, 0], [0, 1]], dtype='complex128')
-
-    UD = UnitaryDecomposition(include_phase_gate = True)
+    UD = UnitaryDecomposition(include_phase_gate=True)
     GT = GateTransform(keep_phase=True)
     # Do unitary decomposition for sake of saving running time when computing matrix
     # or do simulation
     control_gate_list = []
-    if control_bit==1:
+    if control_bit == 1:
         for i in range(len(matrix_array)):
             unitary_matrix = np.kron(
                 project_zero, identity_matrix) + np.kron(project_one, matrix_array[i])
@@ -150,6 +152,7 @@ def matrix_to_control_gate(matrix_array,control_bit = 1):
                 project_one, identity_matrix) + np.kron(project_zero, matrix_array[i])
             control_gate_list.append(GT.execute(UD.execute(unitary_matrix)[0]))
     return control_gate_list, matrix_dimension
+
 
 def product_gates(coefficient_array: np.array, matrix_array, order: int, time: float, time_step: int):
     """
@@ -187,26 +190,32 @@ def product_gates(coefficient_array: np.array, matrix_array, order: int, time: f
         From left to right [1...1, 1...2, ..., 1...k, ..., 1... 21, ..., k...k ]
 
     """
-    #prepare control gates gates
+    # prepare control gates gates
     control_gates, matrix_dimension = matrix_to_control_gate(matrix_array)
-    #prepare reflection and global phase gate
-    global_phase_gate_positive = matrix_to_control_gate([1j*np.identity(2**(matrix_dimension))])[0][0]
-    global_phase_gate_negative = matrix_to_control_gate([-1j*np.identity(2**(matrix_dimension))])[0][0]
-    global_phase_gate_minus = matrix_to_control_gate([-1*np.identity(2**(matrix_dimension))])[0][0]
-    global_phase_gate_identity = matrix_to_control_gate([1*np.identity(2**(matrix_dimension))])[0][0]
+    # prepare reflection and global phase gate
+    global_phase_gate_positive = matrix_to_control_gate(
+        [1j*np.identity(2**(matrix_dimension))])[0][0]
+    global_phase_gate_negative = matrix_to_control_gate(
+        [-1j*np.identity(2**(matrix_dimension))])[0][0]
+    global_phase_gate_minus = matrix_to_control_gate(
+        [-1*np.identity(2**(matrix_dimension))])[0][0]
+    global_phase_gate_identity = matrix_to_control_gate(
+        [1*np.identity(2**(matrix_dimension))])[0][0]
 
-    #generate control gate list
+    # generate control gate list
     gate_list = []
     coefficient_list = []
-    #add taylor expansion first order term
+    # add taylor expansion first order term
     gate_list.append(global_phase_gate_identity)
     coefficient_list.append(1)
+
     def stretch_gates(input_gates, target_composite_gates):
         decomposed_input_gates = input_gates.gate_decomposition()
         for m in range(len(decomposed_input_gates)):
-            decomposed_input_gates[m][0] | target_composite_gates(decomposed_input_gates[m][1])
+            decomposed_input_gates[m][0] | target_composite_gates(
+                decomposed_input_gates[m][1])
         return target_composite_gates
-    ###########################################add taylor expansion higher order term
+    # add taylor expansion higher order term
     for k in range(1, order + 1):
         permute_array = list(itertools.product(
             range(len(control_gates)), repeat=k))
@@ -217,7 +226,8 @@ def product_gates(coefficient_array: np.array, matrix_array, order: int, time: f
             for j in range(length_permute_array):
                 temp_coefficient = temp_coefficient * \
                     coefficient_array[permute_array[i][j]]
-                cg = stretch_gates(control_gates[permute_array[i][length_permute_array-j-1]], cg)
+                cg = stretch_gates(
+                    control_gates[permute_array[i][length_permute_array-j-1]], cg)
             if (-1j)**k == -1j:
                 cg = stretch_gates(global_phase_gate_negative, cg)
             elif (-1j)**k == 1j:
@@ -233,6 +243,7 @@ def product_gates(coefficient_array: np.array, matrix_array, order: int, time: f
     coefficient_array = np.array(coefficient_list)
     return coefficient_array, gate_list
 
+
 def multicontrol_unitary(unitary_gate_array):
     """
     Find composite gates generates matrix = sum_{i} |i><i| tensor U_{i}
@@ -244,41 +255,42 @@ def multicontrol_unitary(unitary_gate_array):
     """
     binary_string, num_ancilla_qubits = permute_bit_string(
         len(unitary_gate_array)-1)
-    #initialize multicontrol toffoli
+    # initialize multicontrol toffoli
     composite_gate = CompositeGate()
     composite_gate_inverse = CompositeGate()
 
-    mct = MultiControlToffoli('no_aux')
+    mct_ini = MultiControlToffoli('no_aux')
     num_control_bits = num_ancilla_qubits
-    c_n_x = mct(num_control_bits)
+    cnx = mct_ini(num_control_bits)
 
     if num_ancilla_qubits == 1:
-        c_n_x = mct(0)
-    c_n_x_width = c_n_x.width()
+        cnx = mct_ini(0)
+    cnx_width = cnx.width()
     for i in range(len(unitary_gate_array)):
         def add_X():
             for j in range(len(binary_string[i])):
                 if binary_string[i][j] == "0":
                     X | composite_gate(j)
                     X | composite_gate_inverse(j)
-
-
         add_X()
-        if c_n_x_width!=1:
-            c_n_x | composite_gate([k for k in range(num_control_bits+1)])
-            c_n_x | composite_gate_inverse([k for k in range(num_control_bits+1)])
+        if cnx_width != 1:
+            cnx | composite_gate([k for k in range(num_control_bits+1)])
+            cnx | composite_gate_inverse(
+                [k for k in range(num_control_bits+1)])
 
         unitary_gate_array[i] | composite_gate(
-            [c_n_x_width+k-1 for k in range(unitary_gate_array[i].width())])
+            [cnx_width+k-1 for k in range(unitary_gate_array[i].width())])
         unitary_gate_array[i].inverse() | composite_gate_inverse(
-            [c_n_x_width+k-1 for k in range(unitary_gate_array[i].width())])
-        if c_n_x_width != 1:
-            c_n_x | composite_gate([k for k in range(num_control_bits + 1)])
-            c_n_x | composite_gate_inverse([k for k in range(num_control_bits + 1)])
+            [cnx_width+k-1 for k in range(unitary_gate_array[i].width())])
+        if cnx_width != 1:
+            cnx | composite_gate([k for k in range(num_control_bits + 1)])
+            cnx | composite_gate_inverse(
+                [k for k in range(num_control_bits + 1)])
         add_X()
     return composite_gate, composite_gate_inverse
 
-def conjugation_encoding(Hamiltonian):
+
+def conjugation_encoding(hamiltonian):
     """
     Find the matrix [H, sqrt(I-H H)]
                   [sqrt(I-H H), -H]
@@ -288,14 +300,15 @@ def conjugation_encoding(Hamiltonian):
         encoding_gates: composite gates realize the unitary matrix
         circuit_size: Num of qubits use
     """
-    eigenvalue, eigenvector = np.linalg.eig(Hamiltonian)
+    eigenvalue, eigenvector = np.linalg.eig(hamiltonian)
     conj_matrix = []
     for i in range(len(eigenvalue)):
-        transpose_eigenvector = eigenvector[i].reshape(len(eigenvector[i]),1)
-        conj_matrix.append(np.sqrt(1-eigenvalue[i]**2)*np.kron(transpose_eigenvector, eigenvector[i]))
-    conj_matrix = np.sum(np.array(conj_matrix), axis = 0)
-    temp_matrix = np.hstack((conj_matrix, -1 * Hamiltonian))
-    block_encoding_matrix = np.hstack((Hamiltonian, conj_matrix))
+        transpose_eigenvector = eigenvector[i].reshape(len(eigenvector[i]), 1)
+        conj_matrix.append(
+            np.sqrt(1-eigenvalue[i]**2) * np.kron(transpose_eigenvector, eigenvector[i]))
+    conj_matrix = np.sum(np.array(conj_matrix), axis=0)
+    temp_matrix = np.hstack((conj_matrix, -1 * hamiltonian))
+    block_encoding_matrix = np.hstack((hamiltonian, conj_matrix))
     block_encoding_matrix = np.vstack((block_encoding_matrix, temp_matrix))
     UD = UnitaryDecomposition(include_phase_gate=True)
     encoding_gates, _ = UD.execute(block_encoding_matrix)
@@ -303,10 +316,11 @@ def conjugation_encoding(Hamiltonian):
 
     return encoding_gates, circuit_size
 
+
 class UnitaryMatrixEncoding:
     def __init__(self, method):
         self.method = method
-        assert self.method == "LCU" or self.method == "CONJ", "Only LCU or CONJ method are provided."
+        assert self.method == "LCU" or self.method == "conj", "Only LCU or conj method are provided."
 
     def execute(self, coefficient_array: np.ndarray, matrix_array: np.ndarray, complete: bool = False):
         """
@@ -337,7 +351,8 @@ class UnitaryMatrixEncoding:
         if self.method == "LCU":
             G = prepare_G_state(coefficient_array, summed_coefficient)
             G_inverse = G.inverse()
-            control_unitary_gates, _ = matrix_to_control_gate(unitary_matrix_array)
+            control_unitary_gates, _ = matrix_to_control_gate(
+                unitary_matrix_array)
             unitary_encoding, unitary_encoding_inverse = multicontrol_unitary(
                 control_unitary_gates)
 
@@ -350,6 +365,7 @@ class UnitaryMatrixEncoding:
                 return cg
             elif not complete:
                 return G, G_inverse, unitary_encoding, unitary_encoding_inverse
-        if self.method == "CONJ":
-            unitary_encoding, unitary_encoding_width = conjugation_encoding(hamiltonian)
+        if self.method == "conj":
+            unitary_encoding, unitary_encoding_width = conjugation_encoding(
+                hamiltonian)
             return unitary_encoding, unitary_encoding_width
