@@ -79,7 +79,7 @@ def find_order(times_steps: int, error: float):
         temp_poly.append(np.log(2)**i / math.factorial(i))
     temp_poly = np.array(temp_poly)
     order = 0
-    while np.sum(temp_poly) > error/times_steps:
+    while np.sum(temp_poly) > error / times_steps:
         temp_poly = np.delete(temp_poly, 0, axis=0)
         order += 1
     order = order - 1
@@ -113,8 +113,8 @@ def find_time_steps(coef_array: np.ndarray, time: float):
     Returns:
         time steps: A positive integer.
     """
-    T = np.sum(coef_array)*time
-    r = T/np.log(2)
+    T = np.sum(coef_array) * time
+    r = T / np.log(2)
     # use upper r
     time_steps = math.ceil(r)
     return time_steps
@@ -152,7 +152,7 @@ def calculate_approximate_matrix(hamiltonian: np.ndarray, order: int, time: floa
         temp_matrix = hamiltonian
         for _ in range(i - 1):
             temp_matrix = np.matmul(temp_matrix, hamiltonian)
-        temp_matrix = 1 / math.factorial(i)*(-1j*time/time_order)**i * temp_matrix
+        temp_matrix = 1 / math.factorial(i) * (-1j * time / time_order)**i * temp_matrix
         approximate_matrix = np.sum((approximate_matrix, temp_matrix), axis=0)
     approximate_hamiltonian = approximate_matrix
     return approximate_hamiltonian
