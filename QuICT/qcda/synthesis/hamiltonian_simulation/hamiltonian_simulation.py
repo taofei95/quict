@@ -1,8 +1,7 @@
-from QuICT.qcda.synthesis.quantum_signal_processing import SignalAngleFinder, QuantumSignalProcessing
-from .TS_method import TS_method
-from .Trotter import Trotter
-from QuICT.core import Circuit
-import numpy as np
+from .ts_method import truncate_series
+from .trotter import *
+
+
 class HamiltonianSimulation():
     def __init__(self, method):
         """
@@ -10,8 +9,9 @@ class HamiltonianSimulation():
              method: string, either Ts or Trotter
         """
         self.method = method
-        assert self.method == "TS" or self.method ==  "Trotter", "Please select 'Trotter'or 'TS' method."
-    def execute(self, hamiltonian, time, initial_state, error = 0.1, max_order = 20):
+        assert self.method == "TS" or self.method == "Trotter", "Please select 'Trotter'or 'TS' method."
+
+    def execute(self, hamiltonian, time, initial_state, error=0.1, max_order=20):
         """
         Args:
             hamiltonian: string, either Ts or Trotter
@@ -38,14 +38,13 @@ class HamiltonianSimulation():
         """
         if self.method == "TS":
             coefficient_array, hamiltonian_array = hamiltonian
-            assert len(initial_state) == len(
-                hamiltonian_array[0][0]), "The initial state size must equal to hamiltonian row number."
-            return TS_method(coefficient_array, hamiltonian_array, time, error, max_order, initial_state)
+            assert len(initial_state) == len(hamiltonian_array[0][0]), "The initial state size must equal to hamiltonian row number."
+            circuit, circuit_info_dictionary = truncate_series(coefficient_array, hamiltonian_array,
+                                                               time,
+                                                               error,
+                                                               max_order,
+                                                               initial_state)
+            return circuit, circuit_info_dictionary
         elif self.method == "Trotter":
-            circuit_width = int(np.log2(initial_state))
-            circuit = Circuit(circuit_width)
-            trotter_method_init = Trotter(hamiltonian, time, error, initial_state)
-            trotter_method_gate = trotter_method_init.output_gate()
-            initial_state_gate | circuit([i for i in range(circuit_width)])
-            trotter_method_gate | circuit([i for i in range(circuit_width)])
-            return circuit
+            circuit, circuit_info_dictionary = trotter(hamiltonian, time, error, initial_state)
+            return circuit, circuit_info_dictionary
