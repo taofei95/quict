@@ -76,6 +76,18 @@ def test_linear_fjk():
     resu = DiagonalGate.linear_fjk(2,1,10,n,t)
     print(resu)
 
+def test_with_aux_qubit():
+    n = 4
+    #nn=DiagonalGate()
+    #nn.target = 4
+    m = 8
+    #nn.aux = 8
+    theta = 2 * np.pi * np.random.random(1 << n)
+    circuit = Circuit((n+m))
+    gates = DiagonalGate.with_aux_qubit(theta)
+    gates | circuit
+    circuit.draw(filename='test_with_aux_qubit_4.jpg', flatten=True)
+
 if __name__ == '__main__':
     #test_gray_code()
     #test_Ainv()
@@ -84,5 +96,6 @@ if __name__ == '__main__':
     #test_partitioned_gray_code()
     #test_linear_fjk()
     #test_alpha_s()
-    test_phase_shift_s() #here dim(A_inv)=dim(theta)
+    #test_phase_shift_s() #here dim(A_inv)=dim(theta)
+    test_with_aux_qubit()
 
