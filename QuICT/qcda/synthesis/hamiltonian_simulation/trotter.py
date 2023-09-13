@@ -7,7 +7,7 @@ from QuICT.qcda.synthesis.hamiltonian_simulation.unitary_matrix_encoding import 
 import numpy as np
 
 
-def trotter(hmtn, t, eps, init_statevec=None, iterations=None):
+def trotter(hamiltonian, t, eps, init_statevec=None, iterations=None):
     '''
     This major function returns the trotter splitting circuit
     hmtn is input pauli string with coeff, gate and gate index
@@ -28,7 +28,7 @@ def trotter(hmtn, t, eps, init_statevec=None, iterations=None):
 
     '''
 
-    h = Hamiltonian(hmtn)
+    h = Hamiltonian(hamiltonian)
     m = len(h._pauli_str)
     iterations = int((m ** 2) * (t ** 2) / eps)
     n = max(max(h._qubit_indexes)) + 1
@@ -55,10 +55,14 @@ def trotter(hmtn, t, eps, init_statevec=None, iterations=None):
             elif gate_dict[gate] == Y:
                 U2(np.pi / 2, np.pi / 2) | cgate(gateindex)
     cgate | cir
-    return cir
+    circuit_info_dictionary = {
+        "iterations": iterations
+
+    }
+    return cir, circuit_info_dictionary
 
 
-def accfinalstate(hmtn, t, init_statevec=None):  # accurate final state
+def accurate_final_state(hamiltonian, t, init_statevec=None):  # accurate final state
     '''
     This can check the accurate final state vector by using matrix multiplication
     NB: this only applys to circuits with small number of qubits(n), due to matrix size is 2^n
@@ -68,16 +72,16 @@ def accfinalstate(hmtn, t, init_statevec=None):  # accurate final state
     exp(-iHt) = exp(-i UDU^(-1) t) = U * exp(-iDt) * U^(-1) = U * exp(-i Dkk t) * U^(-1)
 
     '''
-    h = Hamiltonian(hmtn)
+    h = Hamiltonian(hamiltonian)
     n = max(max(h._qubit_indexes)) + 1
     matrix = Hamiltonian.get_hamiton_matrix(h, n)
-    Eval, Evec = np.linalg.eig(matrix)
+    Eval, Evec = np.linalg.eigh(matrix)
     U = Evec
-    U_inverse = np.linalg.inv(Evec)
+    U_inverse = Evec.T.conj()
     D = np.diag(Eval)
     exp_D = np.zeros((2 ** n, 2 ** n), dtype='complex_')
     for i in range(2 ** n):
-        a = t * complex(0, -1) * (D[i][i])
+        a = t * -1j * (D[i][i])
         exp_D[i][i] = np.exp(a)
     time_evolution_operator = np.matmul(np.matmul(U, exp_D), U_inverse)
 
