@@ -33,6 +33,5 @@ unit_test/**/*.jpg
 /del
 /data/
 .log/
-/demo/
-/QNN_MNIST*
-/docs_
+wr_unit_test*/
+alg_circuits_build*/
