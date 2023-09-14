@@ -58,7 +58,7 @@ T2_times = [
     2.69, 1.69, 3.76, 4.44, 3.7, 8.98, 3.92, 12.61, 10.78, 7.92, 1.52, 3.18, 20.03, 8.24, 11.82
 ]
 
-CTEKOneD12 = VirtualQuantumMachine(
+CTEKClosedBetaQC = VirtualQuantumMachine(
     qubits=qubit_number,
     instruction_set=iset,
     qubit_fidelity=qubit_fidelity,
