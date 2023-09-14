@@ -52,13 +52,13 @@ class Normalize:
 
 
 class MPSSiteStructure:
-    """ The Structure of Matrix Product State. 
-    
+    """ The Structure of Matrix Product State.
+
     Q0 -- O -- Q1 -- O -- ... -- O -- Qn-1 -- O -- Qn
      |         |                        |           |
      U         U          ...           ----  U  ----
      |         |                        |           |
-    Q0`-- O -- Q1`-- O -- ... -- O -- Qn-1`-- O` -- Qn`      
+    Q0`-- O -- Q1`-- O -- ... -- O -- Qn-1`-- O` -- Qn`
     """
     __SWAP_MATRIX = np.array([
         [1, 0, 0, 0],
@@ -304,7 +304,7 @@ class MPSSiteStructure:
         return result
 
     def _measured_back_for_individual_shot(self, result: int, qubit_index: int):
-        result_array = [0, 1] if result == 1 else [1, 0] 
+        result_array = [0, 1] if result == 1 else [1, 0]
         self._product_state[qubit_index] = QubitTensor(
             self._array_helper.array(result_array, dtype=self._dtype).reshape(1, 2, 1)
         )

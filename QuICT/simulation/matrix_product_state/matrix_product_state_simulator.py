@@ -1,7 +1,7 @@
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import GateType, BasicGate, CompositeGate
+from QuICT.core.gate import GateType, BasicGate
 from .mps_site import MPSSiteStructure
 
 
@@ -45,7 +45,7 @@ class MatrixProductStateSimulator:
             else:
                 gates_per_layer[gate_depth - 1].append((gate, qidxes, size))
 
-            depth_per_qubits[qidxes] = gate_depth 
+            depth_per_qubits[qidxes] = gate_depth
 
         return gates_per_layer
 
@@ -88,3 +88,13 @@ class MatrixProductStateSimulator:
             cgate = gate.build_gate(qindexes)
             for gate, g_idx, _ in cgate.fast_gates:
                 self._apply_basic_gate(gate, g_idx)
+
+    def sample(self, shots: int):
+        """ Sample the measured result from current Matrix Product State.
+
+        Args:
+            shots (int): The sample times.
+        """
+        assert isinstance(shots, int) and shots >= 1
+
+        return self._mps.sample(shots)
