@@ -68,7 +68,7 @@ class DiagonalGate(object):
         m = self.aux
         gates = CompositeGate()
 
-        for x in range(2 ^ n):
+        for x in range(2**n):
             # Stage 1: Prefix Copy
             t = int(np.floor(np.log2(m / 2)))
             copies = int(np.floor(m / (2 * t)))
@@ -78,7 +78,7 @@ class DiagonalGate(object):
 
             # Stage 2: Gray Initial
             t = int(np.floor(np.log2(m / 2)))
-            ell = 2^t
+            ell = 2**t
             ini_star = n + t * copies
 
                 #1.implement U1
@@ -111,7 +111,7 @@ class DiagonalGate(object):
                     CX & [i + t, n + i + j * t] | gates
 
             #Stage 4: Gray Path
-            num_phases = int((2^n)/ell)
+            num_phases = int((2**n)/ell)
             #the end label of the Stage 3
             sucoend = n + n - t - 1 + (copies3 - 1) * t
             for k in range(2,num_phases+1):

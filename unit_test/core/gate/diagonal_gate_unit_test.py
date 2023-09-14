@@ -77,16 +77,18 @@ def test_linear_fjk():
     print(resu)
 
 def test_with_aux_qubit():
-    n = 4
-    #nn=DiagonalGate()
+    n = 2 #number of target qubit
+    m = 4 #number of ancillary qubit
+    nn=DiagonalGate(n,m)
     #nn.target = 4
-    m = 8
+
     #nn.aux = 8
     theta = 2 * np.pi * np.random.random(1 << n)
-    circuit = Circuit((n+m))
-    gates = DiagonalGate.with_aux_qubit(theta)
+    size = n+m+1
+    circuit = Circuit(size)
+    gates = nn.with_aux_qubit(theta)
     gates | circuit
-    circuit.draw(filename='test_with_aux_qubit_4.jpg', flatten=True)
+    circuit.draw(filename='test_with_aux_qubit_n=2,m=4.jpg', flatten=True)
 
 if __name__ == '__main__':
     #test_gray_code()
