@@ -1,6 +1,6 @@
 import numpy as np
-from numpy.polynomial.polynomial import Polynomial as P
-from numpy.polynomial.chebyshev import Chebyshev as C
+from numpy.polynomial.polynomial import Polynomial
+from numpy.polynomial.chebyshev import Chebyshev
 import scipy.special as sp
 
 
@@ -8,14 +8,14 @@ def cheby_poly(order, input_value):
     """
     generate chebyshev polynomial
 
-    Parameters
+    Parameters:
     ----------
     order : list or 1-D array
         degrees of polynomial
     input_value : float
         The x of polynomial(x)
 
-    Returns
+    Returns:
     -------
     Array
         the value of chebyshev polynomial with given input value
@@ -66,9 +66,9 @@ def exp_to_poly(time, order):
     coefficient_array.append(bessel_poly(0, time))
     for i in range(1, order):
         if i % 2 == 0:
-            coefficient_array.append(2 * (-1)**(i / 2) * bessel_poly(i, time))
+            coefficient_array.append(2*(-1)**(i/2)*bessel_poly(i, time))
         elif i % 2 == 1:
-            coefficient_array.append(2j * (-1)**((i - 1) / 2) * bessel_poly(i, time))
+            coefficient_array.append(2j*(-1)**((i-1)/2)*bessel_poly(i, time))
 
     return coefficient_array
 
@@ -79,18 +79,17 @@ class Poly:
 
     def normal_basis(self, time, order: int):
         """
-        Given input time and max order. generate taylor expansion of e(i*t).
+        Given input time and highest order. generate taylor expansion of e(i*time).
 
         """
         if self.polynomial == "exp":
-            return P(np.polynomial.chebyshev.
-                     cheb2poly(exp_to_poly(time, order)))
+            return Polynomial(np.polynomial.chebyshev.cheb2poly(exp_to_poly(time, order)))
 
     def chevbyshev_basis(self, time, order):
         """
-        Given input time
-        generate polynomial expansion of e(i*time) in chevbyshev  kind basis
+        Given input time 
+        generate polynomial expansion of e(i*time) in chevbyshev first kind basis
 
         """
         if self.polynomial == "exp":
-            return C(exp_to_poly(time, order))
+            return Chebyshev(exp_to_poly(time, order))
