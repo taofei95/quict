@@ -5,7 +5,7 @@ from QuICT.core.layout import Layout
 from QuICT.core.virtual_machine import VirtualQuantumMachine, InstructionSet
 
 
-qubit_number = 5
+qubit_number = 7
 iset = InstructionSet(GateType.cx, [GateType.id, GateType.rz, GateType.sx, GateType.x])
 layout = Layout(qubit_number)
 layout.add_edge(0, 1, directional=False, error_rate=1.0)
@@ -16,12 +16,12 @@ layout.add_edge(4, 5, directional=False, error_rate=1.0)
 layout.add_edge(5, 6, directional=False, error_rate=1.0)
 
 qubit_fidelity = [
-    (0.0235999999999999, 0.0286), (0.0248, 0.0244), (0.0213999999999999, 0.034), (0.0172, 0.0151999999999999),
-    (0.0244, 0.0255999999999999), (0.0268, 0.0286), (0.00760000000000005, 0.0054)
+    (0.9764000000000002, 0.9714), (0.9752, 0.9756), (0.9786000000000001, 0.966), (0.9828, 0.9848000000000001),
+    (0.9756, 0.9744000000000002), (0.9732, 0.9714), (0.9924, 0.9946)
 ]
 gate_fidelity = [
-    0.000189050853796395, 0.000322397870901852, 0.000221780954602079, 0.000204854512294976, 0.000329270743491048,
-    0.000492962189796472, 0.000288643832183614
+    0.9998109491462036, 0.9996776021290982, 0.9997782190453979, 0.999795145487705, 0.9996707292565089,
+    0.9995070378102036, 0.9997113561678164
 ]
 coupling_strength = [
     (0, 1, 0.00791456540569041), (1, 3, 0.016519359317290316), (1, 2, 0.006611751464476401),
