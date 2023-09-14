@@ -1,8 +1,8 @@
 import os
-import numpy as np 
- 
+import numpy as np
+
 from QuICT.algorithm.quantum_algorithm import CNFSATOracle, Grover
-from QuICT.simulation.state_vector import StateVectorSimulator 
+from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 # 导入CNF文件，及读取相关参数
@@ -39,8 +39,8 @@ result_var_samples = np.array(result_samples).reshape(
     (1 << variable_number, 1 << 6)
 ).sum(axis=1)
 n_hit = 0
-for result in range(1<<variable_number):
-    result_str = bin(result)[2:].rjust(variable_number,'0')
+for result in range(1 << variable_number):
+    result_str = bin(result)[2:].rjust(variable_number, '0')
     if CNFSATOracle.check_solution([int(x) for x in result_str], variable_number, clause_number, CNF_data):
         n_hit += result_var_samples[result]
 
