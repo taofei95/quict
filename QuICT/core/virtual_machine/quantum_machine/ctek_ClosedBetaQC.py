@@ -8,7 +8,7 @@ from QuICT.core.virtual_machine import VirtualQuantumMachine, InstructionSet
 qubit_number = 66
 iset = InstructionSet(GateType.cz, [GateType.x, GateType.y, GateType.z])
 unreachable_nodes = [2, 18, 22, 27, 37, 42, 54, 60, 61, 62, 66]
-layout = Layout.grid_layout(qubit_number, unreachable_nodes)
+layout = Layout.grid_layout(qubit_number, unreachable_nodes=unreachable_nodes)
 qubit_fidelity = [
     (0.988, 0.9425), (0.996, 0.9755), (0.9645, 0.9335), (0.996, 0.9055), (0.961, 0.812), (0.909, 0.956),
     (0.9915, 0.9145), (0.9655, 0.933), (0.9985, 0.977), (0.995, 0.957), (0.986, 0.8985), (0.9885, 0.935),
@@ -61,11 +61,11 @@ T2_times = [
 CTEKClosedBetaQC = VirtualQuantumMachine(
     qubits=qubit_number,
     instruction_set=iset,
-    qubit_fidelity=qubit_fidelity,
-    gate_fidelity=gate_fidelity,
-    coupling_strength=coupling_strength,
+    # qubit_fidelity=qubit_fidelity,
+    # gate_fidelity=gate_fidelity,
+    # coupling_strength=coupling_strength,
     layout=layout,
-    readout_frequency=readout_frequency,
-    t1_coherence_time=T1_times,
-    t2_coherence_time=T2_times
+    # readout_frequency=readout_frequency,
+    # t1_coherence_time=T1_times,
+    # t2_coherence_time=T2_times
 )
