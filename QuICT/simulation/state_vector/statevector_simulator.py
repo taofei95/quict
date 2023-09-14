@@ -228,18 +228,3 @@ class StateVectorSimulator:
             self._run()
 
         return state_list
-
-    def new_sample(self, shots: int = 1, target_qubits: list = None) -> list:
-        assert (self._circuit is not None), \
-            SampleBeforeRunError("StateVectorSimulation sample without run any circuit.")
-        if self._quantum_machine is not None:
-            return self._sample_with_noise(shots, target_qubits)
-
-        target_qubits = target_qubits if target_qubits is not None else list(range(self._qubits))
-        state_list = [0] * (1 << len(target_qubits))
-
-        sample_result = self._gate_calculator.sample_for_statevector(shots, self._qubits, self._vector)
-        for res in sample_result:
-            state_list[res] += 1
-
-        return state_list

@@ -52,6 +52,14 @@ class Normalize:
 
 
 class MPSSiteStructure:
+    """ The Structure of Matrix Product State. 
+    
+    Q0 -- O -- Q1 -- O -- ... -- O -- Qn-1 -- O -- Qn
+     |         |                        |           |
+     U         U          ...           ----  U  ----
+     |         |                        |           |
+    Q0`-- O -- Q1`-- O -- ... -- O -- Qn-1`-- O` -- Qn`      
+    """
     __SWAP_MATRIX = np.array([
         [1, 0, 0, 0],
         [0, 0, 1, 0],
@@ -181,7 +189,7 @@ class MPSSiteStructure:
         ).transpose([0, 2, 1])
 
     def apply_double_gate(self, qubit_indexes: list, gate_matrix: np.ndarray, inverse: bool = False):
-        """ Apply bi-qubits quantum gate into MPS
+        """ Apply bi-qubits quantum gate into MPS.
 
         Args:
             qubit_indexes (list): The list of qubits' indexes
@@ -253,6 +261,7 @@ class MPSSiteStructure:
         norm.matrix_data = S
 
     ### Measure Gate Related ###
+    # TODO: Support Later
     def apply_measure_gate(self, qubit_indexes: list):
         internal_groups = defaultdict(list)
         for qidx in qubit_indexes:
@@ -301,10 +310,11 @@ class MPSSiteStructure:
         )
 
     def _measured_back_for_group(self, result: int, group: list, qubit_indexes: Union[list, int]):
+        # TODO: currently only
         pass
 
-    # temp
     def show(self, only_shape: bool = False):
+        # TODO: Profession or remove later
         print(f"Qubits number: {self.qubits}.")
         idx = 0
         for site in self._product_state:
@@ -346,19 +356,25 @@ class MPSSiteStructure:
 
         return state_vector.flatten('C')
 
-    def measure(self) -> float:
-        measured_state = self._array_helper.tensordot(self._product_state[0].tensor_data.conj(), self._product_state[0].tensor_data, [1, 1])
-        print(measured_state)
-        print(measured_state.shape)
+    def sample(self, shots: int):
+        """ Sample the measured result from current Matrix Product State.
 
-        for i in range(1, self.qubits):
-            shot_state = self._array_helper.tensordot(
-                self._array_helper.diag(self._norms[i - 1].matrix_data), self._product_state[i].tensor_data, [[-1], [0]]
-            )
-            shot_state = self._array_helper.tensordot(shot_state.conj(), shot_state, [1, 1])
-            print(shot_state.shape)
-            measured_state = self._array_helper.tensordot(measured_state, shot_state, [[2], [0]])
-            ldim, rdim = measured_state.shape[0], measured_state.shape[-1]
-            measured_state = measured_state.reshape([ldim, -1, rdim])
+        Args:
+            shots (int): The sample times.
+        """
+        # Get State Vector
+        state_vector = self.to_statevector()
+        state_list = [0] * (1 << self._qubits)
 
-        return measured_state.flatten('C')
+        # Sample from State Vector
+        measured_prob = self._array_helper.square(self._array_helper.abs(state_vector))
+        if self._device == "GPU":
+            measured_prob = measured_prob.get()
+
+        sample_result = np.random.choice(
+            np.arange(1 << self._qubits), shots, p=measured_prob
+        )
+        for res in sample_result:
+            state_list[res] += 1
+
+        return state_list
