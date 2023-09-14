@@ -1,5 +1,4 @@
 from .baidu_CloudIoPCAS import BaiduCloudIoPCAS
-from .ctek_ClosedBetaQC import CTEKClosedBetaQC
 from .ctek_oneD12 import CTEKOneD12
 from .ibm_Egret_r1 import IBMEgretR1
 from .ibm_Falcon_r4P import IBMFalconr4p
