@@ -187,28 +187,6 @@ class StateVectorSimulator:
     def _apply_reset_gate(self, qidx):
         self._gate_calculator.apply_reset_gate(qidx, self._vector, self._qubits)
 
-    # TODO: refactoring later, multi-gpu kernel function
-    def apply_multiply(self, value: Union[float, complex]):
-        """ Deal with Operator <Multiply>
-
-        Args:
-            value (Union[float, complex]): The multiply value apply to state vector.
-        """
-        from QuICT.ops.gate_kernel.multigpu import float_multiply, complex_multiply
-
-        default_parameters = (self._vector, self._qubits, self._sync)
-        if isinstance(value, float):
-            float_multiply(value, *default_parameters)
-        else:
-            if self._precision == np.complex64:
-                value = np.complex64(value)
-
-            complex_multiply(value, *default_parameters)
-
-    def apply_zeros(self):
-        """ Set state vector to be zero. """
-        self._vector = self._gate_calculator.get_empty_state_vector(self._qubits)
-
     def sample(self, shots: int = 1) -> list:
         """ Sample the measured result from current state vector, please first run simulator.run().
 
