@@ -18,7 +18,7 @@ class CnotWithoutAncilla(object):
             circuit_segment: Union[Circuit, CompositeGate]
     ) -> CompositeGate:
         if isinstance(circuit_segment, Circuit):
-            gates = circuit_segment.gates
+            gates = circuit_segment.flatten_gates()
             n = len(circuit_segment.qubits)
         elif isinstance(circuit_segment, CompositeGate):
             gates = circuit_segment

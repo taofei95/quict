@@ -126,6 +126,11 @@ class CliffordRzOptimization(object):
         cnt = 0
         for node in list(gates.topological_sort()):
             # enumerate every single qubit gate
+            if node.gate_type == GateType.id:
+                node.erase()
+                cnt += 1
+                continue
+
             if node.gate_type != GateType.rz or node.flag == node.FLAG_ERASED:
                 continue
             # erase the gate if degree = 0

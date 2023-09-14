@@ -226,8 +226,11 @@ class GateSimulator:
 
     def sample_for_statevector(self, shots: int, qubits: int, state_vector):
         measured_prob = self._array_helper.square(self._array_helper.abs(state_vector))
-        result = self._array_helper.random.choice(
-            self._array_helper.arange(1 << qubits), shots, p=measured_prob
+        if self._device == "GPU":
+            measured_prob = measured_prob.get()
+
+        result = np.random.choice(
+            np.arange(1 << qubits), shots, p=measured_prob
         )
 
         return result
@@ -342,7 +345,6 @@ class GateSimulator:
             matrix = self._get_gate_matrix(gate) if fp else self._get_gate_param_grad(gate, parg_id)
         else:
             matrix = gate.matrix
-
         control_idx = np.array(cargs, dtype=np.int64)
         target_idx = np.array(targs, dtype=np.int64)
 
@@ -548,13 +550,17 @@ class GateSimulator:
     def apply_control_matrix(
         self, value, args_num: int, cargs: list, targs: list, state_vector, qubits
     ):
-        if args_num == 1:  # Deal with 1-qubit control gate, e.g. S
+        if args_num == 1:    # Deal with 1-qubit control gate, e.g. S
             self._algorithm.control_targ(
                 targs[0], value, state_vector, qubits, self._sync
             )
         elif args_num == 2:  # Deal with 2-qubit control gate, e.g. CZ
             self._algorithm.control_ctargs(
                 cargs[0], targs[0], value, state_vector, qubits, self._sync
+            )
+        elif args_num == 3:  # Deal with 3-qubits control gate, e.g. CCZ
+            self._algorithm.control_cctarg(
+                cargs, targs[0], value, state_vector, qubits, self._sync
             )
         else:
             raise GateAlgorithmNotImplementError(

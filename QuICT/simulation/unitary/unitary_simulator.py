@@ -76,37 +76,20 @@ class UnitarySimulator():
 
         return self._vector
 
-    def sample(self, shots: int = 1, target_qubits: list = None) -> list:
+    def sample(self, shots: int = 1) -> list:
         """ Sample the measured result from current state vector, please first run simulator.run().
-
-        **WARNING**: Please make sure the target qubits are not been measured before simulator.sample().
 
         Args:
             shots (int): The sample times for current state vector.
-            target_qubits (List[int]): The indexes of qubits which want to be measured. If it is None, there
-            will measured all qubits in previous circuits.
 
         Returns:
-            List[int]: The measured result list with length equal to 2 ** len(target_qubits)
+            List[int]: The measured result list with length equal to 2 ** self._qubits
         """
         assert (self._vector is not None), \
             SampleBeforeRunError("UnitarySimulation sample without run any circuit/matrix.")
-        target_qubits = target_qubits if target_qubits is not None else list(range(self._qubits_num))
-        state_list = [0] * (1 << len(target_qubits))
-        original_sv = self._vector.copy()
-        for _ in range(shots):
-            final_state = self._get_measured_result(target_qubits)
-            state_list[final_state] += 1
-            self._vector = original_sv.copy()
+        state_list = [0] * (1 << self._qubits_num)
+        sample_result = self._gate_calculator.sample_for_statevector(shots, self._qubits_num, self._vector)
+        for res in sample_result:
+            state_list[res] += 1
 
         return state_list
-
-    def _get_measured_result(self, target_qubits: list):
-        final_state = 0
-        for m_id in target_qubits:
-            index = self._qubits_num - 1 - m_id
-            measured = self._gate_calculator.apply_measure_gate(index, self._vector, self._qubits_num)
-            final_state <<= 1
-            final_state += measured
-
-        return final_state

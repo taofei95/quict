@@ -375,7 +375,6 @@ class BasicGate(object):
                     params.append(str(parg.pargs))
                 else:
                     params.append(str(parg))
-
             params_string = "(" + ", ".join(params) + ")"
 
             qasm_string += params_string
@@ -592,9 +591,12 @@ class BasicGate(object):
         Returns:
             gate(BasicGate): a copy of this gate
         """
+        pargs = [
+            parg.copy() if isinstance(parg, Variable) else parg for parg in self.pargs
+        ]
         gate = BasicGate(
             self.controls, self.targets, self.params, self.type,
-            self.matrix_type, self.pargs[:], self.precision
+            self.matrix_type, pargs, self.precision
         )
 
         if len(self.targs) > 0:
@@ -744,24 +746,21 @@ class Unitary(BasicGate):
         return matrix_type, controls
 
     def build_gate(self, qidxes: list = None):
-        try:
-            decomp_gate = ComplexGateBuilder.build_unitary(self._matrix)
-        except:
-            from QuICT.core.gate import CompositeGate
-
-            decomp_gate = CompositeGate()
-            decomp_gate.append(self & list(range(self.targets)))
-
-            return decomp_gate
+        decomp_gate = ComplexGateBuilder.build_unitary(self._matrix)
 
         gate_args = self.cargs + self.targs if qidxes is None else qidxes
         if len(gate_args) > 0:
             decomp_gate & gate_args
 
+        decomp_gate.gate_decomposition(decomposition=False)
         return decomp_gate
 
     def inverse(self):
         inverse_matrix = np.asmatrix(self.matrix).H
+
+        gate_args = self.cargs + self.targs
+        if len(gate_args) > 0:
+            return Unitary(inverse_matrix) & gate_args
 
         return Unitary(inverse_matrix)
 
