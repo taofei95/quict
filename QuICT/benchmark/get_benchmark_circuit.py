@@ -103,14 +103,15 @@ class BenchmarkCircuitBuilder:
         The number of two quantum bits interacting on the longest path of the circuit depth is close to the total number
             of doublets.
         Example:
-            q_0: |0>──■─────■─────────────────■─────────────────────────────────────────■───
-                    ┌─┴──┐┌─┴──┐            ┌─┴──┐                                    ┌─┴──┐
-            q_1: |0>┤ cx ├┤ cx ├──■─────■───┤ cx ├──■─────■───────────■─────■─────■───┤ cx ├
-                    └────┘└────┘┌─┴──┐┌─┴──┐└────┘┌─┴──┐┌─┴──┐      ┌─┴──┐┌─┴──┐┌─┴──┐└────┘
-            q_2: |0>────────────┤ cx ├┤ cx ├──────┤ cx ├┤ cx ├──■───┤ cx ├┤ cx ├┤ cx ├──────
-                                └────┘└────┘      └────┘└────┘┌─┴──┐└────┘└────┘└────┘
-            q_3: |0>──────────────────────────────────────────┤ cx ├────────────────────────
-                                                              └────┘
+                    ┌────┐┌────┐                        ┌────┐                        ┌────┐                  
+            q_0: |0>┤ cx ├┤ cx ├──────────────■─────────┤ cx ├────────────────────■───┤ cx ├──────────────────
+                    └─┬──┘└─┬──┘      ┌────┐┌─┴──┐      └─┬──┘┌────┐      ┌────┐┌─┴──┐└─┬──┘      ┌────┐┌────┐
+            q_1: |0>──■─────■─────■───┤ cx ├┤ cx ├──■─────■───┤ cx ├──■───┤ cx ├┤ cx ├──■─────■───┤ cx ├┤ cx ├
+                                ┌─┴──┐└─┬──┘└────┘┌─┴──┐      └─┬──┘┌─┴──┐└─┬──┘└────┘      ┌─┴──┐└─┬──┘└─┬──┘
+            q_2: |0>────────────┤ cx ├──■─────────┤ cx ├────────■───┤ cx ├──■─────■─────────┤ cx ├──■─────■───
+                                └────┘            └────┘            └────┘      ┌─┴──┐      └────┘            
+            q_3: |0>────────────────────────────────────────────────────────────┤ cx ├────────────────────────
+                                                                                └────┘                  
         """
         reset_list, normal_list = [], []
         layout_list = layout.edge_list
@@ -123,7 +124,7 @@ class BenchmarkCircuitBuilder:
                 normal_list.append(layout_list[j])  # Associated topology nodes for identified qubits
         reset_list = list(set(layout_list) - set(normal_list))  # Associative topological nodes of uncertain qubits
 
-        size = width * 10
+        size = width * 4
         error_gate = int(size * (1 / (level * 3)))
 
         cir = Circuit(width)
@@ -131,6 +132,7 @@ class BenchmarkCircuitBuilder:
             gate = gate_builder(gateset.two_qubit_gate, random_params=True)
             r_index = np.random.choice(normal_list)
             index = [r_index.u, r_index.v]
+            random.shuffle(index)
             gate | cir(index)
 
         for i in range(error_gate):
@@ -138,6 +140,7 @@ class BenchmarkCircuitBuilder:
             if len(reset_list) > 0:
                 l_index = random.choice(reset_list)
                 index = [l_index.u, l_index.v]
+                random.shuffle(index)
                 insert_index = np.random.randint(0, size - error_gate + i)
                 cir.insert(gate & index, insert_index)
 

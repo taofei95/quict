@@ -40,9 +40,12 @@ class QuantumMachinebenchmark:
     def _get_random_circuit(self, level: int, q_number: int, ins_set, layout, is_measure):
         cir_list = []
         gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
-        prob = [1 - level / 10, level / 10]
+        pro_s = level / 10
 
-        gate_type = [random.choice(ins_set.one_qubit_gates), ins_set.two_qubit_gate]
+        len_s, len_d = len(ins_set.one_qubit_gates), len([ins_set.two_qubit_gate])
+        prob = [(1 - pro_s) / len_s] * len_s + [pro_s / len_d] * len_d
+
+        gate_type = ins_set.one_qubit_gates + [ins_set.two_qubit_gate]
 
         for gates in gate_prob:
             cir = Circuit(wires=q_number, topology=layout)
@@ -139,16 +142,20 @@ class QuantumMachinebenchmark:
         circuit_list.extend(self._get_random_circuit(level, q_number, ins_set, layout, is_measure))
 
         # get benchmark circuits
-        # circuit_list.extend(self._get_benchmark_circuit(level, q_number, ins_set, layout, is_measure))
+        circuit_list.extend(self._get_benchmark_circuit(level, q_number, ins_set, layout, is_measure))
 
         # get algorithm circuit
-        # circuit_list.extend(
-        #     self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
-        # )
-        f = open("benchmark_test.txt", "w+")
+        circuit_list.extend(
+            self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
+        )
+        # f = open("benchmark_test.txt", "w+")
+        # for i in circuit_list:
+        #     f.write(f"{i.circuit.qasm()} \n")
+        #     f.write("-------------------- \n")
         for i in circuit_list:
-            f.write(f"{i.circuit.qasm()} \n")
-            f.write("-------------------- \n")
+            f = open(f'wr_unit_test/circuits/machine_level3_circuit/origin/16q/{i.circuit.name}.qasm', 'w+')
+            f.write(i.circuit.qasm())
+
         return circuit_list
 
     def run(
@@ -183,12 +190,24 @@ class QuantumMachinebenchmark:
             Return the analysis of benchmarking.
         """
         # Step1 : get circuits from circuitlib
-        bench_cir = self.get_circuits(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
+        # bench_cir = self.get_circuits(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
+        from QuICT.tools.interface.qasm_interface import OPENQASMInterface
+
+        cirs_path = os.listdir("wr_unit_test/circuits/machine_level3_circuit/18q/")
+        bench_cir = []
+        for c in cirs_path:
+            cir = OPENQASMInterface.load_file(f"wr_unit_test/circuits/machine_level3_circuit/18q/{c}").circuit
+            cir.name = c
+            cir_data = BenchCirData(cir)
+            bench_cir.append(cir_data)
 
         # Step 2: physical machine simulation
+        f = open("result_save_alg.txt", "w+")
         for i in range(len(bench_cir)):
             sim_result = simulator_interface(bench_cir[i].circuit)
             bench_cir[i].machine_amp = sim_result
+            f.write(f"{bench_cir[i].qv, bench_cir[i].fidelity, bench_cir[i].level_score}\n")
+            f.write(f"{bench_cir[i].benchmark_score}\n")
 
         # Step 3: show result
         self.show_result(bench_cir)
@@ -198,8 +217,8 @@ class QuantumMachinebenchmark:
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path)
 
-        # if len(bench_cir) > 0:
-        #     self._graph_show(bench_cir)
+        if len(bench_cir) > 0:
+            self._graph_show(bench_cir)
 
         if self._output_file_type == "txt":
             self._txt_show(bench_cir)
