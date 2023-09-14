@@ -25,6 +25,26 @@ class MatrixProductStateSimulator:
         self._precision = precision
         self._mps = MPSSiteStructure(device, precision)
 
+    def _initial_circuit(self, circuit: Circuit):
+        gates_per_layer = []
+        depth_per_qubits = np.zeros(circuit.width(), dtype=np.int8)
+        flatten_gates = circuit.gate_decomposition(False, False)
+        for gate, qidxes, size in flatten_gates:
+            if gate.type == GateType.measure:
+                # TODO: only conside Measure Gate in one layer
+                pass
+
+            gate_depth = np.max(depth_per_qubits[qidxes]) + 1
+
+            if gate_depth > len(gates_per_layer):
+                gates_per_layer.append([(gate, qidxes, size)])
+            else:
+                gates_per_layer[gate_depth - 1].append((gate, qidxes, size))
+
+            depth_per_qubits[qidxes] = gate_depth 
+
+        return gates_per_layer
+
     def run(self, circuit: Circuit, quantum_state: np.ndarray = None) -> MPSSiteStructure:
         """ Start Simulator with given circuit
 
@@ -37,8 +57,9 @@ class MatrixProductStateSimulator:
         """
         qubits = circuit.width()
         self._mps.initial_mps(qubits, quantum_state)
+        pipeline = self._initial_circuit(circuit)
 
-        for gate, qindex, _ in circuit.fast_gates:
+        for gate, qindex, _ in pipeline:
             if isinstance(gate, BasicGate):
                 self._apply_basic_gate(gate, qindex)
             elif isinstance(gate, CompositeGate):

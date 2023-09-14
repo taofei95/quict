@@ -284,9 +284,11 @@ class MPSSiteStructure:
     def _measured_from_state_vector(self, state_vector: np.ndarray, qubits: int):
         state_vector = state_vector.flatten('C')
         measured_prob = self._array_helper.square(self._array_helper.abs(state_vector))
+        if self._device == "GPU":
+            measured_prob = measured_prob.get()
 
-        result = self._array_helper.random.choice(
-            self._array_helper.arange(1 << qubits),
+        result = np.random.choice(
+            np.arange(1 << qubits),
             p=measured_prob
         )
 
@@ -360,4 +362,3 @@ class MPSSiteStructure:
             measured_state = measured_state.reshape([ldim, -1, rdim])
 
         return measured_state.flatten('C')
- 
