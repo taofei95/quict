@@ -310,6 +310,11 @@ def conjugation_encoding(hamiltonian: np.ndarray):
 
 class UnitaryMatrixEncoding:
     def __init__(self, method: str):
+        """
+        
+        Args:
+            method (str): either "LCU" linear combination of unitary or "conj" method 
+        """
         self.method = method
         assert self.method == "LCU" or self.method == "conj", "Only LCU or conj method are provided."
 
