@@ -11,6 +11,7 @@ __outward_functions = [
     "control_targ",
     "diagonal_ctargs",
     "control_ctargs",
+    "control_cctarg",
     "normal_ctargs",
     "ctrl_normal_targs",
     "normal_normal_targs",
@@ -427,6 +428,76 @@ Controlled_Product_ctargs_double_kernel = cp.RawKernel(r'''
         vec[_0] = vec[_0]*val;
     }
     ''', 'Controlled4x4Product')
+
+
+Controlled_Product_cctarg_single_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void Controlled8x8Product(const complex<float> val, complex<float>* vec, int high, int low, int t_index) {
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset_c1 = 1 << low;
+        const int offset_c2 = 1 << high;
+        const int offset_t = 1 << t_index;
+        const int maskc1 = offset_c1 - 1;
+        const int maskc2 = offset_c2 - 1;
+        const int mask_t = offset_t - 1;
+
+        int gw = 0, _0 = 0;
+
+        if (t_index < low){
+            gw = label >> t_index << (t_index + 1);
+            _0 = offset_c1 + (gw >> low << (low + 1)) + (gw & (offset_c1 - offset_t)) + (label & mask_t);
+            _0 = offset_c2 + (_0 >> high << (high + 1)) + (_0 & maskc2);
+        }else if(t_index < high){
+            gw = label >> low << (low + 1);
+            _0 = offset_c1 + (gw >> t_index << (t_index + 1)) + (gw & (offset_t - offset_c1)) + (label & maskc1);
+            _0 = offset_c2 + (_0 >> high << (high + 1)) + (_0 & maskc2);
+        }else{
+            gw = label >> low << (low + 1);
+            _0 = offset_c1 + (gw >> high << (high + 1)) + (gw & (offset_c2 - offset_c1)) + (label & maskc1);
+            _0 = offset_c2 + (_0 >> t_index << (t_index + 1)) + (_0 & mask_t);
+        }
+
+        _0 = _0 + offset_t;
+        vec[_0] = vec[_0]*val;
+    }
+    ''', 'Controlled8x8Product')
+
+
+Controlled_Product_cctarg_double_kernel = cp.RawKernel(r'''
+    #include <cupy/complex.cuh>
+    extern "C" __global__
+    void Controlled8x8Product(const complex<double> val, complex<double>* vec, int high, int low, int t_index){
+        int label = blockDim.x * blockIdx.x + threadIdx.x;
+
+        const int offset_c1 = 1 << low;
+        const int offset_c2 = 1 << high;
+        const int offset_t = 1 << t_index;
+        const int maskc1 = offset_c1 - 1;
+        const int maskc2 = offset_c2 - 1;
+        const int mask_t = offset_t - 1;
+
+        int gw = 0, _0 = 0;
+
+        if (t_index < low){
+            gw = label >> t_index << (t_index + 1);
+            _0 = offset_c1 + (gw >> low << (low + 1)) + (gw & (offset_c1 - offset_t)) + (label & mask_t);
+            _0 = offset_c2 + (_0 >> high << (high + 1)) + (_0 & maskc2);
+        }else if(t_index < high){
+            gw = label >> low << (low + 1);
+            _0 = offset_c1 + (gw >> t_index << (t_index + 1)) + (gw & (offset_t - offset_c1)) + (label & maskc1);
+            _0 = offset_c2 + (_0 >> high << (high + 1)) + (_0 & maskc2);
+        }else{
+            gw = label >> low << (low + 1);
+            _0 = offset_c1 + (gw >> high << (high + 1)) + (gw & (offset_c2 - offset_c1)) + (label & maskc1);
+            _0 = offset_c2 + (_0 >> t_index << (t_index + 1)) + (_0 & mask_t);
+        }
+
+        _0 = _0 + offset_t;
+        vec[_0] = vec[_0]*val;
+    }
+    ''', 'Controlled8x8Product')
 
 
 Controlled_InnerProduct_ctargs_single_kernel = cp.RawKernel(r'''
@@ -1286,6 +1357,40 @@ def control_ctargs(c_index, t_index, value, vec, vec_bit, sync: bool = False):
             (block_num,),
             (thread_per_block,),
             (value, vec, c_index, t_index)
+        )
+
+    if sync:
+        cp.cuda.Device().synchronize()
+
+
+def control_cctarg(c_indexes, t_index, value, vec, vec_bit, sync: bool = False):
+    """
+    Controlled matrix (4x4) dot vector
+     e.g.   [[1, 0, 0, 0],    *   vec
+             [0, 1, 0, 0],
+             [0, 0, 1, 0],
+             [0, 0, 0, a]]
+    """
+    if c_indexes[0] > c_indexes[1]:
+        high, low = c_indexes[0], c_indexes[1]
+    else:
+        high, low = c_indexes[1], c_indexes[0]
+
+    task_number = 1 << (vec_bit - 2)
+    thread_per_block = min(256, task_number)
+    block_num = task_number // thread_per_block
+
+    if vec.dtype == np.complex64:
+        Controlled_Product_cctarg_single_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (value, vec, high, low, t_index)
+        )
+    else:
+        Controlled_Product_cctarg_double_kernel(
+            (block_num,),
+            (thread_per_block,),
+            (value, vec, high, low, t_index)
         )
 
     if sync:

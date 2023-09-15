@@ -20,7 +20,6 @@ class GateType(Enum):
     rx = "Rx gate"
     ry = "Ry gate"
     rz = "Rz gate"
-    ri = "Ri gate"
     t = "T gate"
     tdg = "The conjugate transpose of T gate"
     phase = "Phase gate"
@@ -184,7 +183,7 @@ GATEINFO_MAP = {
     GateType.swap: (0, 2, 0, GateType.swap, MatrixType.swap),
     GateType.iswap: (0, 2, 0, GateType.iswap, MatrixType.swap),
     GateType.iswapdg: (0, 2, 0, GateType.iswapdg, MatrixType.swap),
-    GateType.sqiswap: (0, 2, 0, GateType.sqiswap, MatrixType.swap),
+    GateType.sqiswap: (0, 2, 0, GateType.sqiswap, MatrixType.ctrl_normal),
     GateType.ccx: (2, 1, 0, GateType.ccx, MatrixType.reverse),
     GateType.ccz: (2, 1, 0, GateType.ccz, MatrixType.control),
     GateType.ccrz: (2, 1, 1, GateType.ccrz, MatrixType.diagonal),

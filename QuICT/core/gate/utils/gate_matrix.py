@@ -142,8 +142,8 @@ class GateMatrixGenerator:
         elif gate_type == GateType.sqiswap:
             return np.array([
                 [1, 0, 0, 0],
-                [0, 0, (1 + 1j) / np.sqrt(2), 0],
-                [0, (1 + 1j) / np.sqrt(2), 0, 0],
+                [0, 1 / np.sqrt(2), 1j / np.sqrt(2), 0],
+                [0, 1j / np.sqrt(2), 1 / np.sqrt(2), 0],
                 [0, 0, 0, 1]
             ], dtype=precision)
         else:
@@ -337,7 +337,7 @@ class GateMatrixGenerator:
             )
             grad2 = np.array(
                 [
-                    [np.cos(pargs[0] / 2), -np.exp(1j * pargs[2]) * np.sin(pargs[0] / 2),],
+                    [np.cos(pargs[0] / 2), -np.exp(1j * pargs[2]) * np.sin(pargs[0] / 2), ],
                     [
                         1j * np.exp(1j * pargs[1]) * np.sin(pargs[0] / 2),
                         1j * np.exp(1j * (pargs[1] + pargs[2])) * np.cos(pargs[0] / 2),

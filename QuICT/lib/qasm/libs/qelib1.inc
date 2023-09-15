@@ -32,9 +32,9 @@ gate u0(gamma) q { U(0,0,0) q; }
 
 // --- QE Standard Gates ---
 // phase gate
-gate p(lambda) a { U(0,0,lambda) a; }
-// global phase gate
 gate phase(lambda) a { U(0,0,lambda) a; }
+// global phase gate
+gate gphase(lambda) a { U(0,0,lambda) a; }
 // Pauli gate: bit-flip
 gate x a { u3(pi,0,pi) a; }
 // Pauli gate: bit and phase flip
