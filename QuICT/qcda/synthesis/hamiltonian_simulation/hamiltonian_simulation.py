@@ -6,7 +6,7 @@ class HamiltonianSimulation():
     def __init__(self, method):
         """
         Args:
-             method: string, either "TS" or "Trotter"
+             method (str): either "TS" or "Trotter"
         """
         self.method = method
         assert self.method == "TS" or self.method == "Trotter", "Please select 'Trotter'or 'TS' method."
@@ -32,13 +32,13 @@ class HamiltonianSimulation():
             max_order (int): string, either Ts or Trotter
         Returns:
             if TS method:
-            circuit: QuICT circuit simulate e^-iHt/r
+            Circuit: QuICT circuit simulate e^-iHt/r
             dict: A dictionary contain following information.
             Noting that, to get e^-iHt, you take measurements on ancilla qubit, get the final state,
             Then rerun the circuit with initial state prepares with the last final state.
 
             If Trotter method:
-            circuit: a circuit calculate e^-iHt
+            Circuit: a circuit calculate e^-iHt
             dict: Contain information "iterations". The number of given circuit need to be iterated.
         """
         if self.method == "TS":
