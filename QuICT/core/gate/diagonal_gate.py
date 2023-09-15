@@ -68,88 +68,89 @@ class DiagonalGate(object):
         m = self.aux
         gates = CompositeGate()
 
-        for x in range(2**n):
-            # Stage 1: Prefix Copy
-            t = int(np.floor(np.log2(m / 2)))
-            copies = int(np.floor(m / (2 * t)))
-            for j in range(copies):
-                for i in range(t):
-                    CX & [i, n + i + j * t] | gates
+        #for x in range(2**n):
+        # Stage 1: Prefix Copy
+        t = int(np.floor(np.log2(m / 2)))
+        copies = int(np.floor(m / (2 * t)))
+        for j in range(copies):
+            for i in range(t):
+                CX & [i, n + i + j * t] | gates
 
-            # Stage 2: Gray Initial
-            t = int(np.floor(np.log2(m / 2)))
-            ell = 2**t
-            ini_star = n + t * copies
+         # Stage 2: Gray Initial
+        t = int(np.floor(np.log2(m / 2)))
+        ell = 2**t
+        ini_star = n + t * copies
 
-                #1.implement U1
-            for j in range(1, 1 + ell):
-                for i in range(ini_star,ini_star+ell):
-                    self.ket_fjk(j,1,n,t,i) | gates
+            #1.implement U1
+        for j in range(1, 1 + ell):
+            for i in range(ini_star,ini_star+ell):
+                self.ket_fjk(j,1,n,t,i) | gates
 
-                #2.implement R1
-            s = self.partitioned_gray_code(n, t)
-            for j in range(1,1+ell):
-                sj1_int = int(s[j - 1][0], 2)
-                #phase= (self.linear_fjk(j,1,x,n,t)) * (self.alpha_s(theta,sj1_int,n))
-                phase = self.alpha_s(theta,sj1_int,n)
-                #U1(phase) & (ini_star+j-1) | gates
-                U1(phase) | gates(ini_star+j-1)
+             #2.implement R1
+        s = self.partitioned_gray_code(n, t)
+        for j in range(1,1+ell):
+            sj1_int = int(s[j - 1][0], 2)
+            #phase= (self.linear_fjk(j,1,x,n,t)) * (self.alpha_s(theta,sj1_int,n))
+            phase = self.alpha_s(theta,sj1_int,n)
+            #U1(phase) & (ini_star+j-1) | gates
+            U1(phase) | gates(ini_star+j-1)
                 #gates.extend(self.phase_shift_s(sj1_int, n, phase, aux=self.aux))
 
-            #Stage 3:Suffix Copy
+        #Stage 3:Suffix Copy
 
-                #1.U^{\dagger}_{copy,1}
-            for j in range(copies):
-                for i in range(t):
-                    CX & [i, n + i + j * t] | gates
+            #1.U^{\dagger}_{copy,1}
+        for j in range(copies):
+            for i in range(t):
+                CX & [i, n + i + j * t] | gates
 
-                #2.U_{copy,2}
-            copies3 = int(np.floor(m / (2 * (n-t))))
+            #2.U_{copy,2}
+        copies3 = int(np.floor(m / (2 * (n-t))))
 
-            for j in range(copies3):
-                for i in range(n-t):
-                    CX & [i + t, n + i + j * t] | gates
+        for j in range(copies3):
+            for i in range(n-t):
+                CX & [i + t, n + i + j * t] | gates
 
-            #Stage 4: Gray Path
-            num_phases = int((2**n)/ell)
+        #Stage 4: Gray Path
+        num_phases = int((2** n)/ell)
             #the end label of the Stage 3
-            sucoend = n + n - t - 1 + (copies3 - 1) * t
-            for k in range(2,num_phases+1):
+        sucoend = n + n - t - 1 + (copies3 - 1) * t
+        for k in range(2,num_phases+1):
 
-                    #Step k.1: U_k
-                for j in range(1,ell+1):
-                    s = self.partitioned_gray_code(n,t)
-                    s1 = s[j-1][k-2]
-                    s2 = s[j-1][k-1]
-                    for i in range(len(s1)):
-                        if s1[i] != s2[i]:
-                            CX & [i,sucoend+j] | gates
-                            break
+                #Step k.1: U_k
+            for j in range(1,ell+1):
+                s = self.partitioned_gray_code(n,t)
+                s1 = s[j-1][k-2]
+                s2 = s[j-1][k-1]
+                for i in range(len(s1)):
+                    if s1[i] != s2[i]:
+                        CX & [i,sucoend+j] | gates
+                        break
 
                    #Step k.2: R_k
-                for j in range(1,ell+1):
-                    s = self.partitioned_gray_code(n, t)
-                    sjk_int = int(s[j-1][k-1],2)
-                    phase_k = self.alpha_s(theta,sjk_int,n)
-                    U1(phase_k) | gates(j+sucoend)
+            for j in range(1,ell+1):
+                s = self.partitioned_gray_code(n, t)
+                sjk_int = int(s[j-1][k-1],2)
+                phase_k = self.alpha_s(theta,sjk_int,n)
+                U1(phase_k) | gates(j+sucoend)
                     #phase_k = (self.linear_fjk(j,k,x,n,t)) * (self.alpha_s(theta,sjk_int,n))
                     #gates.extend(self.phase_shift_s(sjk_int, n, phase_k, aux=self.aux))
 
             #Stage 5:Inverse
 
-            for j in range(copies3):
-                for i in range(n-t):
-                    CX & [i + t, n + i + j * t] | gates
+        for j in range(copies3):
+            for i in range(n-t):
+                CX & [i + t, n + i + j * t] | gates
 
-            for j in range(1, ell + 1):
-                s = self.partitioned_gray_code(n, t)
-                s1 = s[j - 1][num_phases - 2]
-                s2 = s[j - 1][num_phases - 1]
-                for i in range(len(s1)):
-                    if s1[i] != s2[i]:
-                        y = n + n - t - 1 + (copies3 - 1) * t
-                        CX & [i, y + j] | gates
-                        break
+        for j in range(1, ell + 1):
+            s = self.partitioned_gray_code(n, t)
+            s1 = s[j - 1][num_phases - 2]
+            s2 = s[j - 1][num_phases - 1]
+            for i in range(len(s1)):
+                if s1[i] != s2[i]:
+                    y = n + n - t - 1 + (copies3 - 1) * t
+                    CX & [i, y + j] | gates
+                    break
+
         return gates
 
     @staticmethod

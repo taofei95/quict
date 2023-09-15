@@ -77,8 +77,8 @@ def test_linear_fjk():
     print(resu)
 
 def test_with_aux_qubit():
-    n = 2 #number of target qubit
-    m = 4 #number of ancillary qubit
+    n = 4 #number of target qubit
+    m = 8 #number of ancillary qubit
     nn=DiagonalGate(n,m)
     #nn.target = 4
 
@@ -88,7 +88,30 @@ def test_with_aux_qubit():
     circuit = Circuit(size)
     gates = nn.with_aux_qubit(theta)
     gates | circuit
-    circuit.draw(filename='test_with_aux_qubit_n=2,m=4.jpg', flatten=True)
+    #circuit.draw(filename='test_with_aux_qubit_n=2,m=4.jpg', flatten=True)
+    matrix = gates.matrix()
+
+    print(matrix)
+    #gates.is_diagonal()
+
+    """
+    diagonal_matrix = np.diag(np.exp(1j * theta))
+    # Determines whether two matrices are equal
+    if np.allclose(matrix, diagonal_matrix):
+        print("The two matrices are equal.")
+    else:
+        print("The two matrices are not equal.")
+    """
+
+    diagonal_elements = np.diag(matrix)
+    # Removing duplicate elements
+    unique_diagonal_elements = list(set(diagonal_elements))
+    print(np.exp(1j*theta))
+    # Print the deduplicated diagonal elements
+    print("Deduplicated diagonal elements:", unique_diagonal_elements)
+
+
+
 
 if __name__ == '__main__':
     #test_gray_code()
