@@ -22,19 +22,22 @@ class HamiltonianSimulation():
         Returns:
             if TS method:
             circuit: QuICT circuit simulate e^-iHt/r
-            c_width: circuit with
-            time_steps: Time steps to give error bounded by 0.1 in each time step iteration
-            order: order to truncated taylor series
-            summed_coefficient: summed coefficient of equation 6(See TS method)
-            expected_error: bound error
-            amplification_size: expect 2, but in most of case it is a float number close to 2.
-            approximate_time_evolution_operator: the approximated e^-iHt/r
-
+            circuit_info_dictionary: A dictionary contain following information.
+            #########################################
+            c_width circuit with
+            time_steps Time steps to give error bounded by 0.1 in each time step iteration
+            order order to truncated taylor series
+            summed_coefficient summed coefficient of equation 6(See TS method)
+            expected_error bound error
+            amplification_size expect 2, but in most of case it is a float number close to 2.
+            approximate_time_evolution_operator the approximated e^-iHt/r
+            ##########################################
             Noting that, to get e^-iHt, you take measurements on ancilla qubit, get the final state,
             Then rerun the circuit with initial state prepares with the last final state.
 
             If Trotter method:
             circuit: a circuit calculate e^-iHt
+            circuit_info_dictionary: Contain information "iterations". The number of given circuit need to be iterated.
         """
         if self.method == "TS":
             coefficient_array, hamiltonian_array = hamiltonian
