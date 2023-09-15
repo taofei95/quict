@@ -1,25 +1,21 @@
 import numpy as np
+import scipy
 from numpy.polynomial.polynomial import Polynomial
 from numpy.polynomial.chebyshev import Chebyshev
-import scipy.special as sp
-
 
 def cheby_poly(order, input_value):
     """
     generate chebyshev polynomial
-
-    Parameters:
-    ----------
-    order : list or 1-D array
-        degrees of polynomial
-    input_value : float
-        The x of polynomial(x)
+    Args:
+        order : list or 1-D array
+            degrees of polynomial
+        input_value : float
+            The x of polynomial(x)
 
     Returns:
-    -------
-    Array
-        the value of chebyshev polynomial with given input value
-        Another word, Polynomial(x) value
+            Array
+            the value of chebyshev polynomial with given input value
+            Another word, Polynomial(x) value
 
     """
     poly_array = []
@@ -31,36 +27,28 @@ def cheby_poly(order, input_value):
 def bessel_poly(order, input_value):
     """
     generate bessel polynomial
-
-    Parameters
-    ----------
-    order : highest order of bessel polynomial
-
-    input_value : FLoat
+    Args:
+        order : highest order of bessel polynomial
+        nput_value : FLoat
         x of f(x)
-    Returns
-    -------
-    bessel polynomial(x) value
 
+    Returns:
+        bessel polynomial(x) value
     """
-    return sp.jv(order, input_value)
+    return scipy.special.jv(order, input_value)
 
 
 def exp_to_poly(time, order):
     """
     Convert e(i time ) to polynomials
-
-    Parameters
-    ----------
-    time : float
-    order : int
+    Args:
+        time : float
+        order : int
             degree of polynomial
 
-    Returns
-    -------
-    coefficient_array : 1-D array
+    Returns:
+        coefficient_array : 1-D array
         Polynomial coefficient from order 0 to largest order
-
     """
     coefficient_array = []
     coefficient_array.append(bessel_poly(0, time))
@@ -80,6 +68,12 @@ class Poly:
     def normal_basis(self, time, order: int):
         """
         Given input time and highest order. generate taylor expansion of e(i*time).
+        Args:
+            time: input parameter
+            order: the highest order of chebyshev basis
+
+        Returns:
+            The chebyshev basis convert to normal basis
 
         """
         if self.polynomial == "exp":
@@ -87,8 +81,13 @@ class Poly:
 
     def chevbyshev_basis(self, time, order):
         """
-        Given input time 
-        generate polynomial expansion of e(i*time) in chevbyshev first kind basis
+        Given input time and highest order. generate taylor expansion of e(i*time).
+        Args:
+            time: input parameter
+            order: the highest order of chebyshev basis
+
+        Returns:
+            The chebyshev basis polynomial
 
         """
         if self.polynomial == "exp":
