@@ -12,10 +12,10 @@ def int_reflection(binary_string: str):
     Compute |binary><binary| reflection
     For example if |01><01| reflection, generate [[1,0,0,0],[0,-1,0,0],[0,0,1,0],[0,0,0,1]]
     Args:
-        binary_string: binary representation of a positive integer.
+        binary_string (str): binary representation of a positive integer.
 
     Returns:
-        A composite gate
+        CompositeGate: A composite gate
     """
     m = len(binary_string)
     composite_gate = CompositeGate()
@@ -48,11 +48,11 @@ def gates_R(num_reflection_qubit: int, num_qubit: int):
     generate R = I - 2P gate
 
     Args:
-    num_reflection_qubit: The selected number of qubit are reflected in there subspace.
-    num_qubit: Total number of qubits.
+    num_reflection_qubit (int): The selected number of qubit are reflected in there subspace.
+    num_qubit (int): Total number of qubits.
 
     Returns:
-        A composite gate
+        CompositeGate: R = I - 2P
     """
     assert num_qubit >= num_reflection_qubit, "The num qubits must greater or equal to num reflection qubit."
     bit_string_array, _ = permute_bit_string(2**num_qubit - 1)
@@ -68,11 +68,13 @@ def find_order(times_steps: int, error: float):
     Find the minimum order makes the |summed_coefficient-2|<=2
 
     Args:
-    times_steps: num of time steps
-    error: float
-                    accuracy of the algorithm
+    times_steps (int):
+        num of time steps
+    error (float):
+        accuracy of the algorithm
 
-    Returns: minimum order of taylor expansion
+    Returns:
+        int: minimum order of taylor expansion
     """
     temp_poly = []
     for i in range(30):
@@ -91,11 +93,11 @@ def calculate_target_matrix(hamiltonian: np.ndarray, time: float):
     calculate target time evolution matrix e^-iHt
 
     Args:
-    hamiltonian: A hermitian matrix.
-    time: time setted.
+    hamiltonian (np.ndarray): A hermitian matrix.
+    time (float): time setted.
 
     Returns:
-        A composite gate
+        ComposteGate: A composite gate
     """
     assert check_hermitian(hamiltonian), "Hamiltonian is not hermitian"
     matrix = scipy.expm(-1j * hamiltonian * time)
@@ -107,11 +109,11 @@ def find_time_steps(coef_array: np.ndarray, time: float):
     find the suitable time steps such that make summed coefficient close to 2.
 
     Args:
-    coef_array: A array of coefficient assign infront of matrix V. (U = SUM coef * V )
-    time: evolution time
+    coef_array (np.ndarray): A array of coefficient assign infront of matrix V. (U = SUM coef * V )
+    time (float): evolution time
 
     Returns:
-        time steps: A positive integer.
+        int: time steps of evolution
     """
     T = np.sum(coef_array) * time
     r = T / np.log(2)
@@ -125,12 +127,12 @@ def find_matrix_dimension(matrix_array: np.ndarray):
     Find the matrix dimension.
 
     Args:
-    matrix_array: Array of matrix([matrix, matrix, matrix])
+    matrix_array (np.ndarray): Array of matrix([matrix, matrix, matrix])
 
     Returns:
-        time steps: A positive integer.
+        np.ndarray: A positive integer.
     """
-    matrix_dimension = int(np.log2(len(matrix_array[0][0])))
+    matrix_dimension = int(np.log2(matrix_array.shape[1]))
     return matrix_dimension
 
 
@@ -139,15 +141,15 @@ def calculate_approximate_matrix(hamiltonian: np.ndarray, order: int, time: floa
     calculate the approximated e^-iHt/r
 
     Args:
-        hamiltonian: A numpy 2D array (H)
-        order: hamiltonian highest truncated order
-        time: the evolution time(t)
-        time_order: positive integer (r)
+        hamiltonian (np.ndarray): A numpy 2D array (H)
+        order (int): hamiltonian highest truncated order
+        time (float): the evolution time(t)
+        time_order (int): positive integer (r)
 
     Returns:
-        approximate_hamiltonian: approximated hamiltonian
+        np.ndarray: approximated hamiltonian
     """
-    approximate_matrix = np.identity(len(hamiltonian[0]))
+    approximate_matrix = np.identity(hamiltonian.shape[0])
     for i in range(1, order):
         temp_matrix = hamiltonian
         for _ in range(i - 1):
@@ -165,16 +167,16 @@ def truncate_series(coefficient_array: np.ndarray, matrix_array: np.ndarray, tim
     1. H = summed_{L}_{l=1}(coefficient_{l}*Unitary_{l})
     Compute truncation taylor series hamiltonian simulation algorithm
     Args:
-        coefficient_array: Array of coefficient in equation 1.
-        matrix_array: Array of unitary matrix in equation 1.
-        time: float, The evolution time.
-        error: float, Algorithm accuracy
-        max_order: Maximum degree of taylor expansion allowed.
-        initial_state: The initial state
+        coefficient_array (np.ndarray): Array of coefficient in equation 1.
+        matrix_array (np.ndarray): Array of unitary matrix in equation 1.
+        time (float): The evolution time.
+        error (float): Algorithm accuracy
+        max_order (int): Maximum degree of taylor expansion allowed.
+        initial_state (np.ndarray): The initial state
 
     Returns:
-        circuit: circuit compute e^{-iHt/r}.
-        circuit_info_dictionary: A dictionary contain following information
+        Circuit: circuit compute e^{-iHt/r}.
+        dict: A dictionary contain following information
         "circuit_width": c_width,
         "time_steps": time_steps,
         "order": order,
