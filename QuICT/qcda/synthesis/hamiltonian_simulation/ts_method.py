@@ -139,10 +139,10 @@ def calculate_approximate_matrix(hamiltonian: np.ndarray, order: int, time: floa
     calculate the approximated e^-iHt/r
 
     Args:
-    hamiltonian: A numpy 2D array (H)
-    order: hamiltonian highest truncated order
-    time: the evolution time(t)
-    time_order: positive integer (r)
+        hamiltonian: A numpy 2D array (H)
+        order: hamiltonian highest truncated order
+        time: the evolution time(t)
+        time_order: positive integer (r)
 
     Returns:
         approximate_hamiltonian: approximated hamiltonian
@@ -158,21 +158,30 @@ def calculate_approximate_matrix(hamiltonian: np.ndarray, order: int, time: floa
     return approximate_hamiltonian
 
 
-def truncate_series(coefficient_array, matrix_array, time, error, max_order, initial_state):
+def truncate_series(coefficient_array: np.ndarray, matrix_array: np.ndarray, time: float, error: float, max_order: int, initial_state: np.ndarray):
     """
     https://arxiv.org/abs/1412.4687
     Let hamiltonian satisfy:
     1. H = summed_{L}_{l=1}(coefficient_{l}*Unitary_{l})
     Compute truncation taylor series hamiltonian simulation algorithm
-    :param coefficient_array: Array of coefficient in equation 1.
+    Args:
+        coefficient_array: Array of coefficient in equation 1.
+        matrix_array: Array of unitary matrix in equation 1.
+        time: float, The evolution time.
+        error: float, Algorithm accuracy
+        max_order: Maximum degree of taylor expansion allowed.
+        initial_state: The initial state
 
-    :param matrix_array: Array of unitary matrix in equation 1.
-    :param time: float
-
-    :param times_steps: int
-    :param error: float, Algorithm accuracy
-    :param max_order: Maximum degree of taylor expansion allowed.
-    :return: Quantum circuit
+    Returns:
+        circuit: circuit compute e^{-iHt/r}.
+        circuit_info_dictionary: A dictionary contain following information
+        "circuit_width": c_width,
+        "time_steps": time_steps,
+        "order": order,
+        "summed_coeffcient": summed_coefficient,
+        "expected_error": expected_error,
+        "amplification_size": amplification_size,
+        "approximated_time_evolution_operator": approximate_time_evolution_operator
     """
     logging.info("truncation series algorithm start")
     (hamiltonian,
@@ -199,8 +208,7 @@ def truncate_series(coefficient_array, matrix_array, time, error, max_order, ini
                                                              order,
                                                              time,
                                                              time_steps)
-    _, num_ancilla_qubit = permute_bit_string(
-        len(coefficient_array) - 1)
+    _, num_ancilla_qubit = permute_bit_string(len(coefficient_array) - 1)
     # make B gates, select V gates, ancilla reflection gates
     initial_state_gate = prepare_G_state(initial_state, np.sum(initial_state))
     logging.debug("Find B gates")
@@ -216,8 +224,7 @@ def truncate_series(coefficient_array, matrix_array, time, error, max_order, ini
     summed_coefficient = np.sum(coefficient_array)
     expected_error = np.abs(summed_coefficient - 2)
     amplification_size = summed_coefficient / 2
-    approximate_time_evolution_operator = calculate_approximate_matrix(
-        hamiltonian, order, time, time_steps)
+    approximate_time_evolution_operator = calculate_approximate_matrix(hamiltonian, order, time, time_steps)
     ###########################################################################################
     # completing circuit
     logging.info("completing circuit")
