@@ -6,7 +6,7 @@ class HamiltonianSimulation():
     def __init__(self, method):
         """
         Args:
-             method: string, either Ts or Trotter
+             method (str): string, either Ts or Trotter
         """
         self.method = method
         assert self.method == "TS" or self.method == "Trotter", "Please select 'Trotter'or 'TS' method."
@@ -14,15 +14,15 @@ class HamiltonianSimulation():
     def execute(self, hamiltonian, time, initial_state, error=0.1, max_order=20):
         """
         Args:
-            hamiltonian: string, either Ts or Trotter
-            time: string, either Ts or Trotter
-            initial_state: string, either Ts or Trotter
-            error: string, either Ts or Trotter
-            max_order: string, either Ts or Trotter
+            hamiltonian (np.ndarray): string, either Ts or Trotter
+            time (float): string, either Ts or Trotter
+            initial_state (np.array): string, either Ts or Trotter
+            error (float): string, either Ts or Trotter
+            max_order (int): string, either Ts or Trotter
         Returns:
             if TS method:
             circuit: QuICT circuit simulate e^-iHt/r
-            circuit_info_dictionary: A dictionary contain following information.
+            dict: A dictionary contain following information.
             #########################################
             c_width circuit with
             time_steps Time steps to give error bounded by 0.1 in each time step iteration
@@ -37,7 +37,7 @@ class HamiltonianSimulation():
 
             If Trotter method:
             circuit: a circuit calculate e^-iHt
-            circuit_info_dictionary: Contain information "iterations". The number of given circuit need to be iterated.
+            dict: Contain information "iterations". The number of given circuit need to be iterated.
         """
         if self.method == "TS":
             coefficient_array, hamiltonian_array = hamiltonian
