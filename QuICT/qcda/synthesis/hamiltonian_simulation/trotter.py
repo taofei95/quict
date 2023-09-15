@@ -9,8 +9,8 @@ import numpy as np
 def trotter(hamiltonian: np.ndarray, t: float, eps: float, init_statevec: np.ndarray=None, iterations: np.ndarray=None):
     """
     This major function returns the trotter splitting circuit
-    hmtn is input pauli string with coeff, gate and gate index
-    eg. hmtn = [[1, 'X0', 'Z1', 'Y2'], [2, 'Z2']]
+    hamiltonian is input pauli string with coeff, gate and gate index
+    eg. hamiltonian = [[1, 'X0', 'Z1', 'Y2'], [2, 'Z2']]
     t = evolution time
     eps = expected error
     indicate H = 1 * (X_0 pauli tensor Z_1 pauli tensor Y_2) + 2 * Z_2
@@ -27,15 +27,15 @@ def trotter(hamiltonian: np.ndarray, t: float, eps: float, init_statevec: np.nda
 
     This major function returns the trotter splitting circuit
     Args:
-        hamiltonian: a pauli string represent the hamiltonian
-        t: solution time
-        eps: expected error
-        init_statevec: initial state vector
-        iterations: number of iteration
+        hamiltonian(list[str]): a pauli string represent the hamiltonian
+        t(float): solution time
+        eps(float): expected error
+        init_statevec(np.array): initial state vector
+        iterations(int): number of iteration
 
     Returns:
-        circuit: a circuit compute trotter algorithm
-        circuit_dictionary: number of iterations of the circuit
+        Circuit: a circuit compute trotter algorithm
+        dict: number of iterations of the circuit
     """
 
     h = Hamiltonian(hamiltonian)
@@ -81,12 +81,12 @@ def accurate_final_state(hamiltonian, t, init_statevec=None):  # accurate final 
     H = UDU^-1, U is unitary matrix of eigenvectors, D is diagonal matrix of eigenvalues
     exp(-iHt) = exp(-i UDU^(-1) t) = U * exp(-iDt) * U^(-1) = U * exp(-i Dkk t) * U^(-1)
     Args:
-        hamiltonian: A n*n matrix represent the physical hamiltonian
-        t: evolution time
-        init_statevec: initial state
+        hamiltonian(np.ndarray): A n*n matrix represent the physical hamiltonian
+        t(float): evolution time
+        init_statevec(np.ndarray): initial state
 
     Returns:
-        accuracy of the algorithm.
+        float: accuracy of the algorithm.
     """
     h = Hamiltonian(hamiltonian)
     n = max(max(h._qubit_indexes)) + 1
