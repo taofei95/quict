@@ -1,3 +1,4 @@
+from typing import Optional
 from numpy import pi
 
 from QuICT.core.gate import CompositeGate
@@ -23,6 +24,7 @@ class DrapperAdder(CompositeGate):
     def __init__(
         self,
         qreg_size: int,
+        qreg_size_b: Optional[int] = None,
         in_fourier: bool = False,
         out_fourier: bool = False,
         name: str = None
@@ -43,23 +45,30 @@ class DrapperAdder(CompositeGate):
                 out_fourier (bool): If True, after the addition, the qreg will be left in fourier
                 basis. Default to be False.
         """
-        if qreg_size < 2:
+        if qreg_size < 1:
             raise GateParametersAssignedError(f"Register size must be greater than or equal to 2 but given {qreg_size}")
+
+        if qreg_size_b is None:
+            qreg_size_b = qreg_size
+        elif qreg_size_b < 2:
+            raise GateParametersAssignedError("Input register size must be larger than 1.")
 
         self._reg_size = qreg_size
 
         self._reg_a_list = list(range(qreg_size))
-        self._reg_b_list = list(range(qreg_size, 2 * qreg_size))
+        self._reg_b_list = list(range(qreg_size, qreg_size + qreg_size_b))
 
         super().__init__(name)
 
         with self:
             if not in_fourier:
-                QFT(qreg_size) & self._reg_b_list
+                QFT(qreg_size_b) & self._reg_b_list
             # addition
-            for k in reversed(range(qreg_size)):
-                for j in range(k + 1):
-                    theta = pi / (1 << (k - j))
-                    CU1(theta) & [k, qreg_size + j]
+            for k in range(qreg_size):
+                c_bit = self._reg_a_list[qreg_size - 1 - k]
+                for j in range(qreg_size_b - k):
+                    t_bit = self._reg_b_list[j]
+                    theta = pi / (1 << (qreg_size_b - k - 1 - j))
+                    CU1(theta) & [c_bit, t_bit]
             if not out_fourier:
-                IQFT(qreg_size) & self._reg_b_list
+                IQFT(qreg_size_b) & self._reg_b_list
