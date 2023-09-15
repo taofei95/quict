@@ -9,11 +9,11 @@ In this file, we achieve this motivation.
 given an input x in the domain[-1,1], and polynomial p(x)
 We find the SIGNAL MATRIX
 [p(x), iQ(x) * sqrt(1-x^2)]
-[i*Q*(x)*sqrt(1-x^2), P*(x)]
+[i * Q*(x) * sqrt(1-x^2), P*(x)]
 
 Define a sequence of angle phi = {phi_0, phi_1..... phi_k} include in R_{k+1}
 This matrix is yield by computing sequence of matrix
-e^(i*phi_{0}*pauli_z) *product{k}_{j=1} [ W(x) * e^i*phi_{j}_pauli_z]
+e^(i * phi_{0} * pauli_z) * product{k}_{j=1} [ W(x) * e^i * phi_{j}_pauli_z]
 
 That means if we know the sequence of angle, we can block encode x and polynomial p(x) in
 
@@ -29,7 +29,12 @@ The symbol used in the code is consistent with the symbol that we introduced abo
 
 class SignalAngleFinder:
     def __init__(self, tolerance=1e-6):
-
+        """
+        
+        Args:
+            tolerance (float): The maximum deviation between input polynomial P and signal processing 
+                       simulated polynomial
+        """
         self.tolerance = tolerance
 
     def execute(self, polynomial_p: Polynomial, k: int):
@@ -37,10 +42,10 @@ class SignalAngleFinder:
         Based on algorithm in paper https://arxiv.org/abs/1806.01838
         Given polynomial p find sequence of phi.
         Args:
-           polynomial_p: P(x)
-           k: phase angle length
+           polynomial_p (Polynomial): P(x)
+           k (int): phase angle length
         Returns:
-            phase_angle: phase angle in equaiton 3
+            list[float]: phase angle in equaiton 3
         """
         polynomial_q = generate_poly_q(polynomial_p, k)
         phase_angle = generate_phase_angle(polynomial_p, polynomial_q, k)
@@ -54,36 +59,38 @@ class QuantumSignalProcessing:
     """
     Given x and angle_sequence
     find signal matrix and signal circuit
-
     """
 
-    def __init__(self, angle_sequence):
+    def __init__(self, angle_sequence: list[float]):
+        """
+        Args:
+            angle_sequence (list[float]): The angle sequence shapes polynomial 
+        """
         self.angle_sequence = angle_sequence
 
-    def signal_matrix(self, input_x):
+    def signal_matrix(self, input_x: float):
         """
         generate the circuit in equation A7 from paper:
         https://arxiv.org/abs/2105.02859
         Args:
-           input_x: x of P(x)
+           input_x (float): x of P(x)
         Returns:
-            signal_matrix: Expected matrix that encoding P(x) in the top left hand corner.
+            np.ndarray: Expected matrix that encoding P(x) in the top left hand corner.
         """
         WX = W_X_marix(input_x)
         signal_matrix = exp_pauli_z_matrix(self.angle_sequence[0])
         for i in range(1, len(self.angle_sequence)):
-            signal_matrix = np.matmul(signal_matrix, np.matmul(
-                WX, exp_pauli_z_matrix(self.angle_sequence[i])))
+            signal_matrix = np.matmul(signal_matrix, np.matmul(WX, exp_pauli_z_matrix(self.angle_sequence[i])))
         return signal_matrix
 
-    def signal_circuit(self, input_x):
+    def signal_circuit(self, input_x: float):
         """
         generate the circuit in equation A7 from paper:
         https://arxiv.org/abs/2105.02859
         Args:
-           input_x: x of P(x)
+           input_x (float): x of P(x)
         Returns:
-            signal_composite_gate: QuICT.core.gate.CompositeGate
+            QuICT.core.gate.CompositeGate
         """
         signal_x = -2 * np.arccos(input_x)
         signal_composite_gate = CompositeGate()
@@ -102,10 +109,10 @@ class QuantumSignalProcessing:
         https://arxiv.org/abs/2002.11649
         This is the generalized circuit that use one less ancilla qubit
         Args:
-           coefficient_array: array of coefficient of linear combination  of hamiltonian.
-           matrix_array: array of matrix of linear combination of hamiltonian.
+           coefficient_array (np.array): array of coefficient of linear combination  of hamiltonian.
+           matrix_array (np.ndarray): array of matrix of linear combination of hamiltonian.
         Returns:
-            cir: QuICT.Circuit type
+            Circuit: QSP circuit
         """
         matrix_dimension = int(np.log2(len(matrix_array[0][0])))
         UME = UnitaryMatrixEncoding("LCU")
@@ -132,11 +139,11 @@ def check_poly_parity(poly_p: Polynomial, k: int, tolerance: float = 1e-6):
     """
     Check Theorem 3 condition 2.
     Args:
-       poly_p: polynomial p
-       k: Input order
-       tolerance: treat residue as zero.
+       poly_p (Polynomial): polynomial p
+       k (int): Input order
+       tolerance (float): treat residue as zero.
     Returns:
-        Bool
+        bool: true if poly parity satisfy condition
     """
     # We define even parity as the coefficient of a polynomial associate with even order to be non-zero.
     parity = k % 2
@@ -152,11 +159,10 @@ def check_poly_parity(poly_p: Polynomial, k: int, tolerance: float = 1e-6):
 def W_X_marix(input_signal: float):
     """
     Args:
-        input_signal: input x
+        input_signal (float): input x
     Returns:
-        matrix =
-            [x, i*sqrt(1-x^2)]
-            [isqrt(1-x^2), x]
+        np.ndarray: [x, i*sqrt(1-x^2)]
+                    [isqrt(1-x^2), x]
     """
     assert (-1 <= input_signal <= 1), "input_signal must be in domain[-1,1]"
     return np.array([[input_signal, np.sqrt(1 - input_signal**2) * 1j],
@@ -167,11 +173,10 @@ def exp_pauli_z_matrix(angle_phi: float):
     """
     generate e^(i*phi_{i} * pauli_z)
     Args:
-        angle_phi: Phi in the set{[phi_0, phi_1, phi_2...phi_k}
+        angle_phi (float): Phi in the set{[phi_0, phi_1, phi_2...phi_k}
     Returns:
-        matrix =
-            [e^i*angle_phi, 0]
-            [0, e^-i*angle_phi]
+        np.ndarray: [e^i*angle_phi, 0]
+                    [0, e^-i*angle_phi]
     """
     return np.array([[np.exp(angle_phi * 1j), 0],
                      [0, np.exp(angle_phi * (-1j))]])
@@ -182,11 +187,11 @@ def block_encoding_matrix(signal_x: float, polynomial_p: Polynomial, polynomial_
     Generate matrix [p(x), iQ(x) * sqrt(1-x^2)]
                     [i*Q*(x)*sqrt(1-x^2), P*(x)]
     Args:
-        signal_x: As the convention
-        polynomial_p: P(x)
-        polynomial_q: conjugation to P.
+        signal_x (float): As the convention
+        polynomial_p (Polynomial): P(x)
+        polynomial_q (Polynomial): conjugation to P.
     Returns:
-        matrix =
+        np.ndarray:
         [p(x), iQ(x) * sqrt(1-x^2)]
         [i*Q*(x)*sqrt(1-x^2), P*(x)]
     """
@@ -200,12 +205,12 @@ def check_polynomial_normalization(p: Polynomial, q: Polynomial, steps: int = 10
     """
      Check theorem condition 3.
     Args:
-        p: P(x)
-        q: conjugation to P.
-        steps: num of steps in range [-1, 1].
-        tolerance: Max deviation from 1.
+        p (Polynomial): P(x)
+        q (Polynomial): conjugation to P.
+        steps (int): num of steps in range [-1, 1].
+        tolerance (float): Max deviation from 1.
     Returns:
-        True if Theorem 3 satisfied, false if not satisfied.
+        bool: True if Theorem 3 satisfied, false if not satisfied.
     """
     summed_poly = p * Polynomial(np.conj(p.coef)) + Polynomial([1, 0, -1]) * q * Polynomial(np.conj(q.coef))
     x = np.linspace(-1, 1, steps)
@@ -215,42 +220,16 @@ def check_polynomial_normalization(p: Polynomial, q: Polynomial, steps: int = 10
     return True, max_deviation
 
 
-def check_angle_phi_quality(angle_phi: float,
-                            polynomial_p: Polynomial,
-                            polynomial_q: Polynomial,
-                            steps: int = 100,
-                            tolerance: float = 1e-4):
-    """
-    check angle phi quality while updating polynomial as illustrated by equation 4.
-    Arg:
-        angle_phi: phi sequence
-        polynomial_p: P(x)
-        polynomial_q: Q(x)
-        steps: check points
-        tolerance: Max allowed deviation from p(x)
-    Returns:
-        Bool: True or False based on condition
-    """
-    x = np.linspace(-1, 1, steps)
-    for i in range(steps):
-        new_matrix = np.matmul(block_encoding_matrix(x[i], polynomial_p, polynomial_q), W_X_marix(x[i]))
-        new_matrix = np.matmul(new_matrix, exp_pauli_z_matrix(angle_phi))
-        test_polynomial_p = new_matrix[0][0]
-        if np.abs(test_polynomial_p - polynomial_p(x[i])) > tolerance:
-            return False
-    return True
-
-
-def complete_check(phi_list: np.ndarray, poly_p: Polynomial, tolerance=1e-6):
+def complete_check(phi_list: np.ndarray, poly_p: Polynomial, tolerance: float=1e-6):
     """
     Check if the p(x) generated by signal processing which encoded in top left
      hand side of signal matrix is same as the input P(x).
     Arg:
-        phi_list: phi sequence
-        poly_p: P(x)
-        tolerance: Max deviation from p(x)
+        phi_list (np.ndarray): phi sequence
+        poly_p (Polynomial): P(x)
+        tolerance (float): Max deviation from p(x)
     Returns:
-        Bool: True or False based on condition
+        bool: True or False based on condition
         largest_error: The max deviation from 0.
     """
     # check if equation 3 give rise to the polynomial p within the maximum tolerance.
@@ -280,8 +259,10 @@ def generate_A_tilt(polynomial_p: Polynomial):
     A = 1-P(x)*P*(x). A is even polynomial. Set y=x^2
     A_tilt = A(y) = A(x^2)
     arg:
-        polynomial_p: The polynomial P.
-    return: A(y)
+        polynomial_p (Polynomial): The polynomial P.
+    return:
+        Polynomial: A(y)
+        float: The leading coefficient of A(y)
     """
     polynomial_p_conjugate = Polynomial(np.conj(polynomial_p.coef))
     A = 1 - polynomial_p * polynomial_p_conjugate
@@ -294,13 +275,16 @@ def generate_A_tilt(polynomial_p: Polynomial):
 def generate_A_tilt_root(A_tilt: Polynomial, tolerance: float = 1e-3):
     """
     Args:
-    A_tilt: A(y)
-    tolerance: All value below tolerance is treated as non significant roots
+    A_tilt (Polynomial): A(y)
+    tolerance (float): All value below tolerance is treated as non significant roots
 
     return:
-        temp_roots: P(x) roots. Noting that complex roots comes in pairs and according to the theorem 4,
+        np.array: P(x) roots. Noting that complex roots comes in pairs and according to the theorem 4,
                 We only need one roots in the complex multisets.
     """
+    ######################################################
+    #TODO, Find a more stable method to solve roots
+    ######################################################
     # All real root have even multiplicity except for one.
     # To avoid degeneracy root, we remove zero as well
     # get rid of 0 and 1.
@@ -322,14 +306,17 @@ def generate_poly_q(polynomial_p: Polynomial, k: int):
     """
     Do calculation in equation 7 and equation 8.
     Args:
-    polynomial_p: P(x)
-    k: Order of polynomial P.
+    polynomial_p (Polynomial): P(x)
+    k (int): Order of polynomial P.
 
-    return: Polynomial Q..
+    return:
+     Polynomial: Q.
     """
+    #################
+    #TODO, find a stable method to generate polynomial Q. See paper https://arxiv.org/abs/2002.11649
+    #################
     assert polynomial_p.degree() <= k, "Poly P order must larger than poly Q order."
-    assert check_poly_parity(
-        polynomial_p, k), "Poly P parity doens't satisfy the condition"
+    assert check_poly_parity(polynomial_p, k), "Poly P parity doens't satisfy the condition"
     A_tilt, A_tilt_leading_coefficient = generate_A_tilt(polynomial_p)
     A_tilt_roots = generate_A_tilt_root(A_tilt)
     # algorithm find Q
@@ -346,12 +333,12 @@ def update_polynomial(phi: float, polynomial_p: Polynomial, polynomial_q: Polyno
     """
     Do calculation in equation 7 and equation 8.
     Args:
-        Polynomial_p: P(x)
-        polynomial_q: Q(x)
-        phi: angle from angle sequence
+        polynomial_p (Polynomial): P(x)
+        polynomial_q (Polynomial): Q(x)
+        phi (float): angle from angle sequence
 
     return:
-        updated p and q.
+        Polynomial: updated p and q.
     """
     # The input polynomial must have odd or odd parity.
     new_poly_p = (np.exp(-1j * phi) * Polynomial([0, 1]) * polynomial_p +
@@ -376,11 +363,11 @@ def generate_phase_angle(polynomial_p: Polynomial, polynomial_q: Polynomial, k: 
     p_l is the last non zero term of polynomial p and q_l-1 is second last non zero term of polynomial q.
 
     Args:
-    Polynomial_p: P(x)
-    polynomial_q: Q(x)
+    Polynomial_p (Polynomial): P(x)
+    polynomial_q (Polynomial): Q(x)
 
     Returns:
-        phase angle.
+        np.array: phase angle.
     """
     degree_p = polynomial_p.degree()
     degree_q = polynomial_q.degree()
@@ -419,10 +406,10 @@ def convert_phase_sequence(phase_sequence: list[float]):
     Convert the phase sequence in equation 13 to equation 15.
 
     Args:
-        phase_sequence: sequence of Rz rotation angle
+        phase_sequence (list[float]): sequence of Rz rotation angle
 
     Returns:
-        new_phase: new phase
+        list[float]: new phase
     """
     new_phase = []
     for i in range(len(phase_sequence)):
@@ -438,10 +425,10 @@ def negative_phase_sequence(phase_sequence: list[float]):
     Convert the phase sequence in equation 13 to equation 18.
     Hence, generate -phi sequence used for U_(-phi)
     Args:
-    phase_sequence: sequence of Rz rotation angle
+    phase_sequence (list[float]): sequence of Rz rotation angle
 
     Returns:
-        new_phase: new phase
+        list[float]: new phase
     """
     new_phase = []
     for i in range(len(phase_sequence)):
@@ -457,11 +444,11 @@ def projector_controller(ancilla_size: int, angle: float):
     make circuit in Figure 1, (b) of paper https://arxiv.org/abs/1806.01838.
 
     Args:
-        ancilla_size: ancilla qubit size
-        angle: the rotation angle embeds in Rz
+        ancilla_size (int): ancilla qubit size
+        angle (float): the rotation angle embeds in Rz
 
     Returns:
-        cg: composite gate
+        CompositeGate: composite gate calculate projector controller.
     """
     cg = CompositeGate()
     cg_x = CompositeGate()
