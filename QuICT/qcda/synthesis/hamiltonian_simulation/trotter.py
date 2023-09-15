@@ -6,8 +6,8 @@ from QuICT.simulation.state_vector import StateVectorSimulator
 import numpy as np
 
 
-def trotter(hamiltonian, t, eps, init_statevec=None, iterations=None):
-    '''
+def trotter(hamiltonian: np.ndarray, t: float, eps: float, init_statevec: np.ndarray=None, iterations: np.ndarray=None):
+    """
     This major function returns the trotter splitting circuit
     hmtn is input pauli string with coeff, gate and gate index
     eg. hmtn = [[1, 'X0', 'Z1', 'Y2'], [2, 'Z2']]
@@ -25,7 +25,18 @@ def trotter(hamiltonian, t, eps, init_statevec=None, iterations=None):
     error = 0.05
     initial state = [0, 0, 0, 1], which is |1>|1>
 
-    '''
+    This major function returns the trotter splitting circuit
+    Args:
+        hamiltonian: a pauli string represent the hamiltonian
+        t: solution time
+        eps: expected error
+        init_statevec: initial state vector
+        iterations: number of iteration
+
+    Returns:
+        circuit: a circuit compute trotter algorithm
+        circuit_dictionary: number of iterations of the circuit
+    """
 
     h = Hamiltonian(hamiltonian)
     m = len(h._pauli_str)
@@ -62,15 +73,21 @@ def trotter(hamiltonian, t, eps, init_statevec=None, iterations=None):
 
 
 def accurate_final_state(hamiltonian, t, init_statevec=None):  # accurate final state
-    '''
+    """
     This can check the accurate final state vector by using matrix multiplication
     NB: this only applys to circuits with small number of qubits(n), due to matrix size is 2^n
 
     By using diagonalisation for H matrix
     H = UDU^-1, U is unitary matrix of eigenvectors, D is diagonal matrix of eigenvalues
     exp(-iHt) = exp(-i UDU^(-1) t) = U * exp(-iDt) * U^(-1) = U * exp(-i Dkk t) * U^(-1)
+    Args:
+        hamiltonian: A n*n matrix represent the physical hamiltonian
+        t: evolution time
+        init_statevec: initial state
 
-    '''
+    Returns:
+        accuracy of the algorithm.
+    """
     h = Hamiltonian(hamiltonian)
     n = max(max(h._qubit_indexes)) + 1
     matrix = Hamiltonian.get_hamiton_matrix(h, n)
