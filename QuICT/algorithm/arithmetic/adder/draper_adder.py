@@ -1,7 +1,6 @@
 from numpy import pi
 
-from QuICT.core.gate import CompositeGate
-from QuICT.core.gate import CU1
+from QuICT.core.gate import CompositeGate, CU1
 from QuICT.algorithm.qft import QFT, IQFT
 
 from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError
@@ -53,13 +52,12 @@ class DrapperAdder(CompositeGate):
 
         super().__init__(name)
 
-        with self:
-            if not in_fourier:
-                QFT(qreg_size) & self._reg_b_list
-            # addition
-            for k in reversed(range(qreg_size)):
-                for j in range(k + 1):
-                    theta = pi / (1 << (k - j))
-                    CU1(theta) & [k, qreg_size + j]
-            if not out_fourier:
-                IQFT(qreg_size) & self._reg_b_list
+        if not in_fourier:
+            QFT(qreg_size) | self(self._reg_b_list)
+        # addition
+        for k in reversed(range(qreg_size)):
+            for j in range(k + 1):
+                theta = pi / (1 << (k - j))
+                CU1(theta) | self([k, qreg_size + j])
+        if not out_fourier:
+            IQFT(qreg_size) | self(self._reg_b_list)

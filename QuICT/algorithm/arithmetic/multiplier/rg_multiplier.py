@@ -1,8 +1,7 @@
 from typing import List, Optional
 from numpy import pi
 
-from QuICT.core.gate.composite_gate import CompositeGate
-from QuICT.core.gate import CU1, CCX
+from QuICT.core.gate import CompositeGate, CU1, CCX
 from QuICT.algorithm.qft import QFT, IQFT
 
 from QuICT.tools.exception.core import GateParametersAssignedError
@@ -50,16 +49,15 @@ class RGMultiplier(CompositeGate):
         super().__init__(name)
 
         # construct circuit
-        with self:
-            QFT(qreg_size + qreg_size_b) & self._reg_prod_list
-            # cumulatively add 'b << i' to result register controlled by a's i_th bit
-            for i in range(qreg_size):
-                self._build_ctrl_phi_shift_adder(
-                    reg_size_a=qreg_size_b,
-                    reg_size_b=qreg_size + qreg_size_b - i
-                ) & [qreg_size - 1 - i] + self._reg_b_list + self._reg_prod_list[:qreg_size + qreg_size_b - i]
+        QFT(qreg_size + qreg_size_b) | self(self._reg_prod_list)
+        # cumulatively add 'b << i' to result register controlled by a's i_th bit
+        for i in range(qreg_size):
+            self._build_ctrl_phi_shift_adder(
+                reg_size_a=qreg_size_b,
+                reg_size_b=qreg_size + qreg_size_b - i
+            ) | self([qreg_size - 1 - i] + self._reg_b_list + self._reg_prod_list[:qreg_size + qreg_size_b - i])
 
-            IQFT(qreg_size + qreg_size_b) & self._reg_prod_list
+        IQFT(qreg_size + qreg_size_b) | self(self._reg_prod_list)
 
     def _build_CCU1(self, theta) -> CompositeGate:
         """
@@ -67,12 +65,11 @@ class RGMultiplier(CompositeGate):
         """
         CCU1 = CompositeGate("CCU1")
 
-        with CCU1:
-            CU1(theta / 2) & [0, 1]
-            CCX & [0, 1, 2]
-            CU1(-theta / 2) & [0, 2]
-            CCX & [0, 1, 2]
-            CU1(theta / 2) & [0, 2]
+        CU1(theta / 2) | CCU1([0, 1])
+        CCX | CCU1([0, 1, 2])
+        CU1(-theta / 2) | CCU1([0, 2])
+        CCX | CCU1([0, 1, 2])
+        CU1(theta / 2) | CCU1([0, 2])
 
         return CCU1
 
@@ -91,10 +88,9 @@ class RGMultiplier(CompositeGate):
         reg_a = list(range(1, 1 + reg_size_a))
         reg_b = list(range(1 + reg_size_a, 1 + reg_size_a + reg_size_b))
 
-        with c_adder:
-            for k in range(reg_size_a):
-                for j in range(reg_size_b - k):
-                    theta = pi / (1 << (reg_size_b - k - 1 - j))
-                    self._build_CCU1(theta) & [ctrl, reg_a[-1 - k], reg_b[j]]
+        for k in range(reg_size_a):
+            for j in range(reg_size_b - k):
+                theta = pi / (1 << (reg_size_b - k - 1 - j))
+                self._build_CCU1(theta) | c_adder([ctrl, reg_a[-1 - k], reg_b[j]])
 
         return c_adder

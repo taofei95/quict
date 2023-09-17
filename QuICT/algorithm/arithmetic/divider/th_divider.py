@@ -234,15 +234,14 @@ class THRestoreDivider(CompositeGate):
         """
         iteration = CompositeGate()
 
-        with iteration:
-            # step 1
-            SubtractionModule(qreg_size) & list(range(1, 2 * qreg_size + 1))
-            # step 2
-            CX & [1, 0]
-            # step 3
-            CtrlAddNopModule(qreg_size) & list(range(2 * qreg_size + 1))
-            # step 4
-            X & [0]
+        # step 1
+        SubtractionModule(qreg_size) | iteration(list(range(1, 2 * qreg_size + 1)))
+        # step 2
+        CX | iteration([1, 0])
+        # step 3
+        CtrlAddNopModule(qreg_size) | iteration(list(range(2 * qreg_size + 1)))
+        # step 4
+        X | iteration(0)
 
         return iteration
 
