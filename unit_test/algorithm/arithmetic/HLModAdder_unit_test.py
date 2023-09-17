@@ -157,3 +157,7 @@ class TestHLModAdderGates(unittest.TestCase):
 
     def _unsigned_to_signed(self, value: int, bit_len: int):
         return value - (value >> (bit_len - 1)) * (2 ** bit_len)
+
+
+if __name__ == "__main__":
+    unittest.main()
