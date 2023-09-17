@@ -1,6 +1,5 @@
 from typing import Optional
-from QuICT.core.gate import CompositeGate
-from QuICT.core.gate import CCX, Barrier
+from QuICT.core.gate import CompositeGate, CCX, Barrier
 from QuICT.algorithm.arithmetic.adder import MuThCtrlAdder
 
 from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError

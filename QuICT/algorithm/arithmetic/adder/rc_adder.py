@@ -1,7 +1,6 @@
 from numpy import pi
 
-from QuICT.core.gate import Ry, CU3
-from QuICT.core.gate.composite_gate import CompositeGate
+from QuICT.core.gate import CompositeGate, Ry, CU3
 from QuICT.algorithm.qft import ry_QFT, ry_IQFT
 
 

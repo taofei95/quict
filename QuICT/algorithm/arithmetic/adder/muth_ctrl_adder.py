@@ -1,5 +1,4 @@
-from QuICT.core.gate.composite_gate import CompositeGate
-from QuICT.core.gate import CX, CCX
+from QuICT.core.gate import CompositeGate, CX, CCX
 
 from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError
 
