@@ -4,7 +4,8 @@ import unittest
 from QuICT.core import Circuit
 from QuICT.core.gate import H, X
 from QuICT.simulation.state_vector import StateVectorSimulator
-from QuICT.algorithm.tools import decode_counts_int, circuit_init
+from utils.pre_circuit import circuit_init
+from utils.post_circuit import decode_counts_int
 from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError
 from QuICT.algorithm.arithmetic.multiplier import MuThMultiplier
 

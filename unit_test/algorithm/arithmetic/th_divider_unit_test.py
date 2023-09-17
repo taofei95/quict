@@ -3,7 +3,8 @@ from numpy.random import randint
 from typing import List
 
 from QuICT.algorithm.arithmetic.divider import THRestoreDivider, THNonRestDivider
-from QuICT.algorithm.tools import circuit_init, decode_counts_int
+from utils.pre_circuit import circuit_init
+from utils.post_circuit import decode_counts_int
 from QuICT.core.circuit import Circuit
 from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError
@@ -183,3 +184,7 @@ class TestTHNonRestDivider(unittest.TestCase):
         counts = sv_sim.sample(shots=1)
 
         return decode_counts_int(counts, [qreg_size, qreg_size - 1, qreg_size])
+
+
+if __name__ == "__main__":
+    unittest.main()

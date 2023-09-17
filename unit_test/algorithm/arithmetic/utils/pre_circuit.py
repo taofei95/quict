@@ -2,8 +2,7 @@ from typing import List, Union
 from numpy import binary_repr
 
 from QuICT.core import Circuit
-from QuICT.core.gate import BasicGate, CompositeGate
-from QuICT.core.gate import X
+from QuICT.core.gate import BasicGate, CompositeGate, X
 
 
 def circuit_init(circuit: Circuit, qreg_list: List[int], init_val: int):

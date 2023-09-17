@@ -6,7 +6,8 @@ from QuICT.algorithm.arithmetic.adder import TRIOCarryAdder
 from QuICT.core.circuit import Circuit
 from QuICT.core.gate import X
 from QuICT.simulation.state_vector import StateVectorSimulator
-from QuICT.algorithm.tools import decode_counts_int, circuit_init
+from utils.pre_circuit import circuit_init
+from utils.post_circuit import decode_counts_int
 
 
 class TestTRIOCarryAdder(unittest.TestCase):
@@ -188,3 +189,7 @@ class TestTRIOCarryAdder(unittest.TestCase):
 
     def _unsigned_to_signed(self, value: int, bit_len: int):
         return value - (value >> (bit_len - 1)) * (2 ** bit_len)
+
+
+if __name__ == "__main__":
+    unittest.main()
