@@ -36,11 +36,11 @@ class MuThCtrlAdder(CompositeGate):
 
         self._reg_size = qreg_size
 
-        self._ctrl_bit = [0]
+        self._ctrl_bit = 0
         self._reg_a_list = list(range(1, 1 + qreg_size))
-        self._reg_carry = [1 + qreg_size]
+        self._reg_carry = 1 + qreg_size
         self._reg_b_list = list(range(qreg_size + 2, 2 * qreg_size + 2))
-        self._anci_list = [2 * qreg_size + 2]
+        self._anci_bit = 2 * qreg_size + 2
 
         super().__init__(name)
 
@@ -49,7 +49,7 @@ class MuThCtrlAdder(CompositeGate):
             CX | self([self._reg_a_list[i], self._reg_b_list[i]])
 
         # step 2
-        CCX | self(self._ctrl_bit + [self._reg_a_list[0]] + self._reg_carry)
+        CCX | self([self._ctrl_bit, self._reg_a_list[0], self._reg_carry])
         for i in range(qreg_size - 2):
             CX | self([self._reg_a_list[i + 1], self._reg_a_list[i]])
 
@@ -62,19 +62,19 @@ class MuThCtrlAdder(CompositeGate):
             ])
 
         # step 4
-        CCX | self([self._reg_b_list[0], self._reg_a_list[0]] + self._anci_list)
-        CCX | self(self._ctrl_bit + self._anci_list + self._reg_carry)
-        CCX | self([self._reg_b_list[0], self._reg_a_list[0]] + self._anci_list)
+        CCX | self([self._reg_b_list[0], self._reg_a_list[0], self._anci_bit])
+        CCX | self([self._ctrl_bit, self._anci_bit, self._reg_carry])
+        CCX | self([self._reg_b_list[0], self._reg_a_list[0], self._anci_bit])
 
         # step 5
         for i in range(qreg_size - 1):
-            CCX | self(self._ctrl_bit + [self._reg_a_list[i], self._reg_b_list[i]])
+            CCX | self([self._ctrl_bit, self._reg_a_list[i], self._reg_b_list[i]])
             CCX | self([
                 self._reg_b_list[i + 1],
                 self._reg_a_list[i + 1],
                 self._reg_a_list[i]
             ])
-        CCX | self(self._ctrl_bit + [self._reg_a_list[-1], self._reg_b_list[-1]])
+        CCX | self([self._ctrl_bit, self._reg_a_list[-1], self._reg_b_list[-1]])
 
         # step 6
         for i in range(qreg_size - 2):
