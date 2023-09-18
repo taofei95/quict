@@ -106,7 +106,7 @@ def permute_bit_string(max_int: int):
     return permute_list, num_qubits
 
 
-def prepare_G_state(coefficient_array: np.ndarray, summed_coefficient: float, phase_gate: bool=True):
+def prepare_G_state(coefficient_array: np.ndarray, summed_coefficient: float, phase_gate: bool = True):
     """
     Prepare |G> = sum_{i}(sqrt(coeffcient{i})/summed_coefficient* | i>)
     |i> in standard basis
@@ -129,7 +129,7 @@ def prepare_G_state(coefficient_array: np.ndarray, summed_coefficient: float, ph
     return oracle_G
 
 
-def matrix_to_control_gate(matrix_array: np.ndarray, control_bit: int = 1, phase_gate: bool=True):
+def matrix_to_control_gate(matrix_array: np.ndarray, control_bit: int = 1, phase_gate: bool = True):
     """
     make a array of matrix to control matrix.
     if control bits set to 1. Then do the math |1><1| tensor matrix + |0><0| tensor I
@@ -317,7 +317,8 @@ class UnitaryMatrixEncoding:
         self.method = method
         assert self.method == "LCU" or self.method == "conj", "Only LCU or conj method are provided."
 
-    def execute(self, coefficient_array: np.ndarray, matrix_array: np.ndarray, complete: bool=False, phase_gate: bool=True):
+    def execute(self, coefficient_array: np.ndarray, matrix_array: np.ndarray,
+                complete: bool = False, phase_gate: bool = True):
         """
         if LCU mode, generate circuit of equation 7 of paper https://arxiv.org/abs/2002.11649
         if CONJ mode, generate circuit that equivalent to matrix    [H, sqrt(I-H H)]
