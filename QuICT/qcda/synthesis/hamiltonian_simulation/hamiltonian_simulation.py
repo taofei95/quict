@@ -46,7 +46,7 @@ class HamiltonianSimulation():
         """
         if self.method == "TS":
             coefficient_array, hamiltonian_array = hamiltonian
-            assert len(initial_state) == len(hamiltonian_array[0][0]), ("The initial state size must equal to 
+            assert len(initial_state) == len(hamiltonian_array[0][0]), ("The initial state size must equal to"
                                                                         "hamiltonian row number.")
             circuit, circuit_info_dictionary = truncate_series(coefficient_array, hamiltonian_array,
                                                                time,
