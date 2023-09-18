@@ -106,7 +106,7 @@ def permute_bit_string(max_int: int):
     return permute_list, num_qubits
 
 
-def prepare_G_state(coefficient_array: np.ndarray, summed_coefficient: float):
+def prepare_G_state(coefficient_array: np.ndarray, summed_coefficient: float, phase_gate: bool=True):
     """
     Prepare |G> = sum_{i}(sqrt(coeffcient{i})/summed_coefficient* | i>)
     |i> in standard basis
@@ -124,12 +124,12 @@ def prepare_G_state(coefficient_array: np.ndarray, summed_coefficient: float):
         state_vector.append(
             np.sqrt(coefficient_array[i] / np.abs(summed_coefficient)))
     state_vector = np.sqrt(coefficient_array / summed_coefficient)
-    QSP = QuantumStatePreparation('uniformly_gates', keep_phase=True)
+    QSP = QuantumStatePreparation('uniformly_gates', keep_phase=phase_gate)
     oracle_G = QSP.execute(state_vector)
     return oracle_G
 
 
-def matrix_to_control_gate(matrix_array: np.ndarray, control_bit: int=1):
+def matrix_to_control_gate(matrix_array: np.ndarray, control_bit: int=1, phase_gate: bool=True):
     """
     make a array of matrix to control matrix.
     if control bits set to 1. Then do the math |1><1| tensor matrix + |0><0| tensor I
@@ -144,12 +144,11 @@ def matrix_to_control_gate(matrix_array: np.ndarray, control_bit: int=1):
     assert control_bit == 1 or control_bit == 0, "control bits must be 0 or 1"
     matrix_dimension = int(np.log2(len(matrix_array[0][0])))
     # prepare control gates gates
-    identity_matrix = np.identity(
-        2 ** matrix_dimension).astype('complex128')
+    identity_matrix = np.identity(2 ** matrix_dimension).astype('complex128')
     project_zero = np.array([[1, 0], [0, 0]], dtype='complex128')
     project_one = np.array([[0, 0], [0, 1]], dtype='complex128')
-    UD = UnitaryDecomposition(include_phase_gate=True)
-    GT = GateTransform(keep_phase=True)
+    UD = UnitaryDecomposition(include_phase_gate=phase_gate)
+    GT = GateTransform(keep_phase=phase_gate)
     # Do unitary decomposition for sake of saving running time when computing matrix
     # or do simulation
     control_gate_list = []
@@ -311,14 +310,14 @@ def conjugation_encoding(hamiltonian: np.ndarray):
 class UnitaryMatrixEncoding:
     def __init__(self, method: str):
         """
-        
+
         Args:
-            method (str): either "LCU" linear combination of unitary or "conj" method 
+            method (str): either "LCU" linear combination of unitary or "conj" method
         """
         self.method = method
         assert self.method == "LCU" or self.method == "conj", "Only LCU or conj method are provided."
 
-    def execute(self, coefficient_array: np.ndarray, matrix_array: np.ndarray, complete: bool = False):
+    def execute(self, coefficient_array: np.ndarray, matrix_array: np.ndarray, complete: bool=False, phase_gate: bool=True):
         """
         if LCU mode, generate circuit of equation 7 of paper https://arxiv.org/abs/2002.11649
         if CONJ mode, generate circuit that equivalent to matrix    [H, sqrt(I-H H)]
@@ -347,19 +346,16 @@ class UnitaryMatrixEncoding:
         if self.method == "LCU":
             G = prepare_G_state(coefficient_array, summed_coefficient)
             G_inverse = G.inverse()
-            control_unitary_gates, _ = matrix_to_control_gate(unitary_matrix_array)
+            control_unitary_gates, _ = matrix_to_control_gate(unitary_matrix_array, phase_gate=phase_gate)
             unitary_encoding, unitary_encoding_inverse = multicontrol_unitary(control_unitary_gates)
-
             if complete:
                 cg = CompositeGate()
                 G | cg
                 unitary_encoding | cg
                 G_inverse | cg
-
                 return cg
             elif not complete:
                 return G, G_inverse, unitary_encoding, unitary_encoding_inverse
         if self.method == "conj":
-            unitary_encoding, unitary_encoding_width = conjugation_encoding(
-                hamiltonian)
+            unitary_encoding, unitary_encoding_width = conjugation_encoding(hamiltonian)
             return unitary_encoding, unitary_encoding_width
