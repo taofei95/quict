@@ -3,7 +3,7 @@ import numpy as np
 from QuICT.simulation import state_vector
 
 if __name__ == '__main__':
-    #H = 1 * (X_0 pauli tensor Y_1) + 1 * (Z_0 pauli tensor X_1)
+    # H = 1 * (X_0 pauli tensor Y_1) + 1 * (Z_0 pauli tensor X_1)
     HS = HamiltonianSimulation("Trotter")
     circuit, _ = HS.execute(hamiltonian=[[1, 'X0', 'Y1'], [1, 'Z0', 'X1']],
                             time=1,
@@ -20,9 +20,9 @@ if __name__ == '__main__':
     initial_state = np.array([0, 1])
     HS = HamiltonianSimulation("TS")
     circuit, circuit_dictionary = HS.execute(hamiltonian=[coefficient_array, unitary_matrix_array],
-                                               time=50,
-                                               initial_state=initial_state,
-                                               error=0.1)
+                                            time=50,
+                                            initial_state=initial_state,
+                                            error=0.1)
     circuit.draw("command")
     vector = state_vector.StateVectorSimulator()
     vector = vector.run(circuit)
