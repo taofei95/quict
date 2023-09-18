@@ -116,7 +116,7 @@ class QuantumSignalProcessing:
         """
         matrix_dimension = int(np.log2(len(matrix_array[0][0])))
         UME = UnitaryMatrixEncoding("LCU")
-        U = UME.execute(coefficient_array, matrix_array, complete=True)
+        U = UME.execute(coefficient_array, matrix_array, complete=True, phase_gate=False)
         circuit_width = U.width()
         cir = Circuit(circuit_width + 1)
         k = len(self.angle_sequence)
@@ -131,7 +131,7 @@ class QuantumSignalProcessing:
         projector_controller(
             int(circuit_width - matrix_dimension), self.angle_sequence[0]) | cir
         H | cir(0)
-        GPhase(-np.pi / 2) | cir(0)
+        GPhase(-np.pi/2-np.pi*((k/2)%4)) | cir(0)
         return cir
 
 
