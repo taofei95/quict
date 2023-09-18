@@ -6,24 +6,29 @@ class HamiltonianSimulation():
     def __init__(self, method):
         """
         Args:
-             method (str): either "TS" or "Trotter"
+             method: string, either Ts or Trotter
         """
         self.method = method
         assert self.method == "TS" or self.method == "Trotter", "Please select 'Trotter'or 'TS' method."
 
     def execute(self, hamiltonian, time, initial_state, error=0.1, max_order=20):
-        """
-            returned dictionary include following information if "TS" method:
-            c_width | circuit with
-            time_steps | Time steps to give error bounded by 0.1 in each time step iteration
-            order | order to truncated taylor series
-            summed_coefficient | summed coefficient of equation 6(See TS method)
-            expected_error | bound error
-            amplification_size | expect 2, but in most of case it is a float number close to 2.
-            approximate_time_evolution_operator | the approximated e^-iHt/r
 
-            returned dictionary include following information if "Trotter" method:
-            iterations | number of iteration rerun the circuit
+        """
+            if ts method
+            #########################################
+            c_width circuit with
+            time_steps Time steps to give error bounded by 0.1 in each time step iteration
+            order order to truncated taylor series
+            summed_coefficient summed coefficient of equation 6(See TS method)
+            expected_error bound error
+            amplification_size expect 2, but in most of case it is a float number close to 2.
+            approximate_time_evolution_operator the approximated e^-iHt/r
+
+            Noting that, to get e^-iHt, you take measurements on ancilla qubit, get the final state,
+            Then rerun the circuit with initial state prepares with the last final state.
+            ##########################################
+            if trotter method
+            dictionary contain number of iterations of trotter segment circuit
         Args:
             hamiltonian (np.ndarray): string, either Ts or Trotter
             time (float): string, either Ts or Trotter
@@ -34,8 +39,6 @@ class HamiltonianSimulation():
             if TS method:
             Circuit: QuICT circuit simulate e^-iHt/r
             dict: A dictionary contain following information.
-            Noting that, to get e^-iHt, you take measurements on ancilla qubit, get the final state,
-            Then rerun the circuit with initial state prepares with the last final state.
 
             If Trotter method:
             Circuit: a circuit calculate e^-iHt
