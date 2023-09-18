@@ -100,7 +100,7 @@ def calculate_target_matrix(hamiltonian: np.ndarray, time: float):
         ComposteGate: A composite gate
     """
     assert check_hermitian(hamiltonian), "Hamiltonian is not hermitian"
-    matrix = scipy.expm(-1j * hamiltonian * time)
+    matrix = scipy.linalg.expm(-1j * hamiltonian * time)
     return matrix
 
 
