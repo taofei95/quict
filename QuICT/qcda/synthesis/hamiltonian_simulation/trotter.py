@@ -2,11 +2,12 @@ from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import *
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.tools.exception.core import *
+from .unitary_matrix_encoding import prepare_G_state
 from QuICT.simulation.state_vector import StateVectorSimulator
 import numpy as np
 
 
-def trotter(hamiltonian: np.ndarray, t: float, eps: float, init_statevec: np.ndarray=None, iterations: np.ndarray=None):
+def trotter(hamiltonian: np.ndarray, t: float, eps: float, initial_state: np.ndarray):
     """
     This major function returns the trotter splitting circuit
     hamiltonian is input pauli string with coeff, gate and gate index
@@ -45,7 +46,7 @@ def trotter(hamiltonian: np.ndarray, t: float, eps: float, init_statevec: np.nda
     cgate = CompositeGate()
     cir = Circuit(n)
     gate_dict = {"X": X, "Y": Y, "Z": Z}
-
+    initial_state_vector = prepare_G_state(initial_state, np.sum(initial_state), phase_gate=True)
     for qbt_index, pauli_gate, ceoff in zip(h._qubit_indexes, h._pauli_gates, h._coefficients):
         for gateindex, gate in zip(qbt_index, pauli_gate):
             if gate_dict[gate] == X:
@@ -64,10 +65,11 @@ def trotter(hamiltonian: np.ndarray, t: float, eps: float, init_statevec: np.nda
                 H | cgate(gateindex)
             elif gate_dict[gate] == Y:
                 U2(np.pi / 2, np.pi / 2) | cgate(gateindex)
-    cgate | cir
+    initial_state_vector | cir
+    for i in range(iterations):
+        cgate | cir
     circuit_info_dictionary = {
         "iterations": iterations
-
     }
     return cir, circuit_info_dictionary
 
