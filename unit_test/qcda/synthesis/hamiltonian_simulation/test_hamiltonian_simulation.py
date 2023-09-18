@@ -12,9 +12,7 @@ def test_hamiltonian_simulation():
     initial_state = np.array([1, 0, 0, 0])
     HS = HamiltonianSimulation("TS")
     circuit, circuit_dictionary = HS.execute(hamiltonian=[coefficient_array, unitary_matrix_array],
-                                            time=23,
-                                            initial_state=initial_state,
-                                            error=0.01)
+                                            time=23, initial_state=initial_state, error=0.01)
     circuit.draw("command")
     vector = state_vector.StateVectorSimulator()
     vector = vector.run(circuit)
