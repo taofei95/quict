@@ -30,9 +30,9 @@ The symbol used in the code is consistent with the symbol that we introduced abo
 class SignalAngleFinder:
     def __init__(self, tolerance=1e-6):
         """
-        
+
         Args:
-            tolerance (float): The maximum deviation between input polynomial P and signal processing 
+            tolerance (float): The maximum deviation between input polynomial P and signal processing
                        simulated polynomial
         """
         self.tolerance = tolerance
@@ -64,7 +64,7 @@ class QuantumSignalProcessing:
     def __init__(self, angle_sequence: list[float]):
         """
         Args:
-            angle_sequence (list[float]): The angle sequence shapes polynomial 
+            angle_sequence (list[float]): The angle sequence shapes polynomial
         """
         self.angle_sequence = angle_sequence
 
@@ -73,7 +73,7 @@ class QuantumSignalProcessing:
         generate the circuit in equation A7 from paper:
         https://arxiv.org/abs/2105.02859
         Args:
-           input_x (float): x of P(x)
+            input_x (float): x of P(x)
         Returns:
             np.ndarray: Expected matrix that encoding P(x) in the top left hand corner.
         """
@@ -88,7 +88,7 @@ class QuantumSignalProcessing:
         generate the circuit in equation A7 from paper:
         https://arxiv.org/abs/2105.02859
         Args:
-           input_x (float): x of P(x)
+            input_x (float): x of P(x)
         Returns:
             QuICT.core.gate.CompositeGate
         """
@@ -109,8 +109,8 @@ class QuantumSignalProcessing:
         https://arxiv.org/abs/2002.11649
         This is the generalized circuit that use one less ancilla qubit
         Args:
-           coefficient_array (np.array): array of coefficient of linear combination  of hamiltonian.
-           matrix_array (np.ndarray): array of matrix of linear combination of hamiltonian.
+            coefficient_array (np.array): array of coefficient of linear combination  of hamiltonian.
+            matrix_array (np.ndarray): array of matrix of linear combination of hamiltonian.
         Returns:
             Circuit: QSP circuit
         """
@@ -124,12 +124,10 @@ class QuantumSignalProcessing:
         for i in range(k - 1):
             if i != 0:
                 Z | cir(0)
-            projector_controller(
-                int(circuit_width - matrix_dimension), self.angle_sequence[-i - 1]) | cir
+            projector_controller(int(circuit_width - matrix_dimension), self.angle_sequence[-i - 1]) | cir
             U | cir([i + 1 for i in range(circuit_width)])
         Z | cir(0)
-        projector_controller(
-            int(circuit_width - matrix_dimension), self.angle_sequence[0]) | cir
+        projector_controller(int(circuit_width - matrix_dimension), self.angle_sequence[0]) | cir
         H | cir(0)
         GPhase(-np.pi/2-np.pi*((k/2)%4)) | cir(0)
         return cir
@@ -139,9 +137,9 @@ def check_poly_parity(poly_p: Polynomial, k: int, tolerance: float = 1e-6):
     """
     Check Theorem 3 condition 2.
     Args:
-       poly_p (Polynomial): polynomial p
-       k (int): Input order
-       tolerance (float): treat residue as zero.
+        poly_p (Polynomial): polynomial p
+        k (int): Input order
+        tolerance (float): treat residue as zero.
     Returns:
         bool: true if poly parity satisfy condition
     """
