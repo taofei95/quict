@@ -519,6 +519,12 @@ class ComplexGateBuilder:
             cgate = cls.build_ccrz(parg)
         elif gate_type == GateType.cswap:
             cgate = cls.build_cswap()
+        elif gate_type == GateType.iswap:
+            cgate = cls.build_iswap()
+        elif gate_type == GateType.iswapdg:
+            cgate = cls.build_iswapdg()
+        elif gate_type == GateType.sqiswap:
+            cgate = cls.build_sqiswap()
         else:
             return None
 
@@ -656,6 +662,18 @@ class ComplexGateBuilder:
             (GateType.cx, [2, 1], None),
         ]
 
+    @staticmethod
+    def build_iswap():
+        return [(GateType.fsim, [0, 1], [-np.pi / 2]),]
+
+    @staticmethod
+    def build_iswapdg():
+        return [(GateType.fsim, [0, 1], [np.pi / 2]),]
+
+    @staticmethod
+    def build_sqiswap():
+        return [(GateType.fsim, [0, 1], [-np.pi / 4]),]
+
 
 class InverseGate:
     """ The class of all Inverse functions for Quantum Gate. """
@@ -667,6 +685,9 @@ class InverseGate:
         GateType.sw: (GateType.u2, [3 * np.pi / 4, 5 * np.pi / 4]),
         GateType.t: GateType.tdg,
         GateType.tdg: GateType.t,
+        GateType.iswap: GateType.iswapdg,
+        GateType.iswapdg: GateType.iswap,
+        GateType.sqiswap: (GateType.fsim, [np.pi / 4, 0]),
     }
     __INVERSE_GATE_WITH_NEGATIVE_PARAMS = [
         GateType.u1,
