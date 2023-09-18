@@ -6,7 +6,7 @@ class HamiltonianSimulation():
     def __init__(self, method):
         """
         Args:
-             method: string, either Ts or Trotter
+             method (str): either Ts or Trotter
         """
         self.method = method
         assert self.method == "TS" or self.method == "Trotter", "Please select 'Trotter'or 'TS' method."
