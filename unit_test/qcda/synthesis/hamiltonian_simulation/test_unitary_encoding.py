@@ -29,7 +29,8 @@ def test_unitary_matrix_encoding_conj():
     UME = UnitaryMatrixEncoding("conj")
     circuit, circuit_width = UME.execute(coefficient_array, matrix_array)
     circuit_matrix = circuit.matrix()
-    circuit_matrix = np.array([[circuit_matrix[0][0], circuit_matrix[0][1]], [circuit_matrix[1][0],
-                                circuit_matrix[1][1]]])
+    circuit_matrix = np.array(
+        [[circuit_matrix[0][0], circuit_matrix[0][1]], [circuit_matrix[1][0], circuit_matrix[1][1]]]
+    )
     expected_matrix = np.array([[0.2, 0.3], [0.3, -0.2]])
     assert np.allclose(expected_matrix, circuit_matrix), "Circuit matrix doesn't true."

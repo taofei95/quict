@@ -17,10 +17,12 @@ if __name__ == '__main__':
     unitary_matrix_array = np.array([x, y, z])
     initial_state = np.array([0, 1])
     HS = HamiltonianSimulation("TS")
-    circuit, circuit_dictionary = HS.execute(hamiltonian=[coefficient_array, unitary_matrix_array],
-                                            time=50,
-                                            initial_state=initial_state,
-                                            error=0.1)
+    circuit, circuit_dictionary = HS.execute(
+        hamiltonian=[coefficient_array, unitary_matrix_array],
+        time=50,
+        initial_state=initial_state,
+        error=0.1
+    )
     circuit.draw("command")
     vector = state_vector.StateVectorSimulator()
     vector = vector.run(circuit)
