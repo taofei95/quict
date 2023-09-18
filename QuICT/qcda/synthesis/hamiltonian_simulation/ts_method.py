@@ -160,7 +160,8 @@ def calculate_approximate_matrix(hamiltonian: np.ndarray, order: int, time: floa
     return approximate_hamiltonian
 
 
-def truncate_series(coefficient_array: np.ndarray, matrix_array: np.ndarray, time: float, error: float, max_order: int, initial_state: np.ndarray):
+def truncate_series(coefficient_array: np.ndarray, matrix_array: np.ndarray, 
+                    time: float, error: float, max_order: int, initial_state: np.ndarray):
     """
     https://arxiv.org/abs/1412.4687
     Let hamiltonian satisfy:
