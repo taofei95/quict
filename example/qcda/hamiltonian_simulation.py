@@ -6,9 +6,7 @@ if __name__ == '__main__':
     # H = 1 * (X_0 pauli tensor Y_1) + 1 * (Z_0 pauli tensor X_1)
     HS = HamiltonianSimulation("Trotter")
     circuit, _ = HS.execute(hamiltonian=[[1, 'X0', 'Y1'], [1, 'Z0', 'X1']],
-                            time=1,
-                            initial_state=[0, 0, 0, 1],
-                            error=0.05)
+                            time=1, initial_state=[0, 0, 0, 1], error=0.05)
     circuit.draw("command")
     print(circuit.matrix())
 
