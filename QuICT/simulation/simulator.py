@@ -155,4 +155,3 @@ class Simulator:
         self._result_recorder.record_sample(sample_result)
 
         return self._result_recorder.__dict__()
-

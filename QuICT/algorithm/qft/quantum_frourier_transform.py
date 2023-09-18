@@ -5,7 +5,7 @@ from QuICT.core.gate import H, CU1, CompositeGate
 
 class QFT(CompositeGate):
     """ Implement a QFT Gates. """
-    def __init__(self, targets: int, name: str = None):
+    def __init__(self, targets: int, name: str = "QFT"):
         """
         Args:
             targets (int): The qubits' number.
@@ -33,7 +33,7 @@ class QFT(CompositeGate):
 
 class IQFT(CompositeGate):
     """ Implement an IQFT Gates. """
-    def __init__(self, targets: int, name: str = None):
+    def __init__(self, targets: int, name: str = "IQFT"):
         """
         Args:
             targets (int): The qubits' number.

@@ -4,8 +4,7 @@ from typing import List
 
 from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError
 
-from QuICT.core.gate import X, CX, CU3, Swap, CSwap
-from QuICT.core.gate.composite_gate import CompositeGate
+from QuICT.core.gate import CompositeGate, X, CX, CU3, Swap, CSwap
 from QuICT.algorithm.arithmetic.adder import RCFourierAdderWired
 from QuICT.algorithm.qft import ry_QFT, ry_IQFT
 

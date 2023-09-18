@@ -284,6 +284,7 @@ class Circuit(CircuitBased):
             else:
                 gate_qidxes = list(range(gates.width()))
 
+        assert len(gate_qidxes) <= self.width(), "Circuit cannot append any Gate/CompositeGate which larger than self."
         if isinstance(gates, Circuit):
             gates = gates.to_compositegate()
             if gates.width() != len(gate_qidxes):

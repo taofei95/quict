@@ -57,7 +57,7 @@ class CartanKAKDecomposition(object):
             state = np.random.default_rng(i)
             M2real = state.normal() * M2.real + state.normal() * M2.imag
             _, P = np.linalg.eigh(M2real)
-            D = P.T.dot(M2).dot(P).diagonal()
+            D = np.diagonal(P.T.dot(M2).dot(P))
             if np.allclose(P.dot(np.diag(D)).dot(P.T), M2, rtol=1.0e-6, atol=1.0e-6):
                 break
         else:

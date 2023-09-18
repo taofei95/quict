@@ -1,7 +1,6 @@
 from numpy import pi
 
-from QuICT.core.gate import Ry, CU3
-from QuICT.core.gate.composite_gate import CompositeGate
+from QuICT.core.gate import CompositeGate, Ry, CU3
 from QuICT.algorithm.qft import ry_QFT, ry_IQFT
 
 
@@ -23,7 +22,7 @@ class RCFourierAdderWired(CompositeGate):
         controlled: bool = False,
         in_fourier: bool = False,
         out_fourier: bool = False,
-        name: str = None
+        name: str = "RCAdder"
     ):
         """
             Construct the adder circuit that adds 'addend' to a quantum
