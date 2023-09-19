@@ -1,5 +1,6 @@
-from QuICT.qcda.synthesis.hamiltonian_simulation import *
 import numpy as np
+
+from QuICT.qcda.synthesis.hamiltonian_simulation import *
 from QuICT.simulation import state_vector
 
 if __name__ == '__main__':

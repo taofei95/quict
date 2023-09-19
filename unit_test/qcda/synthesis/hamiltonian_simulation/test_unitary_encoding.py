@@ -1,6 +1,7 @@
-from QuICT.qcda.synthesis.hamiltonian_simulation.unitary_matrix_encoding import UnitaryMatrixEncoding
 import numpy as np
+
 from QuICT.core.gate import X, Y, Z
+from QuICT.qcda.synthesis.hamiltonian_simulation.unitary_matrix_encoding import UnitaryMatrixEncoding
 
 
 def test_unitary_matrix_encoding_lcu():

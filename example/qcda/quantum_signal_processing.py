@@ -1,7 +1,8 @@
-from QuICT.qcda.synthesis.quantum_signal_processing.quantum_signal_processing import *
-from numpy.polynomial.polynomial import Polynomial
 import numpy as np
+from numpy.polynomial.polynomial import Polynomial
 import matplotlib.pyplot as plt
+
+from QuICT.qcda.synthesis.quantum_signal_processing.quantum_signal_processing import *
 
 if __name__ == "__main__":
     SAF = SignalAngleFinder()

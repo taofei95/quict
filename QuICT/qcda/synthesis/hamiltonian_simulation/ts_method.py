@@ -1,7 +1,9 @@
 import math
+import logging
+
 import numpy as np
 import scipy
-import logging
+
 from QuICT.core.gate import CompositeGate, X, Z, CZ, CCZ, MultiControlToffoli, H
 from QuICT.core import Circuit
 from .unitary_matrix_encoding import *

@@ -1,7 +1,10 @@
+import math
+import itertools
+
 import numpy as np
+
 from QuICT.core.gate import MultiControlToffoli, X, CompositeGate
 from QuICT.qcda.synthesis import QuantumStatePreparation, UnitaryDecomposition, GateTransform
-import itertools
 ##########################################
 # Following code do stardard-form encoding of a linear combination of Unitaries
 
@@ -50,7 +53,6 @@ def read_unitary_matrix(coefficient_array: np.ndarray, unitary_matrix_array: np.
         np.ndarray: input coefficient array but in complex 128 type
         np.ndarray: input array but in complex 128 type
         float: summed cofficient array
-
     """
     unitary_matrix = unitary_matrix_array[0]
     assert unitary_matrix.shape[0] == unitary_matrix.shape[1], "Not a square matrix"
@@ -221,17 +223,17 @@ def product_gates(coefficient_array: np.ndarray, matrix_array: np.ndarray, order
                 cg = stretch_gates(
                     control_gates[permute_array[i][length_permute_array - j - 1]], cg)
             mod_k = k % 4
-            if (-1j)**mod_k == -1j:
+            if mod_k == 1:
                 cg = stretch_gates(global_phase_gate_negative, cg)
-            elif (-1j)**mod_k == 1j:
+            elif mod_k == 3:
                 cg = stretch_gates(global_phase_gate_positive, cg)
-            elif (-1j)**mod_k == -1:
+            elif mod_k == 2:
                 cg = stretch_gates(global_phase_gate_minus, cg)
 
             gate_list.append(cg)
 
             coefficient_list.append(
-                (((time / time_step) ** k) / np.math.factorial(k)) * temp_coefficient)
+                (((time / time_step) ** k) / math.factorial(k)) * temp_coefficient)
 
     coefficient_array = np.array(coefficient_list)
     return coefficient_array, gate_list

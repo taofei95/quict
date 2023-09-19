@@ -1,6 +1,7 @@
-from QuICT.qcda.synthesis.hamiltonian_simulation import HamiltonianSimulation, trotter
-from QuICT.simulation import state_vector
 import numpy as np
+
+from QuICT.qcda.synthesis.hamiltonian_simulation import HamiltonianSimulation, accurate_final_state
+from QuICT.simulation import state_vector
 
 
 def test_hamiltonian_simulation():
@@ -28,7 +29,7 @@ def test_hamiltonian_simulation():
         initial_state=np.array([0, 0, 0, 1]),
         error=0.05
     )
-    final_state = trotter.accurate_final_state(
+    final_state = accurate_final_state(
         [[1, 'X0', 'Y1'], [1, 'Z0', 'X1']],
         1, init_statevec=np.array([0, 0, 0, 1]))
     assert np.allclose(circuit.matrix()[:, 0], final_state), "Trotter method fails"

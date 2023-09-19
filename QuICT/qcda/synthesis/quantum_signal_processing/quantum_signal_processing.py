@@ -1,7 +1,10 @@
+from typing import List
+
 import numpy as np
 from numpy.polynomial.polynomial import Polynomial
-from QuICT.core.gate import H, Z, X, Rz, Rx, GPhase, CompositeGate, MultiControlToffoli
+
 from QuICT.core import Circuit
+from QuICT.core.gate import H, Z, X, Rz, Rx, GPhase, CompositeGate, MultiControlToffoli
 from QuICT.qcda.synthesis.hamiltonian_simulation.unitary_matrix_encoding import UnitaryMatrixEncoding
 #######################################################
 """
@@ -60,7 +63,7 @@ class QuantumSignalProcessing:
     find signal matrix and signal circuit
     """
 
-    def __init__(self, angle_sequence: list[float]):
+    def __init__(self, angle_sequence: List[float]):
         """
         Args:
             angle_sequence (list[float]): The angle sequence shapes polynomial
@@ -399,7 +402,7 @@ def generate_phase_angle(polynomial_p: Polynomial, polynomial_q: Polynomial, k: 
 
 # Following code convert angle sequence to another convention
 # https://arxiv.org/abs/2002.11649
-def convert_phase_sequence(phase_sequence: list[float]):
+def convert_phase_sequence(phase_sequence: List[float]):
     """
     Convert the phase sequence in equation 13 to equation 15.
 
@@ -418,7 +421,7 @@ def convert_phase_sequence(phase_sequence: list[float]):
     return new_phase
 
 
-def negative_phase_sequence(phase_sequence: list[float]):
+def negative_phase_sequence(phase_sequence: List[float]):
     """
     Convert the phase sequence in equation 13 to equation 18.
     Hence, generate -phi sequence used for U_(-phi)

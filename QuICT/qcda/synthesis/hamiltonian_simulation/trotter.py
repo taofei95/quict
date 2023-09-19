@@ -1,10 +1,10 @@
+import numpy as np
+
 from QuICT.algorithm.quantum_machine_learning.utils.hamiltonian import *
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 from QuICT.tools.exception.core import *
 from .unitary_matrix_encoding import prepare_G_state
-from QuICT.simulation.state_vector import StateVectorSimulator
-import numpy as np
 
 
 def trotter(hamiltonian: np.ndarray, t: float, eps: float, initial_state: np.ndarray):
