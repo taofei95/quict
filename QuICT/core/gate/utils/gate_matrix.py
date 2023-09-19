@@ -664,15 +664,15 @@ class ComplexGateBuilder:
 
     @staticmethod
     def build_iswap():
-        return [(GateType.fsim, [0, 1], [-np.pi / 2]),]
+        return [(GateType.fsim, [0, 1], [-np.pi / 2]), ]
 
     @staticmethod
     def build_iswapdg():
-        return [(GateType.fsim, [0, 1], [np.pi / 2]),]
+        return [(GateType.fsim, [0, 1], [np.pi / 2]), ]
 
     @staticmethod
     def build_sqiswap():
-        return [(GateType.fsim, [0, 1], [-np.pi / 4]),]
+        return [(GateType.fsim, [0, 1], [-np.pi / 4]), ]
 
 
 class InverseGate:
