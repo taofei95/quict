@@ -6,7 +6,7 @@ from QuICT.core.noise import (
     BitflipError, DampingError, DepolarizingError, PauliError, PhaseflipError, PhaseBitflipError,
     NoiseModel, ReadoutError
 )
-from QuICT.simulation.density_matrix.density_matrix_simulator import DensityMatrixSimulator
+from QuICT.simulation.density_matrix import DensityMatrixSimulator
 
 
 def build_dampling_noise():
@@ -29,7 +29,7 @@ def build_dampling_noise():
     return nm
 
 
-def build_pauil_noise():
+def build_pauli_noise():
     pauil_error_rate = 0.4
     # bitflip pauilerror
     bf_err = BitflipError(pauil_error_rate)

@@ -40,9 +40,12 @@ class QuantumMachinebenchmark:
     def _get_random_circuit(self, level: int, q_number: int, ins_set, layout, is_measure):
         cir_list = []
         gate_prob = range(2 + (level - 1) * 4, 2 + level * 4)
-        prob = [1 - level / 10, level / 10]
+        pro_s = level / 10
 
-        gate_type = [random.choice(ins_set.one_qubit_gates), ins_set.two_qubit_gate]
+        len_s, len_d = len(ins_set.one_qubit_gates), len([ins_set.two_qubit_gate])
+        prob = [(1 - pro_s) / len_s] * len_s + [pro_s / len_d] * len_d
+
+        gate_type = ins_set.one_qubit_gates + [ins_set.two_qubit_gate]
 
         for gates in gate_prob:
             cir = Circuit(wires=q_number, topology=layout)

@@ -813,7 +813,6 @@ class CNFSATOracle:
             variable_data = [int(x) for x in variable_data]
             if cls.check_solution(variable_data, variable_number, clause_number, CNF_data):
                 solutions.append(variable_data)
-                print(variable_data)
 
         return len(solutions)
 
