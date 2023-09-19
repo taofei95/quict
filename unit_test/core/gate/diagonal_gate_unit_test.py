@@ -1,6 +1,8 @@
 #from itertools import permutations
 import numpy as np
 from QuICT.core.gate import DiagonalGate
+#print the whole array
+#np.set_printoptions(threshold=np.inf)
 
 #from QuICT.core.gate import *
 from QuICT.core import Circuit
@@ -77,38 +79,74 @@ def test_linear_fjk():
     print(resu)
 
 def test_with_aux_qubit():
-    n = 4 #number of target qubit
-    m = 8 #number of ancillary qubit
+    n = 2 #number of target qubit
+    m = 4 #number of ancillary qubit
     nn=DiagonalGate(n,m)
     #nn.target = 4
-
     #nn.aux = 8
-    theta = 2 * np.pi * np.random.random(1 << n)
+    #theta = 2 * np.pi * np.random.random(1 << n)
+    theta = np.append([0], 2 * np.pi * np.random.random((1 << n) - 1))
+
     size = n+m+1
     circuit = Circuit(size)
     gates = nn.with_aux_qubit(theta)
     gates | circuit
     #circuit.draw(filename='test_with_aux_qubit_n=2,m=4.jpg', flatten=True)
     matrix = gates.matrix()
-
     print(matrix)
-    #gates.is_diagonal()
+    #new_mat = matrix[:2 ** n, :2 ** n] #the first 2**n row and coloum
+    new_mat = matrix[-2 ** n:, -2 ** n:]
+
+    #print(matrix)
+    #print(new_mat)
+    #shape = matrix.shape
+    #print(shape) #2^(n+m)
 
     """
-    diagonal_matrix = np.diag(np.exp(1j * theta))
-    # Determines whether two matrices are equal
-    if np.allclose(matrix, diagonal_matrix):
-        print("The two matrices are equal.")
+    #The part of circuit related to target qubit is diagonal! :)
+    
+    is_diagonal = np.all(new_mat == np.diag(np.diagonal(new_mat)))
+    
+    if is_diagonal:
+        print("The circuit matrix is diagonal.")
     else:
-        print("The two matrices are not equal.")
+        print("The circuit matrix is not diagonal.")
     """
+
+    # The part of circuit of all qubits is diagonal! :)
+
+    is_diagonal = np.all(matrix == np.diag(np.diagonal(matrix)))
+
+    if is_diagonal:
+        print("The circuit matrix is diagonal.")
+    else:
+        print("The circuit matrix is not diagonal.")
+
+
+    """
+    trace = np.trace(new_mat)
+    print("trace:",trace)
+    """
+
+    exp_theta = np.exp(1j * theta)
+    print("exp_theta:",exp_theta)
+    diagonal_theta = np.diag(exp_theta)
 
     diagonal_elements = np.diag(matrix)
-    # Removing duplicate elements
-    unique_diagonal_elements = list(set(diagonal_elements))
-    print(np.exp(1j*theta))
-    # Print the deduplicated diagonal elements
-    print("Deduplicated diagonal elements:", unique_diagonal_elements)
+
+    # 去除重复元素
+    #unique_diagonal_elements = list(set(diagonal_elements))
+
+    # 打印去重后的对角元素
+    print("对角元素：", diagonal_elements)
+
+    """
+    if np.allclose(new_mat, diagonal_theta):
+        print("两个矩阵相等")
+    else:
+        print("两个矩阵不相等")
+    #print(exp_theta)
+    """
 
 
 
