@@ -27,7 +27,7 @@ class MatrixProductStateSimulator:
         self._mps = MPSSiteStructure(device, precision)
 
     def _initial_circuit(self, circuit: Circuit):
-        """ Initial Quantum Circuit.
+        """ Pre-Compile Quantum Circuit. Not use.
 
         Args:
             circuit (Circuit): The Quantum Circuit.
@@ -61,14 +61,12 @@ class MatrixProductStateSimulator:
         """
         qubits = circuit.width()
         self._mps.initial_mps(qubits, quantum_state)
-        pipeline = self._initial_circuit(circuit)
 
-        for layer in pipeline:
-            for gate, qindex, _ in layer:
-                if isinstance(gate, BasicGate):
-                    self._apply_basic_gate(gate, qindex)
-                else:
-                    raise ValueError("MPS Simulation only support BasicGate currently.")
+        for gate, qindex, _ in circuit.gate_decomposition(False, False):
+            if isinstance(gate, BasicGate):
+                self._apply_basic_gate(gate, qindex)
+            else:
+                raise ValueError("MPS Simulation only support BasicGate currently.")
 
         return self._mps
 
