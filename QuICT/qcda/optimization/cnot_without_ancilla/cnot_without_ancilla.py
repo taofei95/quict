@@ -5,7 +5,6 @@ import numpy as np
 from QuICT.core import *
 from QuICT.core.gate import gate_builder, BasicGate, CompositeGate, GateType
 from QuICT.qcda.utility import OutputAligner
-from .utility import *
 from .graph import *
 from .edge_coloring import EdgeColoring
 from .block_ldu_decompose import BlockLDUDecompose
