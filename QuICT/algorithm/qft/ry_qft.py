@@ -16,7 +16,7 @@ class ry_QFT(CompositeGate):
         self,
         targets: int,
         approx_level: int = 0,
-        name: str = None
+        name: str = "ryQFT"
     ):
         """
             Args:
@@ -68,7 +68,7 @@ class ry_IQFT(CompositeGate):
         self,
         targets: int,
         approx_level: int = 0,
-        name: str = None
+        name: str = "ryIQFT"
     ):
         """
             Args:

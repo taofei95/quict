@@ -138,6 +138,7 @@ class UnitaryDecomposition(object):
         u2: np.ndarray = u[1]
 
         if use_cz_ry:
+            reversed_ry.gate_decomposition(decomposition=False)
             reversed_ry.pop()  # CZ on (0,1)
             # This CZ affects 1/4 last columns of the matrix of U, or 1/2 last columns of u2.
             _u_size = u2.shape[0]
@@ -145,6 +146,7 @@ class UnitaryDecomposition(object):
                 u2[:, i] = -u2[:, i]
 
             if qubit_num > 2:
+                reversed_ry.gate_decomposition(decomposition=False)
                 reversed_ry.pop()  # CZ on (0, qubit_num - 1)
                 # For similar reasons, this CZ only affect 2 parts of matrix of U.
                 for i in range(_u_size - _u_size // 4, _u_size):

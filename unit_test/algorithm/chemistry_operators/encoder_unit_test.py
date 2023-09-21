@@ -4,7 +4,7 @@
 # @Author  : Xiaoquan Xu
 # @File    : encoder_unit_test.py
 
-from QuICT.algorithm.quantum_machine_learning.model.VQE.operators.encoder import(
+from QuICT.algorithm.quantum_machine_learning.model.VQE.operators.encoder import (
     JordanWigner,
     Parity,
     BravyiKitaev

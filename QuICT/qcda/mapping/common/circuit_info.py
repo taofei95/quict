@@ -16,7 +16,7 @@ class CircuitInfo:
         self._max_gate_num = max_gate_num
         q = circ.width()
         if isinstance(circ, (Circuit, CompositeGate)):
-            self._gates: List[BasicGate] = circ.gates
+            self._gates: List[BasicGate] = circ.flatten_gates()
         else:
             raise TypeError(
                 "circ argument only supports Circuit/CompositeGate/List[BasicGate]"
