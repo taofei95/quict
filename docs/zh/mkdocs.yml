@@ -67,12 +67,12 @@ nav:
           - QuICT.algorithm:
                 - arithmetic:
                       - adder:
-                            - utils: API/quict/algorithm/arithmetic/adder/utils.md
                             - DrapperAdder: API/quict/algorithm/arithmetic/adder/draper_adder.md
                             - HLAdder: API/quict/algorithm/arithmetic/adder/hl_adder.md
                             - MuThCtrlAdder: API/quict/algorithm/arithmetic/adder/muth_ctrl_adder.md
                             - RCFourierAdderWired: API/quict/algorithm/arithmetic/adder/rc_adder.md
                             - TRIOCarryAdder: API/quict/algorithm/arithmetic/adder/tr_adder.md
+                            - utils: API/quict/algorithm/arithmetic/adder/utils.md
                       - multiplier:
                             - MuThMultiplier: API/quict/algorithm/arithmetic/multiplier/muth_multiplier.md
                             - RCModMultiplier: API/quict/algorithm/arithmetic/multiplier/rc_mod_multiplier.md
@@ -84,7 +84,10 @@ nav:
                       - ry_QFT: API/quict/algorithm/qft/ry_qft.md
                 - quantum_algorithm:
                       - amplitude_estimate:
-                            - backend: API/quict/algorithm/quantum_algorithm/amplitude_estimate/backend.md
+                            - backend:
+                                  - canonical_QAE: API/quict/algorithm/quantum_algorithm/amplitude_estimate/backend/canonical_QAE.md
+                                  - FQAE: API/quict/algorithm/quantum_algorithm/amplitude_estimate/backend/FQAE.md
+                                  - max_likely_QAE: API/quict/algorithm/quantum_algorithm/amplitude_estimate/backend/max_likely_QAE.md
                             - QAE: API/quict/algorithm/quantum_algorithm/amplitude_estimate/QAE.md
                             - Utility: API/quict/algorithm/quantum_algorithm/amplitude_estimate/Utility.md
                       - cnf:
@@ -119,7 +122,8 @@ nav:
                       - model:
                             - Model: API/quict/algorithm/quantum_machine_learning/model/model.md
                             - QAOA: API/quict/algorithm/quantum_machine_learning/model/QAOA.md
-                            - QNN: API/quict/algorithm/quantum_machine_learning/model/QNN.md
+                            - QNN:
+                                  - QuantumNet: API/quict/algorithm/quantum_machine_learning/model/QNN.md
                       - utils:
                             - Data: API/quict/algorithm/quantum_machine_learning/utils/data.md
                             - Hamiltonian: API/quict/algorithm/quantum_machine_learning/utils/hamiltonian.md
@@ -127,6 +131,8 @@ nav:
                             - ML_utils: API/quict/algorithm/quantum_machine_learning/utils/ml_utils.md
                 - weight_decision:
                       - WeightDecision: API/quict/algorithm/weight_decision/WeightDecision.md
+                - tools:
+                      - Drawer: API/quict/algorithm/tools/drawer.md
           - QuICT.qcda:
                 - QCDA: API/quict/qcda/QCDA.md
                 - mapping:
@@ -268,6 +274,7 @@ plugins:
               python:
                   paths: [.]
                   options:
+                      heading_level: 3
                       show_root_heading: true
                       docstring_section_style: list
                       merge_init_into_class: true

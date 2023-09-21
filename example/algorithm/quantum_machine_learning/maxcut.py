@@ -3,7 +3,7 @@ import numpy_ml
 
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
-from QuICT.algorithm.tools.drawer.graph_drawer import *
+from QuICT.algorithm.tools.drawer import *
 from QuICT.algorithm.quantum_machine_learning.model import QAOA
 
 n = 5

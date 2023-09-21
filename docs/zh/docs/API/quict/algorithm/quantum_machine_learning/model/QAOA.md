@@ -1,1 +1,1 @@
-::: QuICT.algorithm.quantum_machine_learning.model.QAOA
+::: QuICT.algorithm.quantum_machine_learning.model.QAOA.QAOA
