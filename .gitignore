@@ -33,5 +33,9 @@ unit_test/**/*.jpg
 /del
 /data/
 .log/
-wr_unit_test*/
-alg_circuits_build*/
+/demo/
+/QNN_MNIST*
+/docs_
+/QNN2.0_MNIST*
+/MaxCut_*
+/QuICT/algorithm/qml_v1

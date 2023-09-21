@@ -88,6 +88,14 @@ class BasicGate(object):
             self._is_matrix_update = False
 
         return self._target_matrix
+    
+    @property
+    def grad_matrix(self):
+        if self._grad_matrix is None or self._is_matrix_update:
+            self._grad_matrix = GateMatrixGenerator().get_matrix(self, is_get_grad=True)
+            self._is_matrix_update = False
+
+        return self._grad_matrix
 
     @property
     def grad_matrix(self):
@@ -148,6 +156,10 @@ class BasicGate(object):
     @property
     def params(self) -> int:
         return self._params
+    
+    @property
+    def variables(self) -> int:
+        return self._variables
 
     @property
     def variables(self) -> int:
@@ -375,7 +387,6 @@ class BasicGate(object):
                     params.append(str(parg.pargs))
                 else:
                     params.append(str(parg))
-
             params_string = "(" + ", ".join(params) + ")"
 
             qasm_string += params_string
@@ -592,9 +603,12 @@ class BasicGate(object):
         Returns:
             gate(BasicGate): a copy of this gate
         """
+        pargs = [
+            parg.copy() if isinstance(parg, Variable) else parg for parg in self.pargs
+        ]
         gate = BasicGate(
             self.controls, self.targets, self.params, self.type,
-            self.matrix_type, self.pargs[:], self.precision
+            self.matrix_type, pargs, self.precision
         )
 
         if len(self.targs) > 0:
