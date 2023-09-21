@@ -1,6 +1,7 @@
 #from itertools import permutations
 import numpy as np
 from QuICT.core.gate import DiagonalGate
+from QuICT.core.gate import CompositeGate, CX, Rz, U1, GPhase
 #print the whole array
 #np.set_printoptions(threshold=np.inf)
 
@@ -67,9 +68,51 @@ def test_phase_shift_s():
     theta = 2 * np.pi * np.random.random(1 << n)
     alpha = DiagonalGate.alpha_s(theta, s, n)
     gates = DiagonalGate.phase_shift_s(s, n, alpha,aux=n)
-    circuit = Circuit(n*2)
+    circuit = Circuit(n+1)
     gates | circuit
     circuit.draw(filename='test_phase_shift_s_3.jpg', flatten=True)
+    matrix = gates.matrix()
+    print(matrix)
+    is_diagonal = np.all(matrix == np.diag(np.diagonal(matrix)))
+
+    if is_diagonal:
+        print("The circuit matrix is diagonal.")
+    else:
+        print("The circuit matrix is not diagonal.")
+
+    exp_theta = np.exp(1j * theta)
+    print("exp_theta:", exp_theta)
+
+    diagonal_matrix = np.diag(matrix)
+
+    print("alpha:",alpha)
+    print("exp(i*alpha):",np.exp(1j*alpha))
+
+    I_n = np.eye(2 ** n)
+    R_alpha = [[1,0],[0,np.exp(1j*alpha)]]
+    # Compute the tensor product of diagonal_theta with the identity matrix
+    tensor_product = np.kron(I_n,R_alpha)
+    print("tensor_product:", tensor_product)
+
+    print("diagonal_matrix:", diagonal_matrix)
+    diagonal_tensor = np.diag(tensor_product)
+    print("diagonal_tensor:", diagonal_tensor)
+
+    if np.allclose(tensor_product,matrix):
+        print("Two matrices are equal.")
+    else:
+        print("The two matrices are not equal.")
+    # print(exp_theta)
+
+    circuit2 = Circuit(n+1)
+    gates2 = CompositeGate()
+    U1(alpha) & n | gates2
+    matrix2 = gates2.matrix()
+    diagonal_matrix2 = np.diag(matrix2)
+    print("diagonal_matrix2:", diagonal_matrix2)
+
+
+
 
 def test_linear_fjk():
     n = 4
@@ -91,7 +134,7 @@ def test_with_aux_qubit():
     circuit = Circuit(size)
     gates = nn.with_aux_qubit(theta)
     gates | circuit
-    #circuit.draw(filename='test_with_aux_qubit_n=2,m=4.jpg', flatten=True)
+    #circuit.draw(filename='test_with_aux_qubit_n=3,m=6.jpg', flatten=True)
     matrix = gates.matrix()
     print(matrix)
     #new_mat = matrix[:2 ** n, :2 ** n] #the first 2**n row and coloum
@@ -131,20 +174,25 @@ def test_with_aux_qubit():
     exp_theta = np.exp(1j * theta)
     print("exp_theta:",exp_theta)
     diagonal_theta = np.diag(exp_theta)
-
     diagonal_elements = np.diag(matrix)
+    # Create a 2^m x 2^m identity matrix
+    I_m = np.eye(2 ** m)
+    # Compute the tensor product of diagonal_theta with the identity matrix
+    tensor_product = np.kron(diagonal_theta, I_m)
+    print("tensor_product:",tensor_product)
+    diagonal_tensor = np.diag(tensor_product)
+    print("diagonal_tensor:",diagonal_tensor)
 
-    # 去除重复元素
+    # Remove duplicate elements
     #unique_diagonal_elements = list(set(diagonal_elements))
 
-    # 打印去重后的对角元素
-    print("对角元素：", diagonal_elements)
+    print("Diagonal elements:", diagonal_elements)
 
     """
     if np.allclose(new_mat, diagonal_theta):
-        print("两个矩阵相等")
+        print("Two matrices are equal.")
     else:
-        print("两个矩阵不相等")
+        print("The two matrices are not equal.")
     #print(exp_theta)
     """
 
@@ -159,6 +207,6 @@ if __name__ == '__main__':
     #test_partitioned_gray_code()
     #test_linear_fjk()
     #test_alpha_s()
-    #test_phase_shift_s() #here dim(A_inv)=dim(theta)
-    test_with_aux_qubit()
+    test_phase_shift_s() #here dim(A_inv)=dim(theta)
+    #test_with_aux_qubit()
 
