@@ -58,14 +58,14 @@ class BenchmarkCircuitBuilder:
 
         # Base information
         size = width * 10
-        parallel_layers = 3 * level
+        parallel_layers =  3 * level
         normal_gate_size = (10 - parallel_layers) * width
         layout_list = layout.edge_list
         based_2q_gates = int(width * 0.2)
 
         # Build Circuit
         cir = Circuit(width, topology=layout)
-        for i in range(parallel_layers):
+        for _ in range(parallel_layers):
             # append two qubits gate into this layer
             curr_2q_gates = np.random.randint(based_2q_gates // 2, int(based_2q_gates * 1.5) + 1)
             biq_edges, rest_points = _filter_index_obey_qubits(width, layout_list, curr_2q_gates)
@@ -89,10 +89,10 @@ class BenchmarkCircuitBuilder:
             probabilities=prob,
             random_params=True
         )
-
         depth = cir.depth()
+        metric = round((cir.size() / depth - 1) / (width - 1), 3)
         cir.name = "+".join(
-            ["benchmark", "highly_parallelized", f"w{width}_s{size}_d{depth}_level{level}"]
+            ["benchmark", "highly_parallelized", f"w{width}_s{size}_d{depth}_level{level}", f"{metric}"]
         )
 
         return cir
@@ -103,25 +103,15 @@ class BenchmarkCircuitBuilder:
         The number of two quantum bits interacting on the longest path of the circuit depth is close to the total number
             of doublets.
         Example:
-<<<<<<< HEAD
                     ┌────┐┌────┐                        ┌────┐                        ┌────┐                  
-=======
-                    ┌────┐┌────┐                        ┌────┐                        ┌────┐
->>>>>>> origin/dev
             q_0: |0>┤ cx ├┤ cx ├──────────────■─────────┤ cx ├────────────────────■───┤ cx ├──────────────────
                     └─┬──┘└─┬──┘      ┌────┐┌─┴──┐      └─┬──┘┌────┐      ┌────┐┌─┴──┐└─┬──┘      ┌────┐┌────┐
             q_1: |0>──■─────■─────■───┤ cx ├┤ cx ├──■─────■───┤ cx ├──■───┤ cx ├┤ cx ├──■─────■───┤ cx ├┤ cx ├
                                 ┌─┴──┐└─┬──┘└────┘┌─┴──┐      └─┬──┘┌─┴──┐└─┬──┘└────┘      ┌─┴──┐└─┬──┘└─┬──┘
             q_2: |0>────────────┤ cx ├──■─────────┤ cx ├────────■───┤ cx ├──■─────■─────────┤ cx ├──■─────■───
-<<<<<<< HEAD
                                 └────┘            └────┘            └────┘      ┌─┴──┐      └────┘            
             q_3: |0>────────────────────────────────────────────────────────────┤ cx ├────────────────────────
                                                                                 └────┘                  
-=======
-                                └────┘            └────┘            └────┘      ┌─┴──┐      └────┘
-            q_3: |0>────────────────────────────────────────────────────────────┤ cx ├────────────────────────
-                                                                                └────┘
->>>>>>> origin/dev
         """
         reset_list, normal_list = [], []
         layout_list = layout.edge_list
@@ -134,7 +124,7 @@ class BenchmarkCircuitBuilder:
                 normal_list.append(layout_list[j])  # Associated topology nodes for identified qubits
         reset_list = list(set(layout_list) - set(normal_list))  # Associative topological nodes of uncertain qubits
 
-        size = width * 4
+        size = width * 10
         error_gate = int(size * (1 / (level * 3)))
 
         cir = Circuit(width)
@@ -155,8 +145,9 @@ class BenchmarkCircuitBuilder:
                 cir.insert(gate & index, insert_index)
 
         depth = cir.depth()
+        metric = round((size - error_gate) / size, 3)
         cir.name = "+".join(
-            ["benchmark", "highly_serialized", f"w{width}_s{size}_d{depth}_level{level}"]
+            ["benchmark", "highly_serialized", f"w{width}_s{size}_d{depth}_level{level}", f"{metric}"]
         )
 
         return cir
@@ -201,7 +192,6 @@ class BenchmarkCircuitBuilder:
 
                 if len(target_qubits) == 0:
                     break
-
         # Build Circuit
         new_topo = Layout(width)
         for edge in layout.edge_list:
@@ -210,7 +200,6 @@ class BenchmarkCircuitBuilder:
                 (edge.u in rest_qubits and edge.v in rest_qubits)
             ):
                 new_topo.add_edge(edge.u, edge.v, edge.directional)
-
         cir = Circuit(width, topology=new_topo)
         size = width * 10
         pro_s = 0.8  # the probability of one qubit gate in all circuit
@@ -224,8 +213,9 @@ class BenchmarkCircuitBuilder:
         )
 
         depth = cir.depth()
+        metric = round(1 - len(rest_qubits) / width, 3)
         cir.name = "+".join(
-            ["benchmark", "highly_entangled", f"w{width}_s{size}_d{depth}_level{level}"]
+            ["benchmark", "highly_entangled", f"w{width}_s{size}_d{depth}_level{level}", f"{metric}"]
         )
 
         return cir
@@ -254,14 +244,17 @@ class BenchmarkCircuitBuilder:
         prob = [pro_s / len_s] * len_s + [(1 - pro_s) / len_d] * len_d
         cir.random_append(size - width, gateset.one_qubit_gates + [gateset.two_qubit_gate], probabilities=prob)
         # insert measure to circuit
+        mea_index_list = []
         for _ in range(width):
             index = random.choice(list(range(width)))
             mea_index = random.choice(list(range(int(size * 0.25), int(size * 0.75))))
             cir.insert(Measure & index, mea_index)
+            mea_index_list.append(mea_index)
 
+        metric = round((max(mea_index_list) - min(mea_index_list)) / size, 3)
         depth = cir.depth()
         cir.name = "+".join(
-            ["benchmark", "mediate_measure", f"w{width}_s{size}_d{depth}_level{level}"]
+            ["benchmark", "mediate_measure", f"w{width}_s{size}_d{depth}_level{level}", f"{metric}"]
         )
 
         return cir

@@ -19,7 +19,7 @@ from .get_benchmark_circuit import BenchmarkCircuitBuilder
 
 class QuantumMachinebenchmark:
     """ The quantum machine Benchmark. """
-    __alg_fields_list = ["adder", "qft", "cnf", "vqe", "quantum_walk"]
+    __alg_fields_list = ["adder", "qft", "cnf", "qnn", "vqe", "quantum_walk"]
 
     def __init__(
         self,
@@ -95,13 +95,12 @@ class QuantumMachinebenchmark:
         cirs = BenchmarkCircuitBuilder.get_benchmark_circuit(q_number, level, ins_set, layout)
         for cir in cirs:
             split = cir.name.split("+")
-            attribute = re.findall(r'\d+(?:\.\d+)?', split[2])
-            field, void_gates = split[1], attribute[3]
+            field, metric = split[1], split[-1]
             cir.inverse() | cir
             if field != "mediate_measure" and is_measure:
                 Measure | cir
             cir.name = "+".join([
-                "benchmark", field, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}_v{void_gates}", f"level{level}"
+                "benchmark", field, f"w{cir.width()}_s{cir.size()}_d{cir.depth()}", f"level{level}", metric
             ])
             cir = BenchCirData(cir)
             cir_list.append(cir)
@@ -148,13 +147,6 @@ class QuantumMachinebenchmark:
         circuit_list.extend(
             self._get_algorithm_circuit(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
         )
-        # f = open("benchmark_test.txt", "w+")
-        # for i in circuit_list:
-        #     f.write(f"{i.circuit.qasm()} \n")
-        #     f.write("-------------------- \n")
-        for i in circuit_list:
-            f = open(f'wr_unit_test/circuits/machine_level3_circuit/origin/16q/{i.circuit.name}.qasm', 'w+')
-            f.write(i.circuit.qasm())
 
         return circuit_list
 
@@ -190,25 +182,15 @@ class QuantumMachinebenchmark:
             Return the analysis of benchmarking.
         """
         # Step1 : get circuits from circuitlib
-        # bench_cir = self.get_circuits(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
-        from QuICT.tools.interface.qasm_interface import OPENQASMInterface
-
-        cirs_path = os.listdir("wr_unit_test/circuits/machine_level3_circuit/18q/")
-        bench_cir = []
-        for c in cirs_path:
-            cir = OPENQASMInterface.load_file(f"wr_unit_test/circuits/machine_level3_circuit/18q/{c}").circuit
-            cir.name = c
-            cir_data = BenchCirData(cir)
-            bench_cir.append(cir_data)
+        bench_cir = self.get_circuits(quantum_machine_info, level, enable_qcda_for_alg_cir, is_measure)
 
         # Step 2: physical machine simulation
-        f = open("result_save_alg.txt", "w+")
         for i in range(len(bench_cir)):
             sim_result = simulator_interface(bench_cir[i].circuit)
             bench_cir[i].machine_amp = sim_result
-            f.write(f"{bench_cir[i].qv, bench_cir[i].fidelity, bench_cir[i].level_score}\n")
-            f.write(f"{bench_cir[i].benchmark_score}\n")
+        self.evaluate(bench_cir)
 
+    def evaluate(self, bench_cir):
         # Step 3: show result
         self.show_result(bench_cir)
 
@@ -312,17 +294,17 @@ class QuantumMachinebenchmark:
         for i in range(len(bench_cir)):
             field = bench_cir[i].field
             if field in field_list:
-                QV = bench_cir[i].qv
-                value_list.append([field, QV])
+                benchmark_score = bench_cir[i].benchmark_score
+                value_list.append([field, benchmark_score])
         if len(value_list) > 0:
-            field_QV_map = defaultdict(list)
-            for field, QV in value_list:
-                field_QV_map[field].append(QV)
+            field_score_map = defaultdict(list)
+            for field, benchmark_score in value_list:
+                field_score_map[field].append(benchmark_score)
                 feature.append(field)
             feature_2 = list(set(feature))
             feature_2.sort(key=feature.index)
             for value in feature_2:
-                values_2.append(max(field_QV_map[value]))
+                values_2.append(max(field_score_map[value]))
             # Sets the angle of the radar chart to bisect a plane
             N = len(values_2)
             alg_data = values_2
@@ -380,11 +362,11 @@ class QuantumMachinebenchmark:
         result_file = open(self._output_path + '/benchmark_txt_show.txt', mode='w+', encoding='utf-8')
         tb = pt.PrettyTable()
         tb.field_names = [
-            'field', 'circuit width', 'circuit size', 'circuit depth', 'fidelity', 'quantum volume', 'benchmark score'
+            'field', 'circuit width', 'circuit size', 'circuit depth', 'I_Score', 'D_Score', 'E_Score', 'benchmark score'
         ]
         for i in range(len(bench_cir)):
             cir = bench_cir[i]
-            tb.add_row([cir.field, cir.width, cir.size, cir.depth, cir.fidelity, cir.qv, cir.benchmark_score])
+            tb.add_row([cir.field, cir.width, cir.size, cir.depth, cir.I_score, cir.D_score, cir.E_score, cir.benchmark_score])
         result_file.write(str(tb))
         result_file.close()
 
@@ -397,8 +379,9 @@ class QuantumMachinebenchmark:
                 'circuit width': cir.width,
                 'circuit size': cir.size,
                 'circuit depth': cir.depth,
-                'fidelity': cir.fidelity,
-                'quantum volume': cir.qv,
+                'I_Score': cir.I_score,
+                'D_Score': cir.D_score,
+                'E_Score': cir.E_score,
                 'benchmark score': cir.benchmark_score
             }
             dfData_list.append(dfData)
