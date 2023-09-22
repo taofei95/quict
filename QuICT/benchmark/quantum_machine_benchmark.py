@@ -1,6 +1,5 @@
 import os
 import random
-import re
 import pandas as pd
 import prettytable as pt
 import numpy as np
@@ -192,9 +191,9 @@ class QuantumMachinebenchmark:
 
     def evaluate(self, bench_cir):
         # Step 3: show result
-        self.show_result(bench_cir)
+        self._show_result(bench_cir)
 
-    def show_result(self, bench_cir):
+    def _show_result(self, bench_cir):
         """ show benchmark result. """
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path)
@@ -241,7 +240,7 @@ class QuantumMachinebenchmark:
         ax.set_ylim(0, np.floor(values.max()) + 2)
 
         plt.tick_params(labelsize=12)
-        plt.title('Quantum machine inset circuits radar chart show')
+        plt.title('Quantum machine random circuits radar chart show')
         plt.legend(["score"])
         ax.grid(True)
 
