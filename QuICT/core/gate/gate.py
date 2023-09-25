@@ -924,6 +924,9 @@ def gate_builder(gate_type, precision: str = "double", params: list = [], random
 
 
 H = BasicGate(*GATEINFO_MAP[GateType.h], is_original_gate=True)
+"""
+H Gate.
+"""
 Hy = BasicGate(*GATEINFO_MAP[GateType.hy], is_original_gate=True)
 S = BasicGate(*GATEINFO_MAP[GateType.s], is_original_gate=True)
 S_dagger = BasicGate(*GATEINFO_MAP[GateType.sdg], is_original_gate=True)
