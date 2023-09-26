@@ -248,8 +248,7 @@ theme:
       name: material
       logo: assets/images/logos/logo.png
       language: zh
-      font:
-            code: Roboto
+      font: false
       features:
             - navigation.tabs
             - navigation.tabs.sticky
