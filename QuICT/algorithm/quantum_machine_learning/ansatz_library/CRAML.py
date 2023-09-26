@@ -12,6 +12,8 @@ from .ansatz import Ansatz
 class CRAML(Ansatz):
     """The Color-Readout-Alternating-Mixed-Layer architecture (CRAML) Ansatz for QNN.
 
+    For an image of size $2^n \times 2^n$, the number of qubits is $2n + 1$.
+
     For more detail, please refer to:
 
     Reference:
@@ -21,8 +23,8 @@ class CRAML(Ansatz):
         Only applicable to FRQI encoding or NEQR for binary images.
 
     Args:
-            n_qubits (int): The number of qubits.
-            layers (int): The number of layers.
+        n_qubits (int): The number of qubits.
+        layers (int): The number of layers.
 
     Examples:
         >>> from QuICT.algorithm.quantum_machine_learning.ansatz_library import CRAML

@@ -1,5 +1,127 @@
 # API文档注释风格
 
+**整体注释风格遵循[Google注释标准](https://zh-google-styleguide.readthedocs.io/en/latest/google-python-styleguide/python_style_rules/#comments)**
+
+## Class
+
+### 类的定义
+
+定义class时的注释需要包含：
+
+- 对类的描述
+- 相关公式：正常LaTex格式即可
+- Reference：参考论文名+链接
+- Note：需要标注的注意事项
+- Args：初始化该类时的参数
+- Examples：调用该类的简单示例，包含import,代码和结果展示
+
+!!! note "格式注意"
+
+    关于类的注释内容放在声明和__init__()之间，__init__()部分的注释只需一句话：“Initialize a xxx object.”即可
+
+    注意缩进
+
+    对于公式：LaTex格式，公式前后$
+
+    链接：< link >
+
+#### 示例
+
+``` python
+class Example:
+    """Some descriptions of this class.
+
+    For more detail, please refer to:
+
+    Reference:
+        `xxx` <https://arxiv.org/>.
+
+    Note:
+        xxxxxxx.
+
+    Args:
+        arg1 (TYPE): xxx.
+        arg2 (TYPE): xxx.
+
+    Examples:
+        >>> from xxx import Example
+        >>> example = Example()
+        >>> print(example)
+
+        XXXXXX
+    """
+
+    def __init__(self, arg1: TYPE, arg1: TYPE):
+        """Initialize an Example object."""
+
+```
+
+## attribute
+
+面向用户，也需要注释
+
+#### 示例
+
+``` python
+@property
+def attribute(self) -> TYPE:
+    """Get xxx.
+
+    Returns:
+        TYPE: xxx.
+    """
+    return self._attribute
+```
+
+``` python
+ @attribute.setter
+def attribute(self, attribute):
+    """Set xxx."""
+    self._attribute = attribute
+```
+
+## function
+
+#### 函数定义
+
+定义function时的注释需要包含：
+
+- 对函数的描述
+- 相关公式：正常LaTex格式即可
+- Reference：参考论文名+链接
+- Note：需要标注的注意事项
+- Args：初始化该类时的参数
+- Returns：返回类型和内容
+- Raises：error类型和描述
+
+#### 示例
+
+``` python
+def func(self, arg1: TYPE, arg2: TYPE = xxx):
+    """Some descriptions of this function.
+
+    For more detail, please refer to:
+
+    Reference:
+        `xxx` <https://arxiv.org/>.
+
+    Note:
+        xxxxxxx.
+
+    Args:
+        arg1 (TYPE): xxx.
+        arg2 (TYPE): xxx. Defaults xxx.
+
+    Returns:
+        TYPE: xxx.
+
+    Raises:
+        xxxError: xxx.
+    """
+
+    return xxx
+```
+
 ## 整体Example
 
 ``` python
@@ -15,7 +137,9 @@ from .ansatz import Ansatz
 
 
 class CRAML(Ansatz):
-    """The Color-Readout-Alternating-Mixed-Layer architecture (CRAML) Ansatz for QNN.
+    r"""The Color-Readout-Alternating-Mixed-Layer architecture (CRAML) Ansatz for QNN.
+
+    For an image of size $2^n \times 2^n$, the number of qubits is $2n + 1$.
 
     For more detail, please refer to:
 
@@ -26,8 +150,8 @@ class CRAML(Ansatz):
         Only applicable to FRQI encoding or NEQR for binary images.
 
     Args:
-            n_qubits (int): The number of qubits.
-            layers (int): The number of layers.
+        n_qubits (int): The number of qubits.
+        layers (int): The number of layers.
 
     Examples:
         >>> from QuICT.algorithm.quantum_machine_learning.ansatz_library import CRAML
@@ -41,7 +165,7 @@ class CRAML(Ansatz):
                 │             │└─────────────┘ │ZZ(1.2849)
         q_2: |0>┤1            ├────────────────■────────────────────────
                 └─────────────┘
-    """     
+    """
 
     def __init__(self, n_qubits: int, layers: int):
         """Initialize a CRADL ansatz object."""
