@@ -1,3 +1,8 @@
+# API文档注释风格
+
+## 整体Example
+
+``` python
 from typing import Union
 
 import numpy as np
@@ -36,7 +41,7 @@ class CRAML(Ansatz):
                 │             │└─────────────┘ │ZZ(1.2849)
         q_2: |0>┤1            ├────────────────■────────────────────────
                 └─────────────┘
-    """
+    """     
 
     def __init__(self, n_qubits: int, layers: int):
         """Initialize a CRADL ansatz object."""
@@ -92,3 +97,5 @@ class CRAML(Ansatz):
                 Rzz(params[l][k + 1]) | circuit([i, self._color_qubit])
 
         return circuit
+
+```
