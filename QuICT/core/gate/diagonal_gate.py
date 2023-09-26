@@ -70,9 +70,28 @@ class DiagonalGate(object):
         # Stage 1: Prefix Copy
             t = int(np.floor(np.log2(m / 2)))
             copies = int(np.floor(m / (2 * t)))
+            rou = np.floor(np.log2(copies+1))
+
+        """
             for j in range(copies):
                 for i in range(t):
                     CX & [i, n + i + j * t] | gates
+        """
+            for i in range(1,rou+1):
+                if i != rou or 2**rou == copies+1:
+                    for j in range(t):
+                        CX & [j,n+(2**i-1)*t]
+                    for j in range((2**i-1)*t):
+                        CX & [n+j,n+j+(2**i)*t]
+                else:
+                    rest = copies - 2**(rou-1) +1
+                    for j in range(t):
+                        CX & [j,n+(2**(rou)-1)*t+j]
+                    if rest != 1:
+                        for j in range((rest-1)*t):
+                            CX & [n+j,n+(2**rou)*t+j]
+
+
 
          # Stage 2: Gray Initial
         #t = int(np.floor(np.log2(m / 2)))
