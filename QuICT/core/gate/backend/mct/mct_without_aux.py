@@ -13,7 +13,7 @@ class MCTWithoutAux(object):
     def execute(self, n):
         """
         Args:
-            n(int): the number of qubits, be aware that n means (n-1)-control NOT
+            n (int): the number of qubits, be aware that n means (n-1)-control NOT
 
         Returns:
             CompositeGate: the n-qubit Toffoli gate
