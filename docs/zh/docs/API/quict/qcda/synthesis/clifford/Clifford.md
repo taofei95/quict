@@ -1,1 +1,2 @@
-::: QuICT.qcda.synthesis.clifford.clifford_synthesizer
+::: QuICT.qcda.synthesis.clifford.CliffordUnidirectionalSynthesizer
+::: QuICT.qcda.synthesis.clifford.CliffordBidirectionalSynthesizer

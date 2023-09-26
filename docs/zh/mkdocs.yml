@@ -152,7 +152,11 @@ nav:
                   - QuICT.qcda:
                             - QCDA: API/quict/qcda/QCDA.md
                             - mapping:
-                                      - Sabre: API/quict/qcda/mapping/Sabre.md
+                                      - common:
+                                                - CircuitInfo: API/quict/qcda/mapping/common/CircuitInfo.md
+                                                - DataFactory: API/quict/qcda/mapping/common/DataFactory.md
+                                                - LayoutInfo: API/quict/qcda/mapping/common/LayoutInfo.md
+                                      - SABREMapping: API/quict/qcda/mapping/sabre/sabre.md
                                       - MCTS:
                                                 - MCTSTreeNode: API/quict/qcda/mapping/MCTS/MCTSTreeNode.md
                                                 - MCTSTree: API/quict/qcda/mapping/MCTS/MCTSTree.md
@@ -171,19 +175,21 @@ nav:
                                                 - CnotLocalForceDepthBfs: API/quict/qcda/optimization/cnot_local_force/CnotLocalForceDepthBfs.md
                                                 - CnotStoreForceBfs: API/quict/qcda/optimization/cnot_local_force/CnotStoreForceBfs.md
                                                 - CnotStoreForceDepthBfs: API/quict/qcda/optimization/cnot_local_force/CnotStoreForceDepthBfs.md
+                                                - utility: API/quict/qcda/optimization/cnot_local_force/utility.md
                                       - cnot_ancilla:
-                                                - CnotAncilla: API/quict/qcda/optimization/CnotAncilla.md
+                                                - CnotAncilla: API/quict/qcda/optimization/cnot_ancilla/CnotAncilla.md
                                       - cnot_without_ancilla:
                                                 - Graph: API/quict/qcda/optimization/cnot_without_ancilla/Graph.md
                                                 - BlockLDUDecompose: API/quict/qcda/optimization/cnot_without_ancilla/BlockLDUDecompose.md
                                                 - EdgeColoring: API/quict/qcda/optimization/cnot_without_ancilla/EdgeColoring.md
                                                 - CnotWithoutAncilla: API/quict/qcda/optimization/cnot_without_ancilla/CnotWithoutAncilla.md
+                                                - utility: API/quict/qcda/optimization/cnot_without_ancilla/utility.md
                                       - commutative_optimization:
-                                                - CommutativeOptimization: API/quict/qcda/optimization/CommutativeOptimization.md
+                                                - CommutativeOptimization: API/quict/qcda/optimization/commutative_optimization/CommutativeOptimization.md
                                       - symbolic_clifford_optimization:
-                                                - SymbolicCliffordOptimization: API/quict/qcda/optimization/SymbolicCliffordOptimization.md
+                                                - SymbolicCliffordOptimization: API/quict/qcda/optimization/symbolic_clifford_optimization/SymbolicCliffordOptimization.md
                                       - template_optimization:
-                                                - template_optimization: API/quict/qcda/optimization/template_optimization/TemplateOptimization.md
+                                                - TemplateOptimization: API/quict/qcda/optimization/template_optimization/TemplateOptimization.md
                                                 - template_searching:
                                                           - TemplateSearching: API/quict/qcda/optimization/template_optimization/template_searching/TemplateSearching.md
                                                 - template_matching:
@@ -196,11 +202,10 @@ nav:
                                       - clifford:
                                                 - Clifford: API/quict/qcda/synthesis/clifford/Clifford.md
                                       - gate_transform:
-                                                - InstructionSet: API/quict/qcda/synthesis/gate_transform/InstructionSet.md
                                                 - GateTransform: API/quict/qcda/synthesis/gate_transform/GateTransform.md
                                       - quantum_state_preparation:
-                                                - SchmidtDecompose: API/quict/qcda/synthesis/quantum_state_preparation/SchmidtDecompose.md
                                                 - QuantumStatePreparation: API/quict/qcda/synthesis/quantum_state_preparation/QuantumStatePreparation.md
+                                                - utility: API/quict/qcda/synthesis/quantum_state_preparation/utility.md
                                       - unitary_decomposition:
                                                 - CartanKAKDecomposition: API/quict/qcda/synthesis/unitary_decomposition/CartanKAKDecomposition.md
                                                 - CartanKAKDiagonalDecomposition: API/quict/qcda/synthesis/unitary_decomposition/CartanKAKDiagonalDecomposition.md

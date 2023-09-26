@@ -1,1 +1,1 @@
-::: QuICT.qcda.mapping.mcts.MCTSMapping
+::: QuICT.qcda.mapping.MCTSMapping

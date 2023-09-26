@@ -1,1 +1,1 @@
-::: QuICT.qcda.optimization.template_optimization.template_matching.template_substitution
+::: QuICT.qcda.optimization.template_optimization.template_matching.TemplateSubstitution
