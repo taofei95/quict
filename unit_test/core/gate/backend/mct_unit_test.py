@@ -4,8 +4,9 @@
 # @Author  : Han Yu
 # @File    : unit_test.py
 
-from QuICT.core import *
-from QuICT.core.gate import *
+import numpy as np
+from QuICT.core import Circuit
+from QuICT.core.gate import CompositeGate, X, Measure
 from QuICT.core.gate.backend import MCTOneAux, MCTLinearHalfDirtyAux, MCTLinearOneDirtyAux, MCTWithoutAux
 from QuICT.simulation.state_vector import StateVectorSimulator
 
