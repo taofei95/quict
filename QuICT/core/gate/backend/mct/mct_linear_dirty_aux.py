@@ -4,24 +4,24 @@
 # @Author  : Han Yu
 # @File    : MCT_Linear_Simulation.py
 
-from QuICT.core import *
-from QuICT.core.gate import *
+from QuICT.core.gate import CompositeGate, CX, CCX
 
 
 class MCTLinearHalfDirtyAux(object):
     def execute(self, m: int, n: int):
         """ A linear simulation for Toffoli gate
 
-        https://arxiv.org/abs/quant-ph/9503016 Lemma 7.2
+        Reference:
+            https://arxiv.org/abs/quant-ph/9503016 Lemma 7.2
 
-        Implement a m-bit toffoli gate in a qureg with n qubit with linear complexity.
+        Implement an m-bit toffoli gate in a qureg with n qubit with linear complexity.
 
         If n ≥ 5 and m ∈ {3, . . . , ⌈n/2⌉} then (m+1)-Toffoli gate can be simulated
         by a network consisting of 4(m - 2) toffoli gates
 
         Args:
-            m(int): the number of control qubits of the toffoli
-            n(int): the number of qubits in the qureg
+            m (int): the number of control qubits of the toffoli
+            n (int): the number of qubits in the qureg
 
         Returns:
             CompositeGate: the result of Decomposition
@@ -41,11 +41,11 @@ class MCTLinearHalfDirtyAux(object):
     def assign_qubits(n: int, m: int, controls: list, auxs: list, target: int):
         """
         Args:
-            n(int): the number of qubits in the qureg
-            m(int): the number of control qubits of the toffoli
-            controls(list): list of control qubits
-            auxs(list): list of ancillas
-            target(int): target qubit
+            n (int): the number of qubits in the qureg
+            m (int): the number of control qubits of the toffoli
+            controls (list): list of control qubits
+            auxs (list): list of ancillas
+            target (int): target qubit
 
         Returns:
             CompositeGate: the result of Decomposition
@@ -77,7 +77,8 @@ class MCTLinearOneDirtyAux(object):
     def execute(self, n):
         """ A linear simulation for Toffoli gate
 
-        https://arxiv.org/abs/quant-ph/9503016 Corollary 7.4
+        Conference
+            https://arxiv.org/abs/quant-ph/9503016 Corollary 7.4
 
         Implement an n-bit toffoli gate in a qureg with n + 2 qubits with linear complexity.
 
@@ -85,7 +86,7 @@ class MCTLinearOneDirtyAux(object):
         8(n-5) CCX gates, with 1 bit dirty ancilla.
 
         Args:
-            n(int): the number of used qubit, which is (n + 2) for n-qubit Toffoli gates
+            n (int): the number of used qubit, which is (n + 2) for n-qubit Toffoli gates
 
         Returns:
             CompositeGate: the result of Decomposition

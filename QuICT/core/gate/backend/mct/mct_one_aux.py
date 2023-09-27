@@ -4,7 +4,6 @@
 # @Author  : Han Yu
 # @File    : MCT_one_aux.py
 
-from QuICT.core import *
 from QuICT.core.gate import *
 from .mct_linear_dirty_aux import MCTLinearHalfDirtyAux
 
@@ -13,12 +12,15 @@ class MCTOneAux(object):
     def execute(self, n):
         """ Decomposition of n-qubit Toffoli gates with one ancillary qubit and linear circuit complexity
 
-        He Y, Luo M X, Zhang E, et al.
-        Decompositions of n-qubit Toffoli gates with linear circuit complexity[J].
-        International Journal of Theoretical Physics, 2017, 56(7): 2350-2361.
+        Reference:
+            He Y, Luo M X, Zhang E, et al.
+            Decompositions of n-qubit Toffoli gates with linear circuit complexity[J].
+            International Journal of Theoretical Physics, 2017, 56(7): 2350-2361.[1]
+
+            [1]:https://link.springer.com/article/10.1007/s10773-017-3389-4
 
         Args:
-            n(int): the number of used qubit, which is (n + 2) for n-qubit Toffoli gates
+            n (int): the number of used qubit, which is (n + 2) for n-qubit Toffoli gates
 
         Returns:
             CompositeGate: the result of Decomposition
