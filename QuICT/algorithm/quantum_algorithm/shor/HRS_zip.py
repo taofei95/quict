@@ -12,7 +12,7 @@ import numpy as np
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.arithmetic.hrs import *
+from QuICT.algorithm.quantum_algorithm.shor.arithmetic.hrs import *
 from QuICT.simulation.state_vector import StateVectorSimulator
 from QuICT.core.operator import Trigger, CheckPoint
 from .utility import *

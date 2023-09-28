@@ -11,7 +11,7 @@ from fractions import Fraction
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.arithmetic.bea import *
+from QuICT.algorithm.quantum_algorithm.shor.arithmetic.bea import *
 from QuICT.core.operator import Trigger, CheckPoint
 from QuICT.simulation.state_vector import StateVectorSimulator
 from .utility import *
