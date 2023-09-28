@@ -55,7 +55,7 @@ class QuantumStatePreparation(object):
         Reference:
             https://arxiv.org/abs/quant-ph/0407010v1
         """
-        state_vector = np.array(state_vector)
+        state_vector = np.array(state_vector).astype(complex)
         num_qubits = int(round(np.log2(state_vector.size)))
         assert state_vector.ndim == 1 and 1 << num_qubits == state_vector.size,\
             ValueError('Quantum state should be an array with length 2^n')
@@ -96,7 +96,7 @@ class QuantumStatePreparation(object):
         Reference:
             https://arxiv.org/abs/1003.5760
         """
-        state_vector = np.array(state_vector)
+        state_vector = np.array(state_vector).astype(complex)
         num_qubits = int(round(np.log2(state_vector.size)))
         assert state_vector.ndim == 1 and 1 << num_qubits == state_vector.size,\
             ValueError('Quantum state should be an array with length 2^n')
