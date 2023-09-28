@@ -39,6 +39,7 @@ class UnitaryDecomposition(object):
             is returned.
         """
         qubit_num = int(round(np.log2(mat.shape[0])))
+        mat = mat.astype(complex)
 
         """
         After adding KAK diagonal optimization, inner built gates would have a
