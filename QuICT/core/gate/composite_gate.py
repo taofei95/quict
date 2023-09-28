@@ -101,7 +101,7 @@ class CompositeGate(CircuitBased):
         """ remapping the gates' target qubits
 
         Args:
-            targets(list): the related qubits
+            targets (list): the related qubits
         """
         qidx_mapping = {}
         for i, q in enumerate(self.qubits):
@@ -155,7 +155,7 @@ class CompositeGate(CircuitBased):
         and target bits followed.
 
         Args:
-            targets: the targets the gate acts on, it can have following form,
+            targets: the targets the gate acts on, it can have the following form,
                 1) Circuit
                 2) CompositeGate
         Raise:
@@ -176,7 +176,7 @@ class CompositeGate(CircuitBased):
         and target bits followed.
 
         Args:
-            targets: the targets the gate acts on, it can have following form,
+            targets: the targets the gate acts on, it can have the following form,
                 1) Circuit
                 2) CompositeGate
         Raise:
@@ -191,7 +191,7 @@ class CompositeGate(CircuitBased):
         """ get gates from this composite gate
 
         Args:
-            item(int/slice): slice passed in.
+            item (int/slice): slice passed in.
 
         Return:
             [BasicGates]: the gates
@@ -363,7 +363,7 @@ class CompositeGate(CircuitBased):
 
         Args:
             device (str, optional): The device type for generate circuit's matrix, one of [CPU, GPU]. Defaults to "CPU".
-            local: whether consider only about the occupied qubits or not
+            local (bool): whether consider only about the occupied qubits or not
 
         Returns:
             np.ndarray: the matrix of the gates
