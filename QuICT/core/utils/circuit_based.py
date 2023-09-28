@@ -8,6 +8,7 @@ import numpy as np
 
 from .gate_type import GateType
 from .variable import Variable
+from .circuit_gate import CircuitGates
 
 
 class CircuitBased(object):
@@ -25,22 +26,39 @@ class CircuitBased(object):
     def precision(self) -> str:
         return self._precision
 
+    ####################################################################
+    ############         Circuit's Gates Function           ############
+    ####################################################################
     @property
     def gates(self) -> list:
         """ Return the list of BasicGate/CompositeGate/Operator in the current circuit. \n
         *Warning*: this is slowly due to the copy of gates, you can use self.fast_gates to
         get list of tuple(gate, qubit_indexes, size) for further using.
         """
-        combined_gates = [gate.copy() & targs for gate, targs, _ in self._gates]
-
-        return combined_gates
+        return [gate.copy() & qidx for gate, qidx in self._gates.gates]
 
     @property
     def fast_gates(self) -> list:
-        """ Return the list of tuple(gate, qubit_indexes, size) in the current circuit. """
-        return self._gates
+        """ Return the list of Tuple(Union[BasicGate, CompositeGate], indexes) in the current circuit. """
+        return self._gates.gates
 
-    def flatten_gates(self, decomposition: bool = False) -> list:
+    def decomposition_gates(self) -> list:
+        """ Decomposition the CompositeGate or BasicGate which has build_gate function.
+
+        Returns:
+            list: The list of BasicGate
+        """
+        decomp_gates = []
+        for gate, qidxes in self._gates.LTS():
+            cgate = gate.build_gate(qidxes)
+            if cgate is not None:
+                decomp_gates.extend(cgate.flatten_gates())
+            else:
+                decomp_gates.append(gate.copy() & qidxes)
+
+        return decomp_gates
+
+    def flatten_gates(self) -> list:
         """ Get the list of Quantum Gates with decompose the CompositeGate.
 
         Args:
@@ -49,34 +67,39 @@ class CircuitBased(object):
         Returns:
             List[BasicGate]: The list of BasicGate/Operator.
         """
-        flatten_gates = self.gate_decomposition(self_flatten=False, decomposition=decomposition)
+        return [gate & qidx for gate, qidx in self._gates.LTS()]
 
-        return [gate & qidxes for gate, qidxes, _ in flatten_gates]
+    def decomposition(self):
+        self._gates.decomposition()
 
-    def __init__(self, name: str):
+    def flatten(self):
+        self._gates.flatten()
+
+    def __init__(self, name: str, qubits: int = None):
         """
         Args:
             name (str): The name of current Quantum Circuit
         """
         self._name = name
-        self._gates = []
+        self._gates = CircuitGates()
+        self._fast_gates = []
+        self._qubits = qubits
         self._pointer = None
         self._precision = "double"
 
+    ####################################################################
+    ############           Circuit's Properties             ############
+    ####################################################################
     def size(self) -> int:
         """ the number of gates in the circuit/CompositeGate, the operators are not count.
 
         Returns:
             int: the number of gates in circuit
         """
-        tsize = 0
-        for _, _, size in self._gates:
-            tsize += size
-
-        return tsize
+        return self._gates.size
 
     def gate_length(self) -> int:
-        return len(self._gates)
+        return self._gates.length
 
     def width(self):
         """ The number of qubits in Circuit.
@@ -92,11 +115,7 @@ class CircuitBased(object):
         Returns:
             int: the depth
         """
-        depth = np.zeros(self.width(), dtype=int)
-        for _, targs, _ in self.gate_decomposition(False, False):
-            depth[targs] = np.max(depth[targs]) + 1
-
-        return np.max(depth)
+        return self._gates.depth()
 
     def count_2qubit_gate(self) -> int:
         """ the number of the two qubit gates in the Circuit/CompositeGate
@@ -104,19 +123,7 @@ class CircuitBased(object):
         Returns:
             int: the number of the two qubit gates
         """
-        count = 0
-        for gate, _, size in self._gates:
-            if size == 0:
-                continue
-
-            if size > 1 or hasattr(gate, "count_2qubit_gate"):
-                count += gate.count_2qubit_gate()
-                continue
-
-            if gate.controls + gate.targets == 2:
-                count += 1
-
-        return count
+        return self._gates.biq_gates_count
 
     def count_1qubit_gate(self) -> int:
         """ the number of the one qubit gates in the Circuit/CompositeGate
@@ -124,19 +131,7 @@ class CircuitBased(object):
         Returns:
             int: the number of the one qubit gates
         """
-        count = 0
-        for gate, _, size in self._gates:
-            if size == 0:
-                continue
-
-            if size > 1 or hasattr(gate, "count_1qubit_gate"):
-                count += gate.count_1qubit_gate()
-                continue
-
-            if gate.controls + gate.targets == 1:
-                count += 1
-
-        return count
+        return self._gates.siq_gates_count
 
     def count_gate_by_gatetype(self, gate_type: GateType) -> int:
         """ the number of the target Quantum Gate in the Circuit/CompositeGate
@@ -147,19 +142,7 @@ class CircuitBased(object):
         Returns:
             int: the number of the gates
         """
-        count = 0
-        for gate, _, size in self._gates:
-            if size == 0:
-                continue
-
-            if size > 1 or hasattr(gate, "count_gate_by_gatetype"):
-                count += gate.count_gate_by_gatetype(gate_type)
-                continue
-
-            if gate.type == gate_type:
-                count += 1
-
-        return count
+        return self._gates.gates_count_by_type(gate_type)
 
     def count_training_gate(self):
         """ the number of the trainable gates in the Circuit/CompositeGate
@@ -167,19 +150,7 @@ class CircuitBased(object):
         Returns:
             int: the number of the trainable gates
         """
-        count = 0
-        for gate, _, size in self._gates:
-            if size == 0:
-                continue
-
-            if size > 1 or hasattr(gate, "count_training_gate"):
-                count += gate.count_training_gate()
-                continue
-
-            if gate.variables > 0:
-                count += 1
-
-        return count
+        return self._gates.training_gates_count
 
     def __str__(self):
         circuit_info = {
@@ -204,7 +175,6 @@ class CircuitBased(object):
             str: The string of Circuit/CompositeGate's qasm.
         """
         # Header
-        qasm_string = ""
         qreg = self.width()
         creg = min(self.count_gate_by_gatetype(GateType.measure), qreg)
         if creg == 0:
@@ -216,10 +186,7 @@ class CircuitBased(object):
 
         # Body [gates]
         cbits = 0
-        for gate, targs, size in self.gate_decomposition(False, False):
-            if size == 0:
-                continue
-
+        for gate, targs in self._gates.LTS():
             if gate.qasm_name == "measure":
                 qasm_string += f"measure q[{targs[0]}] -> c[{cbits}];\n"
                 cbits += 1
@@ -241,40 +208,6 @@ class CircuitBased(object):
         """
         assert precision in ["single", "double"], "Circuit's precision should be one of [double, single]"
         self._precision = precision
-
-    def gate_decomposition(self, self_flatten: bool = True, decomposition: bool = True) -> list:
-        """ Decomposition the CompositeGate or BasicGate which has build_gate function.
-
-        Args:
-            self_flatten (bool, optional): Whether change the gates in current Circuit. Defaults to True.
-            decomposition (bool, optional): Whether call build_gate for BasicGates. Defaults to True.
-
-        Returns:
-            list: The list of (gate, qubit indexes, size)
-        """
-        decomp_gates = []
-        for gate, qidxes, size in self._gates:
-            if size > 1 or hasattr(gate, "gate_decomposition"):
-                temp_gate = gate.copy() & qidxes
-                decomp_gates += temp_gate.gate_decomposition(False, False)
-            else:
-                decomp_gates.append((gate, qidxes, size))
-
-        if decomposition:
-            temp_decomp_gates = []
-            for gate, qidxes, size in decomp_gates:
-                cgate = gate.build_gate(qidxes)
-                if cgate is not None:
-                    temp_decomp_gates += cgate._gates
-                else:
-                    temp_decomp_gates.append((gate, qidxes, size))
-
-            decomp_gates = temp_decomp_gates[:]
-
-        if self_flatten:
-            self._gates = decomp_gates
-
-        return decomp_gates
 
     def get_variable_shape(self):
         for gate, _, _ in self._gates:

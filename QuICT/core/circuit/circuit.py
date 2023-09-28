@@ -262,7 +262,7 @@ class Circuit(CircuitBased):
     ####################################################################
     ############          Circuit Build Operators           ############
     ####################################################################
-    def extend(self, gates: Union[BasicGate, CompositeGate]):
+    def extend(self, gates: Union[Circuit, CompositeGate]):
         """ Add a CompositeGate/Circuit to the circuit.
 
         Args:
@@ -285,19 +285,8 @@ class Circuit(CircuitBased):
                 gate_qidxes = list(range(gates.width()))
 
         assert len(gate_qidxes) <= self.width(), "Circuit cannot append any Gate/CompositeGate which larger than self."
-        if isinstance(gates, Circuit):
-            gates = gates.to_compositegate()
-            if gates.width() != len(gate_qidxes):
-                gate_qidxes = [gate_qidxes[idx] for idx in gates.qubits]
-
-            position = -1
-        else:
-            position = self.find_position(gates.checkpoint)
-
-        if position == -1:
-            self._gates.append((gates, gate_qidxes, gates.size()))
-        else:
-            self._gates.insert(position, (gates, gate_qidxes, gates.size()))
+        extend_gates = gates._gates.copy()
+        self._gates.extend(extend_gates, gate_qidxes)
 
         self._pointer = None
 
@@ -409,7 +398,7 @@ class Circuit(CircuitBased):
             else:
                 qubit_index = gate_qargs
 
-        self._gates.append((gate, qubit_index, 1))
+        self._gates.append(gate, qubit_index)
 
     def _add_gate_to_all_qubits(self, gate: BasicGate):
         """ Add gate to all qubits.
@@ -419,9 +408,9 @@ class Circuit(CircuitBased):
         """
         for idx in range(self.width()):
             if gate.variables > 0:
-                self._gates.append((gate.copy(), [idx], 1))
+                self._gates.append(gate.copy(), [idx])
             else:
-                self._gates.append((gate, [idx], 1))
+                self._gates.append(gate, [idx])
 
     def _add_operator(self, op: Operator):
         """ Add operator. """
@@ -445,7 +434,7 @@ class Circuit(CircuitBased):
             op_qidxes = op.targs
 
         size = 1 if isinstance(op, NoiseGate) else 0
-        self._gates.append((op, op_qidxes, size))
+        self._gates.append(op, op_qidxes, size)
         self._logger.debug(f"Add an Operator {type(op)} with qubit indexes {op_qidxes}.")
 
     def random_append(
@@ -507,7 +496,7 @@ class Circuit(CircuitBased):
                     [insert_layout.v, insert_layout.u]
             else:
                 random_assigned_qubits = random.sample(range(self.width()), gsize)
-            self._gates.append((r_gate, random_assigned_qubits, 1))
+            self._gates.append(r_gate, random_assigned_qubits)
 
     def supremacy_append(self, repeat: int = 1, pattern: str = "ABCDCDAB", random_parameters: bool = False):
         """
@@ -531,7 +520,7 @@ class Circuit(CircuitBased):
             for q in range(qubits):
                 gate_type = supremacy_typelist[np.random.randint(0, 3)]
                 fgate = gate_builder(gate_type)
-                self._gates.append((fgate, [q], 1))
+                self._gates.append(fgate, [q])
 
             current_pattern = pattern[i % (len(pattern))]
             if current_pattern not in "ABCD":
@@ -543,7 +532,7 @@ class Circuit(CircuitBased):
                 gate_args = [int(e[0]), int(e[1])]
                 fgate = gate_builder(GateType.fsim, params=gate_params, random_params=random_parameters)
 
-                self._gates.append((fgate, gate_args, 1))
+                self._gates.append(fgate, gate_args)
 
         self._add_gate_to_all_qubits(Measure)
 
@@ -558,6 +547,7 @@ class Circuit(CircuitBased):
 
         return _cgate
 
+    # TODO: refactoring later
     def inverse(self) -> Circuit:
         """ the inverse of all Quantum Gates in current Circuit.
 
@@ -568,9 +558,9 @@ class Circuit(CircuitBased):
         inverse_gates = []
         for gate, indexes, size in self._gates[::-1]:
             if not isinstance(gate, Operator):
-                inverse_gates.append((gate.inverse(), indexes, size))
+                inverse_gates.append(gate.inverse(), indexes)
             else:
-                inverse_gates.append((gate, indexes, size))
+                inverse_gates.append(gate, indexes, size)
 
         _cir._gates = inverse_gates
 

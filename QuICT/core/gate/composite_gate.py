@@ -218,7 +218,7 @@ class CompositeGate(CircuitBased):
         else:
             gate_qidxes = gates.qubits
 
-        self._gates.append((gates, gate_qidxes, gates.size()))
+        self._gates.extend(gates._gates.copy(), gate_qidxes)
         self._update_qubit_limit(gate_qidxes)
         self._pointer = None
 
@@ -318,22 +318,22 @@ class CompositeGate(CircuitBased):
                 raise GateQubitAssignedError(f"{gate.type} need qubit indexes to add into Composite Gate.")
 
         self._update_qubit_limit(qubit_index)
-        self._gates.append((gate, qubit_index, 1))
+        self._gates.append(gate, qubit_index)
 
     ####################################################################
     ############            CompositeGate Utils             ############
     ####################################################################
-    def depth(self) -> int:
-        """ the depth of the circuit.
+    # def depth(self) -> int:
+    #     """ the depth of the circuit.
 
-        Returns:
-            int: the depth
-        """
-        depth = np.zeros(max(self.qubits) + 1, dtype=int)
-        for _, targs, _ in self.gate_decomposition(False, False):
-            depth[targs] = np.max(depth[targs]) + 1
+    #     Returns:
+    #         int: the depth
+    #     """
+    #     depth = np.zeros(max(self.qubits) + 1, dtype=int)
+    #     for _, targs, _ in self.gate_decomposition(False, False):
+    #         depth[targs] = np.max(depth[targs]) + 1
 
-        return np.max(depth)
+    #     return np.max(depth)
 
     def inverse(self) -> CompositeGate:
         """ the inverse of CompositeGate
