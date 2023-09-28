@@ -134,7 +134,7 @@ def test_with_aux_qubit():
     circuit = Circuit(size)
     gates = nn.with_aux_qubit(theta)
     gates | circuit
-    circuit.draw(filename='test_with_aux_qubit_n=3,m=6.jpg', flatten=True)
+    circuit.draw(filename='test_with_aux_qubit_n= ,m= .jpg', flatten=True)
     matrix = gates.matrix()
     print(matrix)
     #new_mat = matrix[:2 ** n, :2 ** n] #the first 2**n row and coloum
