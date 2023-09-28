@@ -78,10 +78,10 @@ class Circuit(CircuitBased):
     ):
         """
         Args:
-            wires(Union[Qureg, int]): the number of qubits for the circuit.
-            name(str): the name of the circuit.
-            topology(Layout): The topology of the circuit. If it is empty, it will be seemed as fully connected. \n
-            ancilla_qubits(list<int>): The indexes of ancilla qubits for current circuit.
+            wires (Union[Qureg, int]): the number of qubits for the circuit.
+            name (str): the name of the circuit.
+            topology (Layout): The topology of the circuit. If it is empty, it will be seemed as fully connected. \n
+            ancilla_qubits (list<int>): The indexes of ancilla qubits for current circuit.
         """
         if name is None:
             name = "circuit_" + unique_id_generator()
@@ -126,7 +126,7 @@ class Circuit(CircuitBased):
             circuit_a | circuit([1, 3, 4])   Add a 3-qubits Quantum Circuit into "circuit" with qubit index [1, 3, 4]
 
         Args:
-            targets(Circuit): the targets Quantum Circuit acts on.
+            targets (Circuit): the targets Quantum Circuit acts on.
 
         Raise:
             TypeError: the type of targets is wrong
@@ -174,7 +174,7 @@ class Circuit(CircuitBased):
         get a smaller qureg/qubit from this circuit
 
         Args:
-            item(int/slice): slice passed in.
+            item (int/slice): slice passed in.
 
         Return:
             Qubit/Qureg: the result or slice
@@ -388,7 +388,7 @@ class Circuit(CircuitBased):
         """ add a quantum gate into circuit.
 
         Args:
-            gate(BasicGate): The Quantum Gate want to append in current circuit
+            gate (BasicGate): The Quantum Gate want to append in current circuit
         """
         if self._pointer is not None:
             gate_args = gate.controls + gate.targets
@@ -459,12 +459,12 @@ class Circuit(CircuitBased):
         """ add some random gate to the circuit, not include Unitary, Permutation and Permutation_FX Gate.
 
         Args:
-            rand_size(int): the number of the gate added to the circuit. \n
-            typelist(list<GateType>): the type of gate, default contains.
+            rand_size (int): the number of the gate added to the circuit. \n
+            typelist (list<GateType>): the type of gate, default contains.
                 Rx, Ry, Rz, Cx, Cy, Cz, CRz, Ch, Rxx, Ryy, Rzz and FSim \n
-            random_params(bool): whether using random parameters for all quantum gates with parameters. \n
-            probabilities(list): The probability of append for each gates. \n
-            seed(int): The random seed for fixed Quantum Circuit.
+            random_params (bool): whether using random parameters for all quantum gates with parameters. \n
+            probabilities (list): The probability of append for each gates. \n
+            seed (int): The random seed for fixed Quantum Circuit.
         """
         if seed is not None:
             np.random.seed(seed)
@@ -514,9 +514,9 @@ class Circuit(CircuitBased):
         Add a supremacy circuit to the circuit
 
         Args:
-            repeat(int): the number of two-qubit gates' sequence
-            pattern(str): indicate the two-qubit gates' sequence
-            random_parameters(bool): whether using random parameters for FSim Gate, or not.
+            repeat (int): the number of two-qubit gates' sequence
+            pattern (str): indicate the two-qubit gates' sequence
+            random_parameters (bool): whether using random parameters for FSim Gate, or not.
         """
         qubits = len(self.qubits)
         supremacy_layout = SupremacyLayout(qubits)
@@ -600,11 +600,11 @@ class Circuit(CircuitBased):
         """ Get a sub-part circuit from the current Quantum Circuit with target GateSet and Qureg limitation.
 
         Args:
-            start(int): the start gate's index, default 0.  \n
-            max_size(int): max size of the sub circuit, default -1 without limit.   \n
-            qubit_limit(int/list<int>/Qubit/Qureg): the required qubits' indexes, if [], accept all qubits.
+            start (int): the start gate's index, default 0.  \n
+            max_size (int): max size of the sub circuit, default -1 without limit.   \n
+            qubit_limit (int/list<int>/Qubit/Qureg): the required qubits' indexes, if [], accept all qubits.
                 default to be [].   \n
-            gate_limit(List[GateType]): list of required gate's type, if [], accept all quantum gate. default to be [].
+            gate_limit (List[GateType]): list of required gate's type, if [], accept all quantum gate. default to be [].
 
         Return:
             Circuit: the sub circuit
