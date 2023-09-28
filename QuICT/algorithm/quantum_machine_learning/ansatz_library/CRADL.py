@@ -12,23 +12,49 @@ from .ansatz import Ansatz
 class CRADL(Ansatz):
     """Color-Readout-Alternating-Double-Layer architecture (CRADL) Ansatz.
 
-    **Only applicable to the encoding methods with only one color qubit.**
+    Consist of consecutive data-readout data-color XX gates, followed by analogous ZZ gates.
+
+    For more detail, please refer to:
 
     Reference:
-        https://arxiv.org/abs/2110.05476
+        `Image Compression and Classification Using Qubits and Quantum Deep Learning`
+        <https://arxiv.org/abs/2110.05476>.
+
+    Note:
+        Only applicable to FRQI encoding or NEQR for binary images. By default, the last qubit is the readout qubit,
+        the penultimate qubit is the color qubit, and others are data qubits.
+
+    Args:
+        n_qubits (int): The number of qubits.
+        layers (int): The number of layers.
+
+    Examples:
+        >>> from QuICT.algorithm.quantum_machine_learning.ansatz_library import CRADL
+        >>> cradl = CRADL(4, 1)
+        >>> cradl_cir = cradl.init_circuit()
+        >>> cradl_cir.draw("command")
+                ┌───────────────┐┌───────────────┐
+        q_0: |0>┤0              ├┤0              ├─────────────────────────────────────■─────────────■────────────────────────────────────────────
+                │               ││               │┌────────────────┐┌────────────────┐ │             │
+        q_1: |0>┤               ├┤  rxx(-0.6626) ├┤0               ├┤0               ├─┼─────────────┼─────────────■───────────────■──────────────
+                │  rxx(-0.6626) ││               ││                ││  rxx(-0.27888) │ │             │ZZ(-1.6315)  │               │ZZ(0.0095895)
+        q_2: |0>┤               ├┤1              ├┤  rxx(-0.27888) ├┤1               ├─┼─────────────■─────────────┼───────────────■──────────────
+                │               │└───────────────┘│                │└────────────────┘ │ZZ(-1.6315)                │ZZ(0.0095895)
+        q_3: |0>┤1              ├─────────────────┤1               ├───────────────────■───────────────────────────■──────────────────────────────
+                └───────────────┘                 └────────────────┘
     """
 
     @property
-    def readout(self):
+    def readout(self) -> list:
+        """Get the readout qubits.
+
+        Returns:
+            list: The list of readout qubits.
+        """
         return [self._readout]
 
     def __init__(self, n_qubits: int, layers: int):
-        """Initialize a CRADL ansatz instance.
-
-        Args:
-            n_qubits (int): The number of qubits.
-            layers (int): The number of layers.
-        """
+        """Initialize a CRADL ansatz instance."""
         super(CRADL, self).__init__(n_qubits)
         self._color_qubit = n_qubits - 2
         self._readout = n_qubits - 1
@@ -45,6 +71,9 @@ class CRADL(Ansatz):
 
         Returns:
             Circuit: The CRADL ansatz.
+
+        Raises:
+            AnsatzShapeError: An error occurred defining trainable parameters.
         """
         n_pos_qubits = self._n_qubits - 2
         params = (

@@ -12,23 +12,42 @@ from .ansatz import Ansatz
 class HEAnsatz(Ansatz):
     """Hardware-Efficient Ansatz.
 
+    For more detail, please refer to:
+
     References:
         https://www.nature.com/articles/nature23879
+
+    Args:
+        n_qubits (int): The number of qubits.
+        d (int): The depth of HE-ansatz.
+        layers (list): The list of layers. Supported layers are "CX", "CZ", "CRy", "RY", "RZ".
+        readout (list, optional): The readout qubits. Defaults to None.
+
+    Examples:
+        >>> from QuICT.algorithm.quantum_machine_learning.ansatz_library import HEAnsatz
+        >>> ansatz = HEAnsatz(3, 1, ["RZ", "RY", "RZ", "CX"], [0])
+        >>> circuit = ansatz.init_circuit()
+        >>> circuit.draw("command")
+                 ┌────────────┐┌────────────┐┌─────────────┐            ┌────┐
+        q_0: |0>─┤ rz(1.0306) ├┤ ry(1.2941) ├┤ rz(-1.0592) ├──■─────────┤ cx ├
+                ┌┴────────────┤├───────────┬┘├─────────────┤┌─┴──┐      └─┬──┘
+        q_1: |0>┤ rz(-0.8802) ├┤ ry(1.346) ├─┤ rz(-1.0702) ├┤ cx ├──■─────┼───
+                ├─────────────┤├───────────┴┐├─────────────┤└────┘┌─┴──┐  │
+        q_2: |0>┤ rz(0.40935) ├┤ ry(1.1894) ├┤ rz(-2.4843) ├──────┤ cx ├──■───
+                └─────────────┘└────────────┘└─────────────┘      └────┘
     """
 
     @property
     def readout(self):
+        """Get the readout qubits.
+
+        Returns:
+            list: The list of readout qubits.
+        """
         return self._readout
 
     def __init__(self, n_qubits: int, d: int, layers: list, readout: list = None):
-        """Initialize an HE-ansatz instance.
-
-        Args:
-            n_qubits (int): The number of qubits.
-            d (int): The depth of HE-ansatz.
-            layers (list): The list of layers. Supported layers are "CX", "CZ", "CRy", "RY", "RZ".
-            readout (list, optional): The readout qubits. Defaults to None.
-        """
+        """Initialize an HE-ansatz instance."""
         super(HEAnsatz, self).__init__(n_qubits)
         self._d = d
         self._layers = layers
@@ -49,6 +68,9 @@ class HEAnsatz(Ansatz):
 
         Returns:
             Circuit: The HE-ansatz ansatz.
+
+        Raises:
+            AnsatzShapeError: An error occurred defining trainable parameters.
         """
         params = (
             np.random.randn(self._d, self._param_layers, self._n_qubits)

@@ -12,15 +12,17 @@ from .ansatz import Ansatz
 class CRAML(Ansatz):
     """The Color-Readout-Alternating-Mixed-Layer architecture (CRAML) Ansatz for QNN.
 
-    For an image of size $2^n \times 2^n$, the number of qubits is $2n + 1$.
+    Consist of consecutive data-readout data-color XX and ZZ gates.
 
     For more detail, please refer to:
 
     Reference:
-        `Image Compression and Classification Using Qubits and Quantum Deep Learning` <https://arxiv.org/abs/2110.05476>.
+        `Image Compression and Classification Using Qubits and Quantum Deep Learning`
+        <https://arxiv.org/abs/2110.05476>.
 
     Note:
-        Only applicable to FRQI encoding or NEQR for binary images.
+        Only applicable to FRQI encoding or NEQR for binary images. By default, the last qubit is the readout qubit,
+        the penultimate qubit is the color qubit, and others are data qubits.
 
     Args:
         n_qubits (int): The number of qubits.
@@ -28,16 +30,18 @@ class CRAML(Ansatz):
 
     Examples:
         >>> from QuICT.algorithm.quantum_machine_learning.ansatz_library import CRAML
-        >>> craml = CRAML(3, 1)
+        >>> craml = CRAML(4, 1)
         >>> craml_cir = craml.init_circuit()
         >>> craml_cir.draw("command")
-                ┌─────────────┐┌─────────────┐
-        q_0: |0>┤0            ├┤0            ├─■────────────■───────────
-                │             ││  rxx(1.503) │ │            │ZZ(1.2849)
-        q_1: |0>┤  rxx(1.503) ├┤1            ├─┼────────────■───────────
-                │             │└─────────────┘ │ZZ(1.2849)
-        q_2: |0>┤1            ├────────────────■────────────────────────
-                └─────────────┘
+                ┌────────────────┐┌────────────────┐
+        q_0: |0>┤0               ├┤0               ├─■─────────────■──────────────────────────────────────────────────────────────────────────────
+                │                ││                │ │             │            ┌───────────────┐┌───────────────┐
+        q_1: |0>┤                ├┤  rxx(-0.82889) ├─┼─────────────┼────────────┤0              ├┤0              ├─■───────────────■──────────────
+                │  rxx(-0.82889) ││                │ │             │ZZ(-1.2213) │               ││  rxx(0.16296) │ │               │ZZ(-0.087565)
+        q_2: |0>┤                ├┤1               ├─┼─────────────■────────────┤  rxx(0.16296) ├┤1              ├─┼───────────────■──────────────
+                │                │└────────────────┘ │ZZ(-1.2213)               │               │└───────────────┘ │ZZ(-0.087565)
+        q_3: |0>┤1               ├───────────────────■──────────────────────────┤1              ├──────────────────■──────────────────────────────
+                └────────────────┘                                              └───────────────┘
     """
 
     def __init__(self, n_qubits: int, layers: int):
@@ -48,7 +52,7 @@ class CRAML(Ansatz):
         self._layers = layers
 
     @property
-    def readout(self) -> list[int]:
+    def readout(self) -> list:
         """Get the readout qubits.
 
         Returns:

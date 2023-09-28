@@ -12,21 +12,47 @@ from .ansatz import Ansatz
 class BasicQNN(Ansatz):
     """Basic QNN ansatz.
 
+    Each layer takes the same 2-qubit gate, wich each data qubit acting on the readout qubit.
+    All parametric gates have different parameters.
+
+    For more detail, please refer to:
+
     References:
-        https://arxiv.org/abs/1802.06002
+        `Classification with Quantum Neural Networks on Near Term Processors`
+        <https://arxiv.org/abs/1802.06002>
+
+    Note:
+        By default, the last qubit is the readout qubit, and others are data qubits.
+
+    Args:
+        n_qubits (int): The number of qubits.
+        layers (list): The list of PQC layers. Supported layers are "XX", "YY", "ZZ", "ZX".
+
+    Examples:
+        >>> from QuICT.algorithm.quantum_machine_learning.ansatz_library import BasicQNN
+        >>> basic_qnn = BasicQNN(3, ["ZZ", "ZX"])
+        >>> basic_qnn_cir = basic_qnn.init_circuit()
+        >>> basic_qnn_cir.draw("command")
+                                                      ┌─────────────┐
+        q_0: |0>───────────■──────────────────────────┤0            ├─────────────────────
+                           │                          │             │┌──────────────┐
+        q_1: |0>───────────┼─────────────■────────────┤  rzx(1.639) ├┤0             ├─────
+                ┌───┐┌───┐ │ZZ(0.21842)  │ZZ(0.67852) │             ││  rzx(0.7458) │┌───┐
+        q_2: |0>┤ x ├┤ h ├─■─────────────■────────────┤1            ├┤1             ├┤ h ├
+                └───┘└───┘                            └─────────────┘└──────────────┘└───┘
     """
 
     @property
-    def readout(self):
+    def readout(self) -> list:
+        """Get the readout qubits.
+
+        Returns:
+            list: The list of readout qubits.
+        """
         return [self._readout]
 
     def __init__(self, n_qubits: int, layers: list):
-        """Initialize a basic QNN instance.
-
-        Args:
-            n_qubits (int): The number of qubits.
-            layers (list): The list of PQC layers. Supported layers are "XX", "YY", "ZZ", "ZX".
-        """
+        """Initialize a basic QNN ansatz object."""
         super(BasicQNN, self).__init__(n_qubits)
         self._readout = n_qubits - 1
         self._data_qubits = list(range(n_qubits - 1))
@@ -44,6 +70,9 @@ class BasicQNN(Ansatz):
 
         Returns:
             Circuit: The basic QNN ansatz.
+
+        Raises:
+            AnsatzShapeError: An error occurred defining trainable parameters.
         """
         params = (
             np.random.randn(len(self._layers), self._n_qubits - 1)
