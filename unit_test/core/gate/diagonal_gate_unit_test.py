@@ -11,6 +11,7 @@ from QuICT.core import Circuit
 def test_gray_code():
     for code in DiagonalGate.lucal_gray_code(0, 3):
         print(code)
+    print("partitioned_gray_code:")
     print(DiagonalGate.partitioned_gray_code(4, 2))
 
 def test_Ainv():
@@ -56,10 +57,10 @@ def test_partitioned_gray_code():
 
 def test_alpha_s():
     n = 4
-    s = 6
+    s = 0
     theta = 2 * np.pi * np.random.random(1 << n)
     #theta = 2 * np.pi * np.random.random(len(A_inv))
-
+    print("s=",s," n=",n)
     print(DiagonalGate.alpha_s(theta, s, n))
 
 def test_phase_shift_s():
@@ -112,8 +113,6 @@ def test_phase_shift_s():
     print("diagonal_matrix2:", diagonal_matrix2)
 
 
-
-
 def test_linear_fjk():
     n = 4
     m = 8
@@ -122,8 +121,8 @@ def test_linear_fjk():
     print(resu)
 
 def test_with_aux_qubit():
-    n = 2 #number of target qubit
-    m = 4 #number of ancillary qubit
+    n = 4 #number of target qubit
+    m = 8 #number of ancillary qubit
     nn=DiagonalGate(n,m)
     #nn.target = 4
     #nn.aux = 8
@@ -134,7 +133,7 @@ def test_with_aux_qubit():
     circuit = Circuit(size)
     gates = nn.with_aux_qubit(theta)
     gates | circuit
-    circuit.draw(filename='test_with_aux_qubit_n= ,m= .jpg', flatten=True)
+    circuit.draw(filename='4test_with_aux_qubit_n=4 ,m=8 .jpg', flatten=True)
     matrix = gates.matrix()
     print(matrix)
     #new_mat = matrix[:2 ** n, :2 ** n] #the first 2**n row and coloum

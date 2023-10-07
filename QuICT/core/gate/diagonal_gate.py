@@ -66,60 +66,86 @@ class DiagonalGate(object):
         m = self.aux
         gates = CompositeGate()
 
-        for x in range(2**n):
+        #for x in range(2**n):
+        for x in range(1):
         # Stage 1: Prefix Copy
             t = int(np.floor(np.log2(m / 2)))
             copies = int(np.floor(m / (2 * t)))
+            #the round of the copy process
             r = int(np.floor(np.log2( copies + 1 )))
-            rs = r + 1
 
-            for i in range(1, rs):
+            #Consider the parallelism of the copy process.
+            for i in range(1, r+1):
                 for j in range(t):
                     CX & [j, n + (2 ** (i - 1) - 1) * t + j] | gates
                 for j in range((2 ** (i - 1) - 1) * t):
                     CX & [n + j, n + j + (2 ** (i - 1)) * t] | gates
 
+
             if 2 ** r - 1 < copies:
                 rest = copies - 2 ** r + 1
                 for j in range(t):
-                    CX & [j, n + (2 ** (r - 1) - 1) * t + j] | gates
+                    CX & [j, n + (2 ** (r) - 1) * t + j] | gates
                 if rest != 1:
                     for j in range((rest - 1) * t):
-                        CX & [n + j, n + (2 ** (r - 1)) * t + j] | gates
+                        CX & [n + j, n + (2 ** (r)) * t + j] | gates
 
             #for j in range(copies):
                 #for i in range(t):
                     #CX & [i, n + i + j * t] | gates
 
-
-         # Stage 2: Gray Initial
+        # Stage 2: Gray Initial
         #t = int(np.floor(np.log2(m / 2)))
             ell = 2**t
             ini_star = n + t * copies
-
+            visit = [0 for _ in range(n)]
+            s = self.partitioned_gray_code(n, t)
             #1.implement U1
             for j in range(1, 1 + ell):
-                for i in range(ini_star,ini_star+ell):
-                    self.ket_fjk(j,1,n,t,i) | gates
+                st = s[j - 1][0]
+                #print("s(",j,"0):",st)
+                for i in range(len(st)):
+                    if st[i] == '1':
+                        #if visit[i] == 0:
+                            #CX & [i,ini_star+j-1] | gates
+                        #else:
+                        CX & [n+t*visit[i]+i,ini_star+j-1] | gates
+                        visit[i] += 1
+
+                #for i in range(ini_star,ini_star+ell):
+                #self.ket_fjk(j,1,n,t,ini_star-1+j) | gates
 
              #2.implement R1
-            s = self.partitioned_gray_code(n, t)
+            #s = self.partitioned_gray_code(n, t)
             for j in range(1,1+ell):
                 sj1_int = int(s[j - 1][0], 2)
-                phase= (self.linear_fjk(j,1,x,n,t)) * (self.alpha_s(theta,sj1_int,n))
+                #phase= (self.linear_fjk(j,1,x,n,t)) * (self.alpha_s(theta,sj1_int,n))
+                phase = self.alpha_s(theta,sj1_int,n)
                 #phase = self.alpha_s(theta,sj1_int,n)
-            #U1(phase) & (ini_star+j-1) | gates
-                if phase != 0:
+                #U1(phase) & (ini_star+j-1) | gates
+                if sj1_int != 0:
                     U1(phase) | gates(ini_star+j-1)
-            #gates.extend(self.phase_shift_s(sj1_int, n, phase, aux=self.aux))
+                #gates.extend(self.phase_shift_s(sj1_int, n, phase, aux=self.aux))
+
 
         #Stage 3:Suffix Copy
 
             #1.U^{\dagger}_{copy,1}
-            for j in range(copies):
-                for i in range(t):
-                    CX & [i, n + i + j * t] | gates
+        for i in range(1, r + 1):
+            for j in range(t):
+                CX & [j, n + (2 ** (i - 1) - 1) * t + j] | gates
+            for j in range((2 ** (i - 1) - 1) * t):
+                CX & [n + j, n + j + (2 ** (i - 1)) * t] | gates
 
+        if 2 ** r - 1 < copies:
+            rest = copies - 2 ** r + 1
+            for j in range(t):
+                CX & [j, n + (2 ** (r) - 1) * t + j] | gates
+            if rest != 1:
+                for j in range((rest - 1) * t):
+                    CX & [n + j, n + (2 ** (r)) * t + j] | gates
+
+            """
             #2.U_{copy,2}
             copies3 = int(np.floor(m / (2 * (n-t))))
 
@@ -169,7 +195,7 @@ class DiagonalGate(object):
                         y = n + n - t - 1 + (copies3 - 1) * t
                         CX & [i, y + j] | gates
                         break
-
+            """
         return gates
 
     @staticmethod
@@ -256,6 +282,7 @@ class DiagonalGate(object):
         Returns:
             float: alpha_s in Equation 6
         """
+
         A = np.zeros(1 << n)
         for x in range(1, 1 << n):
             A[x] = cls.binary_inner_prod(s, x, width=n)
