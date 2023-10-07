@@ -4,15 +4,19 @@ from QuICT.tools.exception.algorithm import *
 
 
 class QubitLattice:
-    """Qubit encoding for encoding classical image data into quantum circuits."""
+    """Qubit encoding for encoding classical image data into quantum circuits.
+
+    After flattening the image into a vector, one qubit corresponds to one pixel.
+
+    Note:
+        Only supports binary images.
+
+    Args:
+        data_qubits (int): The number of data qubits
+    """
 
     def __init__(self, data_qubits: int):
-        """Initialize a qubit encoder instance.
-
-        Args:
-            data_qubits (int): The number of data qubits
-        """
-
+        """Initialize a qubit encoder instance."""
         self._data_qubits = data_qubits
 
     def __call__(self, img):
@@ -23,6 +27,9 @@ class QubitLattice:
 
         Returns:
             Circuit: Quantum circuit form of the image.
+
+        Raises:
+            EncodingError: An error occurred with the input image.
         """
 
         img = img.flatten()

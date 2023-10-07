@@ -8,21 +8,26 @@ from QuICT.tools.exception.algorithm import *
 
 
 class FRQI:
-    """FRQI encoding for encoding classical image data into quantum circuits.
+    r"""FRQI encoding for encoding classical image data into quantum circuits.
 
-    For a 2^n x 2^n image, the number of qubits required for FRQI is 2n + 1 (2n position qubits + 1 color qubit).
+    For more detail, please refer to:
 
     References:
-        https://link.springer.com/article/10.1007/s11128-010-0177-y
+        `A flexible representation of quantum images for polynomial preparation, image compression, and processing operations`
+        <https://link.springer.com/article/10.1007/s11128-010-0177-y>
+
+    Note:
+        For a $2^n \times 2^n$ image, the number of qubits required for FRQI is $2n + 1$ ($2n$ position qubits and $1$ color qubit).
+
+        By default, the first $n$ qubits are the Y-axis coordinates, and the next $n$ are the X-axis coordinates. 
+        The final qubit is the color qubit.
+
+    Args:
+        grayscale (int, optional): The grayscale of the input images. Defaults to 2.
     """
 
     def __init__(self, grayscale: int = 2):
-        """Initialize a FRQI instance.
-
-        Args:
-            grayscale (int, optional): The grayscale of the input images. Defaults to 2.
-        """
-
+        """Initialize a FRQI instance."""
         self._grayscale = grayscale
         self._N = None
         self._n_qubits = None
@@ -42,6 +47,9 @@ class FRQI:
 
         Returns:
             Circuit: Quantum circuit form of the image.
+
+        Raises:
+            EncodingError: An error occurred with the input image.
         """
 
         img = self._img_preprocess(img, flatten=True)
@@ -147,7 +155,9 @@ class FRQI:
                 uniqueness_dnf_circuit | dnf_circuit
             else:
                 cnf_circuit = self._construct_cnf_circuit(
-                    cnf_list[i], gid=gid, theta=theta,
+                    cnf_list[i],
+                    gid=gid,
+                    theta=theta,
                 )
                 cnf_circuit | dnf_circuit
 
@@ -168,7 +178,11 @@ class FRQI:
         mc_gate = (
             MultiControlGate(len(qids), GateType.x)
             if theta is None
-            else MultiControlGate(len(qids), GateType.ry, params=[theta],)
+            else MultiControlGate(
+                len(qids),
+                GateType.ry,
+                params=[theta],
+            )
         )
         mc_gate | cnf_circuit(qids + [gid + self._n_pos_qubits])
         return cnf_circuit
@@ -184,7 +198,7 @@ class FRQI:
     def _get_cnf_qid(self, cnf_items):
         idx_list = []
         for item in cnf_items:
-            idx_list.append(int(item[item.index("_") + 1:]))
+            idx_list.append(int(item[item.index("_") + 1 :]))
         return idx_list
 
     def _split_dnf(self, dnf):
