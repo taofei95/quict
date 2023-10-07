@@ -7,7 +7,10 @@ from QuICT.core.gate import Variable
 
 
 class Ansatz(ABC):
-    """The abstract class for ansatz.
+    """Base class for all ansatz.
+
+    Note:
+        User-defined ansatz also need to inherit this class.
 
     Args:
         n_qubits (int): The number of qubits.
@@ -23,7 +26,7 @@ class Ansatz(ABC):
         return self._params
 
     def __init__(self, n_qubits: int):
-        """Initialize an Ansatz object."""
+        """Initialize an Ansatz instance."""
         self._n_qubits = n_qubits
         self._params = None
 

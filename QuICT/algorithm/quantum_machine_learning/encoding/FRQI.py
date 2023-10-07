@@ -13,7 +13,7 @@ class FRQI:
     For more detail, please refer to:
 
     References:
-        `A flexible representation of quantum images for polynomial preparation, image compression, and processing operations`
+        `A flexible representation of quantum images for polynomial preparation, image compression, and processing operations` 
         <https://link.springer.com/article/10.1007/s11128-010-0177-y>
 
     Note:

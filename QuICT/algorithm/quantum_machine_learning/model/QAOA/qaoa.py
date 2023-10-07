@@ -10,7 +10,26 @@ from ..model import Model
 
 
 class QAOA(Model):
-    """The quantum approximate optimization algorithm (QAOA)."""
+    """The quantum approximate optimization algorithm (QAOA).
+
+    Modular QAOA model with autograd.
+
+    For more detail, please refer to:
+
+    Reference:
+        `A Quantum Approximate Optimization Algorithm`
+        <https://arxiv.org/abs/1411.4028>
+
+    Args:
+        n_qubits (int): The number of qubits.
+        p (int): The number of layers of the QAOA network.
+        hamiltonian (Hamiltonian): The hamiltonian for a specific problem.
+        optimizer (OptimizerBase): The optimizer used to optimize the network.
+        params (np.ndarray, optional): Initialization parameters. Defaults to None.
+        device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
+        gpu_device_id (int, optional): The GPU device ID. Defaults to 0.
+        differentiator (str, optional): The differentiator type. Defaults to "adjoint".
+    """
 
     def __init__(
         self,
@@ -19,23 +38,11 @@ class QAOA(Model):
         hamiltonian: Hamiltonian,
         optimizer: OptimizerBase,
         params: np.ndarray = None,
-        device: str = "GPU",
+        device: str = "CPU",
         gpu_device_id: int = 0,
         differentiator: str = "adjoint",
     ):
-        """Initialize a QAOA model.
-
-        Args:
-            n_qubits (int): The number of qubits.
-            p (int): The number of layers of the QAOA network.
-            hamiltonian (Hamiltonian): The hamiltonian for a specific problem.
-            optimizer (OptimizerBase): The optimizer used to optimize the network.
-            params (np.ndarray, optional): Initialization parameters. Defaults to None.
-            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "GPU".
-            gpu_device_id (int, optional): The GPU device ID. Defaults to 0.
-            differentiator (str, optional): The differentiator type, one of ["adjoint", "parameter_shift].
-                Defaults to "adjoint".
-        """
+        """Initialize a QAOA model instance."""
         super(QAOA, self).__init__(
             n_qubits,
             optimizer,

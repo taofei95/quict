@@ -18,7 +18,7 @@ class HEAnsatz(Ansatz):
     For more detail, please refer to:
 
     References:
-        `Hardware-efficient variational quantum eigensolver for small molecules and quantum magnets`
+        `Hardware-efficient variational quantum eigensolver for small molecules and quantum magnets` 
         <https://www.nature.com/articles/nature23879>
 
     Note:

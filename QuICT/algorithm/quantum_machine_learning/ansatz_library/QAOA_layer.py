@@ -16,7 +16,7 @@ class QAOALayer(Ansatz):
     For more detail, please refer to:
 
     Reference:
-        `A Quantum Approximate Optimization Algorithm`
+        `A Quantum Approximate Optimization Algorithm` 
         <https://arxiv.org/abs/1411.4028>
 
     Args:

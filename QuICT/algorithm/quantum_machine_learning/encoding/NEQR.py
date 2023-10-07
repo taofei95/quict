@@ -13,7 +13,7 @@ class NEQR(FRQI):
     For more detail, please refer to:
 
     References:
-        `NEQR: a novel enhanced quantum representation of digital images`
+        `NEQR: a novel enhanced quantum representation of digital images` 
         <https://link.springer.com/article/10.1007/s11128-013-0567-z>
 
     Note:

@@ -17,7 +17,7 @@ class CRAML(Ansatz):
     For more detail, please refer to:
 
     Reference:
-        `Image Compression and Classification Using Qubits and Quantum Deep Learning`
+        `Image Compression and Classification Using Qubits and Quantum Deep Learning` 
         <https://arxiv.org/abs/2110.05476>.
 
     Note:
