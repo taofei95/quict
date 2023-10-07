@@ -9,20 +9,15 @@ from typing import Union, List
 import numpy as np
 
 from QuICT.core.gate import BasicGate
-from QuICT.core.operator import CheckPointChild
 from QuICT.core.utils import CircuitBased, CircuitMatrix, CGATE_LIST, unique_id_generator
-from QuICT.tools.exception.core import ValueError, CompositeGateAppendError, TypeError, GateQubitAssignedError
+from QuICT.tools.exception.core import CompositeGateAppendError, TypeError, GateQubitAssignedError
 
 
 class CompositeGate(CircuitBased):
     """ Implement a group of gate """
     @property
     def qubits(self) -> list:
-        return sorted(self._qubits)
-
-    @property
-    def checkpoint(self):
-        return self._check_point
+        return self._gates.qubits
 
     def __init__(self, name: str = None, gates: List[BasicGate, CompositeGate] = None):
         """
@@ -34,9 +29,6 @@ class CompositeGate(CircuitBased):
             name = "composite_gate_" + unique_id_generator()
 
         super().__init__(name)
-        self._check_point = None        # required checkpoint
-        self._qubits = []
-
         if gates is not None:
             for gate in gates:
                 if isinstance(gate, CompositeGate):
@@ -45,8 +37,7 @@ class CompositeGate(CircuitBased):
                     self.append(gate)
 
     def clean(self):
-        self._gates = []
-        self._qubits = []
+        self._gates.reset()
         self._pointer = None
 
     ####################################################################
@@ -71,10 +62,16 @@ class CompositeGate(CircuitBased):
     ####################################################################
     ############        CompositeGate Qureg Mapping         ############
     ####################################################################
+    def _qubits_validation(self, qubit_indexes: list):
+        for qidx in qubit_indexes:
+            assert qidx >= 0 and isinstance(qidx, (int, np.int32, np.int64)), \
+                "The gate's qubit indexes should be integer or greater than zero."
+
     def __call__(self, indexes: Union[list, int]):
         if isinstance(indexes, int):
             indexes = [indexes]
 
+        self._qubits_validation(indexes)
         self._pointer = indexes
         return self
 
@@ -87,60 +84,14 @@ class CompositeGate(CircuitBased):
         if isinstance(targets, int):
             targets = [targets]
 
-        if len(targets) != self.width():
-            raise ValueError("CompositeGate.&", f"not equal {self.width()}", len(targets))
-
-        self._mapping(targets)
+        self._qubits_validation(targets)
+        print(self.qubits)
+        self._gates.reassign(targets)
 
         if CGATE_LIST:
             CGATE_LIST[-1].extend(self)
 
         return self
-
-    def _mapping(self, targets: list):
-        """ remapping the gates' target qubits
-
-        Args:
-            targets(list): the related qubits
-        """
-        qidx_mapping = {}
-        for i, q in enumerate(self.qubits):
-            qidx_mapping[q] = targets[i]
-
-        new_gates = []
-        for gate, qidxes, size in self._gates:
-            new_q = [qidx_mapping[qidx] for qidx in qidxes]
-            new_gates.append((gate, new_q, size))
-
-        self._qubits = targets
-        self._gates = new_gates
-
-    def _update_qubit_limit(self, indexes: list):
-        for idx in indexes:
-            assert idx >= 0 and isinstance(idx, (int, np.int32, np.int64)), idx
-            if idx not in self._qubits:
-                self._qubits.append(idx)
-
-    def _update_qubits_after_remove(self, indexes: list):
-        """ Update qubits if remove any gate in current CompositeGate.
-
-        Args:
-            indexes (list): The original qubit indexes from removed Quantum Gate.
-        """
-        for idx in indexes:
-            if not self._exist_qubits(idx):
-                self._qubits.remove(idx)
-
-    def _exist_qubits(self, idx: int) -> bool:
-        """ Whether exist Quantum Gate with the given qubit indexes. """
-        if idx not in self._qubits:
-            return False
-
-        for _, qidx, _ in self._gates:
-            if idx in qidx:
-                return True
-
-        return False
 
     ####################################################################
     ############            CompositeGate Build             ############
@@ -196,7 +147,7 @@ class CompositeGate(CircuitBased):
         Return:
             [BasicGates]: the gates
         """
-        gate, qidxes, _ = self._gates[item]
+        gate, qidxes = self._gates[item]
 
         return gate & qidxes
 
@@ -218,8 +169,7 @@ class CompositeGate(CircuitBased):
         else:
             gate_qidxes = gates.qubits
 
-        self._gates.extend(gates._gates.copy(), gate_qidxes)
-        self._update_qubit_limit(gate_qidxes)
+        self._gates.extend(gates, gate_qidxes)
         self._pointer = None
 
     def append(self, gate: BasicGate):
@@ -228,13 +178,21 @@ class CompositeGate(CircuitBased):
         Args:
             gate (BasicGate): The quantum gate need to append
         """
-        if isinstance(gate, BasicGate):
-            self._append_gate(gate)
-        elif isinstance(gate, CheckPointChild):
-            self._check_point = gate
-        else:
+        if not isinstance(gate, BasicGate):
             raise TypeError("CompositeGate.append", "BasicGate/CheckPoint", type(gate))
 
+        if self._pointer is not None:
+            gate_args = gate.controls + gate.targets
+            assert len(self._pointer) == gate_args, \
+                GateQubitAssignedError(f"{gate.type} need {gate_args} indexes, but given {len(self._pointer)}")
+
+            qubit_index = self._pointer[:]
+        else:
+            qubit_index = gate.cargs + gate.targs
+            if not qubit_index:
+                raise GateQubitAssignedError(f"{gate.type} need qubit indexes to add into Composite Gate.")
+
+        self._gates.append(gate, qubit_index)
         self._pointer = None
 
     def insert(self, gate: Union[BasicGate, CompositeGate], insert_idx: int):
@@ -257,7 +215,6 @@ class CompositeGate(CircuitBased):
         if len(gate_args) == 0:
             raise GateQubitAssignedError(f"{gate.type} need qubit indexes to insert into Composite Gate.")
 
-        self._update_qubit_limit(gate_args)
         self._gates.insert(insert_idx, (gate, gate_args, gate_size))
 
     def pop(self, index: int = -1):
@@ -270,8 +227,7 @@ class CompositeGate(CircuitBased):
             index = self.gate_length() + index
 
         assert index >= 0 and index < self.gate_length()
-        gate, qidx, _ = self._gates.pop(index)
-        self._update_qubits_after_remove(qidx)
+        gate, qidx = self._gates.pop(index)
 
         return gate.copy() & qidx
 
@@ -297,44 +253,10 @@ class CompositeGate(CircuitBased):
 
         assert len(origin_qidx) == len(new_qubits)
         self._gates[index] = (origin_gate, new_qubits, origin_size)
-        self._update_qubit_limit(new_qubits)
-        self._update_qubits_after_remove(origin_qidx)
-
-    def _append_gate(self, gate: BasicGate):
-        """ Add a BasicGate into the current CompositeGate
-
-        Args:
-            gate (BasicGate): The BasicGate need to added
-        """
-        if self._pointer is not None:
-            gate_args = gate.controls + gate.targets
-            assert len(self._pointer) == gate_args, \
-                GateQubitAssignedError(f"{gate.type} need {gate_args} indexes, but given {len(self._pointer)}")
-
-            qubit_index = self._pointer[:]
-        else:
-            qubit_index = gate.cargs + gate.targs
-            if not qubit_index:
-                raise GateQubitAssignedError(f"{gate.type} need qubit indexes to add into Composite Gate.")
-
-        self._update_qubit_limit(qubit_index)
-        self._gates.append(gate, qubit_index)
 
     ####################################################################
     ############            CompositeGate Utils             ############
     ####################################################################
-    # def depth(self) -> int:
-    #     """ the depth of the circuit.
-
-    #     Returns:
-    #         int: the depth
-    #     """
-    #     depth = np.zeros(max(self.qubits) + 1, dtype=int)
-    #     for _, targs, _ in self.gate_decomposition(False, False):
-    #         depth[targs] = np.max(depth[targs]) + 1
-
-    #     return np.max(depth)
-
     def inverse(self) -> CompositeGate:
         """ the inverse of CompositeGate
 
@@ -342,9 +264,7 @@ class CompositeGate(CircuitBased):
             CompositeGate: the inverse of the gateSet
         """
         _gates = CompositeGate()
-        inverse_gates = [(gate.inverse(), indexes, size) for gate, indexes, size in self._gates[::-1]]
-        _gates._gates = inverse_gates
-        _gates._qubits = self.qubits
+        _gates._gates = self._gates.inverse()
 
         return _gates
 
@@ -352,9 +272,7 @@ class CompositeGate(CircuitBased):
         """ Copy current CompositeGate. """
         _gates = CompositeGate()
         _gates.name = self.name
-        _gates._qubits = self.qubits
-        copy_gates = [(gate.copy(), indexes, size) for gate, indexes, size in self._gates]
-        _gates._gates = copy_gates
+        _gates._gates = self._gates.copy()
 
         return _gates
 

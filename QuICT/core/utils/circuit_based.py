@@ -35,7 +35,14 @@ class CircuitBased(object):
         *Warning*: this is slowly due to the copy of gates, you can use self.fast_gates to
         get list of tuple(gate, qubit_indexes, size) for further using.
         """
-        return [gate.copy() & qidx for gate, qidx in self._gates.gates]
+        gate_list = []
+        for gate, qidx in self._gates.gates:
+            if type(gate).__name__ == "CompositeGate":
+                gate_list.append(gate.copy())
+            else:
+                gate_list.append(gate.copy() & qidx)
+
+        return gate_list
 
     @property
     def fast_gates(self) -> list:
@@ -82,7 +89,6 @@ class CircuitBased(object):
         """
         self._name = name
         self._gates = CircuitGates()
-        self._fast_gates = []
         self._qubits = qubits
         self._pointer = None
         self._precision = "double"
@@ -107,7 +113,7 @@ class CircuitBased(object):
         Returns:
             int: the number of qubits in circuit
         """
-        return len(self._qubits)
+        return len(self.qubits)
 
     def depth(self) -> int:
         """ the depth of the circuit.
@@ -331,7 +337,8 @@ class CircuitBased(object):
 
         elif method == 'command':
             gates = self.flatten_gates() if flatten else self.gates
-            text_drawer = TextDrawing(self._qubits, gates)
+            print(gates)
+            text_drawer = TextDrawing(self.qubits, gates)
             if filename is None:
                 print(text_drawer.single_string())
                 return

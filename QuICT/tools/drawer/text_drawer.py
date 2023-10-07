@@ -38,7 +38,7 @@ class circuit_layer(object):
 
     def addGate(self, gate: BasicGate) -> bool:
         if isinstance(gate, CompositeGate):
-            Q_set = set(gate._qubits)
+            Q_set = set(gate.qubits)
         else:
             Q_set = set(gate.cargs) | set(gate.targs)
 
@@ -53,7 +53,7 @@ class circuit_layer(object):
 
     def checkGate(self, gate: BasicGate) -> bool:
         if isinstance(gate, CompositeGate):
-            Q_set = set(gate._qubits)
+            Q_set = set(gate.qubits)
         else:
             Q_set = set(gate.cargs) | set(gate.targs)
 
@@ -1104,10 +1104,10 @@ class TextDrawing:
             gate_type = gate.type
 
         if isinstance(gate, CompositeGate):
-            if len(gate._qubits) == 1:
-                layer.set_qubit(gate._qubits[0], BoxOnQuWire(box_label, conditional=conditional))
+            if len(gate.qubits) == 1:
+                layer.set_qubit(gate.qubits[0], BoxOnQuWire(box_label, conditional=conditional))
             else:
-                layer.set_qu_multibox(gate._qubits, box_label, conditional=conditional)
+                layer.set_qu_multibox(gate.qubits, box_label, conditional=conditional)
         elif not isinstance(gate, BasicGate):
             # trigger
             if gate.targets + len(gate.cargs) == 1:

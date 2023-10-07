@@ -285,8 +285,7 @@ class Circuit(CircuitBased):
                 gate_qidxes = list(range(gates.width()))
 
         assert len(gate_qidxes) <= self.width(), "Circuit cannot append any Gate/CompositeGate which larger than self."
-        extend_gates = gates._gates.copy()
-        self._gates.extend(extend_gates, gate_qidxes)
+        self._gates.extend(gates, gate_qidxes)
 
         self._pointer = None
 
