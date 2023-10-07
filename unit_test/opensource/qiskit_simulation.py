@@ -142,3 +142,24 @@ if __name__ == "__main__":
 
     #         for key, val in alg_result.items():
     #             writer.writerow([key, val])
+
+
+from QuICT.core.gate import *
+from QuICT.core.utils.gate_type import GateType
+
+# gate with one qubit
+one_qubits_gate = [
+    GateType.h, GateType.s, GateType.sdg, GateType.x, GateType.y, GateType.z,
+    GateType.sx, GateType.sy, GateType.sw, GateType.id, GateType.u1, GateType.u2, GateType.u3,
+    GateType.rx, GateType.ry, GateType.rz, GateType.t, GateType.tdg, GateType.phase,
+    GateType.measure, GateType.reset, GateType.barrier
+]
+# gate with two qubits
+two_qubits_gate = [
+    GateType.cx, GateType.cz, GateType.ch, GateType.crz, GateType.cu1, GateType.cu3, GateType.fsim,
+    GateType.rxx, GateType.ryy, GateType.rzz, GateType.swap, GateType.iswap
+]
+# gate with three qubits
+three_qubits_gate = [GateType.ccx, GateType.ccz, GateType.cswap]
+# gate with params
+parameter_gates_for_call_test = [U1, U2, CU3, FSim]

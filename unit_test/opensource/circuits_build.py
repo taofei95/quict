@@ -57,8 +57,9 @@ for _ in range(1):
     u = Unitary(matrix)
     u | cir(random.sample(qubits_number, 2))
 
-    mc = MultiControlGate(controls=1, gate_type=GateType.h, params=[0, 0])
-    mc | cir(0)
+    # TODO: bug
+    # mc = MultiControlGate(controls=1, gate_type=GateType.h, params=[0, 0])
+    # mc | cir([0, 1])
 
     mct = MultiControlToffoli(aux_usage='one_clean_aux')
     mct_gate = mct(3)
@@ -151,8 +152,8 @@ for _ in range(1):
             c1 | c1
         elif rand_j == 5:
             print("extend gate begin")
-            c.extend(c)
-            c ^ c
+            # TODO: bug
+            # c.extend(c)
         elif rand_j == 7:
             print("special append gate begin")
             with c:
@@ -162,7 +163,7 @@ for _ in range(1):
     # ----------------------------
     # inverse cir
     # ----------------------------
-    cir.inverse() | cir(random.sample(list(range(q)), cir.width()))
+    cir.inverse() | cir
 
     # ----------------------------
     # gate decomposition
@@ -172,5 +173,5 @@ for _ in range(1):
 
     print(c.qasm())
     print(cir.qasm())
-    # cir.draw("command")
+    cir.draw("command")
 
