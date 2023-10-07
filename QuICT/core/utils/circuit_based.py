@@ -64,7 +64,7 @@ class CircuitBased(object):
         self._precision = "double"
 
     def size(self) -> int:
-        """ the number of gates in the circuit/CompositeGate, the operators are not count.
+        """ The number of gates in the circuit/CompositeGate, the operators are not count.
 
         Returns:
             int: the number of gates in circuit
@@ -87,7 +87,7 @@ class CircuitBased(object):
         return len(self._qubits)
 
     def depth(self) -> int:
-        """ the depth of the circuit.
+        """ The depth of the circuit.
 
         Returns:
             int: the depth
@@ -99,7 +99,7 @@ class CircuitBased(object):
         return np.max(depth)
 
     def count_2qubit_gate(self) -> int:
-        """ the number of the two qubit gates in the Circuit/CompositeGate
+        """ The number of the two qubit gates in the Circuit/CompositeGate
 
         Returns:
             int: the number of the two qubit gates
@@ -119,7 +119,7 @@ class CircuitBased(object):
         return count
 
     def count_1qubit_gate(self) -> int:
-        """ the number of the one qubit gates in the Circuit/CompositeGate
+        """ The number of the one qubit gates in the Circuit/CompositeGate
 
         Returns:
             int: the number of the one qubit gates
@@ -139,7 +139,7 @@ class CircuitBased(object):
         return count
 
     def count_gate_by_gatetype(self, gate_type: GateType) -> int:
-        """ the number of the target Quantum Gate in the Circuit/CompositeGate
+        """ The number of the target Quantum Gate in the Circuit/CompositeGate
 
         Args:
             gateType(GateType): the type of gates to be count
@@ -162,7 +162,7 @@ class CircuitBased(object):
         return count
 
     def count_training_gate(self):
-        """ the number of the trainable gates in the Circuit/CompositeGate
+        """ The number of the trainable gates in the Circuit/CompositeGate
 
         Returns:
             int: the number of the trainable gates
@@ -277,6 +277,11 @@ class CircuitBased(object):
         return decomp_gates
 
     def get_variable_shape(self):
+        """ The original shape of the variables in the Circuit/CompositeGate
+
+        Returns:
+            tuple: The original shape of the variables.
+        """
         for gate, _, _ in self._gates:
             if gate.variables == 0:
                 continue
@@ -285,6 +290,11 @@ class CircuitBased(object):
                     return gate.pargs[i].origin_shape
 
     def get_variables(self):
+        """ The variables in the Circuit/CompositeGate
+
+        Returns:
+            Variable: The variables.
+        """
         shape = self.get_variable_shape()
         pargs = np.zeros(shape=shape, dtype=np.float64)
         grads = np.zeros(shape=shape, dtype=np.float64)
@@ -304,6 +314,11 @@ class CircuitBased(object):
         return Variable(pargs=pargs, grads=grads)
 
     def update(self, variables):
+        """ Update the new variables to the original ones.
+
+        Args:
+            variables (Variable): The new variables.
+        """
         assert variables.shape == self.get_variable_shape()
         remain_training_gates = self.count_training_gate()
         for gate, _, _ in self._gates:

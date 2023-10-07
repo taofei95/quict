@@ -285,6 +285,16 @@ class GateMatrixGenerator:
             TypeError(gate_type)
 
     def grad_for_param(self, gate_type: GateType, gate_pargs: list, precision: complex):
+        """ Return the Parameterized Quantum Gates' gradient matrices.
+
+        Args:
+            gate_type (GateType): The type of Quantum Gate.
+            gate_pargs (List): The Quantum Gate's parameters.
+            precision (complex): The precision of Quantum Gate.
+
+        Returns:
+            list: Parameterized Quantum Gates' gradient matrices.
+        """
         n_pargs = len(gate_pargs)
         pargs = [0.0] * n_pargs
         for i in range(n_pargs):
