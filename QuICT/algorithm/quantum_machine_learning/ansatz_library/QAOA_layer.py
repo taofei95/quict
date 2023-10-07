@@ -11,18 +11,42 @@ from .ansatz import Ansatz
 
 
 class QAOALayer(Ansatz):
-    """The quantum approximate optimization algorithm (QAOA) ansatz."""
+    """The Quantum Approximate Optimization Algorithm (QAOA) ansatz.
+
+    For more detail, please refer to:
+
+    Reference:
+        `A Quantum Approximate Optimization Algorithm`
+        <https://arxiv.org/abs/1411.4028>
+
+    Args:
+        n_qubits (int): The number of qubits.
+        p (int): The number of layers of the QAOA ansatz.
+        hamiltonian (Hamiltonian): The hamiltonian for a specific combinatorial-optimization problem.
+
+    Examples:
+        >>> from QuICT.algorithm.quantum_machine_learning.ansatz_library import QAOALayer
+        >>> from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
+        >>> ham = Hamiltonian([[-1, "Z0", "Z2"], [0.5, "X0", "X1"]])
+        >>> qaoa_ansatz = QAOALayer(3, 1, ham)
+        >>> qaoa_cir = qaoa_ansatz.init_circuit()
+        >>> qaoa_cir.draw("command")
+                ┌───┐                              ┌───┐                                 ┌───┐┌────────────┐
+        q_0: |0>┤ h ├──■───────────────────■───────┤ h ├───────■─────────────────────■───┤ h ├┤ rx(1.0647) ├
+                ├───┤  │                   │       ├───┤     ┌─┴──┐┌──────────────┐┌─┴──┐├───┤├────────────┤
+        q_1: |0>┤ h ├──┼───────────────────┼───────┤ h ├─────┤ cx ├┤ rz(-0.69819) ├┤ cx ├┤ h ├┤ rx(1.0647) ├
+                ├───┤┌─┴──┐┌────────────┐┌─┴──┐┌───┴───┴────┐└────┘└──────────────┘└────┘└───┘└────────────┘
+        q_2: |0>┤ h ├┤ cx ├┤ rz(1.3964) ├┤ cx ├┤ rx(1.0647) ├───────────────────────────────────────────────
+                └───┘└────┘└────────────┘└────┘└────────────┘
+    """
 
     def __init__(
-        self, n_qubits: int, p: int, hamiltonian: Hamiltonian,
+        self,
+        n_qubits: int,
+        p: int,
+        hamiltonian: Hamiltonian,
     ):
-        """Initialize a QAOA ansatz instance.
-
-        Args:
-            n_qubits (int): The number of qubits.
-            p (int): The number of layers of the QAOA ansatz.
-            hamiltonian (Hamiltonian): The hamiltonian for a specific combinatorial-optimization problem.
-        """
+        """Initialize QAOA ansatzinstance."""
         super(QAOALayer, self).__init__(n_qubits)
         self._p = p
         self._hamiltonian = hamiltonian
@@ -35,6 +59,9 @@ class QAOALayer(Ansatz):
 
         Returns:
             Circuit: The QAOA ansatz.
+
+        Raises:
+            AnsatzShapeError: An error occurred defining trainable parameters.
         """
         params = np.random.randn(2, self._p) if params is None else params
         params = Variable(pargs=params) if isinstance(params, np.ndarray) else params
@@ -100,10 +127,10 @@ class QAOALayer(Ansatz):
         else:
             # Add CNOT gates
             for i in range(len(tar_idx) - 1):
-                CX | circuit(tar_idx[i: i + 2])
+                CX | circuit(tar_idx[i : i + 2])
             # Add RZ gate
             Rz(gamma) | circuit(tar_idx[-1])
             # Add CNOT gates
             for i in range(len(tar_idx) - 2, -1, -1):
-                CX | circuit(tar_idx[i: i + 2])
+                CX | circuit(tar_idx[i : i + 2])
         return circuit
