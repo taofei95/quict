@@ -97,7 +97,8 @@ class DiagonalGate(object):
         # Stage 2: Gray Initial
         #t = int(np.floor(np.log2(m / 2)))
             ell = 2**t
-            ini_star = n + t * copies
+            ini_star = n + int(m/2)
+            #To ensure parallelism, the group number of the control bit is given.
             visit = [0 for _ in range(n)]
             s = self.partitioned_gray_code(n, t)
             #1.implement U1
@@ -120,6 +121,7 @@ class DiagonalGate(object):
             for j in range(1,1+ell):
                 sj1_int = int(s[j - 1][0], 2)
                 #phase= (self.linear_fjk(j,1,x,n,t)) * (self.alpha_s(theta,sj1_int,n))
+                #Here need correction.
                 phase = self.alpha_s(theta,sj1_int,n)
                 #phase = self.alpha_s(theta,sj1_int,n)
                 #U1(phase) & (ini_star+j-1) | gates
@@ -131,44 +133,63 @@ class DiagonalGate(object):
         #Stage 3:Suffix Copy
 
             #1.U^{\dagger}_{copy,1}
-        for i in range(1, r + 1):
-            for j in range(t):
-                CX & [j, n + (2 ** (i - 1) - 1) * t + j] | gates
-            for j in range((2 ** (i - 1) - 1) * t):
-                CX & [n + j, n + j + (2 ** (i - 1)) * t] | gates
+            for i in range(1, r + 1):
+                for j in range(t):
+                    CX & [j, n + (2 ** (i - 1) - 1) * t + j] | gates
+                for j in range((2 ** (i - 1) - 1) * t):
+                    CX & [n + j, n + j + (2 ** (i - 1)) * t] | gates
 
-        if 2 ** r - 1 < copies:
-            rest = copies - 2 ** r + 1
-            for j in range(t):
-                CX & [j, n + (2 ** (r) - 1) * t + j] | gates
-            if rest != 1:
-                for j in range((rest - 1) * t):
-                    CX & [n + j, n + (2 ** (r)) * t + j] | gates
+            if 2 ** r - 1 < copies:
+                rest = copies - 2 ** r + 1
+                for j in range(t):
+                    CX & [j, n + (2 ** (r) - 1) * t + j] | gates
+                if rest != 1:
+                    for j in range((rest - 1) * t):
+                        CX & [n + j, n + (2 ** (r)) * t + j] | gates
 
-            """
+
             #2.U_{copy,2}
             copies3 = int(np.floor(m / (2 * (n-t))))
+            r3 = int(np.floor(np.log2(copies3 + 1)))
 
-            for j in range(copies3):
-                for i in range(n-t):
-                    CX & [i + t, n + i + j * t] | gates
+            for i in range(1, r3 + 1):
+                for j in range(t,n):
+                    CX & [j, n + (2 ** (i - 1) - 1) * (n - t) + j - t] | gates
+                for j in range((2 ** (i - 1) - 1) * (n - t)):
+                    CX & [n + j, n + j + (2 ** (i - 1)) * (n - t)] | gates
+
+            if 2 ** r3 - 1 < copies:
+                rest = copies3 - 2 ** r3 + 1
+                for j in range(t,n):
+                    CX & [j, n + (2 ** (r3) - 1) * (n - t) + j - t] | gates
+                if rest != 1:
+                    for j in range((rest - 1) * (n - t)):
+                        CX & [n + j, n + (2 ** (r3)) * (n - t) + j] | gates
+
 
         #Stage 4: Gray Path
             num_phases = int((2** n)/ell)
-            #the end label of the Stage 3
-            sucoend = n + n - t - 1 + (copies3 - 1) * t
-            for k in range(2,num_phases+1):
+            path_star = n + int(m / 2)
+            #the end label of the Stage 3  #sucoend = n + n - t - 1 + (copies3 - 1) * t
+
+            #for k in range(2,num_phases+1):
+            for k in range(2,3):
 
                 #Step k.1: U_k
                 for j in range(1,ell+1):
                     s = self.partitioned_gray_code(n,t)
                     s1 = s[j-1][k-2]
                     s2 = s[j-1][k-1]
+
                     for i in range(len(s1)):
                         if s1[i] != s2[i]:
-                            CX & [i,sucoend+j] | gates
-                            break
+                                CX & [n + j - t + (n-t)*visit[i], path_star+j-1] | gates
+                                visit[i]+=1
 
+
+                            #CX & [i,sucoend+j] | gates
+                            #break
+                """
                    #Step k.2: R_k
                 for j in range(1,ell+1):
                     s = self.partitioned_gray_code(n, t)
