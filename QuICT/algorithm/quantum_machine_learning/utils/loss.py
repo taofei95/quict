@@ -12,15 +12,33 @@ from QuICT.core.gate import Variable
 
 
 class Loss:
+    """The Loss class.
+
+    Args:
+        item (Union[np.float64, float, int]): The value of loss.
+        grads (np.ndarray): The gradients of loss.
+    """
+
     @property
-    def item(self):
+    def item(self) -> Union[np.float64, float, int]:
+        """Get loss value.
+
+        Returns:
+            Union[np.float64, float, int]: The loss value.
+        """
         return self._item
 
     @property
-    def grads(self):
+    def grads(self) -> np.ndarray:
+        """Get loss gradients.
+
+        Returns:
+            np.ndarray: The loss gradients.
+        """
         return self._grads
 
     def __init__(self, item: Union[np.float64, float, int], grads: np.ndarray):
+        """Initialize a Loss instance."""
         self._item = item
         self._grads = grads
 
@@ -29,9 +47,14 @@ class Loss:
 
 
 class LossFun(ABC):
-    """The abstract class for loss."""
+    """Base class for loss functions.
+
+    Note:
+        User-defined loss functions also need to inherit this class.
+    """
 
     def __init__(self):
+        """Initialize a LossFun instance."""
         self._pred = None
         self._target = None
 
@@ -67,9 +90,15 @@ class LossFun(ABC):
 
 
 class HingeLoss(LossFun):
-    """Compute the Hinge Loss."""
+    r"""The Hinge Loss.
+
+    $$
+    L_{Hinge}(y) = max(0, 1 - \hat{y}y)
+    $$
+    """
 
     def __init__(self):
+        """Initialize a HingeLoss instance."""
         super().__init__()
 
     def _get_loss(self, pred: np.ndarray, target: np.ndarray):
@@ -81,9 +110,15 @@ class HingeLoss(LossFun):
 
 
 class MSELoss(LossFun):
-    """Compute the Mean Squared Error Loss."""
+    r"""The Mean Squared Error Loss.
+
+    $$
+    L_{MSE}(y) = \frac{1}{N} \sum_{i=0}^{N-1} (\hat{y}_i - y_i)^2
+    $$
+    """
 
     def __init__(self):
+        """Initialize an MSELoss instance."""
         super().__init__()
 
     def _get_loss(self, pred: np.ndarray, target: np.ndarray):
@@ -95,14 +130,21 @@ class MSELoss(LossFun):
 
 
 class BCELoss(LossFun):
-    """Compute the Binary Cross Entropy Loss.
+    r"""Compute the Binary Cross Entropy Loss.
 
-    **Note that the target y should be numbers between 0 and 1.**
-    BCELoss clamps its log function outputs to be greater than
-    or equal to -100 to avoid an infinite term in the loss equation.
+    $$
+    L_{BCE}(y) = -\frac{1}{N} (y \cdot log(\hat{y}) + (1-y) \cdot log(1 - \hat{y}))
+    $$
+
+    Note:
+        Target $y$ should be numbers between 0 and 1.
+
+        BCELoss clamps its log function outputs to be greater than
+        or equal to -100 to avoid an infinite term in the loss equation.
     """
 
     def __init__(self):
+        """Initialize a BCELoss instance."""
         super().__init__()
 
     def _get_loss(self, pred: np.ndarray, target: np.ndarray):

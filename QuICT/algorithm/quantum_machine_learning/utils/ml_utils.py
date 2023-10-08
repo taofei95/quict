@@ -30,7 +30,7 @@ def save_checkpoint(model, model_path: str, ep: int, it: int, latest=False):
         model_path (str): The path to the saved checkpoint.
         ep (int): The number of the saved epoch.
         it (int): The number of the saved iteration.
-        latest (bool, optional):  Whether this is the last iteration. Defaults to False.
+        latest (bool, optional): Whether this is the last iteration. Defaults to False.
     """
     os.makedirs(model_path, exist_ok=True)
     circuit_dict = dict(
@@ -62,7 +62,9 @@ def restore_checkpoint(model, model_path, restore_optim=True):
     Returns:
         int: The number of the restored epoch.
         int: The number of the restored iteration.
-        OptimizerBase: The optimizer.
+
+    Raises:
+        ModelRestoreError: An error occurred loading model.
     """
 
     def find_fname(model_path):
