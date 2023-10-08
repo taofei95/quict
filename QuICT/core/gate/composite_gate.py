@@ -85,7 +85,6 @@ class CompositeGate(CircuitBased):
             targets = [targets]
 
         self._qubits_validation(targets)
-        print(self.qubits)
         self._gates.reassign(targets)
 
         if CGATE_LIST:
@@ -149,7 +148,7 @@ class CompositeGate(CircuitBased):
         """
         gate, qidxes = self._gates[item]
 
-        return gate & qidxes
+        return gate.copy() & qidxes
 
     def extend(self, gates: CompositeGate):
         """ Add a CompositeGate to current CompositeGate.
@@ -227,9 +226,7 @@ class CompositeGate(CircuitBased):
             index = self.gate_length() + index
 
         assert index >= 0 and index < self.gate_length()
-        gate, qidx = self._gates.pop(index)
-
-        return gate.copy() & qidx
+        return self._gates.pop(index)
 
     def adjust(self, index: int, reassigned_qubits: Union[int, list], is_adjust_value: bool = False):
         """ Adjust the placement for target CompositeGate/BasicGate/Operator.
@@ -264,7 +261,11 @@ class CompositeGate(CircuitBased):
             CompositeGate: the inverse of the gateSet
         """
         _gates = CompositeGate()
-        _gates._gates = self._gates.inverse()
+        for gate in self._gates.gates[::-1]:
+            if isinstance(gate, CompositeGate):
+                _gates.extend(gate.inverse())
+            else:
+                _gates._gates.append(gate.gate.inverse(), gate.indexes)
 
         return _gates
 

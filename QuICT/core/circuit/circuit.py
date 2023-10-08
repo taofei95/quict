@@ -285,7 +285,7 @@ class Circuit(CircuitBased):
                 gate_qidxes = list(range(gates.width()))
 
         assert len(gate_qidxes) <= self.width(), "Circuit cannot append any Gate/CompositeGate which larger than self."
-        self._gates.extend(gates, gate_qidxes)
+        self._gates.extend(gates.copy(), gate_qidxes)
 
         self._pointer = None
 
@@ -306,7 +306,7 @@ class Circuit(CircuitBased):
 
         self._pointer = None
 
-    def insert(self, gate: Union[CompositeGate, BasicGate], insert_idx: int):
+    def insert(self, gate: Union[CompositeGate, BasicGate], depth: int):
         """ Insert a Quantum Gate into current Circuit, only support BasicGate/CompositeGate.
 
         Args:
@@ -316,7 +316,6 @@ class Circuit(CircuitBased):
         assert isinstance(gate, (BasicGate, Operator, CompositeGate)), \
             TypeError("CompositeGate.insert", "BasicGate", type(gate))
         gate_args = gate.qubits if isinstance(gate, CompositeGate) else gate.cargs + gate.targs
-        gate_size = gate.size() if isinstance(gate, CompositeGate) else 1
         if len(gate_args) == 0:
             raise GateQubitAssignedError(f"{gate.type} need qubit indexes to insert into Composite Gate.")
 
@@ -324,7 +323,10 @@ class Circuit(CircuitBased):
             assert garg >= 0 and garg < self.width(), \
                 GateQubitAssignedError(f"Gate's assigned qubits should within [0, {self.width()}]")
 
-        self._gates.insert(insert_idx, (gate, gate_args, gate_size))
+        if isinstance(gate, BasicGate):
+            self._gates.insert_gate(gate, gate_args, depth)
+        else:
+            self._gates.insert_cgate(gate, gate_args, depth)
 
     def pop(self, index: int = -1):
         """ Pop the BasicGate/Operator/CompositeGate from current Quantum Circuit.
@@ -336,9 +338,8 @@ class Circuit(CircuitBased):
             index = self.gate_length() + index
 
         assert index >= 0 and index < self.gate_length()
-        gate, qidx, _ = self._gates.pop(index)
 
-        return gate.copy() & qidx
+        return self._gates.pop(index)
 
     def adjust(self, index: int, reassigned_qubits: Union[int, list, Qubit, Qureg], is_adjust_value: bool = False):
         """ Adjust the placement for target CompositeGate/BasicGate/Operator.
@@ -352,25 +353,11 @@ class Circuit(CircuitBased):
         if index < 0:
             index = self.gate_length() + index
         assert index >= 0 and index < self.gate_length()
-        origin_gate, origin_qidx, origin_size = self._gates[index]
 
-        if is_adjust_value:
-            assert isinstance(reassigned_qubits, (int, list))
-            new_qubits = [v + reassigned_qubits for v in origin_qidx] if isinstance(reassigned_qubits, int) else \
-                [v + reassigned_qubits[idx] for idx, v in enumerate(origin_qidx)]
-        else:
-            if isinstance(reassigned_qubits, int):
-                new_qubits = [reassigned_qubits]
-            elif isinstance(reassigned_qubits, (Qubit, Qureg)):
-                new_qubits = self.qubits.index(reassigned_qubits)
-            else:
-                new_qubits = reassigned_qubits
+        if isinstance(reassigned_qubits, int):
+            reassigned_qubits = [reassigned_qubits]
 
-            for q_idx in new_qubits:
-                assert q_idx >= 0 and q_idx < self.width() and isinstance(q_idx, int)
-
-        assert len(origin_qidx) == len(new_qubits)
-        self._gates[index] = (origin_gate, new_qubits, origin_size)
+        self._gates.adjust(index, reassigned_qubits, is_adjust_value) 
 
     def _add_gate(self, gate: BasicGate):
         """ add a quantum gate into circuit.
@@ -397,7 +384,7 @@ class Circuit(CircuitBased):
             else:
                 qubit_index = gate_qargs
 
-        self._gates.append(gate, qubit_index)
+        self._gates.append(gate.copy(), qubit_index)
 
     def _add_gate_to_all_qubits(self, gate: BasicGate):
         """ Add gate to all qubits.
@@ -409,7 +396,7 @@ class Circuit(CircuitBased):
             if gate.variables > 0:
                 self._gates.append(gate.copy(), [idx])
             else:
-                self._gates.append(gate, [idx])
+                self._gates.append(gate.copy(), [idx])
 
     def _add_operator(self, op: Operator):
         """ Add operator. """
@@ -546,7 +533,6 @@ class Circuit(CircuitBased):
 
         return _cgate
 
-    # TODO: refactoring later
     def inverse(self) -> Circuit:
         """ the inverse of all Quantum Gates in current Circuit.
 
@@ -554,14 +540,14 @@ class Circuit(CircuitBased):
             Circuit: the Quantum Circuit with the inverse of the gateSet
         """
         _cir = Circuit(self.width())
-        inverse_gates = []
-        for gate, indexes, size in self._gates[::-1]:
-            if not isinstance(gate, Operator):
-                inverse_gates.append(gate.inverse(), indexes)
+        for gate in self._gates.gates[::-1]:
+            if isinstance(gate, CompositeGate):
+                _cir.extend(gate.inverse())
             else:
-                inverse_gates.append(gate, indexes, size)
-
-        _cir._gates = inverse_gates
+                if isinstance(gate.gate, BasicGate):
+                    _cir._gates.append(gate.gate.inverse(), gate.indexes)
+                else:
+                    raise ValueError("Inverse only for Quantum Gate, not for Trigger or NoiseGate.")
 
         return _cir
 
@@ -577,7 +563,7 @@ class Circuit(CircuitBased):
         assert device in ["CPU", "GPU"]
         circuit_matrix = CircuitMatrix(device, self._precision)
 
-        return circuit_matrix.get_unitary_matrix(self.flatten_gates(True), self.width())
+        return circuit_matrix.get_unitary_matrix(self.flatten_gates(), self.width())
 
     def sub_circuit(
         self,

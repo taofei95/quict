@@ -36,17 +36,17 @@ class CircuitBased(object):
         get list of tuple(gate, qubit_indexes, size) for further using.
         """
         gate_list = []
-        for gate, qidx in self._gates.gates:
+        for gate in self._gates.gates:
             if type(gate).__name__ == "CompositeGate":
                 gate_list.append(gate.copy())
             else:
-                gate_list.append(gate.copy() & qidx)
+                gate_list.append(gate.gate.copy() & gate.indexes)
 
         return gate_list
 
     @property
     def fast_gates(self) -> list:
-        """ Return the list of Tuple(Union[BasicGate, CompositeGate], indexes) in the current circuit. """
+        """ Return the list of Tuple(Union[GateNode, CompositeGate], indexes) in the current circuit. """
         return self._gates.gates
 
     def decomposition_gates(self) -> list:
@@ -337,7 +337,6 @@ class CircuitBased(object):
 
         elif method == 'command':
             gates = self.flatten_gates() if flatten else self.gates
-            print(gates)
             text_drawer = TextDrawing(self.qubits, gates)
             if filename is None:
                 print(text_drawer.single_string())

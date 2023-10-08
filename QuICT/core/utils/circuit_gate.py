@@ -7,6 +7,10 @@ from .gate_type import GateType
 
 class GateNode:
     @property
+    def gate(self):
+        return self._gate
+
+    @property
     def depth(self):
         return self._layer
 
@@ -42,6 +46,18 @@ class GateNode:
 
     def _get_layer(self):
         return max([p.depth for p in self._parent])
+
+    def get_parent(self, index):
+        if index not in self._parent.keys():
+            return None
+        else:
+            return self._parent[index]
+
+    def get_child(self, index):
+        if index not in self._children.keys():
+            return None
+        else:
+            return self._children[index]
 
     def assign_depth(self):
         if len(self._parent) == 0:
@@ -127,6 +143,9 @@ class CircuitGates:
 
         self._initial_property()
 
+    def __call__(self):
+        return self._gates
+
     def _initial_property(self):
         # Gates's Property
         self._size = 0
@@ -143,8 +162,8 @@ class CircuitGates:
 
     def copy(self):
         _new = CircuitGates()
-        for gate, qidxes in self._gates:
-            _new._gates.append((gate, qidxes.copy()))
+        for gate in self._gates:
+            _new._gates.append(gate.copy())
 
         _new._first_layer_gates = self._first_layer_gates.copy()
         _new._last_layer_gates = self._last_layer_gates.copy()
@@ -157,13 +176,12 @@ class CircuitGates:
 
         return _new
 
-    def append(self, gate, qidxes: list, size: int = 1):
+    def append(self, gate, qidxes: list):
         # Update GateInfo
-        self._size += size
         self._analysis_gate(gate)
 
         # Construct the GateNode
-        curr_node = GateNode(gate, qidxes)
+        curr_node = GateNode(gate.copy(), qidxes)
 
         # Find the parents from qidxes
         for q_id in qidxes:
@@ -177,15 +195,14 @@ class CircuitGates:
 
         # Update Depth for curr_node and record GateNode
         curr_node.assign_depth()
-        self._gates.append((gate, qidxes))
+        self._gates.append(curr_node)
 
-    def extend(self, gates, qidxes: list = None):
+    def extend(self, gates, qidxes: list):
         """ Add a CompositeGate. """
         # Reassign the extend_gates
         cgate_copy = gates.copy()
         extend_gates: CircuitGates = cgate_copy._gates
-        if qidxes is not None:
-            extend_gates.reassign(qidxes, self.depth(qidxes))
+        extend_gates.reassign(qidxes, self.depth(qidxes))
 
         # Connectted the self.last_gates with first_gates in circuit_gates
         for key, initial_node in extend_gates._first_layer_gates.items():
@@ -202,39 +219,190 @@ class CircuitGates:
             self._last_layer_gates[qidx] = end_node
 
         # Update gate properties
-        self._size += extend_gates.size
-        self._biq_gates_count += extend_gates.biq_gates_count
-        self._siq_gates_count += extend_gates.siq_gates_count
-        for key, value in extend_gates._gate_type_count.items():
-            self._gate_type_count[key] += value
+        self._analysis_compositegate(cgate_copy)
+        self._gates.append(cgate_copy)
 
-        self._gates.append((cgate_copy, []))
+    def insert_gate(self, gate, qidxes: list, depth: int = None, is_adjust: bool = False):
+        # Initial Node
+        inode = GateNode(gate, qidxes) if not is_adjust else gate
 
-    def insert(self, index: int, gate):
-        pass
+        # Get connectted nodes by qidxes and depth
+        for idx in qidxes:
+            if depth == 1:
+                iparent, ichild = None, self._first_layer_gates[idx]
+            elif depth > self._last_layer_gates[idx].depth:
+                iparent, ichild = self._last_layer_gates[idx], None
+            else:
+                start_node = self._first_layer_gates[idx]
+                while start_node.depth < depth:
+                    start_node = start_node.get_child(idx)
+
+                iparent = start_node.get_parent(idx)
+                ichild = start_node
+
+            if iparent is not None:
+                inode.assign_parent(idx, iparent)
+                iparent.assign_child(idx, inode)
+            else:
+                self._first_layer_gates[idx] = inode
+
+            if ichild is not None:
+                inode.assign_child(idx, ichild)
+                ichild.assign_parent(idx, inode)
+            else:
+                self._last_layer_gates[idx] = inode
+
+        self._depth_update([inode])
+        if not is_adjust:
+            self._analysis_gate(gate)
+            self._gates.append(inode)
+        else:
+            return inode
+
+    def insert_cgate(self, gate, qidxes: list, depth: int = None):
+        # Initial CompositeGate
+        gate_list: CircuitGates = gate._gates
+        gate_list.reassign(qidxes)
+        update_node = []
+        for node in gate_list._first_layer_gates.values():
+            if node.depth == 1:
+                update_node.append(node)
+
+        # Get connectted nodes by qidxes and depth
+        for idx in qidxes:
+            if depth == 1:
+                iparent, ichild = None, self._first_layer_gates[idx]
+            elif depth > self._last_layer_gates[idx].depth:
+                iparent, ichild = self._last_layer_gates[idx], None
+            else:
+                start_node = self._first_layer_gates[idx]
+                while start_node.depth < depth:
+                    start_node = start_node.get_child(idx)
+
+                iparent = start_node.get_parent(idx)
+                ichild = start_node
+
+            start_node, end_node = gate_list._first_layer_gates[idx], gate_list._last_layer_gates[idx]
+            if iparent is not None:
+                start_node.assign_parent(idx, iparent)
+                iparent.assign_child(idx, start_node)
+            else:
+                self._first_layer_gates[idx] = start_node
+
+            if ichild is not None:
+                end_node.assign_child(idx, ichild)
+                ichild.assign_parent(idx, end_node)
+            else:
+                self._last_layer_gates[idx] = end_node
+
+        self._depth_update(update_node)
+        self._analysis_compositegate(gate)
+        self._gates.append(gate)
 
     def pop(self, index: int):
-        # TODO: reduce the index gate
         pop_node = self._gates.pop(index)
-        self._analysis_gate(pop_node.gate, minus=-1)
-        self._size -= 1
 
-        return pop_node.gate, pop_node.indexes
+        if isinstance(pop_node, GateNode):
+            return self._pop_node(pop_node)
+        else:
+            return self._pop_cgate(pop_node)
 
-    def replace(self, index: int):
-        pass
+    def _pop_node(self, node):
+        # Update the circuit's property
+        self._analysis_gate(node.gate, minus=-1)
 
-    def adjust(self, index: int, qubit_indexes: list):
-        pass
+        update_node = []
+        for idx in node.indexes:
+            parent = node.get_parent(idx)
+            child = node.get_child(idx)
+
+            if parent is not None:
+                if child is not None:
+                    parent.assign_child(idx, child)
+                    child.assign_parent(idx, parent)
+                    update_node.append(child)
+                else:
+                    del parent._children[idx]
+                    self._last_layer_gates[idx] = parent
+            else:
+                if child is not None:
+                    del child._parent[idx]
+                    update_node.append(child)
+                    self._first_layer_gates[idx] = child
+                else:
+                    del self._first_layer_gates[idx]
+                    del self._last_layer_gates[idx]
+
+        self._depth_update(update_node)
+
+        return node.gate & node.indexes
+
+    def _pop_cgate(self, cgate):
+        # Update the circuit's property
+        self._analysis_compositegate(cgate, minus=-1)
+        gate_list: CircuitGates = cgate._gates
+
+        update_node = []
+        for idx in gate_list.qubits:
+            first_layer_node: GateNode = gate_list._first_layer_gates[idx]
+            last_layer_node: GateNode = gate_list._last_layer_gates[idx]
+            parent = first_layer_node.get_parent(idx)
+            child = last_layer_node.get_child(idx)
+
+            if parent is not None:
+                if child is not None:
+                    parent.assign_child(idx, child)
+                    child.assign_parent(idx, parent)
+                    update_node.append(child)
+                else:
+                    del parent._children[idx]
+                    self._last_layer_gates[idx] = parent
+            else:
+                if child is not None:
+                    del child._parent[idx]
+                    update_node.append(child)
+                    self._first_layer_gates[idx] = child
+                else:
+                    del self._first_layer_gates[idx]
+                    del self._last_layer_gates[idx]
+
+        self._depth_update(update_node)
+        gate_list.restore()
+        return cgate
+
+    def adjust(self, index: int, qidxes: list, is_adjust: bool = False, depth: int = 10):
+        adj_node = self._gates[index]
+        if isinstance(adj_node, GateNode):
+            if not is_adjust and qidxes == adj_node.indexes and depth is None:
+                return
+
+            self._pop_node(adj_node)
+            adj_node = self.insert_gate(adj_node, qidxes, depth, True)
+        else:
+            if qidxes == adj_node.qubits and depth is None:
+                return
+
+            self._pop_cgate(adj_node)
+            adj_node = self.insert_cgate(adj_node, qidxes, depth)
+
+        self._gates[index] = adj_node
 
     def _analysis_gate(self, gate, minus: int = 1):
         # Gates count update
+        self._size += minus
         if gate.controls + gate.targets == 1:
             self._siq_gates_count += minus
         elif gate.controls + gate.targets == 2:
             self._biq_gates_count += minus
 
         self._gate_type_count[gate.type] += minus
+
+    def _analysis_compositegate(self, cgate, minus: int = 1):
+        self._size += cgate.size() * minus
+        self._biq_gates_count += cgate.count_2qubit_gate() * minus
+        self._siq_gates_count += cgate.count_1qubit_gate() * minus
+        for key, value in cgate._gates._gate_type_count.items():
+            self._gate_type_count[key] += value * minus
 
     def depth(self, indexes: list = None) -> Union[dict, int]:
         """ Return the depth of the circuit.
@@ -292,6 +460,18 @@ class CircuitGates:
 
         self._first_layer_gates = _first_layer_gates
         self._last_layer_gates = _last_layer_gates
+
+    def restore(self):
+        start_node = []
+        for idx, node in self._first_layer_gates.items():
+            del node._parent[idx]
+            if len(node.parent) == 0:
+                start_node.append(node)
+
+        for idx, node in self._last_layer_gates.items():
+            del node._children[idx]
+
+        self._depth_update(start_node)
 
     def LTS(self, node_only: bool = False):
         update_node = set(self._first_layer_gates.values())
@@ -352,6 +532,23 @@ class CircuitGates:
 
         return RST_gates
 
+    def _depth_update(self, start_node: list):
+        for node in start_node:
+            node.hold()
+
+        while len(start_node) > 0:
+            next_layer = []
+            for node in start_node:
+                node.assign_depth()
+                for cnode in node.children:
+                    if not cnode.occupy:
+                        next_layer.append(cnode)
+                        cnode.hold()
+
+                node.release()
+
+            start_node = next_layer
+
     def flatten(self):
         # TODO: add qubit mapping change
         flat_gates = []
@@ -373,6 +570,3 @@ class CircuitGates:
                 self.extend(cgate)
             else:
                 self.append(gate, qidxes)
-
-    def inverse(self):
-        pass
