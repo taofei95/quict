@@ -5,7 +5,7 @@ pip install isort
 isort --settings-path linters/tox.ini
 
 # Install flake8.
-pip install flake8
+pip install flake8==3.7.9
 
 # Lint with flake8.
 flake8 --config linters/tox.ini
