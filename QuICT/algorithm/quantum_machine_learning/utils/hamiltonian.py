@@ -14,13 +14,13 @@ class Hamiltonian:
     Note:
         Coefficients are required. And each Pauli Gate should act on different qubit.
 
-    Args:
-        pauli_str (list): A list of Hamiltonian information.
-
-        Some Examples are like this:
+        Some examples are like this:
 
         [[0.4, 'Y0', 'X1', 'Z2', 'I5'], [0.6]]
         [[1, 'X0', 'I5'], [-3, 'Y3'], [0.01, 'Z5', 'Y0]]
+
+    Args:
+        pauli_str (list): A list of Hamiltonian information.
 
     Examples:
         >>> from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian

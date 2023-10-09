@@ -28,7 +28,7 @@ nav:
                       - 酉矩阵分解: functions/QCDA/synthesis/unitary_decomposition.md
           - 量子模拟: functions/simulation.md
           - 工具: functions/tools.md
-          - 量子物理机基准测试: functions/Machinebenchmark.md
+      #     - 量子物理机基准测试: functions/Machinebenchmark.md
     - 教程:
           - 量子电路: tutorials/quantum_circuit.md
           - QCDA: tutorials/QCDA.md
@@ -38,10 +38,10 @@ nav:
                       - Shor算法: tutorials/algorithm/quantum_algorithm/shor.md
                       - 量子振幅估计: tutorials/algorithm/quantum_algorithm/amplitude_estimate.md
                       - 量子游走: tutorials/algorithm/quantum_algorithm/quantum_walk.md
-                - 变分量子算法 (quict-ml):
+                - 变分量子算法:
                       - 变分量子本征求解器: tutorials/algorithm/VQA/VQE.md
                       - 量子近似优化算法: tutorials/algorithm/VQA/QAOA.md
-                - 量子神经网络 (quict-ml): tutorials/algorithm/QNN.md
+                - 量子神经网络: tutorials/algorithm/QNN.md
     - API:
           - QuICT.core:
                 - qubit:
@@ -132,7 +132,7 @@ nav:
                             - CRADL: API/quict/algorithm/quantum_machine_learning/ansatz_library/CRADL.md
                             - CRAML: API/quict/algorithm/quantum_machine_learning/ansatz_library/CRAML.md
                             - HEAnsatz: API/quict/algorithm/quantum_machine_learning/ansatz_library/HE_ansatz.md
-                            - OAOALayer: API/quict/algorithm/quantum_machine_learning/ansatz_library/QAOA_layer.md
+                            - QAOALayer: API/quict/algorithm/quantum_machine_learning/ansatz_library/QAOA_layer.md
                       - differentiator:
                             - Differentiator: API/quict/algorithm/quantum_machine_learning/differentiator/differentiator.md
                             - AdjointDifferentiator: API/quict/algorithm/quantum_machine_learning/differentiator/adjoint_differentiator.md
@@ -173,14 +173,6 @@ nav:
                             - PhasePolynomial: API/quict/qcda/optimization/clifford_rz_optimization/PhasePolynomial.md
                             - Template: API/quict/qcda/optimization/clifford_rz_optimization/template.md
                             - CliffordRzOptimization: API/quict/qcda/optimization/clifford_rz_optimization/CliffordRzOptimization.md
-                      - cnot_local_force:
-                            - CnotForceBfs: API/quict/qcda/optimization/cnot_local_force/CnotForceBfs.md
-                            - CnotForceDepthBfs: API/quict/qcda/optimization/cnot_local_force/CnotForceDepthBfs.md
-                            - CnotLocalForceBfs: API/quict/qcda/optimization/cnot_local_force/CnotLocalForceBfs.md
-                            - CnotLocalForceDepthBfs: API/quict/qcda/optimization/cnot_local_force/CnotLocalForceDepthBfs.md
-                            - CnotStoreForceBfs: API/quict/qcda/optimization/cnot_local_force/CnotStoreForceBfs.md
-                            - CnotStoreForceDepthBfs: API/quict/qcda/optimization/cnot_local_force/CnotStoreForceDepthBfs.md
-                            - utility: API/quict/qcda/optimization/cnot_local_force/utility.md
                       - cnot_ancilla:
                             - CnotAncilla: API/quict/qcda/optimization/cnot_ancilla/CnotAncilla.md
                       - cnot_without_ancilla:
@@ -232,16 +224,35 @@ nav:
                 - circuit_library:
                       - CircuitLib: API/quict/tools/circuit_library/CircuitLib.md
                       - CircuitLibDB: API/quict/tools/circuit_library/CircuitLibDB.md
-                      - BenchmarkCircuitBuilder: API/quict/tools/circuit_library/BenchmarkCircuitBuilder.md
+                  #     - BenchmarkCircuitBuilder: API/quict/tools/circuit_library/BenchmarkCircuitBuilder.md
+                - drawer: 
+                      - DefaultStyle: API/quict/tools/drawer/ibmq_style.md
+                      - LocalDrawer: API/quict/tools/drawer/local_drawer.md
+                      - TextDrawer: API/quict/tools/drawer/text_drawer.md
+                      - TikzDrawer: API/quict/tools/drawer/tikz_drawer.md
+                - interface:
+                      - BasicInterface: API/quict/tools/interface/BasicInterface.md
+                      - QASMInterface: API/quict/tools/interface/qasm_interface.md
+                - exception:
+                      - QuICTException: API/quict/tools/exception/QuICTException.md
+                      - core: 
+                            - CoreException: API/quict/tools/exception/core/core_exception.md
+                            - GateException: API/quict/tools/exception/core/gate_exception.md
+                            - CircuitException: API/quict/tools/exception/core/circuit_exception.md
+                            - NoiseException: API/quict/tools/exception/core/noise_exception.md
+                      - algorithm:
+                            - QMLException: API/quict/tools/exception/algorithm/qml_exception.md
+                      - simulation:
+                            - SimulationException: API/quict/tools/exception/simulation/simulation_exception.md
                 - logger:
                       - Logger: API/quict/tools/logger/Logger.md
-          - QuICT.benchmark:
-                - Benchmark: API/quict/benchmark/Benchmark.md
-    - 基准测试:
-          - 简介: QuICTbenchmark/QuICTbenchmark.md
-          - 模拟基准测试: QuICTbenchmark/simulation_benchmark.md
-          - 算法基准测试: QuICTbenchmark/algorithm_benchmark.md
-          - QCDA基准测试: QuICTbenchmark/qcda_benchmark.md
+      #     - QuICT.benchmark:
+      #           - Benchmark: API/quict/benchmark/Benchmark.md
+#     - 基准测试:
+#           - 简介: QuICTbenchmark/QuICTbenchmark.md
+#           - 模拟基准测试: QuICTbenchmark/simulation_benchmark.md
+#           - 算法基准测试: QuICTbenchmark/algorithm_benchmark.md
+#           - QCDA基准测试: QuICTbenchmark/qcda_benchmark.md
     - 贡献: contribution.md
 
 theme:

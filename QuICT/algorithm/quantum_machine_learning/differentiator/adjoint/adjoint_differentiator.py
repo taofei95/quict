@@ -17,7 +17,7 @@ class AdjointDifferentiator:
         <https://arxiv.org/abs/1912.10877>.
 
     Args:
-        device (str, optional): The device type, one of [CPU, GPU]. Defaults to "GPU".
+        device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
         precision (str, optional): The precision for the state vector, one of [single, double].
             Defaults to "double".
         gpu_device_id (int, optional): The GPU device ID. Defaults to 0.
@@ -29,7 +29,7 @@ class AdjointDifferentiator:
 
     def __init__(
         self,
-        device: str = "GPU",
+        device: str = "CPU",
         precision: str = "double",
         gpu_device_id: int = 0,
         sync: bool = True,

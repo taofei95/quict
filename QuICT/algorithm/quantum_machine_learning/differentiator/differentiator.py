@@ -18,13 +18,12 @@ class Differentiator:
         **options (dict): other optional parameters for the simulator.
             adjoint: [gpu_device_id] (only for gpu)
 
-    Example:
+    Examples:
         >>> from QuICT.core.gate import *
         >>> from QuICT.core.circuit import Circuit
         >>> from QuICT.simulation.state_vector import StateVectorSimulator
         >>> from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
         >>> from QuICT.algorithm.quantum_machine_learning.differentiator import Differentiator
-
         >>> simulator = StateVectorSimulator()
         >>> differentiator = Differentiator()
         >>> var = Variable(np.array([0.3, -1.2, 2]))
