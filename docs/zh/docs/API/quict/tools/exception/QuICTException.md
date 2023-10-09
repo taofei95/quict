@@ -1,0 +1,1 @@
+::: QuICT.tools.exception.QuICTException

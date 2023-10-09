@@ -10,7 +10,20 @@ from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 class Model(ABC):
-    """The abstract class for model."""
+    """Base class for all models involving variations.
+
+    Note:
+        User-defined models also need to inherit this class.
+
+    Args:
+        n_qubits (int): The number of qubits.
+        optimizer (OptimizerBase): The optimizer used to optimize the network.
+        hamiltonian (Union[Hamiltonian, List], optional): The hamiltonians for measurement. Defaults to None.
+        params (np.ndarray, optional): Initialization parameters. Defaults to None.
+        device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
+        gpu_device_id (int, optional): The GPU device ID. Defaults to 0.
+        differentiator (str, optional): The differentiator type. Defaults to "adjoint".
+    """
 
     @property
     def params(self):
@@ -34,10 +47,11 @@ class Model(ABC):
         optimizer: OptimizerBase,
         hamiltonian: Union[Hamiltonian, List] = None,
         params: np.ndarray = None,
-        device: str = "GPU",
+        device: str = "CPU",
         gpu_device_id: int = 0,
         differentiator: str = "adjoint",
     ):
+        """Initialize a Model instance."""
         self._n_qubits = n_qubits
         self._optimizer = optimizer
         self._params = params
@@ -51,13 +65,16 @@ class Model(ABC):
         )
 
     @abstractmethod
-    def forward():
+    def forward(self):
+        """The forward propagation procedure for one step."""
         raise NotImplementedError
 
     @abstractmethod
-    def backward():
+    def backward(self):
+        """The backward propagation procedure for one step."""
         raise NotImplementedError
 
     @abstractmethod
-    def update():
+    def update(self):
+        """Update the trainable parameters in the PQC."""
         raise NotImplementedError

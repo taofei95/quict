@@ -10,59 +10,31 @@ from QuICT.simulation.utils import GateSimulator
 class AdjointDifferentiator:
     """The differentiator using adjoint method.
 
-    References:
-    https://arxiv.org/abs/1912.10877
+    For more detail, please refer to:
+
+    Reference:
+        `Yao.jl: Extensible, Efficient Framework for Quantum Algorithm Design`
+        <https://arxiv.org/abs/1912.10877>.
+
+    Args:
+        device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
+        precision (str, optional): The precision for the state vector, one of [single, double].
+            Defaults to "double".
+        gpu_device_id (int, optional): The GPU device ID. Defaults to 0.
+        sync (bool, optional): Sync mode or Async mode. Defaults to True.
     """
 
     __DEVICE = ["CPU", "GPU"]
     __PRECISION = ["single", "double"]
 
-    @property
-    def circuit(self):
-        return self._circuit
-
-    @circuit.setter
-    def circuit(self, circuit):
-        self._circuit = circuit
-
-    @property
-    def vector(self):
-        return self._vector
-
-    @vector.setter
-    def vector(self, vec):
-        self._vector = self._gate_calculator.validate_state_vector(vec, self._qubits)
-
-    @property
-    def device(self):
-        return self._device_id
-
-    @property
-    def grad_vector(self):
-        return self._grad_vector
-
-    @grad_vector.setter
-    def grad_vector(self, vec):
-        self._grad_vector = self._gate_calculator.normalized_state_vector(
-            vec, self._qubits
-        )
-
     def __init__(
         self,
-        device: str = "GPU",
+        device: str = "CPU",
         precision: str = "double",
         gpu_device_id: int = 0,
         sync: bool = True,
     ):
-        """Initialize a adjoint differentiator.
-
-        Args:
-            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "GPU".
-            precision (str, optional): The precision for the state vector, one of [single, double].
-                Defaults to "double".
-            gpu_device_id (int, optional): The GPU device ID. Defaults to 0.
-            sync (bool, optional): Sync mode or Async mode. Defaults to True.
-        """
+        """Initialize a adjoint differentiator instance."""
 
         if device not in self.__DEVICE:
             raise ValueError("AdjointDifferentiator.device", "[CPU, GPU]", device)
@@ -92,19 +64,6 @@ class AdjointDifferentiator:
         state_vector: np.ndarray,
         expectation_op: Hamiltonian,
     ):
-        """Calculate the gradients and expectation of a Parameterized Quantum Circuit (PQC).
-
-        Args:
-            circuit (Circuit): PQC that needs to calculate gradients.
-            variables (Variable): The parameters of the circuit.
-            state_vector (np.ndarray): The state vector output from forward propagation.
-            expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
-
-        Returns:
-            np.ndarry: The gradients of parameters (params_shape).
-            np.float: The expectation.
-        """
-
         self._initial_circuit(circuit)
         self._vector = state_vector.copy()
 
@@ -200,18 +159,11 @@ class AdjointDifferentiator:
         return np.array(params_grad_list), np.array(expectation_list)
 
     def _get_one_expectation(
-        self, circuit: Circuit, state_vector: np.ndarray, expectation_op: Hamiltonian,
+        self,
+        circuit: Circuit,
+        state_vector: np.ndarray,
+        expectation_op: Hamiltonian,
     ):
-        """Calculate the expectation of a PQC.
-
-        Args:
-            circuit (Circuit): The PQC.
-            state_vector (np.ndarray): The state vector output from forward propagation.
-            expectation_op (Hamiltonian): The hamiltonian that need to get expectation.
-
-        Returns:
-            np.float: The expectation.
-        """
         self._initial_circuit(circuit)
 
         # Calculate d(L)/d(|psi_t>)
@@ -227,7 +179,10 @@ class AdjointDifferentiator:
         return expectation
 
     def get_expectations(
-        self, circuit: Circuit, state_vector: np.ndarray, expectation_ops: list,
+        self,
+        circuit: Circuit,
+        state_vector: np.ndarray,
+        expectation_ops: list,
     ):
         """Calculate the expectation of a PQC.
 
@@ -246,7 +201,10 @@ class AdjointDifferentiator:
         return np.array(expectation_list)
 
     def get_expectations_batch(
-        self, circuit: Circuit, state_vector_list: list, expectation_ops: list,
+        self,
+        circuit: Circuit,
+        state_vector_list: list,
+        expectation_ops: list,
     ):
         """Calculate the expectations of a batch of PQCs.
 

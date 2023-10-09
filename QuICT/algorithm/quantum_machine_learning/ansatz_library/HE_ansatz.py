@@ -12,10 +12,19 @@ from .ansatz import Ansatz
 class HEAnsatz(Ansatz):
     """Hardware-Efficient Ansatz.
 
+    Consisting of alternating parameterized layers which is composed of single-qubit gates
+    and entanglers which is composed of 2-qubit gates.
+
     For more detail, please refer to:
 
     References:
-        https://www.nature.com/articles/nature23879
+        `Hardware-efficient variational quantum eigensolver for small molecules and quantum magnets` 
+        <https://www.nature.com/articles/nature23879>
+
+    Note:
+        The currently supported single-qubit gates are RY and RZ, 2-qubit gates are CX, CZ and CRy.
+
+        Only support the entanglers of "downstairs" structure.
 
     Args:
         n_qubits (int): The number of qubits.

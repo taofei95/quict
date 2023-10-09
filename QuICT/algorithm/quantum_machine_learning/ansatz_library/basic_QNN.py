@@ -18,7 +18,7 @@ class BasicQNN(Ansatz):
     For more detail, please refer to:
 
     References:
-        `Classification with Quantum Neural Networks on Near Term Processors`
+        `Classification with Quantum Neural Networks on Near Term Processors` 
         <https://arxiv.org/abs/1802.06002>
 
     Note:
