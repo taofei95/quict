@@ -26,6 +26,17 @@ class CircuitBased(object):
     def precision(self) -> str:
         return self._precision
 
+    def __init__(self, name: str, qubits: int = None):
+        """
+        Args:
+            name (str): The name of current Quantum Circuit
+        """
+        self._name = name
+        self._gates = CircuitGates()
+        self._qubits = qubits
+        self._pointer = None
+        self._precision = "double"
+
     ####################################################################
     ############         Circuit's Gates Function           ############
     ####################################################################
@@ -55,15 +66,7 @@ class CircuitBased(object):
         Returns:
             list: The list of BasicGate
         """
-        decomp_gates = []
-        for gate, qidxes in self._gates.LTS():
-            cgate = gate.build_gate(qidxes)
-            if cgate is not None:
-                decomp_gates.extend(cgate.flatten_gates())
-            else:
-                decomp_gates.append(gate.copy() & qidxes)
-
-        return decomp_gates
+        return self._gates.decomposition(True)
 
     def flatten_gates(self) -> list:
         """ Get the list of Quantum Gates with decompose the CompositeGate.
@@ -74,24 +77,14 @@ class CircuitBased(object):
         Returns:
             List[BasicGate]: The list of BasicGate/Operator.
         """
-        return [gate & qidx for gate, qidx in self._gates.LTS()]
+
+        return [gate.copy() & qidx for gate, qidx in self._gates.LTS()]
 
     def decomposition(self):
         self._gates.decomposition()
 
     def flatten(self):
         self._gates.flatten()
-
-    def __init__(self, name: str, qubits: int = None):
-        """
-        Args:
-            name (str): The name of current Quantum Circuit
-        """
-        self._name = name
-        self._gates = CircuitGates()
-        self._qubits = qubits
-        self._pointer = None
-        self._precision = "double"
 
     ####################################################################
     ############           Circuit's Properties             ############
@@ -171,6 +164,9 @@ class CircuitBased(object):
 
         return str(circuit_info)
 
+    ####################################################################
+    ############           Circuit's Utilities              ############
+    ####################################################################
     def qasm(self, output_file: str = None):
         """ The qasm of current CompositeGate/Circuit. The Operator will be ignore.
 

@@ -194,7 +194,7 @@ class CompositeGate(CircuitBased):
         self._gates.append(gate, qubit_index)
         self._pointer = None
 
-    def insert(self, gate: Union[BasicGate, CompositeGate], insert_idx: int):
+    def insert(self, gate: Union[BasicGate, CompositeGate], depth: int):
         """ Insert a Quantum Gate into current CompositeGate.
 
         Args:
@@ -206,15 +206,16 @@ class CompositeGate(CircuitBased):
 
         if isinstance(gate, BasicGate):
             gate_args = gate.cargs + gate.targs
-            gate_size = 1
         else:
             gate_args = gate.qubits
-            gate_size = gate.size()
 
         if len(gate_args) == 0:
             raise GateQubitAssignedError(f"{gate.type} need qubit indexes to insert into Composite Gate.")
 
-        self._gates.insert(insert_idx, (gate, gate_args, gate_size))
+        if isinstance(gate, BasicGate):
+            self._gates.insert_gate(gate, gate_args, depth)
+        else:
+            self._gates.insert_cgate(gate, gate_args, depth)
 
     def pop(self, index: int = -1):
         """ Pop the BasicGate/Operator/CompositeGate from current Quantum Circuit.
@@ -227,29 +228,6 @@ class CompositeGate(CircuitBased):
 
         assert index >= 0 and index < self.gate_length()
         return self._gates.pop(index)
-
-    def adjust(self, index: int, reassigned_qubits: Union[int, list], is_adjust_value: bool = False):
-        """ Adjust the placement for target CompositeGate/BasicGate/Operator.
-
-        Args:
-            index (int): The target Quantum Gate's index, **Start from 0**.
-            reassigned_qubits (Union[int, list]): The new assigned qubits of target Quantum Gate
-            is_adjust_value (bool): Whether the reassigned_qubits means the new qubit indexes or the adjustment
-                value from original indexes.
-        """
-        if index < 0:
-            index = self.gate_length() + index
-        assert index >= 0 and index < self.gate_length()
-        origin_gate, origin_qidx, origin_size = self._gates[index]
-
-        if is_adjust_value:
-            new_qubits = [v + reassigned_qubits for v in origin_qidx] if isinstance(reassigned_qubits, int) else \
-                [v + reassigned_qubits[idx] for idx, v in enumerate(origin_qidx)]
-        else:
-            new_qubits = [reassigned_qubits] if isinstance(reassigned_qubits, int) else reassigned_qubits
-
-        assert len(origin_qidx) == len(new_qubits)
-        self._gates[index] = (origin_gate, new_qubits, origin_size)
 
     ####################################################################
     ############            CompositeGate Utils             ############
@@ -288,23 +266,15 @@ class CompositeGate(CircuitBased):
             np.ndarray: the matrix of the gates
         """
         assert device in ["CPU", "GPU"]
-        matrix_width = self.width() if local else max(self.qubits) + 1
-
         circuit_matrix = CircuitMatrix(device, self._precision)
-        assigned_gates = self.flatten_gates(True) if not local else self._get_local_gates()
+        if not local:
+            matrix_width = max(self.qubits) + 1
+            assigned_gates = self.flatten_gates()
+        else:
+            matrix_width = self.width()
+            based_qubits, assigned_gates = self.qubits, []
+            for gate, qidx in self._gates.LTS():
+                new_qidx = [based_qubits.index(q) for q in qidx]
+                assigned_gates.append(gate.copy() & new_qidx)
 
         return circuit_matrix.get_unitary_matrix(assigned_gates, matrix_width)
-
-    def _get_local_gates(self) -> list:
-        local_qidx_mapping = {}
-        for i, qidx in enumerate(self.qubits):
-            local_qidx_mapping[qidx] = i
-
-        local_gates = []
-        flatten_gates = self.gate_decomposition(self_flatten=False)
-        for gate, qidx, _ in flatten_gates:
-            related_qidx = [local_qidx_mapping[q] for q in qidx]
-            lgate = gate.copy() & related_qidx
-            local_gates.append(lgate)
-
-        return local_gates

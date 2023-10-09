@@ -79,8 +79,8 @@ class ControlledUnitaryDecomposition(object):
             recursive_basis=recursive_basis,
             keep_left_diagonal=keep_left_diagonal,
         )
-        for i in range(gates.gate_length()):
-            gates.adjust(i, 1, True)
+        new_qubits = [q + 1 for q in gates.qubits]
+        gates & new_qubits
 
         return gates, shift
 

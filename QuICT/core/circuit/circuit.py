@@ -341,24 +341,6 @@ class Circuit(CircuitBased):
 
         return self._gates.pop(index)
 
-    def adjust(self, index: int, reassigned_qubits: Union[int, list, Qubit, Qureg], is_adjust_value: bool = False):
-        """ Adjust the placement for target CompositeGate/BasicGate/Operator.
-
-        Args:
-            index (int): The target Quantum Gate's index, **Start from 0**.
-            reassigned_qubits (Union[int, list, Qubit, Qureg]): The new assigned qubits of target Quantum Gate
-            is_adjust_vale (bool): Whether the reassigned_qubits means the new qubit indexes or the adjustment
-                value from original indexes.
-        """
-        if index < 0:
-            index = self.gate_length() + index
-        assert index >= 0 and index < self.gate_length()
-
-        if isinstance(reassigned_qubits, int):
-            reassigned_qubits = [reassigned_qubits]
-
-        self._gates.adjust(index, reassigned_qubits, is_adjust_value) 
-
     def _add_gate(self, gate: BasicGate):
         """ add a quantum gate into circuit.
 

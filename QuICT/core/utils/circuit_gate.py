@@ -53,11 +53,19 @@ class GateNode:
         else:
             return self._parent[index]
 
+    def del_parent(self, index):
+        if index in self._parent.keys():
+            del self._parent[index]
+
     def get_child(self, index):
         if index not in self._children.keys():
             return None
         else:
             return self._children[index]
+
+    def del_child(self, index):
+        if index in self._children.keys():
+            del self._children[index]
 
     def assign_depth(self):
         if len(self._parent) == 0:
@@ -167,6 +175,7 @@ class CircuitGates:
 
         _new._first_layer_gates = self._first_layer_gates.copy()
         _new._last_layer_gates = self._last_layer_gates.copy()
+        _new.restore()
 
         # property copy
         _new._size = self.size
@@ -370,23 +379,6 @@ class CircuitGates:
         gate_list.restore()
         return cgate
 
-    def adjust(self, index: int, qidxes: list, is_adjust: bool = False, depth: int = 10):
-        adj_node = self._gates[index]
-        if isinstance(adj_node, GateNode):
-            if not is_adjust and qidxes == adj_node.indexes and depth is None:
-                return
-
-            self._pop_node(adj_node)
-            adj_node = self.insert_gate(adj_node, qidxes, depth, True)
-        else:
-            if qidxes == adj_node.qubits and depth is None:
-                return
-
-            self._pop_cgate(adj_node)
-            adj_node = self.insert_cgate(adj_node, qidxes, depth)
-
-        self._gates[index] = adj_node
-
     def _analysis_gate(self, gate, minus: int = 1):
         # Gates count update
         self._size += minus
@@ -464,12 +456,12 @@ class CircuitGates:
     def restore(self):
         start_node = []
         for idx, node in self._first_layer_gates.items():
-            del node._parent[idx]
+            node.del_parent(idx)
             if len(node.parent) == 0:
                 start_node.append(node)
 
         for idx, node in self._last_layer_gates.items():
-            del node._children[idx]
+            node.del_child(idx)
 
         self._depth_update(start_node)
 
@@ -550,9 +542,8 @@ class CircuitGates:
             start_node = next_layer
 
     def flatten(self):
-        # TODO: add qubit mapping change
         flat_gates = []
-        for gate, _ in self._gates:
+        for gate in self._gates:
             if type(gate).__name__ == "CompositeGate":
                 gate.flatten()
                 flat_gates.extend(gate._gates)
@@ -561,12 +552,49 @@ class CircuitGates:
 
         self._gates = flat_gates
 
-    def decomposition(self):
-        decomp_gates = self.LTS()
-        self.reset()
-        for gate, qidxes in decomp_gates:
-            cgate = gate.build_gate(qidxes)
-            if cgate is not None:
-                self.extend(cgate)
+    def decomposition(self, gates_only: bool = False):
+        decomp_gates = []
+        for node in self.LTS(node_only=True):
+            de_node = self._decomp_gate(node, gates_only)
+            if isinstance(de_node, list):
+                decomp_gates.extend(de_node)
             else:
-                self.append(gate, qidxes)
+                decomp_gates.append(de_node)
+
+        if gates_only:
+            return decomp_gates
+
+        self._depth_update(set(self._first_layer_gates.values()))
+        self._gates = decomp_gates
+
+    def _decomp_gate(self, node: GateNode, gates_only: bool = False):
+        gate, qidxes = node.gate, node.indexes
+        cgate = gate.build_gate(qidxes)
+        if cgate is None:
+            return node if not gates_only else [node.gate]
+
+        if gates_only:
+            return cgate.gates
+
+        # Update properties
+        self._analysis_gate(gate, -1)
+        self._analysis_compositegate(cgate, 1)
+
+        # Link Nodes for new CompositeGate
+        gate_list: CircuitGates = cgate._gates
+        for qid in qidxes:
+            parent, child = node.get_parent(qid), node.get_child(qid)
+            gate_first, gate_last = gate_list._first_layer_gates[qid], gate_list._last_layer_gates[qid]
+            if parent is not None:
+                gate_first.assign_parent(qid, parent)
+                parent.assign_child(qid, gate_first)
+            else:
+                self._first_layer_gates[qid] = gate_first
+
+            if child is not None:
+                gate_last.assign_child(qid, child)
+                child.assign_parent(qid, gate_last)
+            else:
+                self._last_layer_gates[qid] = gate_last
+
+        return cgate
