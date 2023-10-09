@@ -1,3 +1,5 @@
+from typing import Union
+
 import numpy as np
 
 from QuICT.core import Circuit
@@ -8,31 +10,45 @@ from QuICT.simulation.state_vector import StateVectorSimulator
 
 
 class QuantumStatePreparation(object):
+    r"""
+    For a given quantum state $|\psi\rangle$, create a CompositeGate $C$ that $|\psi\rangle = C |0\rangle$
+
+    Choose the method between the references, designing circuit of quantum state preparation
+    with uniformly gates and unitary decomposition respectively
+
+    Reference:
+        `Transformation of quantum states using uniformly controlled rotations`
+        <https://arxiv.org/abs/quant-ph/0407010>
+
+        `Quantum-state preparation with universal gate decompositions`
+        <https://arxiv.org/abs/1003.5760>
+
+    Examples:
+        >>> from QuICT.qcda.synthesis import QuantumStatePreparation
+        >>> QSP = QuantumStatePreparation('uniformly_gates')
+        >>> gates = QSP.execute(state_vector)
+
+        >>> from QuICT.qcda.synthesis import QuantumStatePreparation
+        >>> QSP = QuantumStatePreparation('unitary_decomposition')
+        >>> gates = QSP.execute(state_vector)
     """
-    For a given quantum state |psi>, create a CompositeGate C that |psi> = C |0>
-    """
-    def __init__(self, method='unitary_decomposition', keep_phase=False):
+    def __init__(self, method: str = 'unitary_decomposition', keep_phase: bool = False):
         """
-        Choose the method between reference [1] and [2], designing circuit of
-        quantum state preparation with uniformly gates and unitary decomposition respectively
-
         Args:
-            method(str, optional): chosen method in ['uniformly_gates', 'unitary_decomposition']
-            keep_phase(bool): whether to keep the global phase as a GPhase gate in the output
-
-        Reference:
-            [1] https://arxiv.org/abs/quant-ph/0407010v1
-            [2] https://arxiv.org/abs/1003.5760
+            method (str, optional): chosen method in ['uniformly_gates', 'unitary_decomposition']
+            keep_phase (bool, optional): whether to keep the global phase as a GPhase gate in the output
         """
         assert method in ['uniformly_gates', 'unitary_decomposition'],\
             ValueError('Invalid quantum state preparation method')
         self.method = method
         self.keep_phase = keep_phase
 
-    def execute(self, state_vector):
+    def execute(self, state_vector: np.ndarray) -> CompositeGate:
         """
+        Quantum state preparation with the chosen method
+
         Args:
-            state_vector(np.ndarray): the statevector to be prapared
+            state_vector (np.ndarray): the statevector to be prapared
 
         Returns:
             CompositeGate: the preparation CompositeGate
@@ -42,18 +58,18 @@ class QuantumStatePreparation(object):
         if self.method == 'unitary_decomposition':
             return self._with_unitary_decomposition(state_vector)
 
-    def _with_uniformly_gates(self, state_vector):
+    def _with_uniformly_gates(self, state_vector: np.ndarray) -> CompositeGate:
         """
         Quantum state preparation with uniformly gates
 
         Args:
-            state_vector(np.ndarray): the statevector to be prapared
+            state_vector (np.ndarray): the statevector to be prapared
 
         Returns:
             CompositeGate: the preparation CompositeGate
 
         Reference:
-            https://arxiv.org/abs/quant-ph/0407010v1
+            https://arxiv.org/abs/quant-ph/0407010
         """
         state_vector = np.array(state_vector)
         num_qubits = int(round(np.log2(state_vector.size)))
@@ -83,12 +99,12 @@ class QuantumStatePreparation(object):
 
         return gates
 
-    def _with_unitary_decomposition(self, state_vector):
+    def _with_unitary_decomposition(self, state_vector: np.ndarray) -> CompositeGate:
         """
         Quantum state preparation with unitary decomposition
 
         Args:
-            state_vector(np.ndarray): the statevector to be prapared
+            state_vector (np.ndarray): the statevector to be prapared
 
         Returns:
             CompositeGate: the preparation CompositeGate
@@ -129,35 +145,41 @@ class QuantumStatePreparation(object):
 
 
 class SparseQuantumStatePreparation(object):
+    r"""
+    For a sparse quantum state $|\psi\rangle$, i.e. only a few of entries in the statevector is not zero,
+    create a circuit $C$ that $|\psi\rangle = C |0\rangle$
+
+    Despite the original state vector, we could also use a 'state array' to describe a sparse quantum state.
+    That is, each element [basis, amplitude] in the state array gives the amplitude on the computational basis,
+    where the bases are boolean strings and not shown amplitudes are zeros.
+    Be careful that no duplicated basis is allowed.
+
+    Reference:
+        `An Efficient Algorithm for Sparse Quantum State Preparation`
+        <https://ieeexplore.ieee.org/abstract/document/9586240/metrics>
+
+    Examples:
+        >>> from QuICT.qcda.synthesis import SparseQuantumStatePreparation
+        >>> sparseQSP = SparseQuantumStatePreparation('state_vector')
+        >>> gates = sparseQSP.execute(state_vector)
     """
-    For a sparse quantum state |psi>, i.e. only a few of entries in the statevector is not zero,
-    create a circuit C that |psi> = C |0>
-    """
-    def __init__(self, input_format='state_vector', keep_phase=False):
+    def __init__(self, input_format: str = 'state_vector', keep_phase: bool = False):
         """
-        Despite the original state vector, we could also use a 'state array' to describe a sparse quantum state.
-        That is, each element [basis, amplitude] in the state array gives the amplitude on the computational basis,
-        where the bases are boolean strings and not shown amplitudes are zeros.
-        Be careful that no duplicated basis is allowed.
-
         Args:
-            input_mode(str, optional): chosen input in ['state_array', 'state_vector']
-            keep_phase(bool): whether to keep the global phase as a GPhase gate in the output
-
-        Reference:
-            https://ieeexplore.ieee.org/abstract/document/9586240/metrics
+            input_mode (str, optional): chosen input in ['state_array', 'state_vector']
+            keep_phase (bool, optional): whether to keep the global phase as a GPhase gate in the output
         """
         assert input_format in ['state_array', 'state_vector'],\
             ValueError('Invalid sparse quantum state preparation input format')
         self.input_format = input_format
         self.keep_phase = keep_phase
 
-    def execute(self, state_array) -> CompositeGate:
+    def execute(self, state_array: Union[dict, np.ndarray]) -> CompositeGate:
         """
         Quantum state preparation for sparse state
 
         Args:
-            state_array: input quantum state, whose format is decided by the input_format
+            state_array (dict/np.ndarray): input quantum state, whose format is decided by the input_format
 
         Returns:
             CompositeGate: the preparation CompositeGate
@@ -198,8 +220,8 @@ class SparseQuantumStatePreparation(object):
         Algorithm 1 in the reference, to reduce the non-zero entries in the state vector.
 
         Args:
-            state(dict): a sparse state dict
-            width(int): the width of the state
+            state (dict): a sparse state dict
+            width (int): the width of the state
 
         Returns:
             CompositeGate: a CompositeGate that reduce the state dict
@@ -272,9 +294,9 @@ class SparseQuantumStatePreparation(object):
         Create a CompositeGate that maps alpha|0> + beta|1> to e^{i phase} |0> with some control qubits
 
         Args:
-            control(int): the number of control qubits
-            alpha(complex): alpha in the initial state
-            beta(complex): beta in the initial stats
+            control (int): the number of control qubits
+            alpha (complex): alpha in the initial state
+            beta (complex): beta in the initial stats
 
         Returns:
             CompositeGate: the required CompositeGate
