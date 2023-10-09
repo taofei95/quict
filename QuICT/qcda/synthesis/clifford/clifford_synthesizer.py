@@ -5,6 +5,7 @@ Synthesize a Clifford circuit unidirectionally or bidirectionally
 import copy
 import random
 import multiprocessing as mp
+from typing import Tuple, Union
 
 import numpy as np
 
@@ -14,27 +15,35 @@ from QuICT.qcda.utility import PauliOperator, OutputAligner
 
 
 class CliffordUnidirectionalSynthesizer(object):
-    """
-    Construct L_1,…,L_n such that C = L_1…L_j C_j, where C_j acts trivially on the first j qubits.
-    By induction the original Clifford circuit C is synthesized.
+    r"""
+    Construct $L_1, …, L_n$ such that $C = L_1 … L_j C_j$, where $C_j$ acts trivially on the first $j$ qubits.
+    By induction the original Clifford circuit $C$ is synthesized.
 
     Reference:
-        https://arxiv.org/abs/2105.02291
+        `Clifford Circuit Optimization with Templates and Symbolic Pauli Gates`
+        <https://arxiv.org/abs/2105.02291>
+
+    Examples:
+        >>> from QuICT.qcda.synthesis.clifford.clifford_synthesizer import CliffordUnidirectionalSynthesizer
+        >>> CUS = CliffordUnidirectionalSynthesizer()
+        >>> circ_syn = CUS.execute(circ)
     """
-    def __init__(self, strategy='greedy'):
+    def __init__(self, strategy: str = 'greedy'):
         """
         Args:
-            strategy(str, optional): strategy of choosing qubit for each step, in ['greedy', 'random']
+            strategy (str, optional): strategy of choosing qubit for each step, in ['greedy', 'random']
         """
         assert strategy in ['greedy', 'random'],\
             ValueError('strategy of choosing qubit could only be "greedy" or "random"')
         self.strategy = strategy
 
     @OutputAligner()
-    def execute(self, gates: CompositeGate):
+    def execute(self, gates: Union[Circuit, CompositeGate]) -> CompositeGate:
         """
+        Synthesize the Clifford circuit
+
         Args:
-            gates(Circuit/CompositeGate): the Clifford Circuit/CompositeGate to be synthesized
+            gates (Circuit/CompositeGate): the Clifford Circuit/CompositeGate to be synthesized
 
         Returns:
             CompositeGate: the synthesized Clifford CompositeGate
@@ -79,15 +88,15 @@ class CliffordUnidirectionalSynthesizer(object):
         return gates_syn
 
     @staticmethod
-    def disentangle_one_qubit(gates: CompositeGate, width: int, target: int):
-        """
-        Disentangle the target qubit from gates, i.e. for CompositeGate C, give the CompositeGate L
-        such that L^-1 C acts trivially on the target qubit.
+    def disentangle_one_qubit(gates: CompositeGate, width: int, target: int) -> CompositeGate:
+        r"""
+        Disentangle the target qubit from gates, i.e. for CompositeGate $C$, give the CompositeGate $L$
+        such that $L^{-1} C$ acts trivially on the target qubit.
 
         Args:
-            gates(CompositeGate): the CompositeGate to be disentangled
-            width(int): the width of the operators
-            target(int): the target qubit to be disentangled from gates
+            gates (CompositeGate): the CompositeGate to be disentangled
+            width (int): the width of the operators
+            target (int): the target qubit to be disentangled from gates
 
         Returns:
             CompositeGate: the disentangler
@@ -107,24 +116,37 @@ class CliffordUnidirectionalSynthesizer(object):
 
 
 class CliffordBidirectionalSynthesizer(object):
-    """
-    Construct L_1,…,L_n,R_1,…,R_n such that C = L_1…L_j C_j R_j…R_1,  where C_j acts trivially
-    on the first j qubits.
-    By induction the original Clifford circuit C is synthesized.
+    r"""
+    Construct $L_1, …, L_n, R_1, …, R_n$ such that $C = L_1 … L_j C_j R_j … R_1$,  where $C_j$ acts trivially
+    on the first $j$ qubits.
+    By induction the original Clifford circuit $C$ is synthesized.
 
     Reference:
-        https://arxiv.org/abs/2105.02291
+        `Clifford Circuit Optimization with Templates and Symbolic Pauli Gates`
+        <https://arxiv.org/abs/2105.02291>
+
+    Examples:
+        >>> from QuICT.qcda.synthesis.clifford.clifford_synthesizer import CliffordBidirectionalSynthesizer
+        >>> CBS = CliffordBidirectionalSynthesizer()
+        >>> circ_syn = CBS.execute(circ)
     """
-    def __init__(self, qubit_strategy='greedy', pauli_strategy='random',
-                 shots=1, multiprocess=False, process=4, chunksize=64):
+    def __init__(
+            self,
+            qubit_strategy: str = 'greedy',
+            pauli_strategy: str = 'random',
+            shots: int = 1,
+            multiprocess: bool = False,
+            process: int = 4,
+            chunksize: int = 64,
+    ):
         """
         Args:
-            qubit_strategy(str, optional): strategy of choosing qubit for each step, in ['greedy', 'random']
-            pauli_strategy(str, optional): strategy of choosing PauliOperator for each step, in ['greedy', 'random']
-            shots(int, optional): if pauli_strategy is random, shots of random
-            multiprocess(bool, optional): whether to use the multiprocessing accelaration
-            process(int, optional): the number of processes in a pool
-            chunksize(int, optional): iteration dealt with in a process
+            qubit_strategy (str, optional): strategy of choosing qubit for each step, in ['greedy', 'random']
+            pauli_strategy (str, optional): strategy of choosing PauliOperator for each step, in ['greedy', 'random']
+            shots (int, optional): if pauli_strategy is random, shots of random
+            multiprocess (bool, optional): whether to use the multiprocessing accelaration
+            process (int, optional): the number of processes in a pool
+            chunksize (int, optional): iteration dealt with in a process
         """
         assert qubit_strategy in ['greedy', 'random'],\
             ValueError('strategy of choosing qubit could only be "greedy" or "random"')
@@ -138,10 +160,12 @@ class CliffordBidirectionalSynthesizer(object):
         self.chunksize = chunksize
 
     @OutputAligner()
-    def execute(self, gates: CompositeGate):
+    def execute(self, gates: Union[Circuit, CompositeGate]) -> CompositeGate:
         """
+        Synthesize the Clifford circuit
+
         Args:
-            gates(Circuit/CompositeGate): the Clifford Circuit/CompositeGate to be synthesized
+            gates (Circuit/CompositeGate): the Clifford Circuit/CompositeGate to be synthesized
 
         Returns:
             CompositeGate: the synthesized Clifford CompositeGate
@@ -249,19 +273,24 @@ class CliffordBidirectionalSynthesizer(object):
         return cnot_min, left_min, right_min
 
     @staticmethod
-    def disentangle_one_qubit(gates: CompositeGate, target: int, p1: PauliOperator, p2: PauliOperator):
-        """
-        Disentangle the target qubit from gates, i.e. for CompositeGate C, give the CompositeGate L, R
-        such that L^-1 C R^-1 acts trivially on the target qubit.
+    def disentangle_one_qubit(
+        gates: CompositeGate,
+        target: int,
+        p1: PauliOperator,
+        p2: PauliOperator
+    ) -> Tuple[CompositeGate, CompositeGate]:
+        r"""
+        Disentangle the target qubit from gates, i.e. for CompositeGate $C$, give the CompositeGate $L, R$
+        such that $L^{-1} C R^{-1}$ acts trivially on the target qubit.
 
         Args:
-            gates(CompositeGate): the CompositeGate to be disentangled
-            target(int): the target qubit to be disentangled from gates
-            p1(PauliOperator): PauliOperator P
-            p2(PauliOperator): PauliOperator P'
+            gates (CompositeGate): the CompositeGate to be disentangled
+            target (int): the target qubit to be disentangled from gates
+            p1 (PauliOperator): PauliOperator $P$
+            p2 (PauliOperator): PauliOperator $P'$
 
         Returns:
-            CompositeGate, CompositeGate: the left and right disentangler
+            Tuple[CompositeGate, CompositeGate]: the left and right disentangler
         """
         # Using the notation in the paper
         o1 = copy.deepcopy(p1)
