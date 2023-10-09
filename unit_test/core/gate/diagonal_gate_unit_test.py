@@ -120,6 +120,36 @@ def test_linear_fjk():
     resu = DiagonalGate.linear_fjk(2,1,10,n,t)
     print(resu)
 
+
+def test_linear_equation():
+    n = 4
+    m = 8
+    t = int(np.floor(np.log2(m / 2)))
+    s = DiagonalGate.partitioned_gray_code(n, t)
+    #print(s)
+    theta = np.append([0], 2 * np.pi * np.random.random((1 << n) - 1))
+    #x = 1
+    print("theta:")
+    print(theta)
+
+    for x in range(1 << n):
+
+        print("x=",x,".The binary of x is:",bin(x).replace('0b',''))
+        sum = 0
+        for j in range(1 << t):
+            for k in range(1 << t):
+                sum+=DiagonalGate.linear_fjk(j+1,k+1,x,n,t)*DiagonalGate.alpha_s(theta,int(s[j][k],2),n)
+
+        print("\sum <x,s>alpha_s = ",sum)
+        if np.allclose(theta[x],sum):
+        #if theta[x] == sum:
+            print("theta(",x,") satisfies the equation.")
+        else:
+            print("theta(",x,") doesn't satisfy the equation.")
+
+
+
+
 def test_with_aux_qubit():
     n = 4 #number of target qubit
     m = 8 #number of ancillary qubit
@@ -164,12 +194,6 @@ def test_with_aux_qubit():
     else:
         print("The circuit matrix is not diagonal.")
 
-
-    """
-    trace = np.trace(new_mat)
-    print("trace:",trace)
-    """
-
     exp_theta = np.exp(1j * theta)
     print("exp_theta:",exp_theta)
     diagonal_theta = np.diag(exp_theta)
@@ -207,5 +231,7 @@ if __name__ == '__main__':
     #test_linear_fjk()
     #test_alpha_s()
     #test_phase_shift_s() #here dim(A_inv)=dim(theta)
+    #test_linear_equation()
     test_with_aux_qubit()
+
 

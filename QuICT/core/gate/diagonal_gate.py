@@ -67,7 +67,7 @@ class DiagonalGate(object):
         gates = CompositeGate()
 
         #for x in range(2**n):
-        for x in range(1):
+        for x in range(1,2):
         # Stage 1: Prefix Copy
             t = int(np.floor(np.log2(m / 2)))
             copies = int(np.floor(m / (2 * t)))
@@ -95,7 +95,7 @@ class DiagonalGate(object):
                     #CX & [i, n + i + j * t] | gates
 
         # Stage 2: Gray Initial
-        #t = int(np.floor(np.log2(m / 2)))
+            #t = int(np.floor(np.log2(m / 2)))
             ell = 2**t
             ini_star = n + int(m/2)
             #To ensure parallelism, the group number of the control bit is given.
@@ -172,9 +172,9 @@ class DiagonalGate(object):
             path_star = n + int(m / 2)
             #the end label of the Stage 3  #sucoend = n + n - t - 1 + (copies3 - 1) * t
 
-            #for k in range(2,num_phases+1):
-            for k in range(2,3):
-
+            for k in range(2,num_phases+1):
+            #for k in range(2,3):
+                visit = [0 for _ in range(n)]
                 #Step k.1: U_k
                 for j in range(1,ell+1):
                     s = self.partitioned_gray_code(n,t)
@@ -183,26 +183,45 @@ class DiagonalGate(object):
 
                     for i in range(len(s1)):
                         if s1[i] != s2[i]:
-                                CX & [n + j - t + (n-t)*visit[i], path_star+j-1] | gates
+                                CX & [n + i - t + (n-t) * visit[i], path_star+j-1] | gates
                                 visit[i]+=1
 
+                                #CX & [i,sucoend+j] | gates
+                                #break
 
-                            #CX & [i,sucoend+j] | gates
-                            #break
-                """
-                   #Step k.2: R_k
+                #Step k.2: R_k
                 for j in range(1,ell+1):
                     s = self.partitioned_gray_code(n, t)
                     sjk_int = int(s[j-1][k-1],2)
-                    #phase_k = self.alpha_s(theta,sjk_int,n)
-                    phase_k = (self.linear_fjk(j,k,x,n,t)) * (self.alpha_s(theta,sjk_int,n))
-                    if phase_k != 0:
-                        U1(phase_k) | gates(j+sucoend)
+                    phase_k = self.alpha_s(theta,sjk_int,n)
+                    #phase_k = (self.linear_fjk(j,k,x,n,t)) * (self.alpha_s(theta,sjk_int,n))
+                    #if phase_k != 0:
+                    if sjk_int != 0:
+                        U1(phase_k) | gates(j-1+path_star)
 
                     #gates.extend(self.phase_shift_s(sjk_int, n, phase_k, aux=self.aux))
 
             #Stage 5:Inverse
+            for i in range(1, r3 + 1):
+                for j in range(t,n):
+                    CX & [j, n + (2 ** (i - 1) - 1) * (n - t) + j - t] | gates
+                for j in range((2 ** (i - 1) - 1) * (n - t)):
+                    CX & [n + j, n + j + (2 ** (i - 1)) * (n - t)] | gates
 
+            if 2 ** r3 - 1 < copies:
+                rest = copies3 - 2 ** r3 + 1
+                for j in range(t,n):
+                    CX & [j, n + (2 ** (r3) - 1) * (n - t) + j - t] | gates
+                if rest != 1:
+                    for j in range((rest - 1) * (n - t)):
+                        CX & [n + j, n + (2 ** (r3)) * (n - t) + j] | gates
+
+
+            #clear the the copy process in Stage 3
+
+
+
+            """
             for j in range(copies3):
                 for i in range(n-t):
                     CX & [i + t, n + i + j * t] | gates
