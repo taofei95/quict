@@ -17,39 +17,9 @@ class AdjointDifferentiator:
     __DEVICE = ["CPU", "GPU"]
     __PRECISION = ["single", "double"]
 
-    @property
-    def circuit(self):
-        return self._circuit
-
-    @circuit.setter
-    def circuit(self, circuit):
-        self._circuit = circuit
-
-    @property
-    def vector(self):
-        return self._vector
-
-    @vector.setter
-    def vector(self, vec):
-        self._vector = self._gate_calculator.validate_state_vector(vec, self._qubits)
-
-    @property
-    def device(self):
-        return self._device_id
-
-    @property
-    def grad_vector(self):
-        return self._grad_vector
-
-    @grad_vector.setter
-    def grad_vector(self, vec):
-        self._grad_vector = self._gate_calculator.normalized_state_vector(
-            vec, self._qubits
-        )
-
     def __init__(
         self,
-        device: str = "GPU",
+        device: str = "CPU",
         precision: str = "double",
         gpu_device_id: int = 0,
         sync: bool = True,
@@ -57,7 +27,7 @@ class AdjointDifferentiator:
         """Initialize a adjoint differentiator.
 
         Args:
-            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "GPU".
+            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
             precision (str, optional): The precision for the state vector, one of [single, double].
                 Defaults to "double".
             gpu_device_id (int, optional): The GPU device ID. Defaults to 0.
@@ -200,7 +170,10 @@ class AdjointDifferentiator:
         return np.array(params_grad_list), np.array(expectation_list)
 
     def _get_one_expectation(
-        self, circuit: Circuit, state_vector: np.ndarray, expectation_op: Hamiltonian,
+        self,
+        circuit: Circuit,
+        state_vector: np.ndarray,
+        expectation_op: Hamiltonian,
     ):
         """Calculate the expectation of a PQC.
 
@@ -227,7 +200,10 @@ class AdjointDifferentiator:
         return expectation
 
     def get_expectations(
-        self, circuit: Circuit, state_vector: np.ndarray, expectation_ops: list,
+        self,
+        circuit: Circuit,
+        state_vector: np.ndarray,
+        expectation_ops: list,
     ):
         """Calculate the expectation of a PQC.
 
@@ -246,7 +222,10 @@ class AdjointDifferentiator:
         return np.array(expectation_list)
 
     def get_expectations_batch(
-        self, circuit: Circuit, state_vector_list: list, expectation_ops: list,
+        self,
+        circuit: Circuit,
+        state_vector_list: list,
+        expectation_ops: list,
     ):
         """Calculate the expectations of a batch of PQCs.
 

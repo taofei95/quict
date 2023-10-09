@@ -25,7 +25,7 @@ class QuantumNet(Model):
         data_qubits: list = None,
         hamiltonian: Union[Hamiltonian, List] = None,
         params: np.ndarray = None,
-        device="GPU",
+        device="CPU",
         gpu_device_id: int = 0,
         differentiator: str = "adjoint",
     ):
@@ -38,7 +38,7 @@ class QuantumNet(Model):
             data_qubits (list, optional): List of qubits used by encoding. Defaults to None.
             hamiltonian (Union[Hamiltonian, List], optional): The hamiltonians for measurement. Defaults to None.
             params (np.ndarray, optional): Initialization parameters. Defaults to None.
-            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "GPU".
+            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
             gpu_device_id (int, optional): The GPU device ID. Defaults to 0.
             differentiator (str, optional): The differentiator type, one of ["adjoint", "parameter_shift].
                 Defaults to "adjoint".

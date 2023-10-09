@@ -19,7 +19,7 @@ class QAOA(Model):
         hamiltonian: Hamiltonian,
         optimizer: OptimizerBase,
         params: np.ndarray = None,
-        device: str = "GPU",
+        device: str = "CPU",
         gpu_device_id: int = 0,
         differentiator: str = "adjoint",
     ):
@@ -31,7 +31,7 @@ class QAOA(Model):
             hamiltonian (Hamiltonian): The hamiltonian for a specific problem.
             optimizer (OptimizerBase): The optimizer used to optimize the network.
             params (np.ndarray, optional): Initialization parameters. Defaults to None.
-            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "GPU".
+            device (str, optional): The device type, one of [CPU, GPU]. Defaults to "CPU".
             gpu_device_id (int, optional): The GPU device ID. Defaults to 0.
             differentiator (str, optional): The differentiator type, one of ["adjoint", "parameter_shift].
                 Defaults to "adjoint".

@@ -1,13 +1,15 @@
 import numpy as np
 
-from QuICT.algorithm.quantum_machine_learning.differentiator.adjoint import AdjointDifferentiator
+from QuICT.algorithm.quantum_machine_learning.differentiator.adjoint import (
+    AdjointDifferentiator,
+)
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.core import Circuit
 from QuICT.core.gate import *
 
 
 class Differentiator:
-    """ The high-level differentiator class, including all QuICT differentiator mode. """
+    """The high-level differentiator class, including all QuICT differentiator mode."""
 
     __DEVICE = ["CPU", "GPU"]
     __BACKEND = ["adjoint"]
@@ -19,7 +21,7 @@ class Differentiator:
 
     def __init__(
         self,
-        device: str = "GPU",
+        device: str = "CPU",
         backend: str = "adjoint",
         precision: str = "double",
         **options,
@@ -27,7 +29,7 @@ class Differentiator:
         """Initialize a differentiator.
 
         Args:
-            device (str, optional): The device of the simulator. One of [CPU, GPU]. Defaults to "GPU".
+            device (str, optional): The device of the simulator. One of [CPU, GPU]. Defaults to "CPU".
             backend (str, optional): The backend for the simulator. One of ["adjoint"]. Defaults to "adjoint".
             precision (str, optional): The precision of simulator, one of ["single", "double"]. Defaults to "double".
             **options (dict): other optional parameters for the simulator.
@@ -122,7 +124,10 @@ class Differentiator:
         )
 
     def get_expectations(
-        self, circuit: Circuit, state_vector: np.ndarray, expectation_ops: list,
+        self,
+        circuit: Circuit,
+        state_vector: np.ndarray,
+        expectation_ops: list,
     ):
         """Calculate the expectation of a PQC.
 
@@ -139,7 +144,10 @@ class Differentiator:
         )
 
     def get_expectations_batch(
-        self, circuit: Circuit, state_vector_list: list, expectation_ops: list,
+        self,
+        circuit: Circuit,
+        state_vector_list: list,
+        expectation_ops: list,
     ):
         """Calculate the expectations of a batch of PQCs.
 

@@ -22,18 +22,16 @@ def maxcut_hamiltonian(edges):
 
 H = maxcut_hamiltonian(edges)
 
-p = 4  # 量子电路层数
-MAX_ITERS = 150  # 最大迭代次数
-LR = 0.1  # 梯度下降的学习率
-SEED = 1  # 随机数种子
+p = 4
+MAX_ITERS = 150
+LR = 0.1
+SEED = 1
 SHOTS = 1000
-
-set_seed(SEED)  # 设置全局随机种子
+set_seed(SEED)
 
 optim = numpy_ml.neural_nets.optimizers.Adam(lr=LR)
 qaoa_net = QAOA(n_qubits=n, p=p, hamiltonian=H, optimizer=optim, device="CPU")
 
-# 开始训练
 loader = tqdm.trange(MAX_ITERS, desc="Training", leave=True)
 for it in loader:
     loss = qaoa_net.run()

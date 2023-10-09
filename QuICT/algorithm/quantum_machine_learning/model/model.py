@@ -34,7 +34,7 @@ class Model(ABC):
         optimizer: OptimizerBase,
         hamiltonian: Union[Hamiltonian, List] = None,
         params: np.ndarray = None,
-        device: str = "GPU",
+        device: str = "CPU",
         gpu_device_id: int = 0,
         differentiator: str = "adjoint",
     ):

@@ -77,19 +77,6 @@ class Hamiltonian:
     def __rmul__(self, other: float):
         return self.__mul__(other)
 
-    def _remove_I(self):
-        new_pauli_str = []
-        for pauli_operator in self._pauli_str:
-            assert isinstance(pauli_operator[0], int) or isinstance(
-                pauli_operator[0], float
-            ), TypeError("Hamiltonian.init", "int or float", pauli_operator[0].type,)
-            for pauli_gate in pauli_operator[1:][::-1]:
-                if "I" in pauli_gate:
-                    pauli_operator.remove(pauli_gate)
-            new_pauli_str.append(pauli_operator)
-
-        self._pauli_str = new_pauli_str
-
     def get_hamiton_matrix(self, n_qubits):
         """Construct a matrix form of the Hamiltonian.
 
@@ -126,6 +113,23 @@ class Hamiltonian:
             hamiton_circuits.append(circuit)
         return hamiton_circuits
 
+    def _remove_I(self):
+        new_pauli_str = []
+        for pauli_operator in self._pauli_str:
+            assert isinstance(pauli_operator[0], int) or isinstance(
+                pauli_operator[0], float
+            ), TypeError(
+                "Hamiltonian.init",
+                "int or float",
+                pauli_operator[0].type,
+            )
+            for pauli_gate in pauli_operator[1:][::-1]:
+                if "I" in pauli_gate:
+                    pauli_operator.remove(pauli_gate)
+            new_pauli_str.append(pauli_operator)
+
+        self._pauli_str = new_pauli_str
+
     def _pauli_str_validation(self):
         """Validate the Pauli string."""
         for pauli_operator in self._pauli_str:
@@ -135,7 +139,11 @@ class Hamiltonian:
         """Validate the Pauli operator."""
         assert isinstance(pauli_operator[0], int) or isinstance(
             pauli_operator[0], float
-        ), TypeError("Hamiltonian.init", "int or float", pauli_operator[0].type,)
+        ), TypeError(
+            "Hamiltonian.init",
+            "int or float",
+            pauli_operator[0].type,
+        )
 
         indexes = []
         pauli_gates = ""
