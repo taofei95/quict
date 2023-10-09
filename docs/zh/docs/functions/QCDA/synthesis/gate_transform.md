@@ -34,7 +34,7 @@ QuICT 中内置的指令集如下：
 
 ``` python
 from QuICT.core.gate import GateType
-from QuICT.qcda.synthesis import InstructionSet
+from QuICT.core.virtual_machine import InstructionSet
 
 CustomSet = InstructionSet(
     GateType.cx,
@@ -53,7 +53,8 @@ CustomSet.register_one_qubit_rule(custom_rule)
 ## 代码实例
 
 ``` python
-from QuICT.qcda.synthesis.gate_transform import GateTransform, USTCSet
+from QuICT.core.virtual_machine.special_set import USTCSet
+from QuICT.qcda.synthesis.gate_transform import GateTransform
 
 gt = GateTransform(USTCSet)
 circ_syn = gt.execute(circ)

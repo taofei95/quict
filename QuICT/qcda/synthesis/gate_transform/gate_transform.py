@@ -4,6 +4,8 @@
 # @Author  : Han Yu
 # @File    : gate_transform.py
 
+from typing import Union
+
 import numpy as np
 
 from QuICT.core import Circuit
@@ -14,25 +16,31 @@ from .transform_rule import *
 
 
 class GateTransform(object):
+    """
+    Equivalently transfrom circuit into goal instruction set
+
+    Examples:
+        >>> from QuICT.core.virtual_machine.special_set import USTCSet
+        >>> from QuICT.qcda.synthesis.gate_transform import GateTransform
+        >>> gt = GateTransform(USTCSet)
+        >>> circ_syn = gt.execute(circ)
+    """
     def __init__(self, instruction_set=USTCSet, keep_phase=False):
         """
         Args:
-            instruction_set(InstructionSet): the goal instruction set
-            keep_phase(bool): whether to keep the global phase as a GPhase gate in the output
+            instruction_set (InstructionSet): the goal instruction set
+            keep_phase (bool): whether to keep the global phase as a GPhase gate in the output
         """
         self.instruction_set = instruction_set
         self.keep_phase = keep_phase
 
     @OutputAligner()
-    def execute(self, circuit):
-        """ equivalently transfrom circuit into goal instruction set
-
-        The algorithm will try two possible path, and return a better result:
-        1. make continuous local two-qubit gates into SU(4), then decomposition with goal instruction set
-        2. transform the two-qubit gate into instruction set one by one, then one-qubit gate
+    def execute(self, circuit: Union[Circuit, CompositeGate]) -> CompositeGate:
+        """
+        Transform the two-qubit gate into instruction set one by one, then one-qubit gate
 
         Args:
-            circuit(Circuit/CompositeGate): the circuit to be transformed
+            circuit (Circuit/CompositeGate): the circuit to be transformed
 
         Returns:
             CompositeGate: the equivalent compositeGate with goal instruction set
@@ -46,7 +54,7 @@ class GateTransform(object):
 
         return gates
 
-    def one_qubit_transform(self, gates: CompositeGate):
+    def one_qubit_transform(self, gates: CompositeGate) -> CompositeGate:
         gates_tran = CompositeGate()
         unitaries = [np.identity(2, dtype=np.complex128) for _ in range(max(gates.qubits) + 1)]
         single_qubit_rule = self.instruction_set.one_qubit_rule
@@ -91,7 +99,7 @@ class GateTransform(object):
             gates_tran.extend(gates_transformed)
         return gates_tran
 
-    def two_qubit_transform(self, gates: CompositeGate):
+    def two_qubit_transform(self, gates: CompositeGate) -> CompositeGate:
         gates_tran = CompositeGate()
         for gate in gates:
             if gate.targets + gate.controls > 2:
