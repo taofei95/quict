@@ -166,7 +166,7 @@ class SparseQuantumStatePreparation(object):
     def __init__(self, input_format: str = 'state_vector', keep_phase: bool = False):
         """
         Args:
-            input_mode (str, optional): chosen input in ['state_array', 'state_vector']
+            input_format (str, optional): chosen input in ['state_array', 'state_vector']
             keep_phase (bool, optional): whether to keep the global phase as a GPhase gate in the output
         """
         assert input_format in ['state_array', 'state_vector'],\

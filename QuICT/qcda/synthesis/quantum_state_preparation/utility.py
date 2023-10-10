@@ -1,21 +1,28 @@
+from typing import Tuple
+
 import numpy as np
 
 
-def schmidt_decompose(state_vector: np.ndarray, A_qubits: int):
-    """
-    A quantum state |psi> of a composite system A, B could be decomposed as |psi> = sum lambda_i |i_A> |i_B>,
-    where lambda_i are non-negative real numbers, sum lambda_i^2 = 1, and |i_A>, |i_B> are orthonormal states.
-    Such decomposition is called Schmidt decomposition, the lambda_i are called Schmidt coefficients,
-    the number of non-zero lambda_i is called Schmidt number, and |i_A>, |i_B> are called Schmidt bases.
+def schmidt_decompose(state_vector: np.ndarray, A_qubits: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    r"""
+    A quantum state $|\psi\rangle$ of a composite system A, B could be decomposed as
+    $$
+    |\psi\rangle = \sum \lambda_i |i_A\rangle |i_B\rangle,
+    $$
+    where $\lambda_i$ are non-negative real numbers, $\sum \lambda_i^2 = 1$,
+    while $|i_A\rangle, |i_B\rangle$ are orthonormal states.
+    Such decomposition is called Schmidt decomposition, the $\lambda_i$ are called Schmidt coefficients,
+    the number of non-zero $\lambda_i$ is called Schmidt number,
+    and $|i_A\rangle, |i_B\rangle$ are called Schmidt bases.
 
-    In this function, we restrict A and B to be the first several qubits and the last several qubits respectively.
+    In this function, we restrict $A$ and $B$ to be the first several qubits and the last several qubits respectively.
 
     Args:
-        state_vector(np.ndarray): the state vector of the given state
-        A_qubits(int): the number of the first qubits corresponding to A
+        state_vector (np.ndarray): the state vector of the given state
+        A_qubits (int): the number of the first qubits corresponding to $A$
 
     Returns:
-        np.ndarray, np.ndarray, np.ndarray: lambda_i, |i_A>, |i_B> respectively
+        Tuple[np.ndarray, np.ndarray, np.ndarray]: $\lambda_i, |i_A\rangle, |i_B\rangle$ respectively
     """
     state_vector = np.array(state_vector)
     num_qubits = int(np.log2(state_vector.size))
