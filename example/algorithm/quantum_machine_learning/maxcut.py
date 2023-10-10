@@ -1,6 +1,6 @@
 import tqdm
-import numpy_ml
 
+from QuICT.algorithm.quantum_machine_learning.optimizer.optimizer import *
 from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 from QuICT.algorithm.tools.drawer.graph_drawer import *
@@ -29,7 +29,7 @@ SEED = 1
 SHOTS = 1000
 set_seed(SEED)
 
-optim = numpy_ml.neural_nets.optimizers.Adam(lr=LR)
+optim = Adam(lr=LR)
 qaoa_net = QAOA(n_qubits=n, p=p, hamiltonian=H, optimizer=optim, device="CPU")
 
 loader = tqdm.trange(MAX_ITERS, desc="Training", leave=True)

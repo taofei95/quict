@@ -1,12 +1,12 @@
 import collections
 import tqdm
 from torchvision import datasets, transforms
-import numpy_ml
 import yaml
 import time
 import torch.utils.tensorboard
 
 from QuICT.algorithm.quantum_machine_learning.encoding import *
+from QuICT.algorithm.quantum_machine_learning.optimizer.optimizer import *
 from QuICT.algorithm.quantum_machine_learning.utils.loss import *
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 from QuICT.algorithm.quantum_machine_learning.model.QNN import QuantumNet
@@ -191,7 +191,7 @@ if __name__ == "__main__":
     )
 
     loss_fun = MSELoss()
-    optimizer = numpy_ml.neural_nets.optimizers.Adam(lr=LR)
+    optimizer = Adam(lr=LR)
     n_qubits = int(np.log2(RESIZE[0] * RESIZE[1])) + 2
     ansatz = CRADL(n_qubits, 6)
     net = QuantumNet(

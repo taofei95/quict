@@ -3,8 +3,10 @@ import random
 import shutil
 
 import numpy as np
-import numpy_ml
 
+from QuICT.algorithm.quantum_machine_learning.optimizer.initializer import (
+    OptimizerInitializer,
+)
 from QuICT.core.utils import Variable
 from QuICT.tools.exception.algorithm import *
 from QuICT.tools.logger import *
@@ -100,9 +102,7 @@ def restore_checkpoint(model, model_path, restore_optim=True):
 
         if restore_optim:
             optim_dict = checkpoint.item()["optimizer"]
-            optim_lodeder = numpy_ml.neural_nets.initializers.OptimizerInitializer(
-                optim_dict
-            )
+            optim_lodeder = OptimizerInitializer(optim_dict)
             optim = optim_lodeder()
             model.optimizer = optim
     except:
