@@ -151,8 +151,8 @@ def test_linear_equation():
 
 
 def test_with_aux_qubit():
-    n = 4 #number of target qubit
-    m = 8 #number of ancillary qubit
+    n = 2 #number of target qubit
+    m = 4 #number of ancillary qubit
     nn=DiagonalGate(n,m)
     #nn.target = 4
     #nn.aux = 8
@@ -163,7 +163,7 @@ def test_with_aux_qubit():
     circuit = Circuit(size)
     gates = nn.with_aux_qubit(theta)
     gates | circuit
-    circuit.draw(filename='4test_with_aux_qubit_n=4 ,m=8 .jpg', flatten=True)
+    #circuit.draw(filename='4test_with_aux_qubit_n=4 ,m=8 .jpg', flatten=True)
     matrix = gates.matrix()
     print(matrix)
     #new_mat = matrix[:2 ** n, :2 ** n] #the first 2**n row and coloum
@@ -196,8 +196,10 @@ def test_with_aux_qubit():
 
     exp_theta = np.exp(1j * theta)
     print("exp_theta:",exp_theta)
+
     diagonal_theta = np.diag(exp_theta)
     diagonal_elements = np.diag(matrix)
+    """
     # Create a 2^m x 2^m identity matrix
     I_m = np.eye(2 ** m)
     # Compute the tensor product of diagonal_theta with the identity matrix
@@ -205,7 +207,7 @@ def test_with_aux_qubit():
     print("tensor_product:",tensor_product)
     diagonal_tensor = np.diag(tensor_product)
     print("diagonal_tensor:",diagonal_tensor)
-
+    """
     # Remove duplicate elements
     #unique_diagonal_elements = list(set(diagonal_elements))
 

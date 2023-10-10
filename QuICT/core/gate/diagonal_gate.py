@@ -67,7 +67,7 @@ class DiagonalGate(object):
         gates = CompositeGate()
 
         #for x in range(2**n):
-        for x in range(1,2):
+        for x in range(3,4):
         # Stage 1: Prefix Copy
             t = int(np.floor(np.log2(m / 2)))
             copies = int(np.floor(m / (2 * t)))
@@ -120,12 +120,12 @@ class DiagonalGate(object):
             #s = self.partitioned_gray_code(n, t)
             for j in range(1,1+ell):
                 sj1_int = int(s[j - 1][0], 2)
-                #phase= (self.linear_fjk(j,1,x,n,t)) * (self.alpha_s(theta,sj1_int,n))
+                phase= (self.linear_fjk(j,1,x,n,t)) * (self.alpha_s(theta,sj1_int,n))
                 #Here need correction.
-                phase = self.alpha_s(theta,sj1_int,n)
+                #phase = self.alpha_s(theta,sj1_int,n)
                 #phase = self.alpha_s(theta,sj1_int,n)
                 #U1(phase) & (ini_star+j-1) | gates
-                if sj1_int != 0:
+                if phase != 0:
                     U1(phase) | gates(ini_star+j-1)
                 #gates.extend(self.phase_shift_s(sj1_int, n, phase, aux=self.aux))
 
@@ -193,15 +193,17 @@ class DiagonalGate(object):
                 for j in range(1,ell+1):
                     s = self.partitioned_gray_code(n, t)
                     sjk_int = int(s[j-1][k-1],2)
-                    phase_k = self.alpha_s(theta,sjk_int,n)
-                    #phase_k = (self.linear_fjk(j,k,x,n,t)) * (self.alpha_s(theta,sjk_int,n))
+                    #phase_k = self.alpha_s(theta,sjk_int,n)
+                    phase_k = (self.linear_fjk(j,k,x,n,t)) * (self.alpha_s(theta,sjk_int,n))
                     #if phase_k != 0:
-                    if sjk_int != 0:
+                    if phase_k != 0:
                         U1(phase_k) | gates(j-1+path_star)
 
                     #gates.extend(self.phase_shift_s(sjk_int, n, phase_k, aux=self.aux))
 
             #Stage 5:Inverse
+
+            # clear the the copy process in Stage 3
             for i in range(1, r3 + 1):
                 for j in range(t,n):
                     CX & [j, n + (2 ** (i - 1) - 1) * (n - t) + j - t] | gates
@@ -216,9 +218,32 @@ class DiagonalGate(object):
                     for j in range((rest - 1) * (n - t)):
                         CX & [n + j, n + (2 ** (r3)) * (n - t) + j] | gates
 
+            #clear the CNOT gates in Gray Path Stage k.1 U1
+            for k in range(2,num_phases+1):
+            #for k in range(2,3):
+                visit = [0 for _ in range(n)]
+                #Step k.1: U_k
+                for j in range(1,ell+1):
+                    s = self.partitioned_gray_code(n,t)
+                    s1 = s[j-1][k-2]
+                    s2 = s[j-1][k-1]
 
-            #clear the the copy process in Stage 3
+                    for i in range(len(s1)):
+                        if s1[i] != s2[i]:
+                                CX & [n + i - t + (n-t) * visit[i], path_star+j-1] | gates
+                                visit[i]+=1
 
+            #clear the CNOT gates in Stage Gray Initial Step1 U_1
+            for j in range(1, 1 + ell):
+                st = s[j - 1][0]
+                #print("s(",j,"0):",st)
+                for i in range(len(st)):
+                    if st[i] == '1':
+                        #if visit[i] == 0:
+                            #CX & [i,ini_star+j-1] | gates
+                        #else:
+                        CX & [n+t*visit[i]+i,ini_star+j-1] | gates
+                        visit[i] += 1
 
 
             """
