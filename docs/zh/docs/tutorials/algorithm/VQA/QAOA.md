@@ -1,10 +1,6 @@
 # 量子近似优化算法（QAOA）
 
-!!! note
-
-    本教程额外依赖 quict-ml 库
-
-本教程旨在介绍如何使用经典机器学习库 Pytorch 和 QuICT 中内置的量子近似优化算法模块（Quantum Approximate Optimization Algorithm, QAOA）进行通用的组合优化问题的求解，并以最大割问题（Max-Cut Problem）为例具体阐述 QAOA 。
+本教程旨在介绍如何使用 QuICT 中内置的量子近似优化算法模块（Quantum Approximate Optimization Algorithm, QAOA）进行通用的组合优化问题的求解，并以最大割问题（Max-Cut Problem）为例具体阐述 QAOA 。
 
 ## 组合优化问题
 
@@ -102,13 +98,13 @@ $$\lim_{p \to \infty}M_p=C(z_{opt})$$
 首先，导入运行库：
 
 ```python
-import torch
 import tqdm
 
-from QuICT_ml.utils import Hamiltonian
-from QuICT_ml.utils.ml_utils import *
-from QuICT_ml.model.VQA import QAOANet
-from QuICT.algorithm.tools.drawer.graph_drawer import *
+from QuICT.algorithm.quantum_machine_learning.model import QAOA
+from QuICT.algorithm.quantum_machine_learning.optimizer.optimizer import *
+from QuICT.algorithm.quantum_machine_learning.utils import Hamiltonian
+from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
+from QuICT.algorithm.tools.drawer import *
 ```
 
 接下来，生成最大割问题的图 $G$ ，其中 $n$ 为图 $G$ 的顶点数：
@@ -162,18 +158,13 @@ H.pauli_str
 
 为了求解最大割问题，需要找到量子态 $\left | \psi \right \rangle$ ，使上一节中哈密顿量的期望 $\left \langle \psi \right | H \left | \psi \right \rangle$ 最大
 
-在 QuICT 中，可以直接调用 `QAOANet` 根据哈密顿量初始化 QAOA 量子神经网络实例：
+在 QuICT 中，可以调用 ansatz 库中的 `QAOALayer` 根据哈密顿量初始化含参数 QAOA 量子电路，并通过 `init_circuit()` 函数获取构建好的 QAOA 电路：
 
 ```python
-qaoa_net_sample = QAOANet(n_qubits=n, p=1, hamiltonian=H)
-```
+from QuICT.algorithm.quantum_machine_learning.ansatz_library import QAOALayer
 
-`QAOANet` 继承自 `torch.nn.Module` ，定义了待训练的参数；前向传播函数 `forward()` ，用于计算运行量子电路后得到的输出态 $\left | \psi \right \rangle$ ；以及损失函数 `loss_func()` ，用于计算负期望 $-\left \langle \psi \right | H \left | \psi \right \rangle$ 。
-
-另外，可以通过 `construct_circuit()` 函数获取构建的 QAOA 电路：
-
-```python
-qaoa_cir_sample = qaoa_net_sample.construct_circuit()
+qaoa_layer = QAOALayer(n_qubits=n, p=1, hamiltonian=H)
+qaoa_cir_sample = qaoa_layer.init_circuit()
 qaoa_cir_sample.draw()
 ```
 
@@ -181,12 +172,18 @@ qaoa_cir_sample.draw()
 ![Max-Cut Circuit](../../../assets/images/tutorials/algorithm/VQA/QAOA/maxcut_circuit.png)
 </figure>
 
-### 4. 利用 Pytorch 的经典优化器进行训练
+更推荐且更方便的方法是直接调用 QuICT 内置的 `QAOA` 模块，支持自动微分，包含了前向传播函数 `forward()` ，反向传播函数 `backward()` ，以及参数更新函数 `update()` ，并且内置了进行一次迭代训练的函数 `run()` ，能够自动计算运行量子电路后得到的输出态 $\left | \psi \right \rangle$ 和作为损失函数的负期望 $-\left \langle \psi \right | H \left | \psi \right \rangle$ ，并且在自动微分后根据输入的优化器类型自动更新 QAOA 电路中的参数：
+
+``` python
+qaoa_net_sample = QAOA(n_qubits=n, p=p, hamiltonian=H, optimizer=optim)
+```
+
+### 4. 利用经典优化器进行训练
 
 初始化训练相关的参数：
 
 ```python
-p = 4           # 量子电路层数
+p = 5           # 量子电路层数
 MAX_ITERS = 150 # 最大迭代次数
 LR = 0.1        # 梯度下降的学习率
 SEED = 17       # 随机数种子
@@ -197,23 +194,18 @@ set_seed(SEED)  # 设置全局随机种子
 初始化 QAOA 网络和经典优化器，并开始迭代训练：
 
 ```python
-qaoa_net = QAOANet(n_qubits=n, p=p, hamiltonian=H)
-optim = torch.optim.Adam([dict(params=qaoa_net.parameters(), lr=LR)])
+optim = Adam(lr=LR)
+qaoa_net = QAOA(n_qubits=n, p=p, hamiltonian=H, optimizer=optim, device="CPU")
 
 # 开始训练
-qaoa_net.train()
 loader = tqdm.trange(MAX_ITERS, desc="Training", leave=True)
 for it in loader:
-    optim.zero_grad()
-    state = qaoa_net()
-    loss = qaoa_net.loss_func(state)
-    loss.backward()
-    optim.step()
+    loss = qaoa_net.run()
     loader.set_postfix(loss=loss.item())
 ```
 
 ```
-Training: 100%|██████████| 150/150 [00:53<00:00,  2.81it/s, loss=-3.74]
+Training: 100%|██████████| 150/150 [00:02<00:00, 53.11it/s, loss=-3.82]
 ```
 
 ### 5. 利用输出的量子态解码最大割问题的解
@@ -222,14 +214,13 @@ Training: 100%|██████████| 150/150 [00:53<00:00,  2.81it/s, 
 
 ```python
 # 进行1000次模拟测量
-shots = 1000
-qaoa_ansatz = qaoa_net.construct_ansatz()
-prob = qaoa_ansatz.sample(shots)
+SHOTS = 1000
+prob = qaoa_net.sample(SHOTS)
 
 plt.figure()
 plt.xlabel("Qubit States")
 plt.ylabel("Probabilities")
-plt.bar(range(len(prob)), np.array(prob) / shots)
+plt.bar(range(len(prob)), np.array(prob) / SHOTS)
 plt.show()
 ```
 

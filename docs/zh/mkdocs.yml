@@ -39,9 +39,9 @@ nav:
                       - 量子振幅估计: tutorials/algorithm/quantum_algorithm/amplitude_estimate.md
                       - 量子游走: tutorials/algorithm/quantum_algorithm/quantum_walk.md
                 - 变分量子算法:
-                      - 变分量子本征求解器: tutorials/algorithm/VQA/VQE.md
-                      - 量子近似优化算法: tutorials/algorithm/VQA/QAOA.md
-                - 量子神经网络: tutorials/algorithm/QNN.md
+                  #     - 变分量子本征求解器: tutorials/algorithm/VQA/VQE.md
+                      - 量子近似优化算法(QAOA): tutorials/algorithm/VQA/QAOA.md
+                - 量子神经网络(QNN): tutorials/algorithm/QNN.md
     - API:
           - QuICT.core:
                 - qubit:
