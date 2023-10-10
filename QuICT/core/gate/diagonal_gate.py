@@ -59,8 +59,7 @@ class DiagonalGate(object):
         Returns:
             CompositeGate: diagonal gate with auxiliary qubit at the end of qubits
         """
-        #Pay attention:
-        #All arrays and qubit is 0 as the starting point, but begins with 1 in the paper.
+        #Pay attention:All arrays and qubit is 0 as the starting point, but begins with 1 in the paper.
 
         n = self.target
         m = self.aux
@@ -245,21 +244,6 @@ class DiagonalGate(object):
                         visit[i] += 1
 
 
-            """
-            for j in range(copies3):
-                for i in range(n-t):
-                    CX & [i + t, n + i + j * t] | gates
-
-            for j in range(1, ell + 1):
-                s = self.partitioned_gray_code(n, t)
-                s1 = s[j - 1][num_phases - 2]
-                s2 = s[j - 1][num_phases - 1]
-                for i in range(len(s1)):
-                    if s1[i] != s2[i]:
-                        y = n + n - t - 1 + (copies3 - 1) * t
-                        CX & [i, y + j] | gates
-                        break
-            """
         return gates
 
     @staticmethod
