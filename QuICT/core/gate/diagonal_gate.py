@@ -120,10 +120,9 @@ class DiagonalGate(object):
             #s = self.partitioned_gray_code(n, t)
             for j in range(1,1+ell):
                 sj1_int = int(s[j - 1][0], 2)
-                phase= (self.linear_fjk(j,1,x,n,t)) * (self.alpha_s(theta,sj1_int,n))
+                #phase= (self.linear_fjk(j,1,x,n,t)) * (self.alpha_s(theta,sj1_int,n))
                 #Here need correction.
-                #phase = self.alpha_s(theta,sj1_int,n)
-                #phase = self.alpha_s(theta,sj1_int,n)
+                phase = self.alpha_s(theta,sj1_int,n)
                 #U1(phase) & (ini_star+j-1) | gates
                 if phase != 0:
                     U1(phase) | gates(ini_star+j-1)
@@ -193,8 +192,8 @@ class DiagonalGate(object):
                 for j in range(1,ell+1):
                     s = self.partitioned_gray_code(n, t)
                     sjk_int = int(s[j-1][k-1],2)
-                    #phase_k = self.alpha_s(theta,sjk_int,n)
-                    phase_k = (self.linear_fjk(j,k,x,n,t)) * (self.alpha_s(theta,sjk_int,n))
+                    phase_k = self.alpha_s(theta,sjk_int,n)
+                    #phase_k = (self.linear_fjk(j,k,x,n,t)) * (self.alpha_s(theta,sjk_int,n))
                     #if phase_k != 0:
                     if phase_k != 0:
                         U1(phase_k) | gates(j-1+path_star)

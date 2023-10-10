@@ -221,6 +221,40 @@ def test_with_aux_qubit():
     #print(exp_theta)
     """
 
+    ket_0 = np.array([1, 0])
+    ket_1 = np.array([0, 1])
+
+    ket_x_01 = np.kron(ket_0, ket_1)
+    ket_x_010 = np.kron(ket_x_01, ket_0)
+    ket_x_0100 = np.kron(ket_x_010, ket_0)
+    ket_x_01000 = np.kron(ket_x_0100, ket_0)
+    ket_x_010000 = np.kron(ket_x_01000, ket_0)
+
+    ket_x_010000_prime = np.dot(matrix,ket_x_010000)
+    print("ket_x_010000 can become:")
+    print(ket_x_010000_prime)
+
+    ket_x_10 = np.kron(ket_1, ket_0)
+    ket_x_100 = np.kron(ket_x_10, ket_0)
+    ket_x_1000 = np.kron(ket_x_100, ket_0)
+    ket_x_10000 = np.kron(ket_x_1000, ket_0)
+    ket_x_100000 = np.kron(ket_x_10000, ket_0)
+
+    ket_x_100000_prime = np.dot(matrix, ket_x_100000)
+    print("ket_x_100000 can become:")
+    print(ket_x_100000_prime)
+
+    ket_x_11 = np.kron(ket_1, ket_1)
+    ket_x_110 = np.kron(ket_x_11, ket_0)
+    ket_x_1100 = np.kron(ket_x_110, ket_0)
+    ket_x_11000 = np.kron(ket_x_1100, ket_0)
+    ket_x_110000 = np.kron(ket_x_11000, ket_0)
+
+    ket_x_110000_prime = np.dot(matrix, ket_x_110000)
+    print("ket_x_110000 can become:")
+    print(ket_x_110000_prime)
+
+
 
 
 
