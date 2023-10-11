@@ -16,30 +16,36 @@ B = (1.0 / np.sqrt(2)) * np.array([[1, 1j, 0, 0],
 
 
 class CartanKAKDiagonalDecomposition(object):
-    def __init__(self, eps=1e-15):
+    r"""
+    Decompose a matrix $U \in SU(4)$ with Cartan KAK Decomposition. Unlike the
+    original version, now the result circuit has a two-qubit gate whose
+    matrix is diagonal at the edge, which is useful in the optimization.
+    The process is taken from [2] Proposition V.2 and Theorem VI.3,
+    while the Cartan KAK Decomposition process is refined from [1].
+
+    Reference:
+        [1] `Constructive Quantum Shannon Decomposition from Cartan Involutions`
+        <https://arxiv.org/abs/0806.4015>
+
+        [2] `Optimal Quantum Circuits for General Two-Qubit Gates`
+        <https://arxiv.org/abs/quant-ph/0308006>
+    """
+    def __init__(self, eps: float = 1e-15):
         """
         Args:
-            eps(float, optional): Eps of decomposition process
+            eps (float, optional): Eps of decomposition process
         """
         self.eps = eps
 
-    def execute(self, matrix):
-        """
-        Decompose a matrix U in SU(4) with Cartan KAK Decomposition. Unlike the
-        original version, now the result circuit has a two-qubit gate whose
-        matrix is diagonal at the edge, which is useful in the optimization.
-        The process is taken from [2] Proposition V.2 and Theorem VI.3,
-        while the Cartan KAK Decomposition process is refined from [1].
+    def execute(self, matrix: np.ndarray) -> CompositeGate:
+        r"""
+        Decompose a matrix $U \in SU(4)$ with Cartan KAK Diagonal Decomposition.
 
         Args:
-            matrix(np.array): 4*4 unitary matrix to be decomposed
+            matrix (np.ndarray): 4*4 unitary matrix to be decomposed
 
         Returns:
             CompositeGate: Decomposed gates.
-
-        Reference:
-            [1] https://arxiv.org/abs/0806.4015
-            [2] https://arxiv.org/abs/quant-ph/0308033
         """
         sy2 = np.array([[0, 0, 0, -1],
                         [0, 0, 1, 0],

@@ -2,6 +2,8 @@
 Decomposition of SU(4) with Cartan KAK Decomposition
 """
 
+from typing import Tuple
+
 import numpy as np
 
 from QuICT.core.gate import CompositeGate, CX, Ry, Rz, Unitary
@@ -14,42 +16,43 @@ B = (1.0 / np.sqrt(2)) * np.array([[1, 1j, 0, 0],
 
 
 class CartanKAKDecomposition(object):
-    """Cartan KAK Decomposition in SU(4)
+    r"""Cartan KAK Decomposition in $SU(4)$
 
-    ∀ U in SU(4), ∃ KL0, KL1, KR0, KR1 in SU(2), a, b, c in R, s.t.
-    U = (KL0⊗KL1).exp(i(a XX + b YY + c ZZ)).(KR0⊗KR1)
+    $\forall U \in SU(4)$, $\exists KL_0, KL_1, KR_0, KR_1 \in SU(2)$ and $a, b, c \in \mathbb{R}$, s.t.
+    $U = (KL_0 \otimes KL_1) \exp(i(a XX + b YY + c ZZ)) (KR_0 \otimes KR_1)$
 
-    Proof of this proposition in general cases is too 'mathematical' even for TCS
-    researchers. [2] gives a proof for U(4), which is a little more friendly for
-    researchers without mathematical background. However, be aware that [2] uses
-    a different notation.
+    Proof of this proposition in general cases is too 'mathematical'. [2] gives a proof for $U(4)$.
+    Be aware that [2] uses a different notation.
 
-    The process of this part is taken from [1], while some notation is from [3],
-    which is useful in the build_gate.
+    The process of this part is taken from [1], while some notations are from [3].
 
-    Reference:
-        [1] https://arxiv.org/abs/0806.4015
-        [2] https://arxiv.org/abs/quant-ph/0507171
-        [3] https://arxiv.org/abs/quant-ph/0308006
+    References:
+        [1] `Constructive Quantum Shannon Decomposition from Cartan Involutions`
+        <https://arxiv.org/abs/0806.4015>
+
+        [2] `An Introduction to Cartan's KAK Decomposition for QC Programmers`
+        <https://arxiv.org/abs/quant-ph/0507171>
+
+        [3] `Optimal Quantum Circuits for General Two-Qubit Gates`
+        <https://arxiv.org/abs/quant-ph/0308006>
     """
-
-    def __init__(self, eps=1e-15):
+    def __init__(self, eps: float = 1e-15):
         """
         Args:
-            eps(float, optional): Eps of decomposition process
+            eps (float, optional): eps of decomposition process
         """
         self.eps = eps
 
     @staticmethod
-    def diagonalize_unitary_symmetric(matrix):
+    def diagonalize_unitary_symmetric(matrix: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Diagonalize unitary symmetric matrix with real orthogonal matrix
 
         Args:
-            matrix(np.array): unitary symmetric matrix to be diagonalized
+            matrix (np.ndarray): unitary symmetric matrix to be diagonalized
 
         Returns:
-            Tuple[np.array, np.array]: Eigenvalues and eigenvectors
+            Tuple[np.ndarray, np.ndarray]: Eigenvalues and eigenvectors
         """
         M2 = matrix.copy()
         # D, P = la.eig(M2)  # this can fail for certain kinds of degeneracy
@@ -65,15 +68,15 @@ class CartanKAKDecomposition(object):
         return D, P
 
     @staticmethod
-    def tensor_decompose(matrix):
-        """
-        Decompose U in SU(2)⊗SU(2) to U0, U1 in SU(2), s.t. U = U0⊗U1
+    def tensor_decompose(matrix: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        r"""
+        Decompose $U \in SU(2) \otimes SU(2)$ to $U_0, U_1 \in SU(2)$, s.t. $U = U_0 \otimes U_1$
 
         Args:
-            matrix(np.array): Matrix to be decomposed
+            matrix (np.ndarray): Matrix to be decomposed
 
         Returns:
-            Tuple(np.array): Decomposed result U0, U1
+            Tuple[np.ndarray, np.ndarray]: Decomposed result $U_0, U_1$
         """
         U = matrix.copy()
         # Decompose U1
@@ -100,21 +103,17 @@ class CartanKAKDecomposition(object):
         assert dev < 1e-6, ValueError("tensor_decompose: Final failed")
         return U0, U1
 
-    def execute(self, matrix):
-        """
-        Decompose a matrix U in SU(4) with Cartan KAK Decomposition to
+    def execute(self, matrix: np.ndarray) -> CompositeGate:
+        r"""
+        Decompose a matrix $U \in SU(4)$ with Cartan KAK Decomposition to
         a circuit, which contains only 1-qubit gates and CNOT gates.
-        The decomposition of Exp(i(a XX + b YY + c ZZ)) may vary a global phase.
+        The decomposition of $\exp(i(a XX + b YY + c ZZ))$ may vary a global phase.
 
         Args:
-            matrix(np.array): 4*4 unitary matrix to be decomposed
+            matrix (np.ndarray): 4*4 unitary matrix to be decomposed
 
         Returns:
             CompositeGate: Decomposed gates.
-
-        Reference:
-            [1] https://arxiv.org/abs/0806.4015
-            [2] https://arxiv.org/abs/quant-ph/0308006
         """
         assert matrix.shape == (4, 4), \
             ValueError("CartanKAKDecomposition: Input must be a 4*4 matrix.")

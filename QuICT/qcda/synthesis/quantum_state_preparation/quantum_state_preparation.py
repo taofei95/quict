@@ -17,10 +17,10 @@ class QuantumStatePreparation(object):
     with uniformly gates and unitary decomposition respectively
 
     Reference:
-        `Transformation of quantum states using uniformly controlled rotations`
+        [1] `Transformation of quantum states using uniformly controlled rotations`
         <https://arxiv.org/abs/quant-ph/0407010>
 
-        `Quantum-state preparation with universal gate decompositions`
+        [2] `Quantum-state preparation with universal gate decompositions`
         <https://arxiv.org/abs/1003.5760>
 
     Examples:

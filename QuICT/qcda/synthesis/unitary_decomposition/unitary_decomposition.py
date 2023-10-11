@@ -16,25 +16,25 @@ class UnitaryDecomposition(object):
     def __init__(self, include_phase_gate: bool = False, recursive_basis: int = 2):
         """
         Args:
-            include_phase_gate(bool): Whether to include a phase gate to keep synthesized gate matrix the same
+            include_phase_gate (bool): Whether to include a phase gate to keep synthesized gate matrix the same
                 as input. If set False, the output gates might have a matrix which has a factor shift to input:
                 np.allclose(<matrix_of_return_gates> * factor, <input_matrix>).
-            recursive_basis(int): Terminate recursion at which level. It could be set as 1 or 2, which would stop
+            recursive_basis (int): Terminate recursion at which level. It could be set as 1 or 2, which would stop
                 recursion when matrix is 2 or 4, respectively. When set as 2, the final step is done by KAK
                 decomposition. Correctness of this algorithm is never influenced by recursive_basis.
         """
         self.include_phase_gate = include_phase_gate
         self.recursive_basis = recursive_basis
 
-    def execute(self, mat: np.ndarray):
+    def execute(self, mat: np.ndarray) -> Union[Tuple[CompositeGate, None], Tuple[CompositeGate, complex]]:
         """
         Transform a general unitary matrix into CX gates and single qubit gates.
 
         Args:
-            mat(np.ndarray): Unitary matrix.
+            mat (np.ndarray): Unitary matrix.
 
         Returns:
-            Union[Tuple[CompositeGate,None], Tuple[CompositeGate,complex]]: If inlclude_phase_gate==False,
+            Union[Tuple[CompositeGate, None], Tuple[CompositeGate, complex]]: If self.inlclude_phase_gate==False,
             this function returns synthesized gates and a shift factor. Otherwise a tuple like (<gates>, None)
             is returned.
         """

@@ -16,7 +16,7 @@ class OutputAligner(object):
     def __init__(self, output=None):
         """
         Args:
-            output(class, optional): assigned type of output in [CompositeGate, Circuit]
+            output (class, optional): assigned type of output in [CompositeGate, Circuit]
         """
         if output is not None:
             assert output in [CompositeGate, Circuit], ValueError('Invalid output type')
@@ -25,7 +25,7 @@ class OutputAligner(object):
     def __call__(self, func):
         """
         Args:
-            func(callable): function to be decorated
+            func (callable): function to be decorated
 
         Returns:
             callable: func with whose output type aligned
@@ -39,7 +39,7 @@ class OutputAligner(object):
             the function would be passed by the __init__ method.
 
             Args:
-                object(Object): the object that func belongs to
+                object (Object): the object that func belongs to
                 input: input of func, the following types are supported.
                     1. CompositeGate: the input is a CompositeGate
                     2. Circuit: the input is a Circuit

@@ -10,22 +10,26 @@ from QuICT.core.gate import CompositeGate, CX, CZ, Ry
 
 
 class UniformlyRyRevision(object):
+    """
+    This part is mainly copied from uniformly_rotation.py
+    Here we demand a CZ gate at the edge of the decomposition, therefore the
+    recursion process is slightly revised.
+
+    If qubit_num > 2, synthesized gates would have 2 cz gates at rightmost place.
+    If qubit_num == 2, there would be only 1 cz gate.
+
+    References:
+        `Decompositions of general quantum gates`
+        <http://arxiv.org/abs/quant-ph/0504100v1> Fig4 a)
+    """
     def __init__(self, is_cz_left: bool = False):
         self.is_cz_left = is_cz_left
 
-    def execute(self, angle_list):
+    def execute(self, angle_list: List[float]) -> CompositeGate:
         """ uniformlyRyGate
 
-        http://cn.arxiv.org/abs/quant-ph/0504100v1 Fig4 a)
-        This part is mainly copied from ../uniformly_gate/uniformly_rotation.py
-        Here we demand a CZ gate at the edge of the decomposition, therefore the
-        recursion process is slightly revised.
-
-        If qubit_num > 2, synthesized gates would have 2 cz gates at rightmost place.
-        If qubit_num == 2, there would be only 1 cz gate.
-
         Args:
-            angle_list(list<float>): the angles of Ry Gates
+            angle_list (List[float]): the angles of Ry Gates
 
         Returns:
             CompositeGate: the synthesis gate list
@@ -47,13 +51,13 @@ class UniformlyRyRevision(object):
         synthesis uniformlyRy gate, bits range [low, high)
 
         Args:
-            low(int): the left range low
-            high(int): the right range high
-            angles(list<float>): the list of angle y
-            mapping(list<int>): the qubit order of gate
-            is_cz_left(bool): is cx/cz left decomposition
+            low (int): the left range low
+            high (int): the right range high
+            angles (List[float]): the list of angle y
+            is_cz_left (bool): is cx/cz left decomposition
+
         Returns:
-            gateSet: the synthesis gate list
+            CompositeGate: the synthesis gate list
         """
         return self.inner_uniformly_rotation_cz(low, high, angles, True, is_cz_left)
 
