@@ -97,7 +97,7 @@ class circuit_layer(object):
 
     def addGate(self, gate: BasicGate) -> bool:
         if isinstance(gate, CompositeGate):
-            Q_set = set(gate._qubits)
+            Q_set = set(gate.qubits)
         else:
             Q_set = set(gate.cargs) | set(gate.targs)
 
@@ -112,7 +112,7 @@ class circuit_layer(object):
 
     def checkGate(self, gate: BasicGate) -> bool:
         if isinstance(gate, CompositeGate):
-            Q_set = set(gate._qubits)
+            Q_set = set(gate.qubits)
         else:
             Q_set = set(gate.cargs) | set(gate.targs)
 
@@ -640,7 +640,7 @@ class PhotoDrawer(object):
 
     def run(self, circuit, filename=None, show_depth=False, save_file=False, flatten=False):
         global cir_len
-        cir_len = max(circuit._qubits) + 1 if isinstance(circuit, CompositeGate) else circuit.width()
+        cir_len = max(circuit.qubits) + 1 if isinstance(circuit, CompositeGate) else circuit.width()
         name_dict = collections.OrderedDict()
         now = {
             'max_x': 0,
@@ -697,7 +697,7 @@ class PhotoDrawer(object):
                     anchors[index].set_index(position, layer_width)
                     coord.append(anchors[index].coord(position, layer_width, offset_x))
 
-                targs = gate._qubits if isinstance(gate, CompositeGate) else gate.targs
+                targs = gate.qubits if isinstance(gate, CompositeGate) else gate.targs
                 for index in targs:
                     anchors[index].set_index(position, layer_width)
                     coord.append(anchors[index].coord(position, layer_width, offset_x))
@@ -712,7 +712,7 @@ class PhotoDrawer(object):
                     param = self.get_parameter_str(gate.pargs)
 
                 if isinstance(gate, CompositeGate):
-                    name = "cg_" + gate.name[-4:]
+                    name = gate.name
                     if len(coord) == 1:
                         self.draw_gate(coord[0], name, '')
                     else:

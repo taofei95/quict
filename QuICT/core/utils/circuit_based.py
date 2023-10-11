@@ -6,9 +6,11 @@
 from enum import Enum
 import numpy as np
 
+from .id_generator import unique_id_generator
 from .gate_type import GateType
 from .variable import Variable
 from .circuit_gate import CircuitGates
+
 
 
 class CircuitBased(object):
@@ -20,22 +22,31 @@ class CircuitBased(object):
 
     @name.setter
     def name(self, name: str):
-        self._name = name
+        if name is None:
+            self._name = "QC_" + unique_id_generator()
+        else:
+            self._name = name
 
     @property
     def precision(self) -> str:
         return self._precision
 
-    def __init__(self, name: str, qubits: int = None):
+    @precision.setter
+    def precision(self, precision: str):
+        assert precision in ['single', 'double'], ValueError("Wrong precision. Should be one of [single, double]")
+        self._precision = precision
+
+    def __init__(self, name: str, qubits: int = 0, precision: str = "double"):
         """
         Args:
             name (str): The name of current Quantum Circuit
         """
-        self._name = name
+        self.name = name
+        self.precision = precision
+
         self._gates = CircuitGates()
         self._qubits = qubits
         self._pointer = None
-        self._precision = "double"
 
     ####################################################################
     ############         Circuit's Gates Function           ############

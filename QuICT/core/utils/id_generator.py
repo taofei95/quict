@@ -6,4 +6,4 @@ def unique_id_generator():
     u_id = uuid.uuid4()
     u_id = str(u_id).replace("-", "")
 
-    return u_id
+    return u_id[-6:]

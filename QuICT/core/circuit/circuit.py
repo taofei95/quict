@@ -15,8 +15,7 @@ from QuICT.core.gate import BasicGate, H, Measure, gate_builder, CompositeGate
 from QuICT.core.utils import (
     GateType,
     CircuitBased,
-    CircuitMatrix,
-    unique_id_generator
+    CircuitMatrix
 )
 from QuICT.core.operator import (
     CheckPoint,
@@ -74,7 +73,8 @@ class Circuit(CircuitBased):
         wires,
         name: str = None,
         topology: Layout = None,
-        ancilla_qubits: List[int] = None
+        ancilla_qubits: List[int] = None,
+        precision: bool = "double"
     ):
         """
         Args:
@@ -83,10 +83,7 @@ class Circuit(CircuitBased):
             topology(Layout): The topology of the circuit. If it is empty, it will be seemed as fully connected. \n
             ancilla_qubits(list<int>): The indexes of ancilla qubits for current circuit.
         """
-        if name is None:
-            name = "circuit_" + unique_id_generator()
-
-        super().__init__(name)
+        super().__init__(name, precision=precision)
         self._ancillae_qubits = []
         self._topology = None
         self._checkpoints = []
@@ -271,6 +268,9 @@ class Circuit(CircuitBased):
         assert isinstance(gates, (Circuit, CompositeGate)), \
             "The circuit extend method only accept CompositeGate or Circuit."
 
+        if isinstance(gates, Circuit):
+            gates = gates.to_compositegate()
+
         if self._pointer is not None:
             gate_args = gates.width()
             assert gate_args == len(self._pointer), GateQubitAssignedError(
@@ -279,13 +279,10 @@ class Circuit(CircuitBased):
 
             gate_qidxes = self._pointer[:]
         else:
-            if isinstance(gates, CompositeGate):
-                gate_qidxes = gates.qubits
-            else:
-                gate_qidxes = list(range(gates.width()))
+            gate_qidxes = gates.qubits
 
         assert len(gate_qidxes) <= self.width(), "Circuit cannot append any Gate/CompositeGate which larger than self."
-        self._gates.extend(gates.copy(), gate_qidxes)
+        self._gates.extend(gates, gate_qidxes)
 
         self._pointer = None
 

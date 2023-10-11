@@ -1095,9 +1095,7 @@ class TextDrawing:
                     current_cons.append((actual_index, g))
 
         ctrl_label = ""
-        if isinstance(gate, CompositeGate):
-            box_label = "cg_" + gate.name[-4:]
-        elif not isinstance(gate, BasicGate):
+        if not isinstance(gate, BasicGate):
             box_label = gate.name
         else:
             box_label = gate.qasm_name

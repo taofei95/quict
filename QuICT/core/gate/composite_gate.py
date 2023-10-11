@@ -9,7 +9,7 @@ from typing import Union, List
 import numpy as np
 
 from QuICT.core.gate import BasicGate
-from QuICT.core.utils import CircuitBased, CircuitMatrix, CGATE_LIST, unique_id_generator
+from QuICT.core.utils import CircuitBased, CircuitMatrix, CGATE_LIST
 from QuICT.tools.exception.core import CompositeGateAppendError, TypeError, GateQubitAssignedError
 
 
@@ -19,16 +19,18 @@ class CompositeGate(CircuitBased):
     def qubits(self) -> list:
         return self._gates.qubits
 
-    def __init__(self, name: str = None, gates: List[BasicGate, CompositeGate] = None):
+    def __init__(
+        self,
+        name: str = None,
+        gates: List[BasicGate, CompositeGate] = None,
+        precision: str = "double"
+    ):
         """
         Args:
             name (str, optional): the name of the composite gate. Defaults to None.
             gates (List[BasicGate, CompositeGate], optional): gates within this composite gate. Defaults to None.
         """
-        if name is None:
-            name = "composite_gate_" + unique_id_generator()
-
-        super().__init__(name)
+        super().__init__(name, precision=precision)
         if gates is not None:
             for gate in gates:
                 if isinstance(gate, CompositeGate):
