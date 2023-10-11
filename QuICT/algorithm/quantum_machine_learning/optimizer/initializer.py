@@ -1,3 +1,11 @@
+# This code is part of numpy_ml.
+#                     GNU GENERAL PUBLIC LICENSE
+#                        Version 3, 29 June 2007
+#
+#  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+#  Everyone is permitted to copy and distribute verbatim copies
+#  of this license document, but changing it is not allowed.
+
 import re
 from ast import literal_eval as eval
 
@@ -12,17 +20,18 @@ from .scheduler import (
 
 
 class SchedulerInitializer(object):
-    def __init__(self, param=None, lr=None):
-        """
-        A class for initializing learning rate schedulers. Valid inputs are:
-            (a) __str__ representations of `SchedulerBase` instances
-            (b) `SchedulerBase` instances
-            (c) Parameter dicts (e.g., as produced via the `summary` method in
-                `LayerBase` instances)
+    """A class for initializing learning rate schedulers. Valid inputs are:
+        (a) __str__ representations of `SchedulerBase` instances
+        (b) `SchedulerBase` instances
+        (c) Parameter dicts (e.g., as produced via the `summary` method in
+            `LayerBase` instances)
 
+    Note:
         If `param` is `None`, return the ConstantScheduler with learning rate
         equal to `lr`.
-        """
+    """
+
+    def __init__(self, param=None, lr=None):
         if all([lr is None, param is None]):
             raise ValueError("lr and param cannot both be `None`")
 
@@ -77,16 +86,17 @@ class SchedulerInitializer(object):
 
 
 class OptimizerInitializer(object):
-    def __init__(self, param=None):
-        """
-        A class for initializing optimizers. Valid inputs are:
-            (a) __str__ representations of `OptimizerBase` instances
-            (b) `OptimizerBase` instances
-            (c) Parameter dicts (e.g., as produced via the `summary` method in
-                `LayerBase` instances)
+    """A class for initializing optimizers. Valid inputs are:
+        (a) __str__ representations of `OptimizerBase` instances
+        (b) `OptimizerBase` instances
+        (c) Parameter dicts (e.g., as produced via the `summary` method in
+            `LayerBase` instances)
 
+    Note:
         If `param` is `None`, return the SGD optimizer with default parameters.
-        """
+    """
+
+    def __init__(self, param=None):
         self.param = param
 
     def __call__(self):

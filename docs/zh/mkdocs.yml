@@ -145,6 +145,10 @@ nav:
                             - QAOA: API/quict/algorithm/quantum_machine_learning/model/QAOA.md
                             - QNN:
                                   - QuantumNet: API/quict/algorithm/quantum_machine_learning/model/QNN.md
+                      - optimizer:
+                            - Initializer: API/quict/algorithm/quantum_machine_learning/optimizer/initializer.md
+                            - Optimizer: API/quict/algorithm/quantum_machine_learning/optimizer/optimizer.md
+                            - Scheduler: API/quict/algorithm/quantum_machine_learning/optimizer/scheduler.md
                       - utils:
                             - Data: API/quict/algorithm/quantum_machine_learning/utils/data.md
                             - Hamiltonian: API/quict/algorithm/quantum_machine_learning/utils/hamiltonian.md

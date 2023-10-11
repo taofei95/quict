@@ -1,3 +1,11 @@
+# This code is part of numpy_ml.
+#                     GNU GENERAL PUBLIC LICENSE
+#                        Version 3, 29 June 2007
+#
+#  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+#  Everyone is permitted to copy and distribute verbatim copies
+#  of this license document, but changing it is not allowed.
+
 from copy import deepcopy
 from abc import ABC, abstractmethod
 
@@ -6,12 +14,13 @@ from numpy.linalg import norm
 
 
 class OptimizerBase(ABC):
-    def __init__(self, lr, scheduler=None):
-        """
-        An abstract base class for all Optimizer objects.
+    """An abstract base class for all Optimizer objects.
 
-        This should never be used directly.
-        """
+    This should never be used directly.
+    """
+
+    def __init__(self, lr, scheduler=None):
+        """Initialize a OptimizerBase instance."""
         from .initializer import SchedulerInitializer
 
         self.cache = {}
@@ -57,40 +66,36 @@ class OptimizerBase(ABC):
 
 
 class SGD(OptimizerBase):
+    r"""A stochastic gradient descent optimizer.
+
+    Note:
+        For model parameters $\theta$, averaged parameter gradients
+        $\nabla_{\theta} \mathcal{L}$, and learning rate $\eta$,
+        the SGD update at timestep $t$ is:
+
+        $$
+        update^t = momentum \cdot update^{t-1} + \eta^t \nabla_{\theta} \mathcal{L}
+        $$
+
+        $$
+        \theta^{t+1} \leftarrow  \theta^t - update^t
+        $$
+
+    Args:
+        lr (float, optional): float: Learning rate for SGD. If scheduler is not None, this is used as
+            the starting learning rate. Default is 0.01.
+        momentum (float, optional): The fraction of the previous update to add to the current update.
+            In the range [0, 1]. If 0, no momentum is applied. Default is 0.
+        clip_norm (float, optional): If not None, all param gradients are scaled to have maximum l2 norm of
+            `clip_norm` before computing update. Default is None.
+        lr_scheduler (Union[str, Scheduler], optional): The learning rate scheduler.
+            If None, use a constant learning rate equal to `lr`. Default is None.
+    """
+
     def __init__(
         self, lr=0.01, momentum=0.0, clip_norm=None, lr_scheduler=None, **kwargs
     ):
-        """
-        A stochastic gradient descent optimizer.
-
-        Notes
-        -----
-        For model parameters :math:`\\theta`, averaged parameter gradients
-        :math:`\\nabla_{\\theta} \mathcal{L}`, and learning rate :math:`\eta`,
-        the SGD update at timestep `t` is
-
-        .. math::
-
-            \\text{update}^{(t)}
-                &=  \\text{momentum} \cdot \\text{update}^{(t-1)} + \eta^{(t)} \\nabla_{\\theta} \mathcal{L}\\\\
-            \\theta^{(t+1)}
-                &\leftarrow  \\theta^{(t)} - \\text{update}^{(t)}
-
-        Parameters
-        ----------
-        lr : float
-            Learning rate for SGD. If scheduler is not None, this is used as
-            the starting learning rate. Default is 0.01.
-        momentum : float in range [0, 1]
-            The fraction of the previous update to add to the current update.
-            If 0, no momentum is applied. Default is 0.
-        clip_norm : float
-            If not None, all param gradients are scaled to have maximum l2 norm of
-            `clip_norm` before computing update. Default is None.
-        lr_scheduler : str, :doc:`Scheduler <numpy_ml.neural_nets.schedulers>` object, or None
-            The learning rate scheduler. If None, use a constant learning
-            rate equal to `lr`. Default is None.
-        """
+        """Initialize an SGD instace."""
         super().__init__(lr, lr_scheduler)
 
         self.hyperparameters = {
@@ -109,27 +114,17 @@ class SGD(OptimizerBase):
         )
 
     def update(self, param, param_grad, param_name, cur_loss=None):
-        """
-        Compute the SGD update for a given parameter
+        """Compute the SGD update for a given parameter.
 
-        Parameters
-        ----------
-        param : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
-            The value of the parameter to be updated.
-        param_grad : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
-            The gradient of the loss function with respect to `param_name`.
-        param_name : str
-            The name of the parameter.
-        cur_loss : float
-            The training or validation loss for the current minibatch. Used for
-            learning rate scheduling e.g., by
-            :class:`~numpy_ml.neural_nets.schedulers.KingScheduler`.
-            Default is None.
+        Args:
+            param (np.ndarray): The value of the parameter to be updated.
+            param_grad (np.ndarray): The gradient of the loss function with respect to `param_name`.
+            param_name (str): The name of the parameter.
+            cur_loss (float), optional: The training or validation loss for the current minibatch.
+                Used for learning rate scheduling. Default is None.
 
-        Returns
-        -------
-        updated_params : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
-            The value of `param` after applying the momentum update.
+        Returns:
+            np.ndarray: The value of `param` after applying the momentum update.
         """
         C = self.cache
         H = self.hyperparameters
@@ -155,46 +150,35 @@ class SGD(OptimizerBase):
 
 
 class AdaGrad(OptimizerBase):
-    def __init__(self, lr=0.01, eps=1e-7, clip_norm=None, lr_scheduler=None, **kwargs):
-        """
-        An AdaGrad optimizer.
+    """An AdaGrad optimizer.
 
-        Notes
-        -----
+    Note:
         Weights that receive large gradients will have their effective learning
         rate reduced, while weights that receive small or infrequent updates
         will have their effective learning rate increased.
 
-        Equations::
+        ``` python
+        cache[t] = cache[t-1] + grad[t] ** 2
+        update[t] = lr * grad[t] / (np.sqrt(cache[t]) + eps)
+        param[t+1] = param[t] - update[t]
+        ```
 
-            cache[t] = cache[t-1] + grad[t] ** 2
-            update[t] = lr * grad[t] / (np.sqrt(cache[t]) + eps)
-            param[t+1] = param[t] - update[t]
+    References:
+        `CS231n: Convolutional neural networks for visual recognition`
+        <https://cs231n.github.io/neural-networks-3/>
 
-        Note that the ``**`` and `/` operations are elementwise
-
-        "A downside of Adagrad ... is that the monotonic learning rate usually
-        proves too aggressive and stops learning too early." [1]
-
-        References
-        ----------
-        .. [1] Karpathy, A. "CS231n: Convolutional neural networks for visual
-           recognition" https://cs231n.github.io/neural-networks-3/
-
-        Parameters
-        ----------
-        lr : float
-            Global learning rate
-        eps : float
-            Smoothing term to avoid divide-by-zero errors in the update calc.
+    Args:
+        lr (float, optional): Global learning rate.
+        eps (float, optional): Smoothing term to avoid divide-by-zero errors in the update calc.
             Default is 1e-7.
-        clip_norm : float or None
-            If not None, all param gradients are scaled to have maximum `L2` norm of
+        clip_norm (float, optional): If not None, all param gradients are scaled to have maximum `L2` norm of
             `clip_norm` before computing update. Default is None.
-        lr_scheduler : str or :doc:`Scheduler <numpy_ml.neural_nets.schedulers>` object or None
-            The learning rate scheduler. If None, use a constant learning
-            rate equal to `lr`. Default is None.
-        """
+        lr_scheduler (Union[str, Scheduler], optional): The learning rate scheduler.
+            If None, use a constant learning rate equal to `lr`. Default is None.
+    """
+
+    def __init__(self, lr=0.01, eps=1e-7, clip_norm=None, lr_scheduler=None, **kwargs):
+        """Initialize an AdaGrad instance."""
         super().__init__(lr, lr_scheduler)
 
         self.cache = {}
@@ -214,32 +198,21 @@ class AdaGrad(OptimizerBase):
         )
 
     def update(self, param, param_grad, param_name, cur_loss=None):
-        """
-        Compute the AdaGrad update for a given parameter.
+        """Compute the AdaGrad update for a given parameter.
 
-        Notes
-        -----
-        Adjusts the learning rate of each weight based on the magnitudes of its
-        gradients (big gradient -> small lr, small gradient -> big lr).
+        Note:
+            Adjusts the learning rate of each weight based on the magnitudes of its
+            gradients (big gradient -> small lr, small gradient -> big lr).
 
-        Parameters
-        ----------
-        param : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
-            The value of the parameter to be updated
-        param_grad : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
-            The gradient of the loss function with respect to `param_name`
-        param_name : str
-            The name of the parameter
-        cur_loss : float or None
-            The training or validation loss for the current minibatch. Used for
-            learning rate scheduling e.g., by
-            :class:`~numpy_ml.neural_nets.schedulers.KingScheduler`.
-            Default is None.
+        Args:
+            param (np.ndarray): The value of the parameter to be updated.
+            param_grad (np.ndarray): The gradient of the loss function with respect to `param_name`.
+            param_name (str): The name of the parameter.
+            cur_loss (float, optional): The training or validation loss for the current minibatch.
+                Used for learning rate scheduling. Default is None.
 
-        Returns
-        -------
-        updated_params : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
-            The value of `param` after applying the AdaGrad update
+        Returns:
+            np.ndarray: The value of `param` after applying the AdaGrad update.
         """
         C = self.cache
         H = self.hyperparameters
@@ -261,14 +234,9 @@ class AdaGrad(OptimizerBase):
 
 
 class RMSProp(OptimizerBase):
-    def __init__(
-        self, lr=0.001, decay=0.9, eps=1e-7, clip_norm=None, lr_scheduler=None, **kwargs
-    ):
-        """
-        RMSProp optimizer.
+    """RMSProp optimizer.
 
-        Notes
-        -----
+    Note:
         RMSProp was proposed as a refinement of :class:`AdaGrad` to reduce its
         aggressive, monotonically decreasing learning rate.
 
@@ -276,30 +244,28 @@ class RMSProp(OptimizerBase):
         (second moment) rather than just the immediately preceding squared
         gradient for its `previous_update` value.
 
-        Equations::
+        ``` python
+        cache[t] = decay * cache[t-1] + (1 - decay) * grad[t] ** 2
+        update[t] = lr * grad[t] / (np.sqrt(cache[t]) + eps)
+        param[t+1] = param[t] - update[t]
+        ```
 
-            cache[t] = decay * cache[t-1] + (1 - decay) * grad[t] ** 2
-            update[t] = lr * grad[t] / (np.sqrt(cache[t]) + eps)
-            param[t+1] = param[t] - update[t]
-
-        Note that the ``**`` and ``/`` operations are elementwise.
-
-        Parameters
-        ----------
-        lr : float
-            Learning rate for update. Default is 0.001.
-        decay : float in [0, 1]
-            Rate of decay for the moving average. Typical values are [0.9,
-            0.99, 0.999]. Default is 0.9.
-        eps : float
-            Constant term to avoid divide-by-zero errors during the update calc. Default is 1e-7.
-        clip_norm : float or None
-            If not None, all param gradients are scaled to have maximum l2 norm of
+    Args:
+        lr (float, optional): Learning rate for update. Default is 0.001.
+        decay (float, optional): Rate of decay for the moving average, in the range [0, 1]. Typical values are
+            [0.9, 0.99, 0.999]. Default is 0.9.
+        eps (float, optional): Constant term to avoid divide-by-zero errors during the update calc.
+            Default is 1e-7.
+        clip_norm (float, optional): If not None, all param gradients are scaled to have maximum `L2` norm of
             `clip_norm` before computing update. Default is None.
-        lr_scheduler : str or :doc:`Scheduler <numpy_ml.neural_nets.schedulers>` object or None
-            The learning rate scheduler. If None, use a constant learning
-            rate equal to `lr`. Default is None.
-        """
+        lr_scheduler (Union[str, Scheduler], optional): The learning rate scheduler.
+            If None, use a constant learning rate equal to `lr`. Default is None.
+    """
+
+    def __init__(
+        self, lr=0.001, decay=0.9, eps=1e-7, clip_norm=None, lr_scheduler=None, **kwargs
+    ):
+        """Initialize a RMSProp instance."""
         super().__init__(lr, lr_scheduler)
 
         self.cache = {}
@@ -321,27 +287,17 @@ class RMSProp(OptimizerBase):
         )
 
     def update(self, param, param_grad, param_name, cur_loss=None):
-        """
-        Compute the RMSProp update for a given parameter.
+        """Compute the RMSProp update for a given parameter.
 
-        Parameters
-        ----------
-        param : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
-            The value of the parameter to be updated
-        param_grad : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
-            The gradient of the loss function with respect to `param_name`
-        param_name : str
-            The name of the parameter
-        cur_loss : float or None
-            The training or validation loss for the current minibatch. Used for
-            learning rate scheduling e.g., by
-            :class:`~numpy_ml.neural_nets.schedulers.KingScheduler`.
-            Default is None.
+        Args:
+            param (np.ndarray): The value of the parameter to be updated.
+            param_grad (np.ndarray): The gradient of the loss function with respect to `param_name`.
+            param_name (str): The name of the parameter.
+            cur_loss (float, optional): The training or validation loss for the current minibatch.
+                Used for learning rate scheduling. Default is None.
 
-        Returns
-        -------
-        updated_params : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
-            The value of `param` after applying the RMSProp update.
+        Returns:
+            np.ndarray: The value of `param` after applying the RMSProp update.
         """
         C = self.cache
         H = self.hyperparameters
@@ -363,6 +319,28 @@ class RMSProp(OptimizerBase):
 
 
 class Adam(OptimizerBase):
+    """Adam (adaptive moment estimation) optimization algorithm.
+
+    Note:
+        Designed to combine the advantages of `AdaGrad`, which works
+        well with sparse gradients, and `RMSProp`, which works well in
+        online and non-stationary settings.
+
+    Args:
+        lr (float, optional): Learning rate for update. This parameter is ignored if using NoamScheduler.
+            Defaults to 0.001.
+        decay1 (float, optional): The rate of decay to use for in running estimate of the first
+            moment (mean) of the gradient. Defaults to 0.9.
+        decay2 (float, optional): The rate of decay to use for in running estimate of the second
+            moment (variance) of the gradient. Defaults to 0.999.
+        eps (float, optional): Constant term to avoid divide-by-zero errors during the update
+            calc. Defaults to 1e-7.
+        clip_norm (float, optional): If not None, all param gradients are scaled to have maximum
+            l2 norm of `clip_norm` before computing update. Defaults to None.
+        lr_scheduler (Union[str, Scheduler], optional): The learning rate scheduler. If None, use a constant
+            learning rate equal to `lr`. Defaults to None.
+    """
+
     def __init__(
         self,
         lr=0.001,
@@ -373,37 +351,7 @@ class Adam(OptimizerBase):
         lr_scheduler=None,
         **kwargs
     ):
-        """
-        Adam (adaptive moment estimation) optimization algorithm.
-
-        Notes
-        -----
-        Designed to combine the advantages of :class:`AdaGrad`, which works
-        well with sparse gradients, and :class:`RMSProp`, which works well in
-        online and non-stationary settings.
-
-        Parameters
-        ----------
-        lr : float
-            Learning rate for update. This parameter is ignored if using
-            :class:`~numpy_ml.neural_nets.schedulers.NoamScheduler`.
-            Default is 0.001.
-        decay1 : float
-            The rate of decay to use for in running estimate of the first
-            moment (mean) of the gradient. Default is 0.9.
-        decay2 : float
-            The rate of decay to use for in running estimate of the second
-            moment (variance) of the gradient. Default is 0.999.
-        eps : float
-            Constant term to avoid divide-by-zero errors during the update
-            calc. Default is 1e-7.
-        clip_norm : float
-            If not None, all param gradients are scaled to have maximum l2 norm of
-            `clip_norm` before computing update. Default is None.
-        lr_scheduler : str, or :doc:`Scheduler <numpy_ml.neural_nets.schedulers>` object, or None
-            The learning rate scheduler. If None, use a constant learning rate
-            equal to `lr`. Default is None.
-        """
+        """Initialize an Adam instance."""
         super().__init__(lr, lr_scheduler)
 
         self.cache = {}
@@ -426,27 +374,17 @@ class Adam(OptimizerBase):
         )
 
     def update(self, param, param_grad, param_name, cur_loss=None):
-        """
-        Compute the Adam update for a given parameter.
+        """Compute the Adam update for a given parameter.
 
-        Parameters
-        ----------
-        param : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
-            The value of the parameter to be updated.
-        param_grad : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
-            The gradient of the loss function with respect to `param_name`.
-        param_name : str
-            The name of the parameter.
-        cur_loss : float
-            The training or validation loss for the current minibatch. Used for
-            learning rate scheduling e.g., by
-            :class:`~numpy_ml.neural_nets.schedulers.KingScheduler`. Default is
-            None.
+        Args:
+            param (np.ndarray): The value of the parameter to be updated.
+            param_grad (np.ndarray): The gradient of the loss function with respect to `param_name`.
+            param_name (str): The name of the parameter.
+            cur_loss (float, optional): The training or validation loss for the current minibatch.
+                Used for learning rate scheduling. Default is None.
 
-        Returns
-        -------
-        updated_params : :py:class:`ndarray <numpy.ndarray>` of shape (n, m)
-            The value of `param` after applying the Adam update.
+        Returns:
+            np.ndarray: The value of `param` after applying the Adam update.
         """
         C = self.cache
         H = self.hyperparameters
