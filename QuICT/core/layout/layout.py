@@ -201,8 +201,8 @@ class Layout:
         if circuit.width() > self._qubit_number:
             return False
 
-        for gate, qidxes, size in circuit.fast_gates:
-            if size > 1:
+        for gate, qidxes in circuit.fast_gates:
+            if type(gate).__name__ == "CompositeGate":
                 if not self.valid_circuit(gate):
                     return False
 

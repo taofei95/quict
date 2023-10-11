@@ -113,11 +113,11 @@ class StateVectorSimulator:
     def _run(self):
         idx = 0
         while idx < len(self._pipeline):
-            gate, qidxes, _ = self._pipeline[idx]
+            gate, qidxes = self._pipeline[idx]
             idx += 1
 
             if isinstance(gate, CompositeGate):
-                self._apply_compositegate(gate, qidxes)
+                self._apply_compositegate(gate)
             elif isinstance(gate, BasicGate):
                 self._apply_gate(gate, qidxes)
             elif isinstance(gate, Trigger):
@@ -139,23 +139,17 @@ class StateVectorSimulator:
         else:
             self._gate_calculator.apply_gate(gate, qidxes, self._vector, self._qubits)
 
-    def _apply_compositegate(self, gate: CompositeGate, qidxes: list):
+    def _apply_compositegate(self, gate: CompositeGate):
         """ Depending on the given quantum gate, apply the target algorithm to calculate the state vector.
 
         Args:
             gate (Gate): the quantum gate in the circuit.
         """
-        qidxes_mapping = {}
-        cgate_qlist = gate.qubits
-        for idx, cq in enumerate(cgate_qlist):
-            qidxes_mapping[cq] = qidxes[idx]
-
-        for cgate, cg_idx, _ in gate.fast_gates:
-            real_qidx = [qidxes_mapping[idx] for idx in cg_idx]
+        for cgate, cg_idx in gate.fast_gates:
             if isinstance(cgate, CompositeGate):
-                self._apply_compositegate(cgate, real_qidx)
+                self._apply_compositegate(cgate)
             else:
-                self._apply_gate(cgate, real_qidx)
+                self._apply_gate(cgate, cg_idx)
 
     def _apply_trigger(self, op: Trigger, qidxes: list, current_idx: int) -> CompositeGate:
         """ Deal with the Operator <Trigger>.

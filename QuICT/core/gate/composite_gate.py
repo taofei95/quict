@@ -39,6 +39,7 @@ class CompositeGate(CircuitBased):
                     self.append(gate)
 
     def clean(self):
+        """ Remove all quantum gates in current CompositeGate. """
         self._gates.reset()
         self._pointer = None
 
@@ -64,16 +65,11 @@ class CompositeGate(CircuitBased):
     ####################################################################
     ############        CompositeGate Qureg Mapping         ############
     ####################################################################
-    def _qubits_validation(self, qubit_indexes: list):
-        for qidx in qubit_indexes:
-            assert qidx >= 0 and isinstance(qidx, (int, np.int32, np.int64)), \
-                "The gate's qubit indexes should be integer or greater than zero."
-
     def __call__(self, indexes: Union[list, int]):
         if isinstance(indexes, int):
             indexes = [indexes]
 
-        self._qubits_validation(indexes)
+        self._qubit_indexes_validation(indexes)
         self._pointer = indexes
         return self
 
@@ -86,7 +82,7 @@ class CompositeGate(CircuitBased):
         if isinstance(targets, int):
             targets = [targets]
 
-        self._qubits_validation(targets)
+        self._qubit_indexes_validation(targets)
         self._gates.reassign(targets)
 
         if CGATE_LIST:
@@ -168,6 +164,7 @@ class CompositeGate(CircuitBased):
             else:
                 gate_qidxes = [self._pointer[qidx] for qidx in gates.qubits]
         else:
+            self._qubit_indexes_validation(gates.qubits)
             gate_qidxes = gates.qubits
 
         self._gates.extend(gates, gate_qidxes)
@@ -193,6 +190,8 @@ class CompositeGate(CircuitBased):
             if not qubit_index:
                 raise GateQubitAssignedError(f"{gate.type} need qubit indexes to add into Composite Gate.")
 
+            self._qubit_indexes_validation(qubit_index)
+
         self._gates.append(gate, qubit_index)
         self._pointer = None
 
@@ -206,30 +205,15 @@ class CompositeGate(CircuitBased):
         assert isinstance(gate, (BasicGate, CompositeGate)), \
             TypeError("CompositeGate.insert", "BasicGate/CompositeGate", type(gate))
 
-        if isinstance(gate, BasicGate):
-            gate_args = gate.cargs + gate.targs
-        else:
-            gate_args = gate.qubits
-
+        gate_args = gate.cargs + gate.targs if isinstance(gate, BasicGate) else gate.qubits
         if len(gate_args) == 0:
             raise GateQubitAssignedError(f"{gate.type} need qubit indexes to insert into Composite Gate.")
 
+        self._qubit_indexes_validation(gate_args)
         if isinstance(gate, BasicGate):
             self._gates.insert_gate(gate, gate_args, depth)
         else:
             self._gates.insert_cgate(gate, gate_args, depth)
-
-    def pop(self, index: int = -1):
-        """ Pop the BasicGate/Operator/CompositeGate from current Quantum Circuit.
-
-        Args:
-            index (int, optional): The target index. Defaults to 0.
-        """
-        if index < 0:
-            index = self.gate_length() + index
-
-        assert index >= 0 and index < self.gate_length()
-        return self._gates.pop(index)
 
     ####################################################################
     ############            CompositeGate Utils             ############

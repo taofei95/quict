@@ -83,25 +83,23 @@ class Circuit(CircuitBased):
             topology(Layout): The topology of the circuit. If it is empty, it will be seemed as fully connected. \n
             ancilla_qubits(list<int>): The indexes of ancilla qubits for current circuit.
         """
-        super().__init__(name, precision=precision)
+        if isinstance(wires, int):
+            wires = Qureg(wires)
+
+        super().__init__(name, wires, precision=precision)
         self._ancillae_qubits = []
         self._topology = None
         self._checkpoints = []
         self._logger = _logger
-
-        if isinstance(wires, Qureg):
-            self._qubits = wires
-        else:
-            self._qubits = Qureg(wires)
+        self._logger.debug(f"Initial Quantum Circuit {name} with {len(self._qubits)} qubits.")
 
         if ancilla_qubits is not None:
-            assert max(ancilla_qubits) < self.width()
             self.ancilla_qubits = ancilla_qubits
+            self._logger.debug(f"The Indexes of Ancilla Qubits are {self.ancilla_qubits}.")
 
-        self._logger.debug(f"Initial Quantum Circuit {name} with {len(self._qubits)} qubits.")
         if topology is not None:
             self.topology = topology
-            self._logger.debug(f"The Layout for Quantum Circuit is {self._topology}.")
+            self._logger.debug(f"The Layout for Quantum Circuit is {self.topology}.")
 
     def __del__(self):
         """ release the memory """
@@ -112,7 +110,8 @@ class Circuit(CircuitBased):
         self._topology = None
 
     def __or__(self, targets):
-        """ Deal the operator '|', Use the syntax "circuit | circuit" to add a Quantum Circuit into the other one.
+        """ Deal the operator '|', Use the syntax "circuit/CompositeGate | circuit" to add a Quantum Circuit into
+        the other one.
 
             Note that if not assigned the target qubits, it will depending on the Qureg to match the Quantum Circuit.
         For the Qureg which not in the target Quantum Circuit, they will be treated as new extra qubits add into the
@@ -157,11 +156,7 @@ class Circuit(CircuitBased):
         if isinstance(indexes, int):
             indexes = [indexes]
 
-        if not isinstance(indexes, list):
-            raise TypeError(
-                "Circuit.call", "int/list[int]/Qubit/Qureg", type(indexes)
-            )
-
+        self._qubit_indexes_validation(indexes)
         self._pointer = indexes
         return self
 
@@ -197,7 +192,7 @@ class Circuit(CircuitBased):
         if is_ancillary_qubit:
             self._ancillae_qubits += list(range(self.width() - len(qubits), self.width()))
 
-        # self._logger.debug(f"Quantum Circuit {self._name} add {len(qubits)} qubits.")
+        self._logger.debug(f"Quantum Circuit {self._name} add {len(qubits)} qubits.")
 
     def reset_qubits(self):
         """ Reset all qubits in current Quantum Circuit, clean the measured result for each qubit. """
@@ -207,29 +202,6 @@ class Circuit(CircuitBased):
     ####################################################################
     ############          Circuit Gates Operators           ############
     ####################################################################
-    def find_position(self, cp_child: CheckPointChild) -> int:
-        """ Return the CheckPoint position.
-
-        Args:
-            cp_child (CheckPointChild): The given CheckPointChild uses to locate the CheckPoint position.
-
-        Returns:
-            int: The gate's position
-        """
-        position = -1
-        if cp_child is None:
-            return position
-
-        for cp in self._checkpoints:
-            if cp.uid == cp_child.uid:
-                position = cp.position
-                cp.position = cp_child.shift
-            elif position != -1:
-                # change the related position for backward checkpoint
-                cp.position = cp_child.shift
-
-        return position
-
     def get_DAG_circuit(self) -> DAGCircuit:
         """
         Translate a quantum circuit to a directed acyclic graph
@@ -280,10 +252,9 @@ class Circuit(CircuitBased):
             gate_qidxes = self._pointer[:]
         else:
             gate_qidxes = gates.qubits
+            self._qubit_indexes_validation(gate_qidxes)
 
-        assert len(gate_qidxes) <= self.width(), "Circuit cannot append any Gate/CompositeGate which larger than self."
         self._gates.extend(gates, gate_qidxes)
-
         self._pointer = None
 
     def append(self, op: Union[BasicGate, Operator]):
@@ -310,33 +281,17 @@ class Circuit(CircuitBased):
             gate (Union[CompositeGate, BasicGate]): The quantum gate want to insert
             insert_idx (int): the index of insert
         """
-        assert isinstance(gate, (BasicGate, Operator, CompositeGate)), \
-            TypeError("CompositeGate.insert", "BasicGate", type(gate))
+        assert isinstance(gate, (BasicGate, CompositeGate)), \
+            TypeError("CompositeGate.insert", "BasicGate, CompositeGate", type(gate))
         gate_args = gate.qubits if isinstance(gate, CompositeGate) else gate.cargs + gate.targs
         if len(gate_args) == 0:
             raise GateQubitAssignedError(f"{gate.type} need qubit indexes to insert into Composite Gate.")
 
-        for garg in gate_args:
-            assert garg >= 0 and garg < self.width(), \
-                GateQubitAssignedError(f"Gate's assigned qubits should within [0, {self.width()}]")
-
+        self._qubit_indexes_validation(gate_args)
         if isinstance(gate, BasicGate):
             self._gates.insert_gate(gate, gate_args, depth)
         else:
             self._gates.insert_cgate(gate, gate_args, depth)
-
-    def pop(self, index: int = -1):
-        """ Pop the BasicGate/Operator/CompositeGate from current Quantum Circuit.
-
-        Args:
-            index (int, optional): The target index. Defaults to 0.
-        """
-        if index < 0:
-            index = self.gate_length() + index
-
-        assert index >= 0 and index < self.gate_length()
-
-        return self._gates.pop(index)
 
     def _add_gate(self, gate: BasicGate):
         """ add a quantum gate into circuit.
@@ -361,6 +316,7 @@ class Circuit(CircuitBased):
                 else:
                     raise GateQubitAssignedError(f"{gate.type} need qubit indexes to add into Composite Gate.")
             else:
+                self._qubit_indexes_validation(gate_qargs)
                 qubit_index = gate_qargs
 
         self._gates.append(gate.copy(), qubit_index)
@@ -372,17 +328,10 @@ class Circuit(CircuitBased):
             gate (BasicGate): The quantum gate.
         """
         for idx in range(self.width()):
-            if gate.variables > 0:
-                self._gates.append(gate.copy(), [idx])
-            else:
-                self._gates.append(gate.copy(), [idx])
+            self._gates.append(gate.copy(), [idx])
 
     def _add_operator(self, op: Operator):
         """ Add operator. """
-        if isinstance(op, CheckPoint):
-            self._checkpoints.append(op)
-            return
-
         if self._pointer is not None:
             if len(self._pointer) != op.qubits:
                 raise CircuitAppendError("Failure to add Trigger into Circuit, as un-matched qureg.")
@@ -392,14 +341,10 @@ class Circuit(CircuitBased):
             if not op.targs:
                 raise CircuitAppendError("Operators need be assigned qubits before add into circuit.")
 
-            for targ in op.targs:
-                if targ >= self.width():
-                    raise CircuitAppendError("The trigger's target exceed the width of the circuit.")
-
+            self._qubit_indexes_validation(op.targs)
             op_qidxes = op.targs
 
-        size = 1 if isinstance(op, NoiseGate) else 0
-        self._gates.append(op, op_qidxes, size)
+        self._gates.append(op, op_qidxes)
         self._logger.debug(f"Add an Operator {type(op)} with qubit indexes {op_qidxes}.")
 
     def random_append(

@@ -265,13 +265,13 @@ class AdjointDifferentiator:
         return np.array(expectation_list)
 
     def _initial_circuit(self, circuit: Circuit):
-        circuit.gate_decomposition(decomposition=False)
+        circuit.flatten()
         self._training_gates = circuit.count_training_gate()
         self._remain_training_gates = self._training_gates
         self._qubits = int(circuit.width())
         self._circuit = circuit
         self._bp_circuit = circuit.inverse()
-        gates = [gate & targs for gate, targs, _ in circuit.fast_gates][::-1]
+        gates = [gate & targs for gate, targs in circuit.fast_gates][::-1]
         self._pipeline = gates
         self._bp_pipeline = self._bp_circuit.fast_gates
 

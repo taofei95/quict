@@ -19,7 +19,7 @@ def check_template():
 
         width, size, depth = circ.width(), circ.size(), circ.depth()
         gtype = []
-        for g, _, _ in circ.fast_gates:
+        for g, _ in circ.fast_gates:
             if g.type.name not in gtype:
                 gtype.append(g.type.name)
 

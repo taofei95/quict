@@ -55,7 +55,7 @@ class CircuitBased(object):
     def gates(self) -> list:
         """ Return the list of BasicGate/CompositeGate/Operator in the current circuit. \n
         *Warning*: this is slowly due to the copy of gates, you can use self.fast_gates to
-        get list of tuple(gate, qubit_indexes, size) for further using.
+        avoid gate copy.
         """
         gate_list = []
         for gate in self._gates.gates:
@@ -68,8 +68,15 @@ class CircuitBased(object):
 
     @property
     def fast_gates(self) -> list:
-        """ Return the list of Tuple(Union[GateNode, CompositeGate], indexes) in the current circuit. """
-        return self._gates.gates
+        """ Return the list of Tuple(Union[BasicGate, CompositeGate], indexes) in the current circuit. """
+        gate_list = []
+        for gate in self._gates.gates:
+            if type(gate).__name__ == "CompositeGate":
+                gate_list.append((gate, gate.qubits))
+            else:
+                gate_list.append((gate.gate, gate.indexes))
+
+        return gate_list
 
     def decomposition_gates(self) -> list:
         """ Decomposition the CompositeGate or BasicGate which has build_gate function.
@@ -82,9 +89,6 @@ class CircuitBased(object):
     def flatten_gates(self) -> list:
         """ Get the list of Quantum Gates with decompose the CompositeGate.
 
-        Args:
-            decomposition (bool, optional): Whether call build_gate for Quantum Gates. Defaults to False.
-
         Returns:
             List[BasicGate]: The list of BasicGate/Operator.
         """
@@ -96,6 +100,18 @@ class CircuitBased(object):
 
     def flatten(self):
         self._gates.flatten()
+
+    def pop(self, index: int = -1):
+        """ Pop the BasicGate/Operator/CompositeGate from current Quantum Circuit.
+
+        Args:
+            index (int, optional): The target index. Defaults to 0.
+        """
+        if index < 0:
+            index = self.gate_length() + index
+
+        assert index >= 0 and index < self.gate_length()
+        return self._gates.pop(index)
 
     ####################################################################
     ############           Circuit's Properties             ############
@@ -162,6 +178,13 @@ class CircuitBased(object):
         """
         return self._gates.training_gates_count
 
+    def show_detail(self):
+        """
+        Print the list of gates in the Circuit/CompositeGate
+        """
+        for g in self.flatten_gates():
+            print(g.type, g.cargs, g.targs, g.pargs)
+
     def __str__(self):
         circuit_info = {
             "name": self.name,
@@ -178,6 +201,32 @@ class CircuitBased(object):
     ####################################################################
     ############           Circuit's Utilities              ############
     ####################################################################
+    def _qubit_indexes_validation(self, indexes: list):
+        # Indexes' type check
+        if not isinstance(indexes, list):
+            raise TypeError(
+                f"Qubit indexes should be one of int/list[int]/Qubit/Qureg not {type(indexes)}."
+            )
+        for idx in indexes:
+            assert idx >= 0 and isinstance(idx, (int, np.int32, np.int64)), \
+                "The qubit indexes should be integer and greater than zero."
+
+        # Repeat indexes check
+        if len(indexes) != len(set(indexes)):
+            raise ValueError(
+                "The qubit indexes cannot contain the repeatted index."
+            )
+
+        # Qubit's indexes max/min limitation check
+        min_idx, max_idx = min(indexes), max(indexes)
+        if min_idx < 0:
+            raise ValueError("The qubit indexes should >= 0.")
+
+        if self._qubits != 0:
+            assert max_idx < self.width(), ValueError("The max of qubit indexes cannot exceed the width of Circuit.")
+            assert len(indexes) < self.width(), \
+                ValueError("The number of qubit index cannot exceed the width of Circuit.")
+
     def qasm(self, output_file: str = None):
         """ The qasm of current CompositeGate/Circuit. The Operator will be ignore.
 
@@ -212,15 +261,6 @@ class CircuitBased(object):
                 of.write(qasm_string)
 
         return qasm_string
-
-    def set_precision(self, precision: str):
-        """ Set precision for Cicuit/CompositeGate
-
-        Args:
-            precision(str): The precision of Circuit/CompositeGate, should be one of [single, double]
-        """
-        assert precision in ["single", "double"], "Circuit's precision should be one of [double, single]"
-        self._precision = precision
 
     def get_variable_shape(self):
         for gate, _, _ in self._gates:
@@ -263,13 +303,6 @@ class CircuitBased(object):
                     index = gate.pargs[i].index
                     gate.pargs[i].pargs = variables.pargs[index]
                     gate.pargs[i].grads = variables.grads[index]
-
-    def show_detail(self):
-        """
-        Print the list of gates in the Circuit/CompositeGate
-        """
-        for g in self.flatten_gates():
-            print(g.type, g.cargs, g.targs, g.pargs)
 
     def draw(self, method: str = 'matp_auto', filename: str = None, flatten: bool = False):
         """Draw the figure of circuit.

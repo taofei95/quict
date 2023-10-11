@@ -119,11 +119,12 @@ class QCDA(object):
         qm_layout = quantum_machine_info.layout
         qm_process = []
         # Step 1: optimization algorithm for common circuit
-        circuit.gate_decomposition()
+        circuit.decomposition()
+        circuit.flatten()
         if circuit.count_gate_by_gatetype(GateType.cx) == circuit.size():
             qm_process.append(CnotWithoutAncilla())
         else:
-            gate_types = [gate.type for gate, _, _ in circuit.fast_gates]
+            gate_types = [gate.type for gate, _ in circuit.fast_gates]
             qm_process.append(self._choice_opt_algorithm(gate_types))
 
         # Step 2: Mapping if layout is not all-connected
