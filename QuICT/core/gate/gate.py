@@ -924,27 +924,32 @@ def gate_builder(gate_type, precision: str = "double", params: list = [], random
 
 
 H = BasicGate(*GATEINFO_MAP[GateType.h], is_original_gate=True)
-"""
+r"""
 Single-Qubit Hadamard Gate, which apply a pi rotation about the
 X and Z axis.
 
 [Matrix Representation]
 $$
-H = /frac{1}{/sqrt{2}} /matrix[[1, 1], [1, -1]]
+H = \frac{1}{\sqrt{2}} \begin{bmatrix}1 & 1 \\ 1 & -1 \end{bmatrix}
 $$
 
 [How to apply]
-H | circuit(0) or
+```python
+H | circuit(0)
 H & 0 | circuit
+```
 
 [Graph Representation]
-::
-       ┌───┐
-     ──┤ H ├──
-       └───┘
+```python
+   ┌───┐  
+ ──┤ H ├──
+   └───┘  
+```
 
 [QASM Representation]
+```
 h q[0]
+```
 """
 
 Hy = BasicGate(*GATEINFO_MAP[GateType.hy], is_original_gate=True)
