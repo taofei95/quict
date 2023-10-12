@@ -39,9 +39,9 @@ nav:
                       - 量子振幅估计: tutorials/algorithm/quantum_algorithm/amplitude_estimate.md
                       - 量子游走: tutorials/algorithm/quantum_algorithm/quantum_walk.md
                 - 变分量子算法:
-                      - 变分量子本征求解器: tutorials/algorithm/VQA/VQE.md
-                      - 量子近似优化算法: tutorials/algorithm/VQA/QAOA.md
-                - 量子神经网络: tutorials/algorithm/QNN.md
+                  #     - 变分量子本征求解器: tutorials/algorithm/VQA/VQE.md
+                      - 量子近似优化算法(QAOA): tutorials/algorithm/VQA/QAOA.md
+                - 量子神经网络(QNN): tutorials/algorithm/QNN.md
     - API:
           - QuICT.core:
                 - qubit:
@@ -145,6 +145,10 @@ nav:
                             - QAOA: API/quict/algorithm/quantum_machine_learning/model/QAOA.md
                             - QNN:
                                   - QuantumNet: API/quict/algorithm/quantum_machine_learning/model/QNN.md
+                      - optimizer:
+                            - Initializer: API/quict/algorithm/quantum_machine_learning/optimizer/initializer.md
+                            - Optimizer: API/quict/algorithm/quantum_machine_learning/optimizer/optimizer.md
+                            - Scheduler: API/quict/algorithm/quantum_machine_learning/optimizer/scheduler.md
                       - utils:
                             - Data: API/quict/algorithm/quantum_machine_learning/utils/data.md
                             - Hamiltonian: API/quict/algorithm/quantum_machine_learning/utils/hamiltonian.md
