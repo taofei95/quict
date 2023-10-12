@@ -925,49 +925,1124 @@ def gate_builder(gate_type, precision: str = "double", params: list = [], random
 
 H = BasicGate(*GATEINFO_MAP[GateType.h], is_original_gate=True)
 """
-H Gate.
+Single-Qubit Hadamard Gate, which apply a pi rotation about the
+X and Z axis.
+
+[Matrix Representation]
+$$
+H = /frac{1}{/sqrt{2}} /matrix[[1, 1], [1, -1]]
+$$
+
+[How to apply]
+H | circuit(0) or
+H & 0 | circuit
+
+[Graph Representation]
+::
+       ┌───┐
+     ──┤ H ├──
+       └───┘
+
+[QASM Representation]
+h q[0]
 """
+
 Hy = BasicGate(*GATEINFO_MAP[GateType.hy], is_original_gate=True)
+"""
+Single-Qubit Hy Gate.
+
+[Matrix Representation]
+$$
+H = /frac{1}{/sqrt{2}} /matrix[[1, -i], [i, -1]]
+$$
+
+[How to apply]
+Hy | circuit(0) or
+Hy & 0 | circuit
+
+[Graph Representation]
+::
+       ┌────┐
+     ──┤ Hy ├──
+       └────┘
+[QASM Symbol]
+hy q[0]
+"""
 S = BasicGate(*GATEINFO_MAP[GateType.s], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit S Gate, same as Z^0.5 Gate. It produce a phase of pi/2.
+
+[Matrix]
+
+$$
+S = /matrix[[1, 0], [0, i]
+$$
+
+[How to apply]
+S | circuit(0) or
+S & 0 | circuit
+[Draw Symbol]
+::
+       ┌───┐
+     ──┤ S ├──
+       └───┘
+[QASM Symbol]
+s q[0]
+
+"""
 S_dagger = BasicGate(*GATEINFO_MAP[GateType.sdg], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit S_dagger Gate, which produce a phase of -pi / 2.
+[Matrix]
+
+$$
+Sdg = /matrix[[1, 0], [0, -i]]
+$$
+
+[How to apply]
+S_dagger | circuit(0) or
+S_dagger & 0 | circuit
+[Draw Symbol]
+::
+       ┌─────┐
+     ──┤ Sdg ├──
+       └─────┘
+[QASM Symbol]
+sdg q[0]
+"""
 X = BasicGate(*GATEINFO_MAP[GateType.x], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Pauli-X Gate.
+[Matrix]
+
+$$
+X = /matrix[[0, 1], [1, 0]]
+$$
+
+[How to apply]
+X | circuit(0) or
+X & 0 | circuit
+[Draw Symbol]
+::
+       ┌───┐
+     ──┤ X ├──
+       └───┘
+[QASM Symbol]
+x q[0]
+"""
 Y = BasicGate(*GATEINFO_MAP[GateType.y], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Pauli-Y Gate.
+[Matrix]
+
+$$
+Y = /matrix[[0, -i], [i, 0]]
+$$
+
+[How to apply]
+Y | circuit(0) or
+Y & 0 | circuit
+[Draw Symbol]
+::
+       ┌───┐
+     ──┤ Y ├──
+       └───┘
+[QASM Symbol]
+y q[0]
+"""
 Z = BasicGate(*GATEINFO_MAP[GateType.z], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Pauli-Z Gate.
+[Matrix]
+
+$$
+Z = /matrix[[1, 0], [0, -1]]
+$$
+
+[How to apply]
+Z | circuit(0) or
+Z & 0 | circuit
+[Draw Symbol]
+::
+       ┌───┐
+     ──┤ Z ├──
+       └───┘
+[QASM Symbol]
+z q[0]
+"""
 SX = BasicGate(*GATEINFO_MAP[GateType.sx], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Sqrt-X Gate.
+[Matrix]
+
+$$
+Sdg = /frac{1}{2} /matrix[[1 + i, 1 - i], [1 - i, 1 + i]]
+$$
+
+[How to apply]
+SX | circuit(0) or
+SX & 0 | circuit
+[Draw Symbol]
+::
+       ┌────┐
+     ──┤ SX ├──
+       └────┘
+[QASM Symbol]
+sx q[0]
+"""
 SY = BasicGate(*GATEINFO_MAP[GateType.sy], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Sqrt-Y Gate.
+[Matrix]
+
+$$
+Sdg = /frac{1}{/sqrt{2}} /matrix[[1, -1], [1, 1]]
+$$
+
+[How to apply]
+SY | circuit(0) or
+SY & 0 | circuit
+[Draw Symbol]
+::
+       ┌────┐
+     ──┤ SY ├──
+       └────┘
+[QASM Symbol]
+sy q[0]
+"""
 SW = BasicGate(*GATEINFO_MAP[GateType.sw], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Sqrt-W Gate.
+[Matrix]
+
+$$
+Sdg = /matrix[[1 / /sqrt(2), -/sqrt(i/2)], [/sqrt{-i/2}, 1 / /sqrt(2)]]
+$$
+
+[How to apply]
+SW | circuit(0) or
+SW & 0 | circuit
+[Draw Symbol]
+::
+       ┌────┐
+     ──┤ SW ├──
+       └────┘
+[QASM Symbol]
+sw q[0]
+"""
 ID = BasicGate(*GATEINFO_MAP[GateType.id], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Identity Gate.
+[Matrix]
+
+$$
+Sdg = /matrix[[1, 1], [1, 1]]
+$$
+
+[How to apply]
+ID | circuit(0) or
+ID & 0 | circuit
+[Draw Symbol]
+::
+       ┌────┐
+     ──┤ ID ├──
+       └────┘
+[QASM Symbol]
+id q[0]
+"""
 U1 = BasicGate(*GATEINFO_MAP[GateType.u1], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Rotation Gate, which apply an \lambda rotation about Z axis.
+[Matrix]
+
+$$
+U1(\lambda) = /matrix[[1, 0], [0, e^{i\lambda}]]
+$$
+
+[How to apply]
+U1(pi) | circuit(0) or
+U1(pi) & 0 | circuit
+[Draw Symbol]
+::
+       ┌────────┐
+     ──┤ U1(pi) ├──
+       └────────┘
+[QASM Symbol]
+u1(pi) q[0]
+"""
 U2 = BasicGate(*GATEINFO_MAP[GateType.u2], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Rotation Gate about X and Z axis.
+[Matrix]
+
+$$
+U2(\sigma, \lambda) = /frac{1}{\sqrt(2)} /matrix[[1, -e^{i\lambda}], [e^{i\sigma}, e^{i(\lambda + \sigma)}]]
+$$
+
+[How to apply]
+U2(0, pi) | circuit(0) or
+U2(0, pi) & 0 | circuit
+[Draw Symbol]
+::
+       ┌───────────┐
+     ──┤ U2(0, pi) ├──
+       └───────────┘
+[QASM Symbol]
+u2(0, pi) q[0]
+"""
 U3 = BasicGate(*GATEINFO_MAP[GateType.u3], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Rotation Gate with three Euler Angles.
+[Matrix]
+
+$$
+U3(\theta, \sigma, \lambda) = /matrix[[cos(e^{/theta/2}), sin(/theta / 2)*-e^{i\lambda}],
+ [sin(/theta / 2) * e^{i\sigma}, cos(/theta / 2) * e^{i(\lambda + \sigma)}]]
+$$
+
+[How to apply]
+U3(0, pi, 1) | circuit(0) or
+U3(0, pi, 1) & 0 | circuit
+[Draw Symbol]
+::
+       ┌──────────────┐
+     ──┤ U3(0, pi, 1) ├──
+       └──────────────┘
+[QASM Symbol]
+u3(0, pi, 1) q[0]
+"""
 Rx = BasicGate(*GATEINFO_MAP[GateType.rx], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Rotation Gate, which apply an /lambda rotation about X axis.
+[Matrix]
+
+$$
+Rx(\lambda) = /matrix[[cos(\lambda / 2), -i*sin(\lambda / 2)], 
+[i*sin(\lambda / 2), cos(\lambda / 2)]]
+$$
+
+[How to apply]
+Rx(pi) | circuit(0) or
+Rx(pi) & 0 | circuit
+[Draw Symbol]
+::
+       ┌────────┐
+     ──┤ Rx(pi) ├──
+       └────────┘
+[QASM Symbol]
+rx(pi) q[0]
+"""
 Ry = BasicGate(*GATEINFO_MAP[GateType.ry], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Rotation Gate, which apply an /lambda rotation about Y axis.
+[Matrix]
+
+$$
+Ry(\lambda) = /matrix[[cos(\lambda / 2), -sin(\lambda / 2)], 
+[sin(\lambda / 2), cos(\lambda / 2)]]
+$$
+
+[How to apply]
+Ry(pi) | circuit(0) or
+Ry(pi) & 0 | circuit
+[Draw Symbol]
+::
+       ┌────────┐
+     ──┤ Ry(pi) ├──
+       └────────┘
+[QASM Symbol]
+ry(pi) q[0]
+"""
 Rz = BasicGate(*GATEINFO_MAP[GateType.rz], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Rotation Gate, which apply an /lambda rotation about Z axis.
+[Matrix]
+
+$$
+Rz(\lambda) = /matrix[[e^{-i*\lambda / 2}, 0], 
+[0, e^{i\lambda/2}]]
+$$
+
+[How to apply]
+Rz(pi) | circuit(0) or
+Rz(pi) & 0 | circuit
+[Draw Symbol]
+::
+       ┌────────┐
+     ──┤ Rz(pi) ├──
+       └────────┘
+[QASM Symbol]
+rz(pi) q[0]
+"""
 T = BasicGate(*GATEINFO_MAP[GateType.t], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit T Gate, which produce a pi/4 phase. Its matrix equals Rz(pi/4).
+[Matrix]
+
+$$
+T = /matrix[[1, 0], 
+[0, /frac{1}{/sqrt(2)} + i / /sqrt(2)]]
+$$
+
+[How to apply]
+T | circuit(0) or
+T & 0 | circuit
+[Draw Symbol]
+::
+       ┌───┐
+     ──┤ T ├──
+       └───┘
+[QASM Symbol]
+t q[0]
+"""
 T_dagger = BasicGate(*GATEINFO_MAP[GateType.tdg], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit T Dagger Gate, which produce a -pi/4 phase.
+
+[Matrix]
+$$
+T = /matrix[[1, 0], 
+[0, /frac{1}{/sqrt(2)} - i / /sqrt(2)]]
+$$
+
+[How to apply]
+T_dagger | circuit(0) or
+T_dagger & 0 | circuit
+[Draw Symbol]
+::
+       ┌─────┐
+     ──┤ Tdg ├──
+       └─────┘
+[QASM Symbol]
+tdg q[0]
+"""
 Phase = BasicGate(*GATEINFO_MAP[GateType.phase], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Rotation Gate about Z axis.
+
+[Matrix]
+$$
+Phase(/lambda) = /matrix[[1, 0], 
+[0, e^{i*\lambda}]]
+$$
+
+[How to apply]
+Phase(pi) | circuit(0) or
+Phase(pi) & 0 | circuit
+[Draw Symbol]
+::
+       ┌───────────┐
+     ──┤ phase(pi) ├──
+       └───────────┘
+[QASM Symbol]
+phase(pi) q[0]
+"""
+
 GPhase = BasicGate(*GATEINFO_MAP[GateType.gphase], is_original_gate=True)
+"""
+[Introduce about HGate]
+Single-Qubit Rotation Gate about Z axis.
+
+[Matrix]
+$$
+GPhase(/lambda) = /matrix[[e^{i*\lambda}, 0], 
+[0, e^{i*\lambda}]]
+$$
+
+[How to apply]
+GPhase(pi) | circuit(0) or
+GPhase(pi) & 0 | circuit
+[Draw Symbol]
+::
+       ┌────────────┐
+     ──┤ gphase(pi) ├──
+       └────────────┘
+[QASM Symbol]
+gphase(pi) q[0]
+"""
+
 CZ = BasicGate(*GATEINFO_MAP[GateType.cz], is_original_gate=True)
+"""
+[Introduce about HGate]
+Controlled Z Gate.
+
+[Matrix]
+$$
+CZ_q0,q1 = /matrix[[1, 0, 0, 0], 
+                   [0, 1, 0, 0],
+                   [0, 0, 1, 0],
+                   [0, 0, 0, -1]]
+$$
+
+[How to apply]
+CZ | circuit([0, 1]) or
+CZ & [0, 1] | circuit
+[Draw Symbol]
+::
+    q0:  ────■────
+             |
+           ┌───┐
+    q1:  ──┤ Z ├──
+           └───┘
+
+[QASM Representation]
+CZ q[0], q[1]
+"""
+
 CX = BasicGate(*GATEINFO_MAP[GateType.cx], is_original_gate=True)
+"""
+Controlled X Gate.
+
+[Matrix Representation]
+$$
+CX_q0,q1 = /matrix[[1, 0, 0, 0], 
+                   [0, 1, 0, 0],
+                   [0, 0, 0, 1],
+                   [0, 0, 1, 0]]
+$$
+
+[How to apply]
+CX | circuit([0, 1]) or
+CX & [0, 1] | circuit
+
+[Graph Representation]
+::
+    q0:  ────■────
+             |
+           ┌───┐
+    q1:  ──┤ Z ├──
+           └───┘
+
+[QASM Representation]
+CX q[0], q[1]
+"""
 CY = BasicGate(*GATEINFO_MAP[GateType.cy], is_original_gate=True)
+"""
+Controlled Y Gate.
+
+[Matrix Representation]
+$$
+CY_q0,q1 = /matrix[[1, 0, 0, 0], 
+                   [0, 1, 0, 0],
+                   [0, 0, 0, -i],
+                   [0, 0, i, 0]]
+$$
+
+[How to apply]
+CY | circuit([0, 1]) or
+CY & [0, 1] | circuit
+
+[Graph Representation]
+::
+    q0:  ────■────
+             |
+           ┌───┐
+    q1:  ──┤ Y ├──
+           └───┘
+
+[QASM Representation]
+CY q[0], q[1]
+"""
+
 CH = BasicGate(*GATEINFO_MAP[GateType.ch], is_original_gate=True)
+"""
+Controlled H Gate.
+
+[Matrix Representation]
+$$
+CH_q0,q1 = /matrix[[1, 0, 0, 0], 
+                   [0, 1, 0, 0],
+                   [0, 0, 1 / sqrt(2), 1 / sqrt(2)],
+                   [0, 0, 1 / sqrt(2), -1 / sqrt(2)]]
+$$
+
+[How to apply]
+CH | circuit([0, 1]) or
+CH & [0, 1] | circuit
+
+[Graph Representation]
+::
+    q0:  ────■────
+             |
+           ┌───┐
+    q1:  ──┤ H ├──
+           └───┘
+
+[QASM Representation]
+CH q[0], q[1]
+"""
+
 CRy = BasicGate(*GATEINFO_MAP[GateType.cry], is_original_gate=True)
+"""
+Controlled Ry Gate.
+
+[Matrix Representation]
+$$
+CRy_q0,q1(/lambda) = /matrix[[1, 0, 0, 0], 
+                             [0, 1, 0, 0],
+                             [0, 0, cos(/lambda / 2), sin(/lambda / 2)],
+                             [0, 0, sin(/lambda / 2), cos(/lambda / 2)]]
+$$
+
+[How to apply]
+CRy(pi) | circuit([0, 1]) or
+CRy(pi) & [0, 1] | circuit
+
+[Graph Representation]
+::
+    q0:  ──────■───────
+               |
+           ┌────────┐
+    q1:  ──┤ Ry(pi) ├──
+           └────────┘
+
+[QASM Representation]
+cry(pi) q[0], q[1]
+"""
+
 CRz = BasicGate(*GATEINFO_MAP[GateType.crz], is_original_gate=True)
+"""
+Controlled Rz Gate.
+
+[Matrix Representation]
+$$
+CRz_q0,q1(/lambda) = /matrix[[1, 0, 0, 0], 
+                             [0, 1, 0, 0],
+                             [0, 0, e^{-i /lambda / 2}, 0],
+                             [0, 0, 0, e^{i/lambda / 2}]]
+$$
+
+[How to apply]
+CRz(pi) | circuit([0, 1]) or
+CRz(pi) & [0, 1] | circuit
+
+[Graph Representation]
+::
+    q0:  ──────■───────
+               |
+           ┌────────┐
+    q1:  ──┤ Rz(pi) ├──
+           └────────┘
+
+[QASM Representation]
+crz(pi) q[0], q[1]
+"""
+
 CU1 = BasicGate(*GATEINFO_MAP[GateType.cu1], is_original_gate=True)
+"""
+Controlled U1 Gate.
+
+[Matrix Representation]
+$$
+CU1_q0,q1(/lambda) = /matrix[[1, 0, 0, 0], 
+                             [0, 1, 0, 0],
+                             [0, 0, 1, 0],
+                             [0, 0, 0, e^{i*/lambda}]]
+$$
+
+[How to apply]
+CU1(pi) | circuit([0, 1]) or
+CU1(pi) & [0, 1] | circuit
+
+[Graph Representation]
+::
+    q0:  ──────■───────
+               |
+           ┌────────┐
+    q1:  ──┤ U1(pi) ├──
+           └────────┘
+
+[QASM Representation]
+cu1(pi) q[0], q[1]
+"""
+
 CU3 = BasicGate(*GATEINFO_MAP[GateType.cu3], is_original_gate=True)
+"""
+Controlled U3 Gate.
+
+[Matrix Representation]
+$$
+CU3_q0,q1(/alpha, /theta, /lambda) = /matrix[[1, 0, 0, 0], 
+                                             [0, 1, 0, 0],
+                                             [0, 0, 1, 0],
+                                             [0, 0, 0, e^{i*/lambda}]]
+$$
+
+[How to apply]
+CU3(pi, 0, 1) | circuit([0, 1]) or
+CU3(pi, 0, 1) & [0, 1] | circuit
+
+[Graph Representation]
+::
+    q0:  ─────────■──────────
+                  |
+           ┌──────────────┐
+    q1:  ──┤ U3(pi, 0, 1) ├──
+           └──────────────┘
+
+[QASM Representation]
+cu3(pi, 0, 1) q[0], q[1]
+"""
+
 FSim = BasicGate(*GATEINFO_MAP[GateType.fsim], is_original_gate=True)
+"""
+Fermions Simulation Quantum Gate.
+
+[Matrix Representation]
+$$
+FSim_q0,q1(/theta, /lambda) = /matrix[[1, 0, 0, 0], 
+                                      [0, cos(/theta), -i*sin(/theta), 0],
+                                      [0, -i*sin(/theta), cos(/theta), 0],
+                                      [0, 0, 0, e^{-i*/lambda}]]
+$$
+
+[How to apply]
+FSim(pi, 0) | circuit([0, 1]) or
+FSim(pi, 0) & [0, 1] | circuit
+
+[Graph Representation]
+::
+           ┌──────────────┐
+    q0:  ──┤0             ├──
+           |  FSim(pi, 0) |
+    q1:  ──┤1             ├──
+           └──────────────┘
+
+[QASM Representation]
+fsim(pi, 0) q[0], q[1]
+"""
+
 Rxx = BasicGate(*GATEINFO_MAP[GateType.rxx], is_original_gate=True)
+"""
+Double-Qubits X /tensor X Gate.
+
+[Matrix Representation]
+$$
+Rxx_q0,q1(/lambda) = /matrix[[cos(/lambda / 2), 0, 0, -i*sin(/lambda / 2)], 
+                             [0, cos(/lambda / 2), -i*sin(/lambda / 2), 0],
+                             [0, -i*sin(/lambda / 2), cos(/lambda / 2), 0],
+                             [-i*sin(/lambda / 2), 0, 0, cos(/lambda / 2)]]
+$$
+
+[How to apply]
+Rxx(pi) | circuit([0, 1]) or
+Rxx(pi) & [0, 1] | circuit
+
+[Graph Representation]
+::
+           ┌───────────┐
+    q0:  ──┤0          ├──
+           |  Rxx(pi)  |
+    q1:  ──┤1          ├──
+           └───────────┘
+
+[QASM Representation]
+rxx(pi) q[0], q[1]
+"""
+
 Ryy = BasicGate(*GATEINFO_MAP[GateType.ryy], is_original_gate=True)
+"""
+Double-Qubits Y /tensor Y Gate.
+
+[Matrix Representation]
+$$
+Ryy_q0,q1(/lambda) = /matrix[[cos(/lambda / 2), 0, 0, i*sin(/lambda / 2)], 
+                             [0, cos(/lambda / 2), -i*sin(/lambda / 2), 0],
+                             [0, -i*sin(/lambda / 2), cos(/lambda / 2), 0],
+                             [i*sin(/lambda / 2), 0, 0, cos(/lambda / 2)]]
+$$
+
+[How to apply]
+Ryy(pi) | circuit([0, 1]) or
+Ryy(pi) & [0, 1] | circuit
+
+[Graph Representation]
+::
+           ┌───────────┐
+    q0:  ──┤0          ├──
+           |  Ryy(pi)  |
+    q1:  ──┤1          ├──
+           └───────────┘
+
+[QASM Representation]
+ryy(pi) q[0], q[1]
+"""
+
 Rzz = BasicGate(*GATEINFO_MAP[GateType.rzz], is_original_gate=True)
+"""
+Double-Qubits Z /tensor Z Gate.
+
+[Matrix Representation]
+$$
+Rzz_q0,q1(/lambda) = /matrix[[e^{-i*/lambda / 2}, 0, 0, 0], 
+                             [0, e^{i*/lambda / 2}, 0, 0],
+                             [0, 0, e^{i*/lambda / 2}, 0],
+                             [0, 0, 0, e^{-i*/lambda / 2}]]
+$$
+
+[How to apply]
+Rzz(pi) | circuit([0, 1]) or
+Rzz(pi) & [0, 1] | circuit
+
+[Graph Representation]
+::
+           ┌───────────┐
+    q0:  ──┤0          ├──
+           |  Rzz(pi)  |
+    q1:  ──┤1          ├──
+           └───────────┘
+
+[QASM Representation]
+rzz(pi) q[0], q[1]
+"""
+
 Rzx = BasicGate(*GATEINFO_MAP[GateType.rzx], is_original_gate=True)
+"""
+Double-Qubits Z /tensor X Gate.
+
+[Matrix Representation]
+$$
+Rzx_q0,q1(/lambda) = /matrix[[cos(/lambda / 2), -i*sin(/lambda / 2), 0, 0], 
+                             [-i*sin(/lambda / 2), cos(/lambda / 2), 0, 0],
+                             [0, 0, cos(/lambda / 2), i*sin(/lambda / 2)],
+                             [0, 0, i*sin(/lambda / 2), cos(/lambda / 2)]]
+$$
+
+[How to apply]
+Rzx(pi) | circuit([0, 1]) or
+Rzx(pi) & [0, 1] | circuit
+
+[Graph Representation]
+::
+           ┌───────────┐
+    q0:  ──┤0          ├──
+           |  Rzx(pi)  |
+    q1:  ──┤1          ├──
+           └───────────┘
+
+[QASM Representation]
+rzx(pi) q[0], q[1]
+"""
+
 Measure = BasicGate(*GATEINFO_MAP[GateType.measure], is_original_gate=True)
+"""
+The Quantum Measurement Gate.
+
+[How to apply]
+Measure | circuit(0) or
+Measure & 0 | circuit
+
+[Draw Symbol]
+::
+       ┌───┐
+     ──┤ M ├──
+       └───┘
+
+[QASM Symbol]
+measure q[0] -> c[0]
+"""
+
 Reset = BasicGate(*GATEINFO_MAP[GateType.reset], is_original_gate=True)
+"""
+The Quantum Reset Gate.
+
+[How to apply]
+Reset | circuit(0) or
+Reset & 0 | circuit
+
+[Draw Symbol]
+::
+      ┌───┐
+    ──┤ R ├──
+      └───┘
+
+[QASM Symbol]
+reset q[0]
+"""
+
 Barrier = BasicGate(*GATEINFO_MAP[GateType.barrier], is_original_gate=True)
+"""
+The Barrier Gate.
+
+[How to apply]
+Barrier | circuit(0) or
+Barrier & 0 | circuit
+
+[Draw Symbol]
+::
+        ░
+    ────░────
+        ░
+
+[QASM Symbol]
+measure q[0] -> c[0]
+"""
+
 Swap = BasicGate(*GATEINFO_MAP[GateType.swap], is_original_gate=True)
+"""
+Swap Gate.
+
+[Matrix Representation]
+$$
+Swap_q0,q1() = /matrix[[1, 0, 0, 0], 
+                       [0, 0, 1, 0],
+                       [0, 1, 0, 0],
+                       [0, 0, 0, 1]]
+$$
+
+[How to apply]
+Swap | circuit([0, 1]) or
+Swap & [0, 1] | circuit
+
+[Graph Representation]
+::
+           
+    q0:  ─────X─────
+              |
+    q1:  ─────X─────
+        
+
+[QASM Representation]
+swap q[0], q[1]
+"""
+
 iSwap = BasicGate(*GATEINFO_MAP[GateType.iswap], is_original_gate=True)
+"""
+iSwap Gate, a double-qubit XX + YY Gate.
+
+[Matrix Representation]
+$$
+Swap_q0,q1() = /matrix[[1, 0, 0, 0], 
+                       [0, 0, i, 0],
+                       [0, i, 0, 0],
+                       [0, 0, 0, 1]]
+$$
+
+[How to apply]
+iSwap | circuit([0, 1]) or
+iSwap & [0, 1] | circuit
+
+[Graph Representation]
+::
+           
+    q0:  ─────X─────
+              |
+    q1:  ─────X─────
+        
+
+[QASM Representation]
+iswap q[0], q[1]
+"""
+
 iSwap_dagger = BasicGate(*GATEINFO_MAP[GateType.iswapdg], is_original_gate=True)
+"""
+iSwap Dagger Gate.
+
+[Matrix Representation]
+$$
+Swap_q0,q1() = /matrix[[1, 0, 0, 0], 
+                       [0, 0, -i, 0],
+                       [0, -i, 0, 0],
+                       [0, 0, 0, 1]]
+$$
+
+[How to apply]
+iSwap_dagger | circuit([0, 1]) or
+iSwap_dagger & [0, 1] | circuit
+
+[Graph Representation]
+::
+           
+    q0:  ─────X─────
+              |
+    q1:  ─────X─────
+        
+
+[QASM Representation]
+iswap_dagger q[0], q[1]
+"""
+
 sqiSwap = BasicGate(*GATEINFO_MAP[GateType.sqiswap], is_original_gate=True)
+"""
+Swap Gate.
+
+[Matrix Representation]
+$$
+sqiSwap_q0,q1() = /matrix[[1, 0, 0, 0], 
+                          [0, 1 / /sqrt(2), i / /sqrt(2), 0],
+                          [0, i / /sqrt(2), 1 / /sqrt(2), 0],
+                          [0, 0, 0, 1]]
+$$
+
+[How to apply]
+sqiSwap | circuit([0, 1]) or
+sqiSwap & [0, 1] | circuit
+
+[Graph Representation]
+::
+           
+    q0:  ─────X─────
+              |
+    q1:  ─────X─────
+        
+
+[QASM Representation]
+sqiswap q[0], q[1]
+"""
+
 CCX = BasicGate(*GATEINFO_MAP[GateType.ccx], is_original_gate=True)
+"""
+Double-Qubit Controlled X Gate, CCX Gate.
+
+[Matrix Representation]
+$$
+CCX_q0,q1,q2 = /matrix[[1, 0, 0, 0, 0, 0, 0, 0], 
+                       [0, 1, 0, 0, 0, 0, 0, 0],
+                       [0, 0, 1, 0, 0, 0, 0, 0],
+                       [0, 0, 0, 1, 0, 0, 0, 0],
+                       [0, 0, 0, 0, 1, 0, 0, 0], 
+                       [0, 0, 0, 0, 0, 1, 0, 0],
+                       [0, 0, 0, 0, 0, 0, 0, 1],
+                       [0, 0, 0, 0, 0, 0, 1, 0]]
+$$
+
+[How to apply]
+CCX | circuit([0, 1, 2]) or
+CCX & [0, 1, 2] | circuit
+
+[Graph Representation]
+::
+    q0:  ────■────
+             |
+             |
+    q1:  ────■────
+             |
+           ┌───┐
+    q2:  ──┤ X ├──
+           └───┘
+
+[QASM Representation]
+ccx q[0], q[1], q[2]
+"""
+
 CCZ = BasicGate(*GATEINFO_MAP[GateType.ccz], is_original_gate=True)
+"""
+Double-Qubit Controlled Z Gate, CCZ Gate.
+
+[Matrix Representation]
+$$
+CCZ_q0,q1,q2 = /matrix[[1, 0, 0, 0, 0, 0, 0, 0], 
+                       [0, 1, 0, 0, 0, 0, 0, 0],
+                       [0, 0, 1, 0, 0, 0, 0, 0],
+                       [0, 0, 0, 1, 0, 0, 0, 0],
+                       [0, 0, 0, 0, 1, 0, 0, 0], 
+                       [0, 0, 0, 0, 0, 1, 0, 0],
+                       [0, 0, 0, 0, 0, 0, 1, 0],
+                       [0, 0, 0, 0, 0, 0, 0, -1]]
+$$
+
+[How to apply]
+CCZ | circuit([0, 1, 2]) or
+CCZ & [0, 1, 2] | circuit
+
+[Graph Representation]
+::
+    q0:  ────■────
+             |
+             |
+    q1:  ────■────
+             |
+           ┌───┐
+    q2:  ──┤ Z ├──
+           └───┘
+
+[QASM Representation]
+ccz q[0], q[1], q[2]
+"""
+
 CCRz = BasicGate(*GATEINFO_MAP[GateType.ccrz], is_original_gate=True)
+"""
+Double-Qubit Controlled Rz Gate, CCRz Gate.
+
+[Matrix Representation]
+$$
+CCRz_q0,q1,q2(/lambda) = /matrix[[1, 0, 0, 0, 0, 0, 0, 0], 
+                                 [0, 1, 0, 0, 0, 0, 0, 0],
+                                 [0, 0, 1, 0, 0, 0, 0, 0],
+                                 [0, 0, 0, 1, 0, 0, 0, 0],
+                                 [0, 0, 0, 0, 1, 0, 0, 0], 
+                                 [0, 0, 0, 0, 0, 1, 0, 0],
+                                 [0, 0, 0, 0, 0, 0, e^{-i*/lambda / 2}, 0],
+                                 [0, 0, 0, 0, 0, 0, 0, e^{i*/lambda / 2}]]
+$$
+
+[How to apply]
+CCRz(pi) | circuit([0, 1, 2]) or
+CCRz(pi) & [0, 1, 2] | circuit
+
+[Graph Representation]
+::
+    q0:  ──────■───────
+               |
+               |
+    q1:  ──────■───────
+               |
+           ┌────────┐
+    q2:  ──┤ Rz(pi) ├──
+           └────────┘
+
+[QASM Representation]
+ccrz(pi) q[0], q[1], q[2]
+"""
+
 CSwap = BasicGate(*GATEINFO_MAP[GateType.cswap], is_original_gate=True)
+"""
+Controlled Swap Gate.
+
+[Matrix Representation]
+$$
+CSwap_q0,q1,q2 = /matrix[[1, 0, 0, 0, 0, 0, 0, 0], 
+                         [0, 1, 0, 0, 0, 0, 0, 0],
+                         [0, 0, 1, 0, 0, 0, 0, 0],
+                         [0, 0, 0, 1, 0, 0, 0, 0],
+                         [0, 0, 0, 0, 1, 0, 0, 0], 
+                         [0, 0, 0, 0, 0, 0, 1, 0],
+                         [0, 0, 0, 0, 0, 1, 0, 0],
+                         [0, 0, 0, 0, 0, 0, 0, 1]]
+$$
+
+[How to apply]
+CSwap | circuit([0, 1, 2]) or
+CSwap & [0, 1, 2] | circuit
+
+[Graph Representation]
+::
+    q0:  ──────■───────
+               |
+               |
+    q1:  ──────X───────
+               |
+               |
+    q2:  ──────X───────
+
+[QASM Representation]
+cswap q[0], q[1], q[2]
+"""
