@@ -195,26 +195,6 @@ class CompositeGate(CircuitBased):
         self._gates.append(gate, qubit_index)
         self._pointer = None
 
-    def insert(self, gate: Union[BasicGate, CompositeGate], depth: int):
-        """ Insert a Quantum Gate into current CompositeGate.
-
-        Args:
-            gate (Union[BasicGate, CompositeGate]): The quantum gate want to insert
-            insert_idx (int): The index of insert position
-        """
-        assert isinstance(gate, (BasicGate, CompositeGate)), \
-            TypeError("CompositeGate.insert", "BasicGate/CompositeGate", type(gate))
-
-        gate_args = gate.cargs + gate.targs if isinstance(gate, BasicGate) else gate.qubits
-        if len(gate_args) == 0:
-            raise GateQubitAssignedError(f"{gate.type} need qubit indexes to insert into Composite Gate.")
-
-        self._qubit_indexes_validation(gate_args)
-        if isinstance(gate, BasicGate):
-            self._gates.insert_gate(gate, gate_args, depth)
-        else:
-            self._gates.insert_cgate(gate, gate_args, depth)
-
     ####################################################################
     ############            CompositeGate Utils             ############
     ####################################################################
@@ -259,7 +239,7 @@ class CompositeGate(CircuitBased):
         else:
             matrix_width = self.width()
             based_qubits, assigned_gates = self.qubits, []
-            for gate, qidx in self._gates.LTS():
+            for gate, qidx in self._gates.tree_search():
                 new_qidx = [based_qubits.index(q) for q in qidx]
                 assigned_gates.append(gate.copy() & new_qidx)
 

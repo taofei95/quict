@@ -274,25 +274,6 @@ class Circuit(CircuitBased):
 
         self._pointer = None
 
-    def insert(self, gate: Union[CompositeGate, BasicGate], depth: int):
-        """ Insert a Quantum Gate into current Circuit, only support BasicGate/CompositeGate.
-
-        Args:
-            gate (Union[CompositeGate, BasicGate]): The quantum gate want to insert
-            insert_idx (int): the index of insert
-        """
-        assert isinstance(gate, (BasicGate, CompositeGate)), \
-            TypeError("CompositeGate.insert", "BasicGate, CompositeGate", type(gate))
-        gate_args = gate.qubits if isinstance(gate, CompositeGate) else gate.cargs + gate.targs
-        if len(gate_args) == 0:
-            raise GateQubitAssignedError(f"{gate.type} need qubit indexes to insert into Composite Gate.")
-
-        self._qubit_indexes_validation(gate_args)
-        if isinstance(gate, BasicGate):
-            self._gates.insert_gate(gate, gate_args, depth)
-        else:
-            self._gates.insert_cgate(gate, gate_args, depth)
-
     def _add_gate(self, gate: BasicGate):
         """ add a quantum gate into circuit.
 
@@ -521,10 +502,7 @@ class Circuit(CircuitBased):
             elif isinstance(qubit_limit, int):
                 qubit_limit = [qubit_limit]
 
-            for target in qubit_limit:
-                if target < 0 or target >= self.width():
-                    raise IndexExceedError("Circuit.sub_circuit.qubit_limit", [0, self.width()], target)
-
+            self._qubit_indexes_validation(qubit_limit)
             set_tqubits = set(qubit_limit)
 
         sub_circuit = Circuit(self.width()) if not qubit_limit else Circuit(len(qubit_limit))

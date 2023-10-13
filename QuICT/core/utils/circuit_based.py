@@ -5,12 +5,12 @@
 # @File    : _circuit_computing.py
 from enum import Enum
 import numpy as np
+from typing import Union
 
 from .id_generator import unique_id_generator
 from .gate_type import GateType
 from .variable import Variable
 from .circuit_gate import CircuitGates
-
 
 
 class CircuitBased(object):
@@ -93,13 +93,16 @@ class CircuitBased(object):
             List[BasicGate]: The list of BasicGate/Operator.
         """
 
-        return [gate.copy() & qidx for gate, qidx in self._gates.LTS()]
+        return [gate.copy() & qidx for gate, qidx in self._gates.tree_search()]
 
     def decomposition(self):
         self._gates.decomposition()
 
     def flatten(self):
         self._gates.flatten()
+
+    def get_target_gates(self, qubits: list, depth: int):
+        return self._gates.tree_search(qubits, depth)
 
     def pop(self, index: int = -1):
         """ Pop the BasicGate/Operator/CompositeGate from current Quantum Circuit.
@@ -112,6 +115,32 @@ class CircuitBased(object):
 
         assert index >= 0 and index < self.gate_length()
         return self._gates.pop(index)
+
+    def insert(self, gate, qubits: list = None, depth: int = -1):
+        """ Insert a Quantum Gate into current CompositeGate.
+
+        Args:
+            gate (Union[BasicGate, CompositeGate]): The quantum gate want to insert
+            qubits (list[int]):
+            depth (int): The index of insert position
+        """
+        if qubits is None:
+            qubits = gate.qubits if type(gate).__name__ == "CompositeGate" else gate.cargs + gate.targs
+
+        if len(qubits) == 0:
+            raise ValueError("Gate need qubit indexes to insert into Composite Gate.")
+
+        self._qubit_indexes_validation(qubits)
+        if type(gate).__name__ == "CompositeGate":
+            self._gates.insert_cgate(gate, qubits, depth)
+        else:
+            self._gates.insert_gate(gate, qubits, depth)
+
+    def split(self, qubits: list = None, depth: Union[int, list] = None):
+        if qubits is None and depth is None:
+            raise KeyError("Split must assign at least one of qubits and depth.")
+
+
 
     ####################################################################
     ############           Circuit's Properties             ############
@@ -224,7 +253,7 @@ class CircuitBased(object):
 
         if self._qubits != 0:
             assert max_idx < self.width(), ValueError("The max of qubit indexes cannot exceed the width of Circuit.")
-            assert len(indexes) < self.width(), \
+            assert len(indexes) <= self.width(), \
                 ValueError("The number of qubit index cannot exceed the width of Circuit.")
 
     def qasm(self, output_file: str = None):
@@ -248,7 +277,7 @@ class CircuitBased(object):
 
         # Body [gates]
         cbits = 0
-        for gate, targs in self._gates.LTS():
+        for gate, targs in self._gates.tree_search():
             if gate.qasm_name == "measure":
                 qasm_string += f"measure q[{targs[0]}] -> c[{cbits}];\n"
                 cbits += 1
