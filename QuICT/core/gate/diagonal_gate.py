@@ -50,6 +50,12 @@ class DiagonalGate(object):
         Returns:
             CompositeGate: diagonal gate without auxiliary qubit
         """
+        n = self.target
+        gates = CompositeGate()
+        r_t = int(np.floor(n/2))
+        r_c = n - r_t
+
+
 
     def with_aux_qubit(self, theta):
         """
@@ -80,7 +86,6 @@ class DiagonalGate(object):
                 for j in range((2 ** (i - 1) - 1) * t):
                     CX & [n + j, n + j + (2 ** (i - 1)) * t] | gates
 
-
             if 2 ** r - 1 < copies:
                 rest = copies - 2 ** r + 1
                 for j in range(t):
@@ -103,29 +108,22 @@ class DiagonalGate(object):
             #1.implement U1
             for j in range(1, 1 + ell):
                 st = s[j - 1][0]
-                #print("s(",j,"0):",st)
                 for i in range(len(st)):
                     if st[i] == '1':
-                        #if visit[i] == 0:
-                            #CX & [i,ini_star+j-1] | gates
-                        #else:
                         CX & [n+t*visit[i]+i,ini_star+j-1] | gates
                         visit[i] += 1
 
-                #for i in range(ini_star,ini_star+ell):
-                #self.ket_fjk(j,1,n,t,ini_star-1+j) | gates
 
              #2.implement R1
-            #s = self.partitioned_gray_code(n, t)
+             #s = self.partitioned_gray_code(n, t)
             for j in range(1,1+ell):
                 sj1_int = int(s[j - 1][0], 2)
                 #phase= (self.linear_fjk(j,1,x,n,t)) * (self.alpha_s(theta,sj1_int,n))
                 #Here need correction.
                 phase = self.alpha_s(theta,sj1_int,n)
                 #U1(phase) & (ini_star+j-1) | gates
-                if phase != 0:
+                if sj1_int != 0:
                     U1(phase) | gates(ini_star+j-1)
-                #gates.extend(self.phase_shift_s(sj1_int, n, phase, aux=self.aux))
 
 
         #Stage 3:Suffix Copy
@@ -184,8 +182,6 @@ class DiagonalGate(object):
                                 CX & [n + i - t + (n-t) * visit[i], path_star+j-1] | gates
                                 visit[i]+=1
 
-                                #CX & [i,sucoend+j] | gates
-                                #break
 
                 #Step k.2: R_k
                 for j in range(1,ell+1):
@@ -197,24 +193,7 @@ class DiagonalGate(object):
                     if phase_k != 0:
                         U1(phase_k) | gates(j-1+path_star)
 
-                    #gates.extend(self.phase_shift_s(sjk_int, n, phase_k, aux=self.aux))
-
             #Stage 5:Inverse
-
-            # clear the the copy process in Stage 3
-            for i in range(1, r3 + 1):
-                for j in range(t,n):
-                    CX & [j, n + (2 ** (i - 1) - 1) * (n - t) + j - t] | gates
-                for j in range((2 ** (i - 1) - 1) * (n - t)):
-                    CX & [n + j, n + j + (2 ** (i - 1)) * (n - t)] | gates
-
-            if 2 ** r3 - 1 < copies:
-                rest = copies3 - 2 ** r3 + 1
-                for j in range(t,n):
-                    CX & [j, n + (2 ** (r3) - 1) * (n - t) + j - t] | gates
-                if rest != 1:
-                    for j in range((rest - 1) * (n - t)):
-                        CX & [n + j, n + (2 ** (r3)) * (n - t) + j] | gates
 
             #clear the CNOT gates in Gray Path Stage k.1 U1
             for k in range(2,num_phases+1):
@@ -231,17 +210,63 @@ class DiagonalGate(object):
                                 CX & [n + i - t + (n-t) * visit[i], path_star+j-1] | gates
                                 visit[i]+=1
 
-            #clear the CNOT gates in Stage Gray Initial Step1 U_1
+
+            # clear the the copy process in Stage 3
+            for i in range(1, r3 + 1):
+                for j in range(t, n):
+                    CX & [j, n + (2 ** (i - 1) - 1) * (n - t) + j - t] | gates
+                for j in range((2 ** (i - 1) - 1) * (n - t)):
+                    CX & [n + j, n + j + (2 ** (i - 1)) * (n - t)] | gates
+
+
+            if 2 ** r3 - 1 < copies:
+                rest = copies3 - 2 ** r3 + 1
+                for j in range(t, n):
+                    CX & [j, n + (2 ** (r3) - 1) * (n - t) + j - t] | gates
+                if rest != 1:
+                    for j in range((rest - 1) * (n - t)):
+                        CX & [n + j, n + (2 ** (r3)) * (n - t) + j] | gates
+
+            # Consider the parallelism of the copy process.
+            for i in range(1, r + 1):
+                for j in range(t):
+                    CX & [j, n + (2 ** (i - 1) - 1) * t + j] | gates
+                for j in range((2 ** (i - 1) - 1) * t):
+                    CX & [n + j, n + j + (2 ** (i - 1)) * t] | gates
+
+            if 2 ** r - 1 < copies:
+                rest = copies - 2 ** r + 1
+                for j in range(t):
+                    CX & [j, n + (2 ** (r) - 1) * t + j] | gates
+                if rest != 1:
+                    for j in range((rest - 1) * t):
+                        CX & [n + j, n + (2 ** (r)) * t + j] | gates
+
+            # clear the CNOT gates in Stage Gray Initial Step1 U_1
+            visit = [0 for _ in range(n)]
             for j in range(1, 1 + ell):
                 st = s[j - 1][0]
-                #print("s(",j,"0):",st)
                 for i in range(len(st)):
                     if st[i] == '1':
-                        #if visit[i] == 0:
-                            #CX & [i,ini_star+j-1] | gates
-                        #else:
-                        CX & [n+t*visit[i]+i,ini_star+j-1] | gates
+                        CX & [n + t * visit[i] + i, ini_star + j - 1] | gates
                         visit[i] += 1
+
+            # Consider the parallelism of the copy process.
+            for i in range(1, r + 1):
+                for j in range(t):
+                    CX & [j, n + (2 ** (i - 1) - 1) * t + j] | gates
+                for j in range((2 ** (i - 1) - 1) * t):
+                    CX & [n + j, n + j + (2 ** (i - 1)) * t] | gates
+
+            if 2 ** r - 1 < copies:
+                rest = copies - 2 ** r + 1
+                for j in range(t):
+                    CX & [j, n + (2 ** (r) - 1) * t + j] | gates
+                if rest != 1:
+                    for j in range((rest - 1) * t):
+                        CX & [n + j, n + (2 ** (r)) * t + j] | gates
+
+
 
 
         return gates
@@ -471,3 +496,12 @@ class DiagonalGate(object):
                 CX & [i, target_num] | gates
 
         return gates
+
+    @classmethod
+    def  linearly_independent_sets_T(cls,n):
+        """
+        implement the Appendix H,also the construction of sets T.
+        """
+
+        s = []
+
