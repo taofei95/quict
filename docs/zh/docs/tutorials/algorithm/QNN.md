@@ -1,40 +1,36 @@
 # 量子神经网络（QNN）
 
-!!! note
-
-    本教程额外依赖 quict-ml 库
-
-本教程旨在介绍如何使用经典机器学习库 Pytorch 和 QuICT 中内置的量子神经网络层构建一个用于分类 MNIST 手写数据集的量子神经网络（Quantum Neural Network, QNN）。
+本教程旨在介绍如何使用 QuICT 中内置的 FRQI 量子图像编码方式和量子神经网络模块构建一个用于分类 MNIST 手写数据集的量子神经网络（Quantum Neural Network, QNN）。
 
 ## 导入运行库
 
 首先，导入必要的运行库及相关依赖：
 
-```python
+``` python
 import collections
-import torch
-import torch.nn as nn
-import torch.utils.data as data
-import torch.nn.functional as F
+import yaml
+import time
 import tqdm
-from torchvision import datasets, transforms
 import matplotlib.pyplot as plt
-import seaborn as sns
+from torchvision import datasets, transforms
 
-from QuICT_ml.ansatz_library import QNNLayer
-from QuICT_ml.utils.encoding import *
-from QuICT_ml.utils.ml_utils import *
-from QuICT_ml.model.QNN import QuantumNet
+from QuICT.algorithm.quantum_machine_learning.ansatz_library import BasicQNN
+from QuICT.algorithm.quantum_machine_learning.encoding import FRQI
+from QuICT.algorithm.quantum_machine_learning.model.QNN import QuantumNet
+from QuICT.algorithm.quantum_machine_learning.optimizer.optimizer import Adam
+from QuICT.algorithm.quantum_machine_learning.utils.data import Dataset, DataLoader
+from QuICT.algorithm.quantum_machine_learning.utils.loss import MSELoss
+from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 ```
 
 ## 加载和预处理 MNIST 数据
 
-在本教程中，我们将遵循 Farhi et al.[<sup>[1]</sup>](#refer1) 的实验，对数字3和6进行分类。对MNIST数据集的预处理主要目的是使图片能够被编码为量子电路。
-
+在本教程中，我们将对数字3和6进行分类，并使用 FRQI [<sup>[2]</sup>](#refer2) 编码方式对将灰度图像编码为量子电路。对MNIST数据集的预处理主要目的是
+使图片能够在尽量保留较多信息的情况下成功被编码为量子电路。
 
 ### 1. 加载原始 MNIST 数据
 
-Pytorch 的 torchvision 库中的 datasets 能够自动下载 MNIST 数据集：
+Pytorch 的 torchvision 库中的 datasets 能够自动下载 MNIST 手写数据集：
 
 ``` python
 train_data = datasets.MNIST(root="./data/", train=True, download=True)
@@ -51,7 +47,6 @@ print("Testing examples: ", len(test_Y))
 Training examples:  60000
 Testing examples:  10000
 ```
-
 
 ### 2. 筛选数据集使其仅包含数字3和6
 
@@ -86,17 +81,15 @@ plt.imshow(train_X[200], cmap="gray")
 
 ```
 Label:  tensor(False)
-<matplotlib.image.AxesImage at 0x7f63c2429640>
 ```
 
 <figure markdown>
 ![Image](../../assets/images/tutorials/algorithm/QNN/image.png){:width="400px"}
 </figure>
 
-
 ### 3. 缩小图像
 
-原始的 MNIST 数据集图片尺寸是28x28，这对于目前的量子计算来说太大了，无法被编码，因此需要将其缩小到4x4：
+原始的 MNIST 数据集图片尺寸是28x28，而 FRQI 编码只适用于分辨率为 $2^n \times 2^n$ 的图像，因此需要将其缩小到16x16：
 
 ``` python
 def downscale(X, resize):
@@ -106,18 +99,15 @@ def downscale(X, resize):
 ```
 
 ``` python
-resized_train_X = downscale(train_X, (4, 4))
-resized_test_X = downscale(test_X, (4, 4))
+RESIZE = (16, 16)
+resized_train_X = downscale(train_X, RESIZE)
+resized_test_X = downscale(test_X, RESIZE)
 ```
 
 同样地，显示序号为200的图像：
 
 ``` python
 plt.imshow(resized_train_X[200], cmap="gray")
-```
-
-```
-<matplotlib.image.AxesImage at 0x7f63c2371fd0>
 ```
 
 <figure markdown>
@@ -127,7 +117,7 @@ plt.imshow(resized_train_X[200], cmap="gray")
 
 ### 4. 去除冲突数据
 
-在经过向下采样后，会产生大量重复图片，并且部分图片会同时被标记为正类和负类。为了避免这对分类结果造成影响，需要去除同一图片被同时标记为3和6的样本：
+在经过向下采样后，可能会产生部分重复图片，并且这些重复图片可能会同时被标记为正类和负类。为了避免这对分类结果造成影响，需要去除同一图片被同时标记为3和6的样本：
 
 ``` python
 def remove_conflict(X, Y, resize):
@@ -140,106 +130,72 @@ def remove_conflict(X, Y, resize):
         if len(x_dict[x]) == 1:
             X_rmcon.append(np.array(x).reshape(resize))
             Y_rmcon.append(list(x_dict[x])[0])
-    X = torch.from_numpy(np.array(X_rmcon))
-    Y = torch.from_numpy(np.array(Y_rmcon))
+    X = np.array(X_rmcon)
+    Y = np.array(Y_rmcon)
     return X, Y
 ```
 
 ``` python
-nocon_train_X, nocon_train_Y = remove_conflict(resized_train_X, train_Y, (4, 4))
-nocon_test_X, nocon_test_Y = remove_conflict(resized_test_X, test_Y, (4, 4))
-print("Remaining training examples: ", len(nocon_train_Y))
-print("Remaining testing examples: ", len(nocon_test_Y))
+train_X, train_Y = remove_conflict(resized_train_X, train_Y, RESIZE)
+test_X, test_Y = remove_conflict(resized_test_X, test_Y, RESIZE)
+print("Remaining training examples: ", len(train_Y))
+print("Remaining testing examples: ", len(test_Y))
 ```
 
 ```
-Remaining training examples:  10338
-Remaining testing examples:  1793
+Filtered training examples:  12049
+Filtered testing examples:  1968
 ```
-
-### 5. 二值化
-
-为了方便编码，需要将图片进行二值化：
-
-``` python
-def binary_img(X, threshold):
-    X = X > threshold
-    X = X.type(torch.int)
-    return X
-```
-
-``` python
-threshold = 0.5
-bin_train_X = binary_img(nocon_train_X, threshold)
-bin_test_X = binary_img(nocon_test_X, threshold)
-```
-
-???+ note
-
-    理论上应该在二值化之后再去除冲突数据，但是如果这样图片样本数将会太少，无法进行训练：
-
-    ``` python
-    _train_X, _train_Y = remove_conflict(binary_img(resized_train_X, threshold), train_Y, (4, 4))
-    _test_X, _test_Y = remove_conflict(binary_img(resized_test_X, threshold), test_Y, (4, 4))
-    print("Remaining training examples: ", len(_train_Y))
-    print("Remaining testing examples: ", len(_test_Y))
-    ```
-
-    ```
-    Remaining training examples:  149
-    Remaining testing examples:  93
-    ```
-
-最后，将数据转移到 GPU 上以便进行训练：
-
-``` python
-device = torch.device("cuda:0")
-
-train_X = bin_train_X.to(device)
-train_Y = nocon_train_Y.to(device)
-test_X = bin_test_X.to(device)
-test_Y = nocon_test_Y.to(device)
-```
-
-!!! warning
-
-    不推荐使用 CPU 进行训练，速度上很难保证，并且容易失败。
-
-
 
 ## 将图像数据编码为量子电路
 
-本教程将使用量子比特编码（qubit encoding）将图片数据转为量子电路。每个像素对应一个量子比特，像素值为0对应量子态 $\left | 0 \right \rangle$ ，像素值为1对应量子态 $\left | 1 \right \rangle$ 。为了达成这一目的，值为1的像素所对应的量子比特上会被施加一个 X 门使量子态由 $\left | 0 \right \rangle$ 转为 $\left | 1 \right \rangle$ 。
+本教程将使用 FRQI 编码（Flexible Representation of Quantum Images）将图片数据转换为量子电路。
 
-QuICT 中内置了量子比特编码方式，以2x2的图片为例:
+每个像素对应一个量子比特，像素值为0对应量子态 $\left | 0 \right \rangle$ ，像素值为1对应量子态 $\left | 1 \right \rangle$ 。为了达成这一目的，值为1的像素所对应的量子比特上会被施加一个 X 门使量子态由 $\left | 0 \right \rangle$ 转为 $\left | 1 \right \rangle$ 。
+
+QuICT 的 `encoding`库内置了 FRQI 编码方式，以这样一张 4x4 的图片为例:
 
 ``` python
-img = torch.tensor([[0, 1], [0, 0]]).to(device)
-qe = Qubit(4, device)
-qe.encoding(img, circuit=True)
-qe.circuit.draw()
+img = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
+plt.imshow(img, cmap="gray")
 ```
 
 <figure markdown>
-![Qubit Encoding](../../assets/images/tutorials/algorithm/QNN/qubit_encoding.png){:width="400px"}
+![sample_image](../../assets/images/tutorials/algorithm/QNN/frqi_sample_img.png){:width="400px"}
 </figure>
 
 ``` python
-def qubit_encoding(X, device):
-    new_X = []
-    n_qubits = X[0].shape[0] * X[0].shape[1]
-    qe = Qubit(n_qubits, device)
-    for x in X:
-        qe.encoding(x)
-        new_X.append(qe.ansatz)
-    return new_X
+frqi = FRQI(grayscale=2)
+cir = frqi(img)
+cir.gate_decomposition(decomposition=False)
+cir.draw()
+```
+
+<figure markdown>
+![FRQI](../../assets/images/tutorials/algorithm/QNN/frqi.png){:width="600px"}
+</figure>
+
+此处，我们可以批量化的将图像进行编码：
+
+``` python
+def encoding_img(X, encoding):
+    data_circuits = []
+    for i in tqdm.tqdm(range(len(X))):
+        data_circuit = encoding(X[i])
+        data_circuits.append(data_circuit)
+    return data_circuits
 ```
 
 ``` python
-ansatz_train_X = qubit_encoding(train_X, device)
-ansatz_test_X = qubit_encoding(test_X, device)
+frqi = FRQI(grayscale=256)
+train_X = encoding_img(train_X, frqi)
+test_X = encoding_img(test_X, frqi)
 ```
 
+```
+100%|██████████| 12049/12049 [00:13<00:00, 909.78it/s] 
+100%|██████████| 1968/1968 [00:02<00:00, 788.43it/s]
+```
 
 ## 量子神经网络
 
@@ -247,15 +203,14 @@ ansatz_test_X = qubit_encoding(test_X, device)
 
 ### 1. 构建模型电路
 
-模型电路除了数据量子比特之外，还额外有一个读出量子比特，用于存储预测的分类结果，根据 Measure 门的测量结果是 $\left | 1 \right \rangle$ 和 $\left | 0 \right \rangle$ 判定输入图片属于正类还是负类。 Farhi et al.[<sup>[1]</sup>](#refer1) 使用的模型量子电路，是用双比特门（通常是 RXX，RYY，RZZ 和 RZX 门）始终作用在读出量子比特，和全部数据量子比特上构建的。 QuICT 内置了这样的 QNN 模型电路，我们规定前16个量子比特是数据量子比特，最后一个量子比特是读出量子比特比特：
+模型电路除了数据量子比特之外，还额外有一个读出量子比特，用于存储预测的分类结果，根据 Measure 门的测量结果是 $\left | 1 \right \rangle$ 和 $\left | 0 \right \rangle$ 判定输入图片属于正类还是负类。 Farhi et al.[<sup>[1]</sup>](#refer1) 使用的模型量子电路，是用双比特门（通常是 RXX，RYY，RZZ 和 RZX 门）始终作用在读出量子比特，和全部数据量子比特上构建的。 QuICT 内置了这样的 QNN 模型电路，我们规定前9个量子比特是数据量子比特，最后一个量子比特是读出量子比特比特：
 
 以含4个数据量子比特的情况为例，单层 RXX 的 QNN 模型电路应为：
 
 ``` python
-pqc = QNNLayer(list(range(4)), 4, device=device)
-params = nn.Parameter(torch.rand(1, 4, device=device), requires_grad=True)
-model_circuit = pqc.circuit_layer(["XX"], params)
-model_circuit.draw()
+basic_qnn = BasicQNN(5, ["ZZ", "ZX"])
+basic_qnn_cir = basic_qnn.init_circuit()
+basic_qnn_cir.draw()
 ```
 
 <figure markdown>
@@ -265,16 +220,11 @@ model_circuit.draw()
 本教程中将使用两层网络，分别是 RXX 层和 RZZ 层，可训练参数的数量即为数字比特数 * 网络层数：
 
 ``` python
-data_qubits = list(range(16))
-readout_qubit = 16
-pqc = QNNLayer(data_qubits, readout_qubit, device=device)
-layers = ["XX", "ZZ"]
-params = nn.Parameter(torch.rand(2, 16, device=device), requires_grad=True)
-model_ansatz = pqc(layers, params)
+n_qubits = int(np.log2(RESIZE[0] * RESIZE[1])) + 2
+ansatz = BasicQNN(n_qubits, ["YY", "ZZ", "ZX"])
 ```
 
 接下来只需要将数据电路与模型电路连接即可开始训练。
-
 
 ### 2. 用 QuICT 内置的 QuantumNet 进行训练
 
@@ -283,84 +233,88 @@ model_ansatz = pqc(layers, params)
 首先，设置机器学习相关参数：
 
 ``` python
-EPOCH = 3       # 训练总轮数
-BATCH_SIZE = 32 # 一次迭代使用的样本数
-LR = 0.001      # 梯度下降的学习率
-SEED = 17       # 随机数种子
-
-set_seed(SEED)  # 设置全局随机种子
+EPOCH = 10       # 训练总轮数
+BATCH_SIZE = 32  # 一次迭代使用的样本数
+LR = 0.001       # 梯度下降的学习率
+SEED = 0         # 随机数种子0
+ep_start = 0
+it_start = 0
+set_seed(SEED)
 ```
 
 然后将预处理后的 MNIST 图像数据集装入 DataLoader ：
 
 ``` python
-train_dataset = data.TensorDataset(train_X, train_Y)
-test_dataset = data.TensorDataset(test_X, test_Y)
-train_loader = data.DataLoader(
+train_dataset = Dataset(train_X, train_Y)
+test_dataset = Dataset(test_X, test_Y)
+train_loader = DataLoader(
     dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True
 )
-test_loader = data.DataLoader(
+test_loader = DataLoader(
     dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True
 )
 ```
 
-定义待训练的 QNN 网络和经典优化器：
+定义待训练的 QNN 网络，损失函数和经典优化器：
 
 ``` python
-net = QuantumNet(16, layers, encoding="qubit", device=device)
-optim = torch.optim.Adam([dict(params=net.parameters(), lr=LR)])
-```
-
-定义损失函数，此处使用 hinge loss ：
-
-``` python
-def loss_func(y_true, y_pred):
-    y_true = 2 * y_true.type(torch.float32) - 1.0
-    y_pred = 2 * y_pred - 1.0
-    loss = torch.clamp(1 - y_pred * y_true, min=0.0)
-    correct = torch.where(y_true * y_pred > 0)[0].shape[0]
-    return torch.mean(loss), correct
+loss_fun = MSELoss()
+optimizer = Adam(lr=LR)
+net = QuantumNet(
+    n_qubits=n_qubits,
+    ansatz=ansatz,
+    optimizer=optimizer,
+    device="CPU",
+)
 ```
 
 开始训练：
 
 ``` python
-# train epoch
 for ep in range(EPOCH):
-    net.train()
+    # Train
     loader = tqdm.tqdm(
         train_loader, desc="Training epoch {}".format(ep + 1), leave=True
     )
-    # train iteration
     for it, (x_train, y_train) in enumerate(loader):
-        optim.zero_grad()
-        y_pred = net(x_train)
-        loss, correct = loss_func(y_train, y_pred)
-        accuracy = correct / len(y_train)
-        loss.backward()
-        optim.step()
-        loader.set_postfix(
-            it=it,
-            loss="{:.3f}".format(loss),
-            accuracy="{:.3f}".format(accuracy),
-        )
+        if it < it_start:
+            continue
+        it_start = 0
+        expectations = net.forward(x_train)  # (32, 1)
+        y_true = (2 * y_train - 1.0).reshape(expectations.shape)
+        y_pred = -expectations
+        loss = loss_fun(y_pred, y_true)
+        # optimize
+        net.backward(loss)
+        # update
+        net.update()
 
+        correct = np.where(y_true * y_pred.pargs > 0)[0].shape[0]
+        accuracy = correct / len(y_train)
+        loader.set_postfix(
+            it=it, loss="{:.3f}".format(loss.item), accuracy="{:.3f}".format(accuracy)
+        )
+    
     # Validation
-    net.eval()
     loader_val = tqdm.tqdm(
         test_loader, desc="Validating epoch {}".format(ep + 1), leave=True
     )
     loss_val_list = []
     total_correct = 0
     for it, (x_test, y_test) in enumerate(loader_val):
-        y_pred = net(x_test)
-        loss_val, correct = loss_func(y_test, y_pred)
-        loss_val_list.append(loss_val.cpu().detach().numpy())
-        total_correct += correct
-        accuracy_val = correct / len(y_test)
+        expectations_val = net.forward(x_test, train=False)
+        y_true_val = (2 * y_test - 1.0).reshape(expectations_val.shape)
+        y_pred_val = -expectations_val
+
+        loss_val = loss_fun(y_pred_val, y_true_val)
+        loss_val_list.append(loss_val.item)
+        correct_val = np.where(y_true_val * y_pred_val.pargs > 0)[0].shape[0]
+
+        total_correct += correct_val
+        accuracy_val = correct_val / len(y_test)
         loader_val.set_postfix(
             it=it,
-            loss="{:.3f}".format(loss_val),
+            loss="{:.3f}".format(loss_val.item),
             accuracy="{:.3f}".format(accuracy_val),
         )
     avg_loss = np.mean(loss_val_list)
@@ -369,15 +323,36 @@ for ep in range(EPOCH):
 ```
 
 ```
-Training epoch 1: 100%|██████████| 323/323 [29:21<00:00,  5.45s/it, accuracy=0.906, it=322, loss=0.543]
-Validating epoch 1: 100%|██████████| 56/56 [05:00<00:00,  5.37s/it, accuracy=0.750, it=55, loss=0.724]
-Validation Average Loss: 0.5847752690315247, Accuracy: 0.8448660714285714
-Training epoch 2: 100%|██████████| 323/323 [29:30<00:00,  5.48s/it, accuracy=0.812, it=322, loss=0.469]
-Validating epoch 2: 100%|██████████| 56/56 [05:01<00:00,  5.38s/it, accuracy=0.844, it=55, loss=0.446]
-Validation Average Loss: 0.4316808879375458, Accuracy: 0.8325892857142857
-Training epoch 3: 100%|██████████| 323/323 [29:10<00:00,  5.42s/it, accuracy=0.938, it=322, loss=0.370]
-Validating epoch 3: 100%|██████████| 56/56 [05:07<00:00,  5.49s/it, accuracy=0.781, it=55, loss=0.472]
-Validation Average Loss: 0.3986954092979431, Accuracy: 0.8364955357142857
+Training epoch 1: 100%|██████████| 376/376 [02:41<00:00,  2.32it/s, accuracy=0.906, it=375, loss=0.935]
+Validating epoch 1: 100%|██████████| 61/61 [00:18<00:00,  3.34it/s, accuracy=0.938, it=60, loss=0.938]
+Validation Average Loss: 0.9394127107271177, Accuracy: 0.8837090163934426
+Training epoch 2: 100%|██████████| 376/376 [02:41<00:00,  2.32it/s, accuracy=0.844, it=375, loss=0.934]
+Validating epoch 2: 100%|██████████| 61/61 [00:18<00:00,  3.35it/s, accuracy=0.844, it=60, loss=0.907]
+Validation Average Loss: 0.9182945990390312, Accuracy: 0.9118852459016393
+Training epoch 3: 100%|██████████| 376/376 [02:42<00:00,  2.32it/s, accuracy=0.906, it=375, loss=0.883]
+Validating epoch 3: 100%|██████████| 61/61 [00:18<00:00,  3.35it/s, accuracy=0.938, it=60, loss=0.874]
+Validation Average Loss: 0.8638879795421284, Accuracy: 0.9252049180327869
+Training epoch 4: 100%|██████████| 376/376 [02:41<00:00,  2.32it/s, accuracy=0.969, it=375, loss=0.823]
+Validating epoch 4: 100%|██████████| 61/61 [00:18<00:00,  3.33it/s, accuracy=0.906, it=60, loss=0.804]
+Validation Average Loss: 0.7808000876160641, Accuracy: 0.9646516393442623
+Training epoch 5: 100%|██████████| 376/376 [02:41<00:00,  2.32it/s, accuracy=0.938, it=375, loss=0.760]
+Validating epoch 5: 100%|██████████| 61/61 [00:18<00:00,  3.35it/s, accuracy=0.969, it=60, loss=0.755]
+Validation Average Loss: 0.7496410566096504, Accuracy: 0.9605532786885246
+Training epoch 6: 100%|██████████| 376/376 [02:42<00:00,  2.32it/s, accuracy=0.938, it=375, loss=0.728]
+Validating epoch 6: 100%|██████████| 61/61 [00:18<00:00,  3.37it/s, accuracy=0.906, it=60, loss=0.742]
+Validation Average Loss: 0.7384923100156554, Accuracy: 0.9600409836065574
+Training epoch 7: 100%|██████████| 376/376 [02:41<00:00,  2.32it/s, accuracy=1.000, it=375, loss=0.716]
+Validating epoch 7: 100%|██████████| 61/61 [00:18<00:00,  3.35it/s, accuracy=0.938, it=60, loss=0.740]
+Validation Average Loss: 0.7300563092932201, Accuracy: 0.9646516393442623
+Training epoch 8: 100%|██████████| 376/376 [02:42<00:00,  2.31it/s, accuracy=1.000, it=375, loss=0.716]
+Validating epoch 8: 100%|██████████| 61/61 [00:18<00:00,  3.36it/s, accuracy=1.000, it=60, loss=0.688]
+Validation Average Loss: 0.724440254241452, Accuracy: 0.9697745901639344
+Training epoch 9: 100%|██████████| 376/376 [02:43<00:00,  2.31it/s, accuracy=1.000, it=375, loss=0.713]
+Validating epoch 9: 100%|██████████| 61/61 [00:18<00:00,  3.36it/s, accuracy=1.000, it=60, loss=0.732]
+Validation Average Loss: 0.7224605226930816, Accuracy: 0.9707991803278688
+Training epoch 10: 100%|██████████| 376/376 [02:42<00:00,  2.32it/s, accuracy=1.000, it=375, loss=0.703]
+Validating epoch 10: 100%|██████████| 61/61 [00:17<00:00,  3.42it/s, accuracy=0.969, it=60, loss=0.722]
+Validation Average Loss: 0.7216466591301091, Accuracy: 0.9702868852459017
 ```
 
 ### 3. 用 QuICT 提供的模型进行测试
@@ -505,7 +480,6 @@ ax.set_yticks(ticks=[0, 0.2, 0.4, 0.6, 0.8, 1.0])
 <figure markdown>
 ![QNN_CNN](../../assets/images/tutorials/algorithm/QNN/qnn_cnn.png){:width="500px"}
 </figure>
-
 
 ---
 
