@@ -12,15 +12,41 @@
 - 经典电路允许连线汇合，即扇入操作 (FANIN) ，导致单线包含所有输入位的按位或 (bitwise OR) 。显然这个操作不是可逆的，因此也不是酉操作，所以我们不允许量子电路中有扇入操作。
 - 与上面相反的操作，扇出操作 (FANOUT) ，即产生一个比特的多个拷贝在量子电路中也是不允许的。
 
+在 QuICT 中，量子电路是最重要的单元，它支撑着量子算法的设计和模拟器的运行。 在 QuICT 中我们使用 Circuit 类来定义一个量子电路，其中包括一系列量子比特和量子门，并存储了相关的对应关系。在 Circuit 中，它不仅支持量子门和组合量子门的自由添加，也允许通过随机的方式来快速构建需要的量子电路。 Circuit 类还提供了绘制量子电路、转换为 OpenQASM 文件和 DAG 量子线路的工具。
+
+
+## 量子电路基础属性
+```python
+circuit.name            # 返回量子电路的名字
+circuit.qubits          # 返回量子电路中的量子寄存器
+circuit.ancilla_qubits  # 返回量子电路中辅助比特的位置
+circuit.topology        # 返回量子电路所对应的物理比特拓扑结构
+
+circuit.gates           # 返回电路内的所有量子门，包括组合量子门
+circuit.fast_gates      # 返回电路内的所有量子门的信息，包含量子门，作用位，以及对应门数
+circuit.flatten_gates() # 分解所有电路内的组合量子门，之后返回所有基础量子门
+```
+
+
+## 量子电路基础信息
+```python
+circuit.size()      # 电路内量子门个数
+circuit.depth()     # 电路深度
+circuit.width()     # 电路宽度
+
+circuit.count_1qubit_gate()         # 返回电路中单比特量子门的个数
+circuit.count_2qubit_gate()         # 返回电路中双比特量子门的个数
+circuit.count_gate_by_gatetype(GateType.cx)    # 返回电路中给定量子门种类的个数
+```
+
 
 ## 如何使用 QuICT 来构建量子电路
 
-在 QuICT 中，量子电路是最重要的单元，它支撑着量子算法的设计和模拟器的运行。 Circuit 是 QuICT 中的一个类，它使用量子位和门来表示量子电路的线路和量子门。在 Circuit 中，它用电线分配量子门，并允许附加随机门和 Supremacy 电路。 Circuit 还提供了绘制量子电路并将其自身转换为 OpenQASM 文件的工具。
-
-Circuit 提供了多种方法来将门添加到量子电路中
+Circuit 类提供了多种方法来管理量子线路中的量子门：
 
 - 可以使用运算符 or (|) 将量子门、组合量子门甚至量子电路添加到量子电路中
-- 可以使用 circuit.append(gate) 或 circuit.extend(CompositeGate) 添加单个门和多个量子门
+- 可以使用 circuit.append(gate) 或 circuit.extend(CompositeGate，Circuit) 来添加量子门、量子组合门等
+- 可以通过 insert 和 pop 操作来进行量子门的增减操作
 - 如果需要构建随机量子电路，可以通过 circuit.random_append() 来实现
 
 !!! tip
@@ -29,12 +55,13 @@ Circuit 提供了多种方法来将门添加到量子电路中
 ``` python
 from QuICT.core import Circuit
 from QuICT.core.gate import *
+from QuICT.algorithm.qft import QFT
 
 # Build a circuit with qubits 5
 circuit = Circuit(5)
 
 # add gates
-H | circuit(0)                      # append H gate to all qubits
+H | circuit(0)                      # append H gate
 for i in range(4):
     CX | circuit([i, i+1])          # append CX gate
 
@@ -44,30 +71,6 @@ qft_gate | circuit([0, 1, 2, 3, 4])
 
 # append random gates
 circuit.random_append(rand_size=10)
-```
-
-
-## 量子电路的基础属性和辅助功能
-``` python
-circuit.size()      # 电路内量子门个数
-circuit.depth()     # 电路深度
-circuit.width()     # 电路宽度
-
-circuit.qubits          # 返回量子电路中的量子寄存器
-circuit.ancilla_qubits  # 返回量子电路中辅助比特的位置
-
-circuit.gates           # 返回电路内的所有量子门，包括组合量子门
-circuit.fast_gates      # 返回电路内的所有量子门的信息，包含量子门，作用位，以及对应门数
-circuit.flatten_gates() # 分解所有电路内的组合量子门，之后返回所有基础量子门
-
-circuit.count_1qubit_gate()         # 返回电路中单比特量子门的个数
-circuit.count_2qubit_gate()         # 返回电路中双比特量子门的个数
-circuit.count_gate_by_gatetype(GateType.cx)    # 返回电路中给定量子门种类的个数
-
-circuit.to_compositegate()  # 将当前电路转换为组合量子门
-circuit.inverse()           # 返回反转量子电路，即此电路的量子门为当前电路的所有量子的反转门
-circuit.matrix()            # 返回当前电路的酉矩阵
-circuit.sub_circuit()       # 提取部分电路
 ```
 
 
@@ -107,3 +110,20 @@ dag_circuit.draw()                          # DAGCircuit 可视化
 <figure markdown>
 ![Dag Circuit](../assets/images/functions/circuit/dag_circuit.jpg){:width="450px"}
 </figure>
+
+
+## 量子电路辅助功能
+
+Circuit 类同时提供相关辅助功能来帮助用户进一步开发，其中包括量子电路转换为组合量子门、生成量子电路的逆电路、矩阵和子电路分割。
+
+``` python
+circuit.to_compositegate()  # 将当前电路转换为组合量子门
+circuit.inverse()           # 返回反转量子电路，即此电路的量子门为当前电路的所有量子的反转门
+circuit.matrix()            # 返回当前电路的酉矩阵
+circuit.sub_circuit(        # 提取部分电路
+    start_index,    # 子电路起始位置
+    gate_number,    # 子电路门数
+    target_qubits,  # 子电路比特位
+    target_gates    # 子电路量子门种类
+)       
+```

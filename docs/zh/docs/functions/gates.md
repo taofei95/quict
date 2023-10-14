@@ -58,18 +58,15 @@ my_CXGate = CX & [0, 1]     # 构建 CX 量子门，控制位为0，目标位为
 ```
 
 ### 量子门的基础属性
-
 ``` python
 my_CXGate.type          # 门的种类
 my_CXGate.matrix_type   # 量子门的矩阵类别
 my_CXGate.precision     # 门的精度
 my_CXGate.matrix        # 量子门矩阵
 my_CXGate.target_matrix # 量子门作用位矩阵
-my_CXGate.qasm()        # 量子门的 OpenQASM 字符串
 ```
 
 ### 量子门的比特位和参数信息
-
 ``` python
 my_CXGate.controls     # 控制比特个数
 my_CXGate.cargs        # 所有控制比特位
@@ -85,44 +82,51 @@ my_CXGate.parg         # 参数首位
 ```
 
 ### 其他量子门操作
-
 ``` python
-# 部分量子门属性判断
+# 量子门属性判断
+my_CXGate.is_single()           # 判断是否为单比特量子门
+my_CXGate.is_control_single()   # 判断量子门是否只包含一个控制位和一个目标位
 my_CXGate.is_clifford()         # 判断量子门是否属于Clifford
+my_CXGate.is_pauli()            # 判断量子门是否属于Pauli
 my_CXGate.is_identity()         # 判断量子门矩阵是否为单位矩阵
+my_CXGate.is_diagonal()         # 判断量子门矩阵是否为对角矩阵
 my_CXGate.is_special()          # 判断门是否为特殊门，如Measure, Reset, Barrier, Unitary, ...
 
-# 量子门交换对比
+# 判断两个量子门是否可以交换
 other_gate = CX & [3, 4]
 my_CXGate.commutative(other_gate)
 
-# 量子门变换
-inverse_gate = my_CXGate.inverse()          # 得到当前量子门的反转量子门
-decomposition_gate = my_CXGate.build_gate() # 将当前量子门分解为若干基础量子门
-expand_gate = my_CXGate.expand(qubits=5)    # 将当前量子门扩张为5量子比特大小，即 32 * 32
-
-# QASM
-my_CXGate.qasm()    # 得到当前量子门的 QASM 字符串 
+# 得到当前量子门的 QASM 字符串 
+my_CXGate.qasm()
 ```
 
 ### 当前 QuICT 所支持的量子门种类
 
-| 量子门种类    | 名称                                                                                        |
+| 量子门种类    | 名称                                                                                         |
 | ------------- | ------------------------------------------------------------------------------------------- |
 | 单比特门      | H, HY, S, S_dagger, X, Y, Z, SX, SY, SW, ID, U1, U2, U3, Rx, Ry, Rz, Ri, T, T_dagger, Phase |
 | 双比特门      | FSim, Rxx, Ryy, Rzz, Rzx, Swap                                                              |
 | 受控双比特门  | CZ, CX, CY, CH, CRz, CU1, CU3                                                               |
-| 多比特门(>=3) | CCX, CCZ, CCRz, QFT, IQFT, CSwap                                                            |
+| 多比特门(>=3) | CCX, CCZ, CCRz, Multi-Control, CSwap                                                        |
 | 特殊量子门    | Measure, Reset, Barrier, Perm, Unitary, Multi-Control Toffoli, uniformly control gate       |
 
+### 量子门运算
+QuICT 同时也支持一系列量子门运算，例如：量子门的逆，量子门分解和量子门矩阵扩张。
+
+```python
+# 量子门变换
+inverse_gate = my_CXGate.inverse()          # 得到当前量子门的反转量子门
+decomposition_gate = my_CXGate.build_gate() # 将当前量子门分解为若干基础量子门
+expand_gate = my_CXGate.expand(qubits=5)    # 将当前量子门扩张为5量子比特大小，即 32 * 32
+```
 
 ## 组合量子门 (Composite Gate)
 
-组合量子门, 顾名思义，是多个基础量子门的组合。不同于单一量子门，组合量子门可以实现更加复杂的功能，也通过构建组合量子门这种方式，进一步降低构建量子电路时的复杂性和增加代码的复用性。
+组合量子门, 顾名思义，是多个基础量子门的组合。不同于单一量子门，组合量子门可以自定义一组基础量子门来实现更加复杂的功能；也能通过构建组合量子门这种方式，进一步降低构建量子电路时的复杂性和量子电路管理的难度。
 
 ### 构建组合量子门
 
-QuICT 通过构建 CompositeGate 类，来实现组合量子门的功能，它存储了量子门的列表。它使用 $or$ ( | ) 和 $xor$ ( ^ ) 追加量子门或逆门，并使用 $and$ (&) 和 $call$ 重新映射控制量子位。同时也支持使用上下文结构来构建量子组合门。
+QuICT 通过构建 CompositeGate 类，来实现组合量子门的功能，它存储了量子门的列表。它使用 $or$ ( | ) 和 $xor$ ( ^ ) 追加量子门或逆门，并使用 $and$ (&) 和 $call$ 重新映射控制量子位。同时也支持使用上下文结构来构建量子组合门和 $insert$ 和 $pop$ 来进行量子门增减操作。
 
 ``` python
 from QuICT.core.gate import *
@@ -164,16 +168,19 @@ q_3: |0>─────────────┤ cx ├──────┤ c
 q_4: |0>─┤ u1(1) ├─┤ u1(1) ├───────────
          └───────┘ └───────┘           
 ```
+
 ``` python
 # Modify the BasicGate in CompositeGate
 lgate = cg1.pop()       # Pop the last BasicGate in current CompositeGate
-cg1.adjust(1, [0, 2])   # Re-assigned the qubit indexes [0, 2] for the BasicGate with gate index 1 in CompositeGate.
+cg1.insert(H & 0, 1)    # Insert H gate with qubit index 0 into CompositeGate at position 1.
 ```
+#TODO：add graph after modify
 
 在 QuICT 中，我们内置了一些常见的组合量子门，例如： QFT 、多控 Toffoli 门、 CCRz 等量子门组合。
 
 ``` python
-from QuICT.core.gate import QFT, MultiControlToffoli
+from QuICT.core.gate import MultiControlToffoli
+from QuICT.algorithm.qft import QFT
 
 qft_gate = QFT(3)               # 构建 3 比特 QFT 量子门
 qft_gate.draw('command')        # 画出 3 比特 QFT 量子门
@@ -227,13 +234,12 @@ q_4: |0>───┤ u1(-1) ├───┤ u1(-1) ├────────�
 ## 量子指令集 （Instruction Set）
 对于每一个量子机来说，都会有一组由若干单比特量子门和一个双比特量子门组成的指令集，用来控制和操作量子态，从而实现所需要的量子计算。量子指令集的设计和实现对于量子计算机来说是非常重要的，它关系到量子计算应用的速度、精度、效果和可重复性。
 
-在 QuICT 中，我们构建了一个 InstructionSet 类用来存储一组量子指令集，除了对自定义指令集的支持以外，针对当前行业内常见的量子指令集，QuICT已内置了相应的实现，例如USTCSet、GoogleSet、IBMQSet等。另一方面，QuICT也实现了诸多量子门转换算法，支持将任意量子门电路转换为当前指令集电路，即只含有指令集内量子门的电路。这部分在QCDA中会有更详细的展示。
+在 QuICT 中，我们构建了一个 InstructionSet 类用来存储一组量子指令集，其中包括量子门的种类和相关量子门转换算法。除了对自定义指令集的支持以外，针对当前行业内常见的量子指令集，QuICT已内置了相应的实现，例如USTCSet、GoogleSet、IBMQSet等。另一方面，QuICT也实现了诸多量子门转换算法，支持将任意量子门电路转换为当前指令集电路，即只含有指令集内量子门的电路。这部分在QCDA中会有更详细的展示。
 
 ``` python
 from QuICT.core.utils import GateType
 from QuICT.core.virtual_machine import InstructionSet
 from QuICT.core.virtual_machine.special_set import USTCSet
-
 
 single_qubit_gates = [GateType.h, GateType.rx, GateType.ry, GateType.rz]
 double_qubit_gate = GateType.cx

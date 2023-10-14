@@ -4,6 +4,7 @@
     - 离子阱量子物理机
     - 光学量子物理机
     - 核磁共振量子物理机
+    - ...
 
 目前量子物理机还处于初期发展阶段，受到当前技术和环境影响，量子物理机不可避免的需要面对诸多噪声和误差。QuICT 尝试通过分析量子物理机中的量子比特的特性、量子指令集和拓扑结构，来构造与真实量子物理机类似的噪声模型，从而进行基于量子物理机的仿真模拟。
 
@@ -123,7 +124,7 @@ nm = NoiseModel(quantum_machine_info=vqm)
 ```
 
 ### QCDA 电路自动优化
-在 QuICT 的 QCDA 架构中，已支持通过输入量子物理机模型和目标电路，将目标电路转换为当前量子物理机可执行的量子电路。
+在 QuICT 的 QCDA 架构中，已支持通过输入量子物理机模型和目标电路，一步式将目标电路转换为当前量子物理机可执行的量子电路。
 
 ``` python
 from QuICT.core import Circuit
@@ -137,4 +138,3 @@ circuit.random_append(20, random_params=True)
 qcda = QCDA()
 circuit_phy = qcda.auto_compile(circuit, OriginalKFC6130)
 ```
-
