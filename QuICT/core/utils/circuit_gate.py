@@ -39,6 +39,14 @@ class GateNode:
         return len(self.parent)
 
     def __init__(self, gate, qindex: list, parent: dict = None, children: dict = None):
+        """ The tree-style Node to store the quantum gate and its relationship in Quantum Circuit.
+
+        Args:
+            gate (BasicGate): The quantum gate.
+            qindex (list): The qubit indexes of gate.
+            parent (dict): The mapping of qubit index and its' previous GateNode.
+            children (dict): The mapping of qubit index and its' next GateNode.
+        """
         self._gate = gate
         self._qindex = qindex
         self._parent = parent if parent is not None else {}
@@ -56,32 +64,54 @@ class GateNode:
         return max([p.depth for p in self._parent])
 
     def get_parent(self, index):
+        """ Return the previous GateNode with given index.
+        
+        Args:
+            index (int): the qubit index.
+        """
         if index not in self._parent.keys():
             return None
         else:
             return self._parent[index]
 
     def del_parent(self, index):
+        """ Delete the previous GateNode with given index.
+        
+        Args:
+            index (int): the qubit index.
+        """
         if index in self._parent.keys():
             del self._parent[index]
 
     def get_child(self, index):
+        """ Return the next GateNode with given index.
+
+        Args:
+            index (int): the qubit index.
+        """
         if index not in self._children.keys():
             return None
         else:
             return self._children[index]
 
     def del_child(self, index):
+        """ Delete the next GateNode with given index.
+
+        Args:
+            index (int): the qubit index.
+        """
         if index in self._children.keys():
             del self._children[index]
 
     def assign_depth(self):
+        """ Assign the depth for current GateNode, it will get from max(parents_depth) + 1 or 1 if no parents. """
         if len(self._parent) == 0:
             self._layer = 1
         else:
             self._layer = max([p.depth for p in self._parent.values()]) + 1
 
     def assign_qidx(self, qubits_mapping):
+        """ Assign the qubit indexes for current GateNode. """
         self._qindex = [qubits_mapping[q] for q in self.indexes]
         _parent, _children = {}, {}
         for qidx, par in self._parent.items():
@@ -94,12 +124,25 @@ class GateNode:
         self._children = _children
 
     def assign_child(self, qidx, gate):
+        """ Assign the next GateNode with given qubit index and GateNode for current GateNode.
+
+        Args:
+            qidx (int): The qubit index.
+            gate (GateNode): The next GateNode.
+        """
         self._children[qidx] = gate
 
     def assign_parent(self, qidx, gate):
+        """ Assign the previous GateNode with given qubit index and GateNode for current GateNode.
+
+        Args:
+            qidx (int): The qubit index.
+            gate (GateNode): The next GateNode.
+        """
         self._parent[qidx] = gate
 
     def copy(self):
+        """ Copy the current GateNode. It will not copy the quantum gate in self. """
         _new = GateNode(
             self._gate, self._qindex.copy(),
             self._parent.copy(), self._children.copy()
@@ -110,23 +153,28 @@ class GateNode:
         return _new
 
     def hold(self):
+        """ The GateNode is hold. """
         self._hold = True
 
     def release(self):
+        """ Release the GateNode. """
         self._hold = False
 
 
 class CircuitGates:
     @property
     def gates(self) -> list:
+        """ Return the list of [GateNode, CompositeGate]. """
         return self._gates
 
     @property
     def size(self) -> int:
+        """ The number of Quantum Gate. """
         return self._size
 
     @property
     def qubits(self) -> list:
+        """ The list of qubit indexes, which is sorted. """
         return sorted(self._last_layer_gates.keys())
 
     @property
@@ -135,17 +183,21 @@ class CircuitGates:
 
     @property
     def width(self) -> int:
+        """ The number of qubit indexes. """
         return len(self._last_layer_gates.keys())
 
     @property
     def siq_gates_count(self) -> int:
+        """ The number of single-qubit quantum gate. """
         return self._siq_gates_count
 
     @property
     def biq_gates_count(self) -> int:
+        """ The number of 2-qubits quantum gates. """
         return self._biq_gates_count
 
     def gates_count_by_type(self, gate_type: GateType) -> int:
+        """ The number of quantum gate with target gate type. """
         return self._gate_type_count[gate_type]
 
     @property
@@ -170,6 +222,7 @@ class CircuitGates:
         self._gate_type_count = defaultdict(int)
 
     def reset(self):
+        """ Clean the gates in Circuit. """
         self._gates = []
         self._first_layer_gates = {}
         self._last_layer_gates = {}
@@ -177,6 +230,7 @@ class CircuitGates:
         self._initial_property()
 
     def copy(self):
+        """ Copy the quantum gates in current Circuit. """
         _new = CircuitGates()
         for gate in self._gates:
             _new._gates.append(gate.copy())
@@ -194,6 +248,12 @@ class CircuitGates:
         return _new
 
     def append(self, gate, qidxes: list):
+        """ Add a quantum gate to Circuit's gate mapping.
+        
+        Args:
+            gate (BasicGate): The quantum gate.
+            qidxes (list): The qubit indexes.
+        """
         # Update GateInfo
         self._analysis_gate(gate)
 
@@ -215,7 +275,12 @@ class CircuitGates:
         self._gates.append(curr_node)
 
     def extend(self, gates, qidxes: list):
-        """ Add a CompositeGate. """
+        """ Add a CompositeGate to Circuit's gate mapping.
+        
+        Args:
+            gates (CompositeGate): The CompositeGate.
+            qidxes (list): The qubit indexes.
+        """
         # Reassign the extend_gates
         cgate_copy = gates.copy()
         extend_gates: CircuitGates = cgate_copy._gates
@@ -240,6 +305,13 @@ class CircuitGates:
         self._gates.append(cgate_copy)
 
     def insert_gate(self, gate, qidxes: list, depth: int = -1):
+        """ Insert a BasicGate.
+
+        Args:
+            gate (BasicGate): The quantum gate.
+            qidxes (list): the qubit indexes
+            depth (int): the target depth.
+        """
         # Initial Node
         inode = GateNode(gate, qidxes)
 
@@ -274,6 +346,13 @@ class CircuitGates:
         self._gates.append(inode)
 
     def insert_cgate(self, gate, qidxes: list, depth: int = -1):
+        """ Insert a CompositeGate.
+
+        Args:
+            gate (CompositeGate): The quantum gate.
+            qidxes (list): the qubit indexes
+            depth (int): the target depth.
+        """
         # Initial CompositeGate
         gate_list: CircuitGates = gate._gates
         gate_list.reassign(qidxes)
@@ -314,6 +393,7 @@ class CircuitGates:
         self._gates.append(gate)
 
     def pop(self, index: int):
+        """ Pop the gate with target index. """
         pop_node = self._gates.pop(index)
 
         if isinstance(pop_node, GateNode):
@@ -388,6 +468,7 @@ class CircuitGates:
         pass
 
     def _analysis_gate(self, gate, minus: int = 1):
+        """ Update Circuit property by add/pop quantum gate. """
         # Gates count update
         self._size += minus
         if gate.controls + gate.targets == 1:
@@ -398,6 +479,7 @@ class CircuitGates:
         self._gate_type_count[gate.type] += minus
 
     def _analysis_compositegate(self, cgate, minus: int = 1):
+        """ Update Circuit property by add/pop CompositeGate. """
         self._size += cgate.size() * minus
         self._biq_gates_count += cgate.count_2qubit_gate() * minus
         self._siq_gates_count += cgate.count_1qubit_gate() * minus
@@ -407,8 +489,8 @@ class CircuitGates:
     def depth(self, indexes: list = None) -> Union[dict, int]:
         """ Return the depth of the circuit.
 
-        Returns:
-            list: The Depth for each qubits
+        Args:
+            indexes (list): The choiced qubit indexes, if not None, return the dict about qubit index and its depth.
         """
         if indexes is not None:
             ds = {}
@@ -422,6 +504,12 @@ class CircuitGates:
         return max(ds)
 
     def reassign(self, qubit_indexes: list, initial_depth: dict = None):
+        """ Reassign the qubit indexes and initial depth for current gate mapping.
+         
+        Args:
+            qubit_indexes (list): The target qubit indexes.
+            initial_depth (dict): The new initial depth.
+        """
         # Validation
         assert len(qubit_indexes) == len(self.qubits), \
             "Cannot reassign the CGate/Circuit into the wrong qubits' number."
@@ -462,6 +550,7 @@ class CircuitGates:
         self._last_layer_gates = _last_layer_gates
 
     def restore(self):
+        """ Restore the gate's mapping. """
         start_node = []
         for idx, node in self._first_layer_gates.items():
             node.del_parent(idx)
@@ -480,7 +569,16 @@ class CircuitGates:
         node_only: bool = False,
         reverse: bool = False,
         accumulate: bool = False
-    ):
+    ) -> list:
+        """ Return the List of GateNode or Gate sorted by the depth.
+
+        Args:
+            qubit_indexes (list): The target qubit indexes.
+            depth (int): The target depth, if not -1, only return the Gate with the target depth.
+            node_only (bool): Whether return the GateNode or (gate, qubit indexes).
+            reverse (bool): Whether sorted gates from left to right or right to left.
+            accumulate (bool): Whether keep all gates which has depth less/greater than target depth.        
+        """
         # Initial Depth
         update_node, max_depth = [], self.depth()
 
@@ -517,7 +615,7 @@ class CircuitGates:
                 break
 
             update_node = next_layer
-            curr_layer = curr_layer + 1 if not reverse else curr_layer + 1
+            curr_layer = curr_layer + 1 if not reverse else curr_layer - 1
             if curr_layer > max_depth or curr_layer < 0:
                 for node in update_node:
                     print(node)
@@ -545,9 +643,15 @@ class CircuitGates:
             start_node = next_layer
 
     def flatten(self):
+        """ Flatten the CompositeGate. """
         self._gates = self.tree_search(True)
 
     def decomposition(self, gates_only: bool = False):
+        """ Decomposition the Gates. 
+
+        Args:
+            gates_only (bool): Whether only return gates or change self.
+        """
         decomp_gates = []
         for node in self.tree_search(node_only=True):
             de_node = self._decomp_gate(node, gates_only)

@@ -87,28 +87,31 @@ class CircuitBased(object):
         return self._gates.decomposition(True)
 
     def flatten_gates(self) -> list:
-        """ Get the list of Quantum Gates with decompose the CompositeGate.
-
-        Returns:
-            List[BasicGate]: The list of BasicGate/Operator.
-        """
-
+        """ Get the list of Quantum Gates, flat all the CompositeGate in Circuit. """
         return [gate.copy() & qidx for gate, qidx in self._gates.tree_search()]
 
     def decomposition(self):
+        """ Decomposition the CompositeGate and BasicGate in current Circuit. """
         self._gates.decomposition()
 
     def flatten(self):
+        """ Flat all CompositeGate in current Circuit. """
         self._gates.flatten()
 
-    def get_target_gates(self, qubits: list, depth: int):
+    def get_target_gates(self, qubits: list, depth: int) -> list:
+        """ Get the list of Quantum Gates in target qubits and depth.
+
+        Args:
+            qubits (list): The target qubit indexes.
+            depth (int): The target depth.
+        """
         return self._gates.tree_search(qubits, depth)
 
     def pop(self, index: int = -1):
         """ Pop the BasicGate/Operator/CompositeGate from current Quantum Circuit.
 
         Args:
-            index (int, optional): The target index. Defaults to 0.
+            index (int, optional): The target gate's index. Defaults to 0.
         """
         if index < 0:
             index = self.gate_length() + index
@@ -117,12 +120,12 @@ class CircuitBased(object):
         return self._gates.pop(index)
 
     def insert(self, gate, qubits: list = None, depth: int = -1):
-        """ Insert a Quantum Gate into current CompositeGate.
+        """ Insert a Quantum Gate into current Circuit.
 
         Args:
             gate (Union[BasicGate, CompositeGate]): The quantum gate want to insert
-            qubits (list[int]):
-            depth (int): The index of insert position
+            qubits (list[int]): The target qubit indexes.
+            depth (int): The index of insert position.
         """
         if qubits is None:
             qubits = gate.qubits if type(gate).__name__ == "CompositeGate" else gate.cargs + gate.targs
@@ -146,7 +149,7 @@ class CircuitBased(object):
     ############           Circuit's Properties             ############
     ####################################################################
     def size(self) -> int:
-        """ the number of gates in the circuit/CompositeGate, the operators are not count.
+        """ the number of BasicGate/Operator in the Circuit.
 
         Returns:
             int: the number of gates in circuit
@@ -154,6 +157,7 @@ class CircuitBased(object):
         return self._gates.size
 
     def gate_length(self) -> int:
+        """ The number of CompositeGate and BasicGate in Circuit. """
         return self._gates.length
 
     def width(self):
@@ -231,6 +235,11 @@ class CircuitBased(object):
     ############           Circuit's Utilities              ############
     ####################################################################
     def _qubit_indexes_validation(self, indexes: list):
+        """ Validate the qubit indexes.
+
+        Args:
+            indexes (list): The given qubit indexes.
+        """
         # Indexes' type check
         if not isinstance(indexes, list):
             raise TypeError(
