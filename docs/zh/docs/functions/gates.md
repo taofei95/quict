@@ -174,7 +174,19 @@ q_4: |0>─┤ u1(1) ├─┤ u1(1) ├───────────
 lgate = cg1.pop()       # Pop the last BasicGate in current CompositeGate
 cg1.insert(H & 0, 1)    # Insert H gate with qubit index 0 into CompositeGate at position 1.
 ```
-#TODO：add graph after modify
+```python
+          ┌───┐  ┌─────────┐
+q_0: |0>──┤ h ├──┤ u2(1,0) ├
+          ├───┤  └─────────┘
+q_1: |0>──┤ h ├───────■─────
+          └───┘       │     
+q_2: |0>──────────────┼─────
+                    ┌─┴──┐  
+q_3: |0>────────────┤ cx ├──
+        ┌───────┐   └────┘  
+q_4: |0>┤ u1(1) ├───────────
+        └───────┘           
+```
 
 在 QuICT 中，我们内置了一些常见的组合量子门，例如： QFT 、多控 Toffoli 门、 CCRz 等量子门组合。
 
@@ -206,7 +218,7 @@ q_2: |0>───────────────■────────
 cg1.size()      # The number of Quantum Gates in current CompositeGate
 cg1.depth()     # The depth of current CompositeGate
 cg1.width()     # The number of qubits in current CompositeGate
-cg1.qubits()    # The qubits indexes of current CompositeGate
+cg1.qubits      # The qubits indexes of current CompositeGate
 ```
 ``` python
 7 4 4 [0, 1, 3, 4]

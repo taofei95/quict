@@ -125,5 +125,5 @@ circuit.sub_circuit(        # 提取部分电路
     gate_number,    # 子电路门数
     target_qubits,  # 子电路比特位
     target_gates    # 子电路量子门种类
-)       
+)
 ```

@@ -48,6 +48,10 @@ qureg = Qureg(3)
 coupling_strength = [(0, 1, 0.893), (1, 2, 0.993)]  # (start_qubit, end_qubit, fidelity)
 qureg.set_coupling_strength(coupling_strength)
 ```
+```python
+# Qubit infomation
+qubit id: ea3d71b19c754c8785662c5bbbf278f4; fidelity: (0.995, 0.989); QSP_fidelity: 0.976; Gate_fidelity: {<GateType.rx: 'Rx gate'>: 0.991, <GateType.ry: 'Ry gate'>: 0.992, <GateType.rz: 'Rz gate'>: 0.989}; Coherence time: T1: 4.68; T2: 0.0; Work Frequency: 5.68; Readout Frequency: 0.0; Gate Duration: 0.0
+```
 
 
 ## 量子比特测量
@@ -71,7 +75,7 @@ Measure | circuit           # 将测量门放置在所有量子比特上
 # 量子电路模拟
 sim = StateVectorSimulator()
 sv = sim.run(circuit)
-print(int(circuit.qubits))  # 展示所有比特的测量结果
+print(int(circuit.qubits))  # 展示量子比特的最终测量结果
 ```
 
 

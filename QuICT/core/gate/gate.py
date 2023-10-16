@@ -1221,7 +1221,7 @@ Single-Qubit Sqrt-W Gate.
 $$
 SW = \begin{bmatrix}
 \frac{1}{\sqrt(2)} & -\sqrt(\frac{i}{2}) \\
-\sqrt{-i/2}, \frac{1}{\sqrt(2)} \\
+\sqrt{-i/2} & \frac{1}{\sqrt(2)} \\
 \end{bmatrix}
 $$
 
@@ -1315,7 +1315,7 @@ Single-Qubit Rotation Gate about X and Z axis.
 [Matrix Representation]
 
 $$
-U2(\sigma, \lambda) = \frac{1}{\sqrt(2)}
+U2(\sigma, \lambda) = \frac{1}{\sqrt{2}}
 \begin{bmatrix}
 1 & -e^{i*\lambda} \\
 e^{i*\sigma} & e^{i*(\lambda + \sigma)} \\
@@ -1382,7 +1382,7 @@ Single-Qubit Rotation Gate, which apply an $\lambda$ rotation about X axis.
 $$
 Rx(\lambda) = \begin{bmatrix}
 cos(\frac{\lambda}{2}) & -i*sin(\frac{\lambda}{2}) \\
-i*sin(\frac{\lambda}{2} & cos(\frac{\lambda}{2}) \\
+i*sin(\frac{\lambda}{2}) & cos(\frac{\lambda}{2}) \\
 \end{bmatrix}
 $$
 
@@ -1412,8 +1412,8 @@ Single-Qubit Rotation Gate, which apply an $\lambda$ rotation about Y axis.
 
 $$
 Ry(\lambda) = \begin{bmatrix}
-cos(\frac{\lambda}{2} & -sin(\frac{\lambda}{2} \\ 
-sin(\frac{\lambda}{2} & cos(\frac{\lambda}{2} \\
+cos(\frac{\lambda}{2}) & -sin(\frac{\lambda}{2}) \\ 
+sin(\frac{\lambda}{2}) & cos(\frac{\lambda}{2}) \\
 \end{bmatrix}
 $$
 
@@ -1477,7 +1477,7 @@ Single-Qubit T Gate, which produce a $\frac{pi}{4}$ phase. Its matrix equals $Rz
 $$
 T = \begin{bmatrix}
 1 & 0 \\ 
-0 & \frac{1}{\sqrt(2)} + \frac{i}{\sqrt(2)} \\
+0 & \frac{1}{\sqrt{2}} + \frac{i}{\sqrt{2}} \\
 \end{bmatrix}
 $$
 
@@ -1505,10 +1505,11 @@ r"""
 Single-Qubit T Dagger Gate, which produce a -pi/4 phase.
 
 [Matrix Representation]
+
 $$
 T = \begin{bmatrix}
 1 & 0 \\ 
-0 & \frac{1}{\sqrt(2)} - \frac{i}{\sqrt(2)} \\
+0 & \frac{1}{\sqrt{2}} - \frac{i}{\sqrt{2}} \\
 \end{bmatrix}
 $$
 
@@ -1536,6 +1537,7 @@ r"""
 Single-Qubit Rotation Gate about Z axis.
 
 [Matrix Representation]
+
 $$
 Phase(\lambda) = \begin{bmatrix}
 1 & 0 \\
@@ -1567,6 +1569,7 @@ r"""
 Single-Qubit Rotation Gate about Z axis.
 
 [Matrix Representation]
+
 $$
 GPhase(\lambda) = \begin{bmatrix}
 e^{i*\lambda} & 0 \\ 
@@ -1598,6 +1601,7 @@ r"""
 Controlled Z Gate.
 
 [Matrix Representation]
+
 $$
 CZ_{q0,q1} = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
@@ -1633,6 +1637,7 @@ r"""
 Controlled X Gate.
 
 [Matrix Representation]
+
 $$
 CX_{q0,q1} = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
@@ -1668,6 +1673,7 @@ r"""
 Controlled Y Gate.
 
 [Matrix Representation]
+
 $$
 CY_{q0,q1} = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
@@ -1703,12 +1709,13 @@ r"""
 Controlled H Gate.
 
 [Matrix Representation]
+
 $$
 CH_{q0,q1} = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
 0 & 1 & 0 & 0 \\
-0 & 0 & \frac{1}{sqrt(2)} & \frac{1}{sqrt(2)} \\
-0 & 0 & \frac{1}{sqrt(2)} & \frac{-1}{sqrt(2)} \\
+0 & 0 & \frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \\
+0 & 0 & \frac{1}{\sqrt{2}} & \frac{-1}{\sqrt{2}} \\
 \end{bmatrix}
 $$
 
@@ -1738,6 +1745,7 @@ r"""
 Controlled Ry Gate.
 
 [Matrix Representation]
+
 $$
 CRy_{q0,q1}(\lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
@@ -1773,6 +1781,7 @@ r"""
 Controlled Rz Gate.
 
 [Matrix Representation]
+
 $$
 CRz_{q0,q1}(\lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\
@@ -1808,6 +1817,7 @@ r"""
 Controlled U1 Gate.
 
 [Matrix Representation]
+
 $$
 CU1_{q0,q1}(\lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\
@@ -1843,6 +1853,7 @@ r"""
 Controlled U3 Gate.
 
 [Matrix Representation]
+
 $$
 CU3_{q0,q1}(\theta, \sigma, \lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\
@@ -1878,6 +1889,7 @@ r"""
 Fermions Simulation Quantum Gate.
 
 [Matrix Representation]
+
 $$
 FSim_{q0,q1}(\sigma, \lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
@@ -1910,9 +1922,10 @@ fsim(pi, 0) q[0], q[1]
 
 Rxx = BasicGate(*GATEINFO_MAP[GateType.rxx], is_original_gate=True)
 r"""
-Double-Qubits X /tensor X Gate.
+Double-Qubits X $\otimes$ X Gate.
 
 [Matrix Representation]
+
 $$
 Rxx_{q0,q1}(\lambda) = \begin{bmatrix}
 cos(\frac{\lambda}{2}) & 0 & 0 & -i*sin(\frac{\lambda}{2}) \\  
@@ -1945,9 +1958,10 @@ rxx(pi) q[0], q[1]
 
 Ryy = BasicGate(*GATEINFO_MAP[GateType.ryy], is_original_gate=True)
 r"""
-Double-Qubits Y /tensor Y Gate.
+Double-Qubits Y $\otimes$ Y Gate.
 
 [Matrix Representation]
+
 $$
 Ryy_{q0,q1}(\lambda) = \begin{bmatrix}
 cos(\frac{\lambda}{2}) & 0 & 0 & i*sin(\frac{\lambda}{2}) \\
@@ -1980,9 +1994,10 @@ ryy(pi) q[0], q[1]
 
 Rzz = BasicGate(*GATEINFO_MAP[GateType.rzz], is_original_gate=True)
 r"""
-Double-Qubits Z /tensor Z Gate.
+Double-Qubits Z $\otimes$ Z Gate.
 
 [Matrix Representation]
+
 $$
 Rzz_{q0,q1}(\lambda) = \begin{bmatrix}
 e^{\frac{-i*\lambda}{2}} & 0 & 0 & 0 \\ 
@@ -2015,9 +2030,10 @@ rzz(pi) q[0], q[1]
 
 Rzx = BasicGate(*GATEINFO_MAP[GateType.rzx], is_original_gate=True)
 r"""
-Double-Qubits Z /tensor X Gate.
+Double-Qubits Z $\otimes$ X Gate.
 
 [Matrix Representation]
+
 $$
 Rzx_{q0,q1}(\lambda) = \begin{bmatrix}
 cos(\frac{\lambda}{2}) & -i*sin(\frac{\lambda}{2}) & 0 & 0 \\ 
@@ -2122,6 +2138,7 @@ r"""
 Swap Gate.
 
 [Matrix Representation]
+
 $$
 Swap_{q0,q1} = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
@@ -2156,6 +2173,7 @@ r"""
 iSwap Gate, a double-qubit XX + YY Gate.
 
 [Matrix Representation]
+
 $$
 iSwap_{q0,q1} = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
@@ -2190,8 +2208,9 @@ r"""
 iSwap Dagger Gate.
 
 [Matrix Representation]
+
 $$
-iSwap_dagger_{q0,q1} = \begin{bmatrix}
+iSwap\_dagger_{q0,q1} = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
 0 & 0 & -i & 0 \\ 
 0 & -i & 0 & 0 \\ 
@@ -2224,6 +2243,7 @@ r"""
 Swap Gate.
 
 [Matrix Representation]
+
 $$
 sqiSwap_{q0,q1} = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
@@ -2258,6 +2278,7 @@ r"""
 Double-Qubit Controlled X Gate, CCX Gate.
 
 [Matrix Representation]
+
 $$
 CCX_{q0,q1,q2} = \begin{bmatrix}
 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
@@ -2300,6 +2321,7 @@ r"""
 Double-Qubit Controlled Z Gate, CCZ Gate.
 
 [Matrix Representation]
+
 $$
 CCZ_{q0,q1,q2} = \begin{bmatrix}
 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
@@ -2342,6 +2364,7 @@ r"""
 Double-Qubit Controlled Rz Gate, CCRz Gate.
 
 [Matrix Representation]
+
 $$
 CCRz_{q0,q1,q2}(\lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
@@ -2384,6 +2407,7 @@ r"""
 Controlled Swap Gate.
 
 [Matrix Representation]
+
 $$
 CSwap_{q0,q1,q2} = \begin{bmatrix}
 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
