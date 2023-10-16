@@ -954,7 +954,7 @@ H & 0 | circuit
 [Graph Representation]
 ```python
       ┌───┐
-q0: ──┤ H ├──
+q0: ──┤ h ├──
       └───┘
 ```
 
@@ -986,7 +986,7 @@ Hy & 0 | circuit
 [Graph Representation]
 ```python
       ┌────┐
-q0: ──┤ Hy ├──
+q0: ──┤ hy ├──
       └────┘
 ```
 
@@ -1018,7 +1018,7 @@ S & 0 | circuit
 [Graph Representation]
 ```
       ┌───┐
-q0: ──┤ S ├──
+q0: ──┤ s ├──
       └───┘
 ```
 
@@ -1050,7 +1050,7 @@ S_dagger & 0 | circuit
 [Graph Representation]
 ```
       ┌─────┐
-q0: ──┤ Sdg ├──
+q0: ──┤ sdg ├──
       └─────┘
 ```
 
@@ -1082,7 +1082,7 @@ X & 0 | circuit
 [Graph Representation]
 ```python
        ┌───┐
-     ──┤ X ├──
+     ──┤ x ├──
        └───┘
 ```
 
@@ -1114,7 +1114,7 @@ Y & 0 | circuit
 [Graph Representation]
 ```python
       ┌───┐
-q0: ──┤ Y ├──
+q0: ──┤ y ├──
       └───┘
 ```
 
@@ -1146,7 +1146,7 @@ Z & 0 | circuit
 [Graph Representation]
 ```python
       ┌───┐
-q0: ──┤ Z ├──
+q0: ──┤ z ├──
       └───┘
 ```
 
@@ -1178,7 +1178,7 @@ SX & 0 | circuit
 [Graph Representation]
 ```python
       ┌────┐
-q0: ──┤ SX ├──
+q0: ──┤ sx ├──
       └────┘
 ```
 
@@ -1210,7 +1210,7 @@ SY & 0 | circuit
 [Graph Representation]
 ```python
       ┌────┐
-q0: ──┤ SY ├──
+q0: ──┤ sy ├──
       └────┘
 ```
 
@@ -1242,7 +1242,7 @@ SW & 0 | circuit
 [Graph Representation]
 ```python
       ┌────┐
-q0: ──┤ SW ├──
+q0: ──┤ sw ├──
       └────┘
 ```
 
@@ -1274,7 +1274,7 @@ ID & 0 | circuit
 [Graph Representation]
 ```python
       ┌────┐
-q0: ──┤ ID ├──
+q0: ──┤ id ├──
       └────┘
 ```
 
@@ -1306,7 +1306,7 @@ U1(pi) & 0 | circuit
 [Graph Representation]
 ```python
       ┌────────┐
-q0: ──┤ U1(pi) ├──
+q0: ──┤ u1(pi) ├──
       └────────┘
 ```
 
@@ -1339,7 +1339,7 @@ U2(0, pi) & 0 | circuit
 [Graph Representation]
 ```python
       ┌───────────┐
-q0: ──┤ U2(0, pi) ├──
+q0: ──┤ u2(0, pi) ├──
       └───────────┘
 ```
 
@@ -1371,7 +1371,7 @@ U3(0, pi, 1) & 0 | circuit
 [Graph Representation]
 ```python
       ┌──────────────┐
-q0: ──┤ U3(0, pi, 1) ├──
+q0: ──┤ u3(0, pi, 1) ├──
       └──────────────┘
 ```
 
@@ -1403,7 +1403,7 @@ Rx(pi) & 0 | circuit
 [Graph Representation]
 ```python
       ┌────────┐
-q0: ──┤ Rx(pi) ├──
+q0: ──┤ rx(pi) ├──
       └────────┘
 ```
 
@@ -1434,7 +1434,7 @@ Ry(pi) & 0 | circuit
 [Graph Representation]
 ```python
       ┌────────┐
-q0: ──┤ Ry(pi) ├──
+q0: ──┤ ry(pi) ├──
       └────────┘
 ```
 
@@ -1466,7 +1466,7 @@ Rz(pi) & 0 | circuit
 [Graph Representation]
 ```python
       ┌────────┐
-q0: ──┤ Rz(pi) ├──
+q0: ──┤ rz(pi) ├──
       └────────┘
 ```
 
@@ -1498,7 +1498,7 @@ T & 0 | circuit
 [Graph Representation]
 ```python
       ┌───┐
-q0: ──┤ T ├──
+q0: ──┤ t ├──
       └───┘
 ```
 
@@ -1530,7 +1530,7 @@ T_dagger & 0 | circuit
 [Graph Representation]
 ```python
       ┌─────┐
-q0: ──┤ Tdg ├──
+q0: ──┤ tdg ├──
       └─────┘
 ```
 
@@ -1629,14 +1629,14 @@ CZ & [0, 1] | circuit
 ```python
     q0:  ────■────
              |
-           ┌───┐
-    q1:  ──┤ Z ├──
-           └───┘
+           ┌────┐
+    q1:  ──┤ cz ├──
+           └────┘
 ```
 
 [QASM Representation]
 ```
-CZ q[0], q[1]
+cz q[0], q[1]
 ```
 """
 
@@ -1665,14 +1665,14 @@ CX & [0, 1] | circuit
 ```python
     q0:  ────■────
              |
-           ┌───┐
-    q1:  ──┤ Z ├──
-           └───┘
+           ┌────┐
+    q1:  ──┤ cx ├──
+           └────┘
 ```
 
 [QASM Representation]
 ```
-CX q[0], q[1]
+cx q[0], q[1]
 ```
 """
 
@@ -1701,14 +1701,14 @@ CY & [0, 1] | circuit
 ```python
     q0:  ────■────
              |
-           ┌───┐
-    q1:  ──┤ Y ├──
-           └───┘
+           ┌────┐
+    q1:  ──┤ cy ├──
+           └────┘
 ```
 
 [QASM Representation]
 ```
-CY q[0], q[1]
+cy q[0], q[1]
 ```
 """
 
@@ -1737,14 +1737,14 @@ CH & [0, 1] | circuit
 ```python
     q0:  ────■────
              |
-           ┌───┐
-    q1:  ──┤ H ├──
-           └───┘
+           ┌────┐
+    q1:  ──┤ ch ├──
+           └────┘
 ```
 
 [QASM Representation]
 ```
-CH q[0], q[1]
+ch q[0], q[1]
 ```
 """
 
@@ -1771,11 +1771,11 @@ CRy(pi) & [0, 1] | circuit
 
 [Graph Representation]
 ```python
-    q0:  ──────■───────
-               |
-           ┌────────┐
-    q1:  ──┤ Ry(pi) ├──
-           └────────┘
+    q0:  ─────■─────
+              |
+           ┌─────┐
+    q1:  ──┤ cry ├──
+           └─────┘
 ```
 
 [QASM Representation]
@@ -1807,11 +1807,11 @@ CRz(pi) & [0, 1] | circuit
 
 [Graph Representation]
 ```python
-    q0:  ──────■───────
-               |
-           ┌────────┐
-    q1:  ──┤ Rz(pi) ├──
-           └────────┘
+    q0:  ─────■─────
+              |
+           ┌─────┐
+    q1:  ──┤ crz ├──
+           └─────┘
 ```
 
 [QASM Representation]
@@ -1843,11 +1843,11 @@ CU1(pi) & [0, 1] | circuit
 
 [Graph Representation]
 ```python
-    q0:  ──────■───────
-               |
-           ┌────────┐
-    q1:  ──┤ U1(pi) ├──
-           └────────┘
+    q0:  ─────■─────
+              |
+           ┌─────┐
+    q1:  ──┤ cu1 ├──
+           └─────┘
 ```
 
 [QASM Representation]
@@ -1879,11 +1879,11 @@ CU3(pi, 0, 1) & [0, 1] | circuit
 
 [Graph Representation]
 ```python
-    q0:  ─────────■──────────
-                  |
-           ┌──────────────┐
-    q1:  ──┤ U3(pi, 0, 1) ├──
-           └──────────────┘
+    q0:  ─────■─────
+              |
+           ┌─────┐
+    q1:  ──┤ cu3 ├──
+           └─────┘
 ```
 
 [QASM Representation]
@@ -1953,7 +1953,7 @@ Rxx(pi) & [0, 1] | circuit
 ```python
            ┌───────────┐
     q0:  ──┤0          ├──
-           |  Rxx(pi)  |
+           |  rxx(pi)  |
     q1:  ──┤1          ├──
            └───────────┘
 ```
@@ -1989,7 +1989,7 @@ Ryy(pi) & [0, 1] | circuit
 ```python
            ┌───────────┐
     q0:  ──┤0          ├──
-           |  Ryy(pi)  |
+           |  ryy(pi)  |
     q1:  ──┤1          ├──
            └───────────┘
 ```
@@ -2025,7 +2025,7 @@ Rzz(pi) & [0, 1] | circuit
 ```python
            ┌───────────┐
     q0:  ──┤0          ├──
-           |  Rzz(pi)  |
+           |  rzz(pi)  |
     q1:  ──┤1          ├──
            └───────────┘
 ```
@@ -2061,7 +2061,7 @@ Rzx(pi) & [0, 1] | circuit
 ```python
            ┌───────────┐
     q0:  ──┤0          ├──
-           |  Rzx(pi)  |
+           |  rzx(pi)  |
     q1:  ──┤1          ├──
            └───────────┘
 ```
@@ -2107,9 +2107,7 @@ Reset & 0 | circuit
 
 [Graph Representation]
 ```python
-      ┌───┐
-    ──┤ R ├──
-      └───┘
+    ──┤0>──
 ```
 
 [QASM Representation]
@@ -2198,9 +2196,11 @@ iSwap & [0, 1] | circuit
 
 [Graph Representation]
 ```python
-    q0:  ─────X─────
-              |
-    q1:  ─────X─────
+           ┌───────────┐
+    q0:  ──┤0          ├──
+           |   iswap   |
+    q1:  ──┤1          ├──
+           └───────────┘
 ```
 
 [QASM Representation]
@@ -2232,9 +2232,11 @@ iSwap_dagger & [0, 1] | circuit
 
 [Graph Representation]
 ```python
-    q0:  ─────X─────
-              |
-    q1:  ─────X─────
+           ┌───────────┐
+    q0:  ──┤0          ├──
+           |  iswapdg  |
+    q1:  ──┤1          ├──
+           └───────────┘
 ```
 
 [QASM Representation]
@@ -2266,9 +2268,11 @@ sqiSwap & [0, 1] | circuit
 
 [Graph Representation]
 ```python
-    q0:  ─────X─────
-              |
-    q1:  ─────X─────
+           ┌───────────┐
+    q0:  ──┤0          ├──
+           |  sqiswap  |
+    q1:  ──┤1          ├──
+           └───────────┘
 ```
 
 [QASM Representation]
@@ -2304,14 +2308,14 @@ CCX & [0, 1, 2] | circuit
 
 [Graph Representation]
 ```python
-    q0:  ────■────
-             |
-             |
-    q1:  ────■────
-             |
-           ┌───┐
-    q2:  ──┤ X ├──
-           └───┘
+    q0:  ─────■─────
+              |
+              |
+    q1:  ─────■─────
+              |
+           ┌─────┐
+    q2:  ──┤ ccx ├──
+           └─────┘
 ```
 
 [QASM Representation]
@@ -2347,14 +2351,14 @@ CCZ & [0, 1, 2] | circuit
 
 [Graph Representation]
 ```python
-    q0:  ────■────
-             |
-             |
-    q1:  ────■────
-             |
-           ┌───┐
-    q2:  ──┤ Z ├──
-           └───┘
+    q0:  ─────■─────
+              |
+              |
+    q1:  ─────■─────
+              |
+           ┌─────┐
+    q2:  ──┤ ccz ├──
+           └─────┘
 ```
 
 [QASM Representation]
@@ -2390,14 +2394,14 @@ CCRz(pi) & [0, 1, 2] | circuit
 
 [Graph Representation]
 ```python
-    q0:  ──────■───────
-               |
-               |
-    q1:  ──────■───────
-               |
-           ┌────────┐
-    q2:  ──┤ Rz(pi) ├──
-           └────────┘
+    q0:  ─────■──────
+              |
+              |
+    q1:  ─────■──────
+              |
+           ┌──────┐
+    q2:  ──┤ ccrz ├──
+           └──────┘
 ```
 
 [QASM Representation]
@@ -2433,13 +2437,13 @@ CSwap & [0, 1, 2] | circuit
 
 [Graph Representation]
 ```python
-    q0:  ──────■───────
+    q0:  ──────■──────
                |
                |
-    q1:  ──────X───────
+    q1:  ──────X──────
                |
                |
-    q2:  ──────X───────
+    q2:  ──────X──────
 ```
 
 [QASM Representation]
