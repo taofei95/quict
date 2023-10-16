@@ -285,6 +285,7 @@ class Circuit(CircuitBased):
 
             position = -1
         else:
+            gates = gates.copy()
             position = self.find_position(gates.checkpoint)
 
         if position == -1:

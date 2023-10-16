@@ -216,7 +216,7 @@ class CompositeGate(CircuitBased):
         else:
             gate_qidxes = gates.qubits
 
-        self._gates.append((gates, gate_qidxes, gates.size()))
+        self._gates.append((gates.copy(), gate_qidxes, gates.size()))
         self._update_qubit_limit(gate_qidxes)
         self._pointer = None
 
