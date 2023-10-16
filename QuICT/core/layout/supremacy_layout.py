@@ -1,4 +1,4 @@
-from typing import DefaultDict
+from collections import defaultdict
 import numpy as np
 
 from QuICT.core.layout import Layout
@@ -36,7 +36,7 @@ class SupremacyLayout(Layout):
 
     def _add_supremacy_edge(self):
         row, col = self.qubit_table.shape
-        self._pattern_edge = DefaultDict(list)
+        self._pattern_edge = defaultdict(list)
 
         for i in range(1, row, 2):
             for j in range(col):

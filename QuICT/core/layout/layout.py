@@ -7,6 +7,7 @@
 from __future__ import annotations
 from itertools import combinations
 from math import log2
+from numpy import int32, int64
 
 import json
 import warnings
@@ -29,7 +30,8 @@ class LayoutEdge:
 
     @u.setter
     def u(self, u):
-        warnings.warn("In general, the LayoutEdge shouldn't be written.")
+        warnings.warn("In general, the LayoutEdge shouldn't be re-write.")
+        assert u != self._v, "Endpoints cannot be same."
         self._u = u
 
     @property
@@ -38,7 +40,8 @@ class LayoutEdge:
 
     @v.setter
     def v(self, v):
-        warnings.warn("In general, the LayoutEdge shouldn't be written.")
+        warnings.warn("In general, the LayoutEdge shouldn't be re-write.")
+        assert v != self._u, "Endpoints cannot be same."
         self._v = v
 
     @property
@@ -109,6 +112,7 @@ class Layout:
             qubit_number(int): the number of qubits
             name(string): the name of the topology
         """
+        assert qubit_number >= 2, "qubits number should greater than 1"
         self._qubit_number = qubit_number
         self._name = name
         self._edges: Dict[Tuple[int, int], LayoutEdge] = {}
@@ -144,7 +148,7 @@ class Layout:
         layout = Layout(self._qubit_number, self._name)
         for edge in self:
             if edge.directional:
-                layout.add_edge(edge)
+                layout.add_edge(u=edge.u, v=edge.v)
             else:
                 layout.add_edge(
                     u=edge.u, v=edge.v, directional=True, error_rate=edge.error_rate
@@ -170,6 +174,13 @@ class Layout:
             error_rate(float): Error rate, default 1.0
         """
         assert u != v, "Endpoints cannot be the same"
+        assert isinstance(u, (int, int32, int64)) and isinstance(v, (int, int32, int64)), \
+            "Endpoints should be integer."
+        assert (u >= 0 and u < self._qubit_number) and (u >= 0 and u < self._qubit_number), \
+            f"Endpoints should between [0, {self._qubit_number})"
+        if self.check_edge(u, v):
+            return
+
         edge = LayoutEdge(u, v, directional, error_rate)
         key = (u, v) if directional or u < v else (v, u)
         self._edges[key] = edge
@@ -264,66 +275,56 @@ class Layout:
         with open(file_path) as f:
             return cls.from_json(f.read())
 
-    def get_sublayout_edges(self, qubits: list) -> list:
-        connected_qubits = [qubits[0]]
-        connected_edges = []
-        for qubit in qubits:
-            edges = self.out_edges(qubit)
-            for edge in edges:
-                if edge.v in qubits:
-                    if edge.v not in connected_qubits:
-                        connected_qubits.append(edge.v)
+    def get_sublayout_edges(self, qubits: list) -> List[LayoutEdge]:
+        """ Get list of edges with target qubits from current Layout.
 
-                    target_edge = set([edge.u, edge.v])
-                    if target_edge not in connected_edges:
-                        connected_edges.append(target_edge)
+        Args:
+            qubits (list): The target qubits
 
-        if len(connected_qubits) == len(qubits):
-            return connected_edges
-        else:
-            return []
+        Returns:
+            list: The list of LayoutEdge
+        """
+        # Validate qubits:
+        for q in qubits:
+            assert isinstance(q, int), "The qubit index should be integer."
+            assert q >= 0 and q < self._qubit_number, f"The qubit index should between [0, {self._qubit_number})"
 
-    def sub_layout(self, qubits_number: int):
+        sub_edges = []
+        for ledge in self._edges.values():
+            if ledge.v not in qubits or ledge.u not in qubits:
+                continue
+
+            sub_edges.append(ledge)
+
+        return sub_edges
+
+    def sub_layout(self, qubits: list) -> Layout:
         """ Get partial layout. Only working for undirectional layout.
 
         Args:
-            qubits_number (int): The number of qubits for sub-layout
+            qubits_number (list): The qubit indexes for sub-layout
 
         Returns:
             Layout: The sub-layout
         """
-        assert qubits_number < self.qubit_number
+        assert len(qubits) == len(set(qubits)), "Repeatted qubit indexes."
+        for q in qubits:
+            assert q >= 0 and q < self._qubit_number, "The qubit index should in current Layout."
 
-        qubits_list = list(range(self.qubit_number))
-        all_combined = list(combinations(qubits_list, qubits_number))
-        num_edges_subl, edges_subl = [], []
-        for q_comb in all_combined:
-            edges_sl = self.get_sublayout_edges(q_comb)
-            num_edges_subl.append(len(edges_sl))
-            edges_subl.append(edges_sl)
+        sub_layout = Layout(len(qubits))
+        sorted_qidx = sorted(qubits)
+        for edge in self._edges.values():
+            if edge.u not in qubits or edge.v not in qubits:
+                continue
 
-        max_value = max(num_edges_subl)
-        if max_value <= 0:
-            raise ValueError("Failure to find sub-layout.")
-
-        max_idx = num_edges_subl.index(max_value)
-        sub_layout = self._get_layout(all_combined[max_idx], edges_subl[max_idx])
-
-        return sub_layout
-
-    def _get_layout(self, related_qubits: list, edges: list) -> Layout:
-        sub_layout = Layout(len(related_qubits))
-        index_mapping = {}
-        for idx, q in enumerate(related_qubits):
-            index_mapping[q] = idx
-
-        for u, v in edges:
-            sub_layout.add_edge(index_mapping[u], index_mapping[v], directional=False)
+            sub_layout.add_edge(
+                sorted_qidx.index(edge.u), sorted_qidx.index(edge.v), edge.directional, edge.error_rate
+            )
 
         return sub_layout
 
     @staticmethod
-    def linear_layout(qubit_number: int, directional: bool = DIRECTIONAL_DEFAULT, error_rate: list = []):
+    def linear_layout(qubit_number: int, directional: bool = DIRECTIONAL_DEFAULT, error_rate: list = None):
         """ Get Linearly Topology.
 
         Args:
@@ -334,8 +335,9 @@ class Layout:
         Returns:
             Layout: The layout with linearly topology
         """
+        assert qubit_number >= 2, "qubits number should greater than 1"
         linear_layout = Layout(qubit_number)
-        if len(error_rate) == 0:
+        if error_rate is None:
             error_rate = [1.0] * (qubit_number - 1)
 
         assert len(error_rate) == (qubit_number - 1)
@@ -350,7 +352,7 @@ class Layout:
         width: int = None,
         unreachable_nodes: list = [],
         directional: bool = DIRECTIONAL_DEFAULT,
-        error_rate: list = []
+        error_rate: list = None
     ):
         """ Get Grid Structure Topology.
 
@@ -366,9 +368,11 @@ class Layout:
         Returns:
             Layout: The layout with grid topology
         """
+        assert qubit_number >= 2, "qubits number should greater than 1"
         grid_layout = Layout(qubit_number)
         exist_unreachable_nodes = len(unreachable_nodes) != 0
         grid_width = int(log2(qubit_number)) if width is None else width
+        error_rate = [1] * (qubit_number * 4) if error_rate is None else error_rate
         edge_idx = 0
         for s in range(0, qubit_number - 1):
             horizontal_exist, vertical_exist = True, True
@@ -383,15 +387,14 @@ class Layout:
                 if vv in unreachable_nodes:
                     vertical_exist = False
 
-            curr_error = error_rate[edge_idx] if len(error_rate) != 0 else 1.0
             # horizontal line draw
             if hv % grid_width != 0 and horizontal_exist:
-                grid_layout.add_edge(u, hv, directional, curr_error)
+                grid_layout.add_edge(u, hv, directional, error_rate[edge_idx])
                 edge_idx += 1
 
             # vertical line draw
             if vv < qubit_number and vertical_exist:
-                grid_layout.add_edge(u, vv, directional, curr_error)
+                grid_layout.add_edge(u, vv, directional, error_rate[edge_idx])
                 edge_idx += 1
 
         return grid_layout
@@ -402,7 +405,7 @@ class Layout:
         width: int = None,
         unreachable_nodes: list = [],
         directional: bool = DIRECTIONAL_DEFAULT,
-        error_rate: list = []
+        error_rate: list = None
     ):
         """ Get Rhombus Structure Topology.
 
@@ -418,9 +421,12 @@ class Layout:
         Returns:
             Layout: The layout with rhombus topology
         """
+        assert qubit_number >= 2, "qubits number should greater than 1"
         rhombus_layout = Layout(qubit_number)
         exist_unreachable_nodes = len(unreachable_nodes) != 0
         grid_width = int(log2(qubit_number)) if width is None else width
+        error_rate = [1] * (qubit_number * 4) if error_rate is None else error_rate
+        print(error_rate)
         edge_idx = 0
         for s in range(0, qubit_number - grid_width + 1):
             vertical_exist, rhombus_exist = True, True
@@ -436,15 +442,14 @@ class Layout:
                 if rv in unreachable_nodes:
                     rhombus_exist = False
 
-            curr_error = error_rate[edge_idx] if len(error_rate) != 0 else 1.0
             # vertical line draw
             if lv < qubit_number and vertical_exist:
-                rhombus_layout.add_edge(u, lv, directional, curr_error)
+                rhombus_layout.add_edge(u, lv, directional, error_rate[edge_idx])
                 edge_idx += 1
 
             # rhombus line draw
             if rv < qubit_number and u // grid_width + 1 == rv // grid_width and rhombus_exist:
-                rhombus_layout.add_edge(u, rv, directional, curr_error)
+                rhombus_layout.add_edge(u, rv, directional, error_rate[edge_idx])
                 edge_idx += 1
 
         return rhombus_layout
