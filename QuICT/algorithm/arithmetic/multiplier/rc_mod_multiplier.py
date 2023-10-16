@@ -4,7 +4,7 @@ from typing import List
 
 from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError
 
-from QuICT.core.gate import CompositeGate, X, CX, CU3, Swap, CSwap
+from QuICT.core.gate import CompositeGate, X, CX, CRy, Swap, CSwap
 from QuICT.algorithm.arithmetic.adder import RCFourierAdderWired
 from QuICT.algorithm.qft import ry_QFT, ry_IQFT
 
@@ -211,13 +211,13 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
                     theta = np.pi * addend_list[j] / (2**(i - j))
                     ctl_idx = in_reg_size - 1 - j
                     target_idx = total_size - 1 - i + j
-                    CU3(theta, 0, 0) | phi_mac_gate([ctl_idx, target_idx])
+                    CRy(theta) | phi_mac_gate([ctl_idx, target_idx])
 
                 for j in range(in_reg_size - j_bound):
                     theta = np.pi * addend_list[j + j_bound] / (2**(out_reg_size - 1 - j))
                     ctl_idx = in_reg_size - 1 - j_bound - j
                     target_idx = in_reg_size + j
-                    CU3(theta, 0, 0) | phi_mac_gate([ctl_idx, target_idx])
+                    CRy(theta) | phi_mac_gate([ctl_idx, target_idx])
         # general cases, no depth optimization
         else:
             for i in range(in_reg_size):
