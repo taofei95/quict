@@ -4,12 +4,45 @@ from QuICT.core.gate import CU3, CompositeGate
 
 
 class ry_QFT(CompositeGate):
-    """
-        Quantum Fourier Transform using Ry rotations instead of Rz, H
-        (and swap).
+    r"""
+        Quantum Fourier Transform using $R_y$ rotations instead of $R_z$ and $H$.
 
-        Based on paper "High Performance Quantum Modular Multipliers"
-        by Rich Rines, Isaac Chuang: https://arxiv.org/abs/1801.01081
+        $$
+        \vert{j}\rangle \mapsto \bigotimes_{l=n}^{1}[R_{y}(2\pi j2^{-l})\vert{0}\rangle]
+        $$
+
+        Reference:
+            "High Performance Quantum Modular Multipliers" by Rich Rines, Isaac Chuang
+            <https://arxiv.org/abs/1801.01081>
+
+        Examples:
+            >>> from QuICT.core import Circuit
+            >>> from QuICT.algorithm.qft import ry_QFT
+            >>> # An exact ryQFT on 4 qubits
+            >>> circuit = Circuit(4)
+            >>> ry_QFT(4) | circuit
+            >>> circuit.draw(method="command", flatten=True)
+                    ┌─────┐┌─────┐       ┌─────┐
+            q_0: |0>┤ cry ├┤ cry ├───────┤ cry ├──────────────
+                    └──┬──┘└──┬──┘┌─────┐└──┬──┘┌─────┐
+            q_1: |0>───■──────┼───┤ cry ├───┼───┤ cry ├───────
+                              │   └──┬──┘   │   └──┬──┘┌─────┐
+            q_2: |0>──────────■──────■──────┼──────┼───┤ cry ├
+                                            │      │   └──┬──┘
+            q_3: |0>────────────────────────■──────■──────■───
+            >>> # An approximate ryQFT on 4 qubits with approx_level equal to 2
+            >>> circuit = Circuit(4)
+            >>> ry_QFT(4, approx_level=2) | circuit
+            >>> circuit.draw(method="command", flatten=True)
+                    ┌─────┐┌─────┐
+            q_0: |0>┤ cry ├┤ cry ├─────────────────────
+                    └──┬──┘└──┬──┘┌─────┐┌─────┐
+            q_1: |0>───■──────┼───┤ cry ├┤ cry ├───────
+                              │   └──┬──┘└──┬──┘┌─────┐
+            q_2: |0>──────────■──────■──────┼───┤ cry ├
+                                            │   └──┬──┘
+            q_3: |0>────────────────────────■──────■───
+
     """
 
     def __init__(
@@ -18,18 +51,18 @@ class ry_QFT(CompositeGate):
         approx_level: int = 0,
         name: str = "ryQFT"
     ):
-        """
+        r"""
             Args:
-                targets (int):
-                    Qubits number
+                targets (int): Qubits number.
 
-                aprrox_level (int):
-                    For approx_level > 0, all rotation angles <
-                    pi/(2**approx_level) will be omitted.When approx_level = 0,
-                    no approximation and the qft will be exact.
+                approx_level (int):
+                    For `approx_level` greater than 0, there will be at most `approx_level`
+                    number of rotation gates on each qubit. `approx_level = 0` means no approximation.
 
-                name (string):
-                    Name of the gate.
+                name (string): Name of the gate.
+
+            Raises:
+                GateParametersAssignedError: If `targets` is smaller than 2 or `approx_level` is negative.
         """
         assert targets >= 2, "ryQFT Gate need at least two targets."
         assert approx_level >= 0, "approximation level must be non-negative"
@@ -42,9 +75,7 @@ class ry_QFT(CompositeGate):
 
     @property
     def approx_level(self):
-        """
-            an integer represents the approximation level of the qft circuit.
-        """
+        """ The approximation level of the qft circuit. """
         return self._approx_level
 
     def _build_ry_qft(self, targets: int, approx_level: int):
@@ -61,8 +92,41 @@ class ry_QFT(CompositeGate):
 
 
 class ry_IQFT(CompositeGate):
-    """
-        An inversed Ry quantum fourier transform
+    r"""
+        An inversed Ry quantum fourier transform.
+
+        $$
+        \bigotimes_{l=n}^{1}[R_{y}(2\pi j2^{-l})\vert{0}\rangle] \mapsto  \vert{j}\rangle
+        $$
+
+        Examples:
+            >>> from QuICT.core import Circuit
+            >>> from QuICT.algorithm.qft import ry_IQFT
+            >>> # An exact inverse ryQFT on 4 qubits
+            >>> circuit = Circuit(4)
+            >>> ry_IQFT(4) | circuit
+            >>> circuit.draw(method="command", flatten=True)
+                                  ┌─────┐       ┌─────┐┌─────┐
+            q_0: |0>──────────────┤ cry ├───────┤ cry ├┤ cry ├
+                           ┌─────┐└──┬──┘┌─────┐└──┬──┘└──┬──┘
+            q_1: |0>───────┤ cry ├───┼───┤ cry ├───┼──────■───
+                    ┌─────┐└──┬──┘   │   └──┬──┘   │
+            q_2: |0>┤ cry ├───┼──────┼──────■──────■──────────
+                    └──┬──┘   │      │
+            q_3: |0>───■──────■──────■────────────────────────
+            >>> # An approximate inverse ryQFT on 4 qubits with approx_level equal to 2
+            >>> circuit = Circuit(4)
+            >>> ry_IQFT(4, approx_level=2) | circuit
+            >>> circuit.draw(method="command", flatten=True)
+                                         ┌─────┐┌─────┐
+            q_0: |0>─────────────────────┤ cry ├┤ cry ├
+                           ┌─────┐┌─────┐└──┬──┘└──┬──┘
+            q_1: |0>───────┤ cry ├┤ cry ├───┼──────■───
+                    ┌─────┐└──┬──┘└──┬──┘   │
+            q_2: |0>┤ cry ├───┼──────■──────■──────────
+                    └──┬──┘   │
+            q_3: |0>───■──────■────────────────────────
+
     """
     def __init__(
         self,
@@ -70,18 +134,18 @@ class ry_IQFT(CompositeGate):
         approx_level: int = 0,
         name: str = "ryIQFT"
     ):
-        """
+        r"""
             Args:
-                targets (int):
-                    Qubits number
+                targets (int): Qubits number.
 
-                aprrox_level (int):
-                    For approx_level > 0, all rotation angles <
-                    pi/(2**approx_level) will be omitted.When approx_level = 0,
-                    no approximation and the qft will be exact.
+                approx_level (int):
+                    For `approx_level` greater than 0, there will be at most `approx_level`
+                    number of rotation gates on each qubit. `approx_level = 0` means no approximation.
 
-                name (string):
-                    Name of the gate.
+                name (string): Name of the gate.
+
+            Raises:
+                GateParametersAssignedError: If `targets` is smaller than 2 or `approx_level` is negative.
         """
 
         assert targets >= 2, "ryIQFT Gate need at least two targets."
@@ -95,9 +159,7 @@ class ry_IQFT(CompositeGate):
 
     @property
     def approx_level(self):
-        """
-            an integer represents the approximation level of the qft circuit.
-        """
+        """ The approximation level of the inverse qft circuit. """
         return self._approx_level
 
     def _build_ry_iqft(self, targets: int, approx_level: int):
