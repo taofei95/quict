@@ -52,10 +52,13 @@ class RCOutOfPlaceModMultiplier(CompositeGate):
                     Requires M to be coprime with modulus N.
 
         """
-        if int(np.ceil(np.log2(modulus + 1))) > qreg_size:
-            raise GateParametersAssignedError("Not enough register size for modulus.")
+        num_q_required = int(np.ceil(np.log2(modulus + 1)))
+        if num_q_required > qreg_size:
+            raise GateParametersAssignedError(
+                f"For modulus {modulus}, the minimum number of qubits required is {num_q_required} but given {qreg_size}."
+            )
         if modulus % 2 == 0:
-            raise GateParametersAssignedError("Modulus cannot be an even number.")
+            raise GateParametersAssignedError("The modulus cannot be an even number.")
 
         self._modulus = modulus
         self._multiple = multiple
@@ -280,9 +283,11 @@ class RCModMultiplier(CompositeGate):
             running forward the gate obviously cannot generate value greater
             than modulus on any register by design).
         """
-
-        if int(np.ceil(np.log2(modulus + 1))) > qreg_size:
-            raise GateParametersAssignedError("Not enough register size for modulus.")
+        num_q_required = int(np.ceil(np.log2(modulus + 1)))
+        if num_q_required > qreg_size:
+            raise GateParametersAssignedError(
+                f"For modulus {modulus}, the minimum number of qubits required is {num_q_required} but given {qreg_size}."
+            )
         if modulus % 2 == 0:
             raise GateParametersAssignedError("Modulus cannot be an even number.")
         if np.gcd(modulus, multiple) != 1:
@@ -378,19 +383,15 @@ class RCModMultiplierCtl(CompositeGate):
             running forward the gate obviously cannot generate value greater
             than modulus on any register by design).
         """
-
-        if int(np.ceil(np.log2(modulus + 1))) > qreg_size:
+        num_q_required = int(np.ceil(np.log2(modulus + 1)))
+        if num_q_required > qreg_size:
             raise GateParametersAssignedError(
-                "Not enough register size for modulus."
+                f"For modulus {modulus}, the minimum number of qubits required is {num_q_required} but given {qreg_size}."
             )
         if modulus % 2 == 0:
-            raise GateParametersAssignedError(
-                "Modulus cannot be an even number."
-            )
+            raise GateParametersAssignedError("Modulus cannot be an even number.")
         if np.gcd(modulus, multiple) != 1:
-            raise GateParametersAssignedError(
-                "Modulus and multiple have to be co-prime."
-            )
+            raise GateParametersAssignedError("Modulus and multiple have to be co-prime.")
 
         self._modulus = modulus
         self._multiple = multiple

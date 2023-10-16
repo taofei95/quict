@@ -2,6 +2,7 @@ from numpy import pi
 
 from QuICT.core.gate import CompositeGate, Ry, CRy
 from QuICT.algorithm.qft import ry_QFT, ry_IQFT
+from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError
 
 
 class RCFourierAdderWired(CompositeGate):
@@ -52,6 +53,8 @@ class RCFourierAdderWired(CompositeGate):
                     ry-qft basis.
 
         """
+        if qreg_size < 2:
+            raise GateParametersAssignedError(f"The wired Fourier adder needs at least two qubits but given {qreg_size}.")
 
         self._addend = addend
         self._controlled = controlled

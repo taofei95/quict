@@ -35,12 +35,12 @@ class RGMultiplier(CompositeGate):
                 the same as the first input register if not given.
         """
         if qreg_size < 2:
-            raise GateParametersAssignedError("Input register size must be larger than 1.")
+            raise GateParametersAssignedError(f"Input register size must be larger than but given {qreg_size}.")
 
         if qreg_size_b is None:
             qreg_size_b = qreg_size
         elif qreg_size_b < 2:
-            raise GateParametersAssignedError("Input register size must be larger than 1.")
+            raise GateParametersAssignedError(f"The second input register size must be larger than 1 but given {qreg_size_b}.")
 
         self._reg_a_list = list(range(qreg_size))
         self._reg_b_list = list(range(qreg_size, qreg_size + qreg_size_b))
