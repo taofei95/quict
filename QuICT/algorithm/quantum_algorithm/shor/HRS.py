@@ -11,7 +11,7 @@ from fractions import Fraction
 
 from QuICT.core import Circuit
 from QuICT.core.gate import *
-from QuICT.qcda.synthesis.arithmetic.hrs import *
+from QuICT.algorithm.quantum_algorithm.shor.arithmetic.hrs import *
 from QuICT.simulation.state_vector import StateVectorSimulator
 from .utility import *
 

@@ -1,11 +1,12 @@
 import collections
 import tqdm
 from torchvision import datasets, transforms
-import numpy_ml
 import yaml
 import time
+import torch.utils.tensorboard
 
 from QuICT.algorithm.quantum_machine_learning.encoding import *
+from QuICT.algorithm.quantum_machine_learning.optimizer.optimizer import *
 from QuICT.algorithm.quantum_machine_learning.utils.loss import *
 from QuICT.algorithm.quantum_machine_learning.utils.ml_utils import *
 from QuICT.algorithm.quantum_machine_learning.model.QNN import QuantumNet
@@ -13,7 +14,7 @@ from QuICT.algorithm.quantum_machine_learning.utils.data import *
 from QuICT.algorithm.quantum_machine_learning.ansatz_library import *
 
 
-def filter_targets(X, Y, class0=3, class1=6):
+def filter_targets(X, Y, class0, class1):
     idx = (Y == class0) | (Y == class1)
     X, Y = (X[idx], Y[idx])
     Y = Y == class1
@@ -55,7 +56,7 @@ def encoding_img(X, encoding):
     return data_circuits
 
 
-def train(loss_fun, ep, it_start, net, tb):
+def train(ep, it_start, net, tb):
     loader = tqdm.tqdm(
         train_loader, desc="Training epoch {}".format(ep + 1), leave=True
     )
@@ -64,15 +65,26 @@ def train(loss_fun, ep, it_start, net, tb):
             continue
         it_start = 0
         expectations = net.forward(x_train)  # (32, 1)
+        """For HingeLoss and MSELoss"""
         y_true = (2 * y_train - 1.0).reshape(expectations.shape)
         y_pred = -expectations
+        """For BCELoss"""
+        # y_true = y_train.reshape(expectations.shape)
+        # y_pred = (1 - expectations) / 2.0
+
         loss = loss_fun(y_pred, y_true)
         # optimize
         net.backward(loss)
         # update
         net.update()
 
+        """For HingeLoss and MSELoss"""
         correct = np.where(y_true * y_pred.pargs > 0)[0].shape[0]
+        """For BCELoss"""
+        # correct = np.where((2 * y_true - 1.0) * (2 * y_pred.pargs - 1.0) > 0)[0].shape[
+        #     0
+        # ]
+
         accuracy = correct / len(y_train)
         loader.set_postfix(
             it=it, loss="{:.3f}".format(loss.item), accuracy="{:.3f}".format(accuracy)
@@ -82,10 +94,10 @@ def train(loss_fun, ep, it_start, net, tb):
         # Save checkpoint
         latest = (ep + 1) == EPOCH and (it + 1) == len(loader)
         if (it != 0 and it % 30 == 0) or latest:
-            save_checkpoint(net, optimizer, model_path, ep, it, latest)
+            save_checkpoint(net, model_path, ep, it, latest)
 
 
-def validate(loss_fun, ep, net, tb):
+def validate(ep, net, tb):
     loader_val = tqdm.tqdm(
         test_loader, desc="Validating epoch {}".format(ep + 1), leave=True
     )
@@ -93,12 +105,22 @@ def validate(loss_fun, ep, net, tb):
     total_correct = 0
     for it, (x_test, y_test) in enumerate(loader_val):
         expectations_val = net.forward(x_test, train=False)
+        """For HingeLoss and MSELoss"""
         y_true_val = (2 * y_test - 1.0).reshape(expectations_val.shape)
         y_pred_val = -expectations_val
-        loss_val = loss_fun(y_pred_val, y_true_val)
+        """For BCELoss"""
+        # y_true_val = y_test.reshape(expectations_val.shape)
+        # y_pred_val = (1 - expectations_val) / 2.0
 
+        loss_val = loss_fun(y_pred_val, y_true_val)
         loss_val_list.append(loss_val.item)
+        """For HingeLoss and MSELoss"""
         correct_val = np.where(y_true_val * y_pred_val.pargs > 0)[0].shape[0]
+        """For BCELoss"""
+        # correct_val = np.where(
+        #     (2 * y_true_val - 1.0) * (2 * y_pred_val.pargs - 1.0) > 0
+        # )[0].shape[0]
+
         total_correct += correct_val
         accuracy_val = correct_val / len(y_test)
         loader_val.set_postfix(
@@ -112,11 +134,12 @@ def validate(loss_fun, ep, net, tb):
     tb.add_scalar("validation/loss", avg_loss, ep)
     tb.add_scalar("validation/accuracy", avg_acc, ep)
     print("Validation Average Loss: {}, Accuracy: {}".format(avg_loss, avg_acc))
+    return avg_loss, avg_acc
 
 
 if __name__ == "__main__":
     RESIZE = (8, 8)
-
+    classes = (1, 0)
     train_data = datasets.MNIST(root="./data/", train=True, download=True)
     test_data = datasets.MNIST(root="./data/", train=False, download=True)
     train_X = train_data.data
@@ -126,8 +149,8 @@ if __name__ == "__main__":
     print("Training examples: ", len(train_Y))
     print("Testing examples: ", len(test_Y))
 
-    train_X, train_Y = filter_targets(train_X, train_Y)
-    test_X, test_Y = filter_targets(test_X, test_Y)
+    train_X, train_Y = filter_targets(train_X, train_Y, classes[0], classes[1])
+    test_X, test_Y = filter_targets(test_X, test_Y, classes[0], classes[1])
     print("Filtered training examples: ", len(train_Y))
     print("Filtered testing examples: ", len(test_Y))
 
@@ -143,14 +166,13 @@ if __name__ == "__main__":
     bin_train_X = binary_img(nocon_train_X, threshold)
     bin_test_X = binary_img(nocon_test_X, threshold)
 
-    EPOCH = 3
+    EPOCH = 5
     BATCH_SIZE = 32
     LR = 0.001
     SEED = 17
     ep_start = 0
     it_start = 0
     GRAYSCALE = 2
-
     set_seed(SEED)
 
     encoding = FRQI(GRAYSCALE)
@@ -168,8 +190,8 @@ if __name__ == "__main__":
         dataset=test_dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=True
     )
 
-    loss_fun = HingeLoss()
-    optimizer = numpy_ml.neural_nets.optimizers.Adam(lr=LR)
+    loss_fun = MSELoss()
+    optimizer = Adam(lr=LR)
     n_qubits = int(np.log2(RESIZE[0] * RESIZE[1])) + 2
     ansatz = CRADL(n_qubits, 6)
     net = QuantumNet(
@@ -179,25 +201,32 @@ if __name__ == "__main__":
         device="CPU",
     )
 
-    import torch.utils.tensorboard
-
     now_time = time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime(time.time()))
     model_path = "./QNN2.0_MNIST_" + now_time + "/"
     tb = torch.utils.tensorboard.SummaryWriter(log_dir=model_path + "logs")
 
     # save settings
     config = {
+        "classes": str(classes),
         "encoding": str(encoding),
         "ansatz": str(ansatz),
         "grayscale": GRAYSCALE,
         "resize": str(RESIZE),
         "LR": LR,
         "loss_fun": str(loss_fun),
+        "seed": SEED,
     }
     config_file = open(model_path + "config.yaml", "w")
     config_file.write(yaml.dump(config))
     config_file.close()
 
     for ep in range(ep_start, EPOCH):
-        train(loss_fun, ep, it_start, net, tb)
-        validate(loss_fun, ep, net, tb)
+        result_file = open(model_path + "result.yaml", "a")
+        if ep > ep_start:
+            it_start = 0
+        train(ep, it_start, net, tb)
+        avg_loss, avg_acc = validate(ep, net, tb)
+        result_file.write(
+            "Validation Average Loss: {}, Accuracy: {}\n".format(avg_loss, avg_acc)
+        )
+        result_file.close()

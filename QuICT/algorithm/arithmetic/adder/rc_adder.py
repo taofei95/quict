@@ -1,6 +1,6 @@
 from numpy import pi
 
-from QuICT.core.gate import CompositeGate, Ry, CU3
+from QuICT.core.gate import CompositeGate, Ry, CRy
 from QuICT.algorithm.qft import ry_QFT, ry_IQFT
 
 
@@ -95,5 +95,4 @@ class RCFourierAdderWired(CompositeGate):
     ):
         for k in range(qreg_size):
             theta = pi * addend / (2**(k))
-            # CU3(theta, 0, 0) is CRy(theta)
-            CU3(theta, 0, 0) | self([0, qreg_size - k])
+            CRy(theta) | self([0, qreg_size - k])

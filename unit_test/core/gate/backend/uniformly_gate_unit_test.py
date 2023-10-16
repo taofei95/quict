@@ -7,8 +7,8 @@
 import numpy as np
 from scipy.stats import unitary_group
 
-from QuICT.core import *
-from QuICT.core.gate import *
+from QuICT.core import Circuit
+from QuICT.core.gate import GateType, Ry, Rz
 from QuICT.core.gate.backend import UniformlyRotation, UniformlyUnitary
 
 

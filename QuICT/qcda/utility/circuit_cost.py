@@ -1,10 +1,11 @@
 from collections import deque
 from functools import reduce
+from typing import Union
 
 import numpy as np
 
 from QuICT.core import Circuit
-from QuICT.core.gate import BasicGate
+from QuICT.core.gate import BasicGate, CompositeGate
 from QuICT.core.virtual_machine import InstructionSet
 from QuICT.core.virtual_machine.virtual_machine import VirtualQuantumMachine
 
@@ -53,11 +54,14 @@ class CircuitCost:
         else:
             return 0
 
-    def _get_static_cost(self, circuit: Circuit):
+    def _get_static_cost(self, circuit: Union[Circuit, CompositeGate]):
         """
         Compute the cost of a circuit by adding up static weight of gates.
         """
-        return sum(self[n.type] for n in circuit.gates)
+        return sum(
+            self._get_static_cost(n) if isinstance(n, CompositeGate) else self[n.type]
+            for n in circuit.gates
+        )
 
     @staticmethod
     def from_quest_data(model_info):
@@ -184,11 +188,12 @@ class CircuitCost:
         Estimate the fidelity of a circuit.
 
         Args:
-            circuit(Circuit): Circuit to evaluate.
+            circuit(Union[Circuit, CompositeGate]): Circuit to evaluate.
 
         Returns:
             float: Estimated fidelity of the circuit.
         """
+        circuit.flatten_gates()
         qubit_f = [1] * circuit.width()
         qubit_gate_count = [0] * circuit.width()
 
@@ -217,13 +222,13 @@ class CircuitCost:
 
         return circ_f
 
-    def evaluate_cost(self, circuit: Circuit):
+    def evaluate_cost(self, circuit: Union[Circuit, CompositeGate]):
         """
         Estimate the cost of a circuit. If self.backend == None, compute static cost. Otherwise compute
         cost based on estimated fidelity.
 
         Args:
-            circuit(Circuit): Circuit to evaluate.
+            circuit(Union[Circuit, CompositeGate]): Circuit to evaluate.
 
         Returns:
             float: Estimated cost of the circuit.

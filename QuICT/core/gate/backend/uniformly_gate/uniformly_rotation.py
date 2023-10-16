@@ -20,7 +20,7 @@ class UniformlyRotation(object):
     def __init__(self, gate_type=None):
         """
         Args:
-            gate_type(GateType): the type of uniformly gate, Ry or Rz
+            gate_type (GateType): the type of uniformly gate, Ry or Rz
         """
         assert gate_type in [GateType.ry, GateType.rz], ValueError('Invalid gate_type')
         self.gate_type = gate_type
@@ -28,7 +28,7 @@ class UniformlyRotation(object):
     def execute(self, angle_list):
         """
         Args:
-            angle_list(list<float>): the angles of Ry or Rz gates
+            angle_list (list<float>): the angles of Ry or Rz gates
 
         Returns:
             CompositeGate: CompositeGate that implements the uniformly gate
@@ -51,11 +51,11 @@ class UniformlyRotation(object):
         synthesis uniformlyRotation gate, bits range [low, high)
 
         Args:
-            low(int): the left range low
-            high(int): the right range high
-            angles(list<float>): the list of angle y
-            gate_type(int): the gateType (Rz or Ry)
-            is_left_cnot(bool): is cnot left decomposition
+            low (int): the left range low
+            high (int): the right range high
+            angles (list<float>): the list of angle y
+            gate_type (int): the gateType (Rz or Ry)
+            is_left_cnot (bool): is cnot left decomposition
         Returns:
             gateSet: the synthesis gate list
         """

@@ -20,10 +20,10 @@ class UniformlyUnitary(object):
     def execute(self, matrices):
         """
         Args:
-            matrices(list<numpy.array>): the matrices of unitary gates
+            matrices (list<numpy.array>): the matrices of unitary gates
 
         Returns:
-            CompositeGate: CompositeGate that implements the uniformly gate
+            CompositeGate: CompositeGate that implements the uniformly unitary gate
         """
         matrices = list(matrices)
         n = int(np.log2(len(matrices))) + 1
@@ -35,9 +35,9 @@ class UniformlyUnitary(object):
         """ synthesis uniformlyUnitary gate, bits range [low, high)
 
         Args:
-            low(int): the left range low
-            high(int): the right range high
-            unitary(list<int>): the list of unitaries
+            low (int): the left range low
+            high (int): the right range high
+            unitary (list<int>): the list of unitaries
         Returns:
             the synthesis result
         """
@@ -72,8 +72,8 @@ class UniformlyUnitary(object):
         """ gates from a one-qubit unitary
 
         Args:
-            unitary(np.ndarray): the unitary to be transformed
-            target(int): the qubit gate acts on
+            unitary (np.ndarray): the unitary to be transformed
+            target (int): the qubit gate acts on
         Returns:
             U3Gate: gate from the unitary
         """
@@ -99,7 +99,7 @@ class UniformlyUnitary(object):
         exp(i * phi / 2) SU(2) = U(2)
 
         Args:
-            mat(np.ndarray): U2 matrix
+            mat (np.ndarray): U2 matrix
 
         Returns:
             float: phase angle
@@ -121,8 +121,8 @@ class UniformlyUnitary(object):
         (0><0) ⊗ u1 + (1><1) ⊗ u2
 
         Args:
-            u1(np.ndarray): unitary with 0
-            u2(np.ndarray): unitary with 1
+            u1 (np.ndarray): unitary with 0
+            u2 (np.ndarray): unitary with 1
 
         Returns:
             np.ndarray: v in the decomposition

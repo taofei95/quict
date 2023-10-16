@@ -1,6 +1,6 @@
 import numpy as np
 
-from QuICT.core.gate import CU3, CompositeGate
+from QuICT.core.gate import CompositeGate, CRy
 
 
 class ry_QFT(CompositeGate):
@@ -56,8 +56,7 @@ class ry_QFT(CompositeGate):
                 if approx_level > 0 and angle_exp > approx_level:
                     continue
                 theta = np.pi / (2**angle_exp)
-                # CU3(theta, 0, 0) is CRy(theta)
-                CU3(theta, 0, 0) | self([ctl_q, target_q])
+                CRy(theta) | self([ctl_q, target_q])
 
 
 class ry_IQFT(CompositeGate):
@@ -109,4 +108,4 @@ class ry_IQFT(CompositeGate):
                 if approx_level > 0 and angle_exp > approx_level:
                     continue
                 theta = np.pi / (2**angle_exp)
-                CU3(-theta, 0, 0) | self([ctl_q, target_q])
+                CRy(-theta) | self([ctl_q, target_q])
