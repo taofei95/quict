@@ -1,6 +1,7 @@
 import numpy as np
 
 from QuICT.core.gate import H, CU1, CompositeGate
+from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError
 
 
 class QFT(CompositeGate):
@@ -11,8 +12,11 @@ class QFT(CompositeGate):
             targets (int): The qubits' number.
             name (str, optional): The name of QFT gates. Defaults to None.
         """
-        assert targets >= 2, "QFT Gate need at least two targets qubits."
+        if targets < 2:
+            raise GateParametersAssignedError("QFT Gate needs at least two target qubits.")
+
         super().__init__(name)
+
         self.qft_build(targets)
 
     def qft_build(self, targets):
@@ -39,8 +43,11 @@ class IQFT(CompositeGate):
             targets (int): The qubits' number.
             name (str, optional): The name of QFT gates. Defaults to None.
         """
-        assert targets >= 2, "QFT Gate need at least two targets."
+        if targets < 2:
+            raise GateParametersAssignedError("IQFT Gate needs at least two target qubits.")
+
         super().__init__(name)
+
         self.iqft_build(targets)
 
     def iqft_build(self, targets):

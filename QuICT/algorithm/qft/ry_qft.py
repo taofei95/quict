@@ -1,6 +1,7 @@
 import numpy as np
 
 from QuICT.core.gate import CompositeGate, CRy
+from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError
 
 
 class ry_QFT(CompositeGate):
@@ -31,8 +32,10 @@ class ry_QFT(CompositeGate):
                 name (string):
                     Name of the gate.
         """
-        assert targets >= 2, "ryQFT Gate need at least two targets."
-        assert approx_level >= 0, "approximation level must be non-negative"
+        if targets < 2:
+            raise GateParametersAssignedError("ryQFT gate needs at least two target qubits.")
+        if approx_level < 0:
+            raise GateParametersAssignedError("The approximation level can't be negative.")
 
         self._approx_level = approx_level
 
@@ -82,9 +85,10 @@ class ry_IQFT(CompositeGate):
                 name (string):
                     Name of the gate.
         """
-
-        assert targets >= 2, "ryIQFT Gate need at least two targets."
-        assert approx_level >= 0, "approximation level must be non-negative"
+        if targets < 2:
+            raise GateParametersAssignedError("ryIQFT gate needs at least two target qubits.")
+        if approx_level < 0:
+            raise GateParametersAssignedError("The approximation level can't be negative.")
 
         self._approx_level = approx_level
 

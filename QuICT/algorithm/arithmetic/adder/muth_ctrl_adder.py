@@ -32,7 +32,7 @@ class MuThCtrlAdder(CompositeGate):
 
         """
         if qreg_size < 2:
-            raise GateParametersAssignedError("Register size must be greater than or equal to 2.")
+            raise GateParametersAssignedError(f"Register size must be greater than or equal to 2 but given {qreg_size}.")
 
         self._reg_size = qreg_size
 

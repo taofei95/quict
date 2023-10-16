@@ -1,5 +1,6 @@
 from QuICT.core.gate import CX, CompositeGate
 from .utils import HLPeres, HLTR2
+from QuICT.tools.exception.core.gate_exception import GateParametersAssignedError
 
 
 class HLCarryAdder(CompositeGate):
@@ -32,8 +33,11 @@ class HLCarryAdder(CompositeGate):
                 figures (int): The qubits' figures in addend.
                 name (str, optional): The name of HLCarryAdder gates. Defaults to None.
         """
-        assert figures >= 1, "HLCarryAdder Gate need at least one figures in addend."
+        if figures < 1:
+            raise GateParametersAssignedError(f"HLCarryAdder Gate need at least one figures in addend but given {figures}.")
+
         super().__init__(name)
+
         self.add_build(figures)
 
     def add_build(self, figures):
@@ -86,8 +90,11 @@ class HLModAdder(CompositeGate):
                 figures (int): The qubits' figures in addend.
                 name (str, optional): The name of HLModAdder gates. Defaults to None.
         """
-        assert figures >= 1, "HLModAdder Gate need at least one figures in addend."
+        if figures < 1:
+            raise GateParametersAssignedError(f"HLModAdder Gate need at least one figures in addend but given {figures}.")
+
         super().__init__(name)
+
         self.madd_build(figures)
 
     def madd_build(self, figures):
