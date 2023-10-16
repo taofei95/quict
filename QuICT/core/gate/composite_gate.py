@@ -10,7 +10,7 @@ import numpy as np
 
 from QuICT.core.gate import BasicGate
 from QuICT.core.operator import CheckPointChild
-from QuICT.core.utils import CircuitBased, CircuitMatrix, CGATE_LIST, unique_id_generator
+from QuICT.core.utils import CircuitBased, CircuitMatrix, CGATE_LIST
 from QuICT.tools.exception.core import ValueError, CompositeGateAppendError, TypeError, GateQubitAssignedError
 
 
@@ -30,9 +30,6 @@ class CompositeGate(CircuitBased):
             name (str, optional): the name of the composite gate. Defaults to None.
             gates (List[BasicGate, CompositeGate], optional): gates within this composite gate. Defaults to None.
         """
-        if name is None:
-            name = "composite_gate_" + unique_id_generator()
-
         super().__init__(name)
         self._check_point = None        # required checkpoint
         self._qubits = []
@@ -75,6 +72,7 @@ class CompositeGate(CircuitBased):
         if isinstance(indexes, int):
             indexes = [indexes]
 
+        self._qubit_indexes_validation(indexes)
         self._pointer = indexes
         return self
 
@@ -87,11 +85,11 @@ class CompositeGate(CircuitBased):
         if isinstance(targets, int):
             targets = [targets]
 
+        self._qubit_indexes_validation(targets)
         if len(targets) != self.width():
             raise ValueError("CompositeGate.&", f"not equal {self.width()}", len(targets))
 
         self._mapping(targets)
-
         if CGATE_LIST:
             CGATE_LIST[-1].extend(self)
 
@@ -316,6 +314,8 @@ class CompositeGate(CircuitBased):
             qubit_index = gate.cargs + gate.targs
             if not qubit_index:
                 raise GateQubitAssignedError(f"{gate.type} need qubit indexes to add into Composite Gate.")
+
+            self._qubit_indexes_validation(qubit_index)
 
         self._update_qubit_limit(qubit_index)
         self._gates.append((gate, qubit_index, 1))

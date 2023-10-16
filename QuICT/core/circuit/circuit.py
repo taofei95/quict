@@ -15,8 +15,7 @@ from QuICT.core.gate import BasicGate, H, Measure, gate_builder, CompositeGate
 from QuICT.core.utils import (
     GateType,
     CircuitBased,
-    CircuitMatrix,
-    unique_id_generator
+    CircuitMatrix
 )
 from QuICT.core.operator import (
     CheckPoint,
@@ -83,9 +82,6 @@ class Circuit(CircuitBased):
             topology(Layout): The topology of the circuit. If it is empty, it will be seemed as fully connected. \n
             ancilla_qubits(list<int>): The indexes of ancilla qubits for current circuit.
         """
-        if name is None:
-            name = "circuit_" + unique_id_generator()
-
         super().__init__(name)
         self._ancillae_qubits = []
         self._topology = None
@@ -160,11 +156,7 @@ class Circuit(CircuitBased):
         if isinstance(indexes, int):
             indexes = [indexes]
 
-        if not isinstance(indexes, list):
-            raise TypeError(
-                "Circuit.call", "int/list[int]/Qubit/Qureg", type(indexes)
-            )
-
+        self._qubit_indexes_validation(indexes)
         self._pointer = indexes
         return self
 
@@ -285,6 +277,7 @@ class Circuit(CircuitBased):
                 gate_qidxes = list(range(gates.width()))
 
         assert len(gate_qidxes) <= self.width(), "Circuit cannot append any Gate/CompositeGate which larger than self."
+        self._qubit_indexes_validation(gate_qidxes)
         if isinstance(gates, Circuit):
             gates = gates.to_compositegate()
             if gates.width() != len(gate_qidxes):
@@ -332,10 +325,7 @@ class Circuit(CircuitBased):
         if len(gate_args) == 0:
             raise GateQubitAssignedError(f"{gate.type} need qubit indexes to insert into Composite Gate.")
 
-        for garg in gate_args:
-            assert garg >= 0 and garg < self.width(), \
-                GateQubitAssignedError(f"Gate's assigned qubits should within [0, {self.width()}]")
-
+        self._qubit_indexes_validation(gate_args)
         self._gates.insert(insert_idx, (gate, gate_args, gate_size))
 
     def pop(self, index: int = -1):
@@ -378,9 +368,7 @@ class Circuit(CircuitBased):
             else:
                 new_qubits = reassigned_qubits
 
-            for q_idx in new_qubits:
-                assert q_idx >= 0 and q_idx < self.width() and isinstance(q_idx, int)
-
+        self._qubit_indexes_validation(new_qubits)
         assert len(origin_qidx) == len(new_qubits)
         self._gates[index] = (origin_gate, new_qubits, origin_size)
 
@@ -409,6 +397,7 @@ class Circuit(CircuitBased):
             else:
                 qubit_index = gate_qargs
 
+        self._qubit_indexes_validation(qubit_index)
         self._gates.append((gate, qubit_index, 1))
 
     def _add_gate_to_all_qubits(self, gate: BasicGate):
@@ -444,6 +433,7 @@ class Circuit(CircuitBased):
 
             op_qidxes = op.targs
 
+        self._qubit_indexes_validation(op_qidxes)
         size = 1 if isinstance(op, NoiseGate) else 0
         self._gates.append((op, op_qidxes, size))
         self._logger.debug(f"Add an Operator {type(op)} with qubit indexes {op_qidxes}.")

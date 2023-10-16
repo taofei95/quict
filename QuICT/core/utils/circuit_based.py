@@ -8,6 +8,7 @@ import numpy as np
 
 from .gate_type import GateType
 from .variable import Variable
+from .id_generator import unique_id_generator
 
 
 class CircuitBased(object):
@@ -58,10 +59,41 @@ class CircuitBased(object):
         Args:
             name (str): The name of current Quantum Circuit
         """
-        self._name = name
+        self._name = name if name is not None else "QC_" + unique_id_generator()
         self._gates = []
         self._pointer = None
         self._precision = "double"
+
+    def _qubit_indexes_validation(self, indexes: list):
+        """ Validate the qubit indexes.
+
+        Args:
+            indexes (list): The given qubit indexes.
+        """
+        # Indexes' type check
+        if not isinstance(indexes, list):
+            raise TypeError(
+                f"Qubit indexes should be one of int/list[int]/Qubit/Qureg not {type(indexes)}."
+            )
+        for idx in indexes:
+            assert idx >= 0 and isinstance(idx, (int, np.int32, np.int64)), \
+                "The qubit indexes should be integer and greater than zero."
+
+        # Repeat indexes check
+        if len(indexes) != len(set(indexes)):
+            raise ValueError(
+                "The qubit indexes cannot contain the repeatted index."
+            )
+
+        # Qubit's indexes max/min limitation check
+        min_idx, max_idx = min(indexes), max(indexes)
+        if min_idx < 0:
+            raise ValueError("The qubit indexes should >= 0.")
+
+        if type(self).__name__ == "Circuit":
+            assert max_idx < self.width(), ValueError("The max of qubit indexes cannot exceed the width of Circuit.")
+            assert len(indexes) <= self.width(), \
+                ValueError("The number of qubit index cannot exceed the width of Circuit.")
 
     def size(self) -> int:
         """ The number of gates in the circuit/CompositeGate, the operators are not count.
