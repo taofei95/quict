@@ -1381,8 +1381,8 @@ Single-Qubit Rotation Gate, which apply an $\lambda$ rotation about X axis.
 
 $$
 Rx(\lambda) = \begin{bmatrix}
-\cos(\frac{\lambda}{2}) & -isin(\frac{\lambda}{2}) \\
-isin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) \\
+\cos(\frac{\lambda}{2}) & -i\sin(\frac{\lambda}{2}) \\
+i\sin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) \\
 \end{bmatrix}
 $$
 
@@ -1786,8 +1786,8 @@ $$
 CRz_{q0,q1}(\lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\
 0 & 1 & 0 & 0 \\
-1 & 0 & e^{\frac{-i*\lambda}{2}} & 0 \\ 
-1 & 0 & 0 & e^{\frac{i*\lambda}{2}} \\ 
+1 & 0 & e^{\frac{-i\lambda}{2}} & 0 \\ 
+1 & 0 & 0 & e^{\frac{i\lambda}{2}} \\ 
 \end{bmatrix}
 $$
 
@@ -1823,7 +1823,7 @@ CU1_{q0,q1}(\lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\
 0 & 1 & 0 & 0 \\
 0 & 0 & 1 & 0 \\
-0 & 0 & 0 & e^{i*\lambda} \\
+0 & 0 & 0 & e^{i\lambda} \\
 \end{bmatrix}
 $$
 
@@ -1858,8 +1858,8 @@ $$
 CU3_{q0,q1}(\theta, \sigma, \lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\
 0 & 1 & 0 & 0 \\
-0 & 0 & \cos(e^{\frac{\theta}{2}}) & \sin(\frac{\theta}{2})*-e^{i*\lambda} \\
-0 & 0 & \sin(\frac{\theta}{2})*e^{i*\sigma} & \cos(\frac{\theta}{2}) * e^{i*(\lambda + \sigma)} \\
+0 & 0 & \cos(\frac{\theta}{2}) & -\sin(\frac{\theta}{2}) e^{i\lambda} \\
+0 & 0 & \sin(\frac{\theta}{2}) e^{i\sigma} & \cos(\frac{\theta}{2}) e^{i(\lambda + \sigma)} \\
 \end{bmatrix}
 $$
 
@@ -1895,7 +1895,7 @@ FSim_{q0,q1}(\sigma, \lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
 0 & \cos(\theta) & -i\sin(\theta) & 0 \\
 0 & -i\sin(\theta) & \cos(\theta) & 0 \\
-0 & 0 & 0 & e^{-i*\lambda} \\
+0 & 0 & 0 & e^{-i\lambda} \\
 \end{bmatrix}
 $$
 
