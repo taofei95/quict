@@ -65,7 +65,7 @@ class DiagonalGate(object):
         Returns:
             CompositeGate: diagonal gate with auxiliary qubit at the end of qubits
         """
-        #Pay attention:All arrays and qubit is 0 as the starting point, but begins with 1 in the paper.
+        # Pay attention:All arrays and qubit is 0 as the starting point, but begins with 1 in the paper.
 
         n = self.target
         m = self.aux
@@ -265,8 +265,6 @@ class DiagonalGate(object):
                 if rest != 1:
                     for j in range((rest - 1) * t):
                         CX & [n + j, n + (2 ** (r)) * t + j] | gates
-
-
 
 
         return gates

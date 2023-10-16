@@ -288,7 +288,7 @@ if __name__ == '__main__':
     #test_Ainv()
     #test_phase_shift_no_aux() #need change the size of A_inv
     #test_phase_shift_with_aux() #need change the size of A_inv
-    #test_partitioned_gray_code()
+    #test_partitioned_gray_code()E:\quict_work\unit_test\core\gate\diagonal_gate_unit_test.py
     #test_linear_fjk()
     #test_alpha_s()
     #test_phase_shift_s() #here dim(A_inv)=dim(theta)
