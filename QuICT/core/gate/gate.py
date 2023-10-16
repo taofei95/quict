@@ -963,7 +963,7 @@ Single-Qubit Hy Gate.
 [Matrix Representation]
 
 $$
-H = \frac{1}{\sqrt{2}} \begin{bmatrix}
+Hy = \frac{1}{\sqrt{2}} \begin{bmatrix}
 1 & -i \\
 i & -1 \\
 \end{bmatrix}
@@ -1220,8 +1220,8 @@ Single-Qubit Sqrt-W Gate.
 
 $$
 SW = \begin{bmatrix}
-\frac{1}{\sqrt(2)} & -\sqrt(\frac{i}{2}) \\
-\sqrt{-i/2} & \frac{1}{\sqrt(2)} \\
+\frac{1}{\sqrt{2}} & -\sqrt{\frac{i}{2}} \\
+\sqrt{\frac{-i}{2}} & \frac{1}{\sqrt{2}} \\
 \end{bmatrix}
 $$
 
@@ -1285,7 +1285,7 @@ Single-Qubit Rotation Gate, which apply an $\lambda$ rotation about Z axis.
 $$
 U1(\lambda) = \begin{bmatrix}
 1 & 0 \\
-0 & e^{\frac{i}{\lambda}} \\
+0 & e^{i\lambda} \\
 \end{bmatrix}
 $$
 
@@ -1317,8 +1317,8 @@ Single-Qubit Rotation Gate about X and Z axis.
 $$
 U2(\sigma, \lambda) = \frac{1}{\sqrt{2}}
 \begin{bmatrix}
-1 & -e^{i*\lambda} \\
-e^{i*\sigma} & e^{i*(\lambda + \sigma)} \\
+1 & -e^{i\lambda} \\
+e^{i\sigma} & e^{i(\lambda + \sigma)} \\
 \end{bmatrix}
 $$
 
@@ -1349,8 +1349,8 @@ Single-Qubit Rotation Gate with three Euler Angles.
 
 $$
 U3(\theta, \sigma, \lambda) = \begin{bmatrix}
-cos(e^{\frac{\theta}{2}}) & sin(\frac{\theta}{2})*-e^{i*\lambda} \\
-sin(\frac{\theta}{2})*e^{i*\sigma} & cos(\frac{\theta}{2}) * e^{i*(\lambda + \sigma)} \\
+\cos(\frac{\theta}{2}) & -e^{i\lambda}\sin(\frac{\theta}{2}) \\
+e^{i\sigma}\sin(\frac{\theta}{2}) & e^{i(\lambda + \sigma)}\cos(\frac{\theta}{2}) \\
 \end{bmatrix}
 $$
 
@@ -1381,8 +1381,8 @@ Single-Qubit Rotation Gate, which apply an $\lambda$ rotation about X axis.
 
 $$
 Rx(\lambda) = \begin{bmatrix}
-cos(\frac{\lambda}{2}) & -i*sin(\frac{\lambda}{2}) \\
-i*sin(\frac{\lambda}{2}) & cos(\frac{\lambda}{2}) \\
+\cos(\frac{\lambda}{2}) & -isin(\frac{\lambda}{2}) \\
+isin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) \\
 \end{bmatrix}
 $$
 
@@ -1412,8 +1412,8 @@ Single-Qubit Rotation Gate, which apply an $\lambda$ rotation about Y axis.
 
 $$
 Ry(\lambda) = \begin{bmatrix}
-cos(\frac{\lambda}{2}) & -sin(\frac{\lambda}{2}) \\ 
-sin(\frac{\lambda}{2}) & cos(\frac{\lambda}{2}) \\
+\cos(\frac{\lambda}{2}) & -\sin(\frac{\lambda}{2}) \\ 
+\sin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) \\
 \end{bmatrix}
 $$
 
@@ -1444,8 +1444,8 @@ Single-Qubit Rotation Gate, which apply an $\lambda$ rotation about Z axis.
 
 $$
 Rz(\lambda) = \begin{bmatrix}
-e^{\frac{-i*\lambda}{2}} & 0 \\ 
-0 & e^{\frac{i*\lambda}{2}} \\
+e^{\frac{-i\lambda}{2}} & 0 \\ 
+0 & e^{\frac{i\lambda}{2}} \\
 \end{bmatrix}
 $$
 
@@ -1507,7 +1507,7 @@ Single-Qubit T Dagger Gate, which produce a -pi/4 phase.
 [Matrix Representation]
 
 $$
-T = \begin{bmatrix}
+Tdg = \begin{bmatrix}
 1 & 0 \\ 
 0 & \frac{1}{\sqrt{2}} - \frac{i}{\sqrt{2}} \\
 \end{bmatrix}
@@ -1541,7 +1541,7 @@ Single-Qubit Rotation Gate about Z axis.
 $$
 Phase(\lambda) = \begin{bmatrix}
 1 & 0 \\
-0 & e^{i*\lambda} \\
+0 & e^{i\lambda} \\
 \end{bmatrix}
 $$
 
@@ -1566,14 +1566,14 @@ phase(pi) q[0]
 
 GPhase = BasicGate(*GATEINFO_MAP[GateType.gphase], is_original_gate=True)
 r"""
-Single-Qubit Rotation Gate about Z axis.
+Global Phase Gate.
 
 [Matrix Representation]
 
 $$
 GPhase(\lambda) = \begin{bmatrix}
-e^{i*\lambda} & 0 \\ 
-0 & e^{i*\lambda} \\
+e^{i\lambda} & 0 \\ 
+0 & e^{i\lambda} \\
 \end{bmatrix}
 $$
 
@@ -1750,8 +1750,8 @@ $$
 CRy_{q0,q1}(\lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
 0 & 1 & 0 & 0 \\
-0 & 0 & cos(\frac{\lambda}{2}) & sin(\frac{\lambda}{2}) \\
-0 & 0 & sin(\frac{\lambda}{2}) & cos(\frac{\lambda}{2}) \\
+0 & 0 & \cos(\frac{\lambda}{2}) & \sin(\frac{\lambda}{2}) \\
+0 & 0 & \sin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) \\
 \end{bmatrix}
 $$
 
@@ -1858,8 +1858,8 @@ $$
 CU3_{q0,q1}(\theta, \sigma, \lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\
 0 & 1 & 0 & 0 \\
-0 & 0 & cos(e^{\frac{\theta}{2}}) & sin(\frac{\theta}{2})*-e^{i*\lambda} \\
-0 & 0 & sin(\frac{\theta}{2})*e^{i*\sigma} & cos(\frac{\theta}{2}) * e^{i*(\lambda + \sigma)} \\
+0 & 0 & \cos(e^{\frac{\theta}{2}}) & \sin(\frac{\theta}{2})*-e^{i*\lambda} \\
+0 & 0 & \sin(\frac{\theta}{2})*e^{i*\sigma} & \cos(\frac{\theta}{2}) * e^{i*(\lambda + \sigma)} \\
 \end{bmatrix}
 $$
 
@@ -1893,8 +1893,8 @@ Fermions Simulation Quantum Gate.
 $$
 FSim_{q0,q1}(\sigma, \lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
-0 & cos(\theta) & -i*sin(\theta) & 0 \\
-0 & -i*sin(\theta) & cos(\theta) & 0 \\
+0 & \cos(\theta) & -i\sin(\theta) & 0 \\
+0 & -i\sin(\theta) & \cos(\theta) & 0 \\
 0 & 0 & 0 & e^{-i*\lambda} \\
 \end{bmatrix}
 $$
@@ -1928,10 +1928,10 @@ Double-Qubits X $\otimes$ X Gate.
 
 $$
 Rxx_{q0,q1}(\lambda) = \begin{bmatrix}
-cos(\frac{\lambda}{2}) & 0 & 0 & -i*sin(\frac{\lambda}{2}) \\  
-0 & cos(\frac{\lambda}{2}) & -i*sin(\frac{\lambda}{2}) & 0 \\
-0 & -i*sin(\frac{\lambda}{2}) & cos(\frac{\lambda}{2}) & 0 \\
--i*sin(\frac{\lambda}{2}) & 0 & 0 & cos(\frac{\lambda}{2}) \\
+\cos(\frac{\lambda}{2}) & 0 & 0 & -i\sin(\frac{\lambda}{2}) \\  
+0 & \cos(\frac{\lambda}{2}) & -i\sin(\frac{\lambda}{2}) & 0 \\
+0 & -i\sin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) & 0 \\
+-i\sin(\frac{\lambda}{2}) & 0 & 0 & \cos(\frac{\lambda}{2}) \\
 \end{bmatrix}
 $$
 
@@ -1964,10 +1964,10 @@ Double-Qubits Y $\otimes$ Y Gate.
 
 $$
 Ryy_{q0,q1}(\lambda) = \begin{bmatrix}
-cos(\frac{\lambda}{2}) & 0 & 0 & i*sin(\frac{\lambda}{2}) \\
-0 & cos(\frac{\lambda}{2}) & -i*sin(\frac{\lambda}{2}) & 0 \\
-0 & -i*sin(\frac{\lambda}{2}) & cos(\frac{\lambda}{2}) & 0 \\
-i*sin(\frac{\lambda}{2}) & 0 & 0 & cos(\frac{\lambda}{2}) \\
+\cos(\frac{\lambda}{2}) & 0 & 0 & i\sin(\frac{\lambda}{2}) \\
+0 & \cos(\frac{\lambda}{2}) & -i\sin(\frac{\lambda}{2}) & 0 \\
+0 & -i\sin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) & 0 \\
+i\sin(\frac{\lambda}{2}) & 0 & 0 & \cos(\frac{\lambda}{2}) \\
 \end{bmatrix}
 $$
 
@@ -2000,10 +2000,10 @@ Double-Qubits Z $\otimes$ Z Gate.
 
 $$
 Rzz_{q0,q1}(\lambda) = \begin{bmatrix}
-e^{\frac{-i*\lambda}{2}} & 0 & 0 & 0 \\ 
-0 & e^{\frac{i*\lambda}{2}} & 0 & 0 \\
-0 & 0 & e^{\frac{i*\lambda}{2}} & 0 \\
-0 & 0 & 0 & e^{\frac{-i*\lambda}{2}} \\
+e^{\frac{-i\lambda}{2}} & 0 & 0 & 0 \\ 
+0 & e^{\frac{i\lambda}{2}} & 0 & 0 \\
+0 & 0 & e^{\frac{i\lambda}{2}} & 0 \\
+0 & 0 & 0 & e^{\frac{-i\lambda}{2}} \\
 \end{bmatrix}
 $$
 
@@ -2036,10 +2036,10 @@ Double-Qubits Z $\otimes$ X Gate.
 
 $$
 Rzx_{q0,q1}(\lambda) = \begin{bmatrix}
-cos(\frac{\lambda}{2}) & -i*sin(\frac{\lambda}{2}) & 0 & 0 \\ 
--i*sin(\frac{\lambda}{2}) & cos(\frac{\lambda}{2}) & 0 & 0 \\
-0 & 0 & cos(\frac{\lambda}{2}) & i*sin(\frac{\lambda}{2}) \\
-0 & 0 & i*sin(\frac{\lambda}{2}) & cos(\frac{\lambda}{2}) \\
+\cos(\frac{\lambda}{2}) & -i\sin(\frac{\lambda}{2}) & 0 & 0 \\ 
+-i\sin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) & 0 & 0 \\
+0 & 0 & \cos(\frac{\lambda}{2}) & i\sin(\frac{\lambda}{2}) \\
+0 & 0 & i\sin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) \\
 \end{bmatrix}
 $$
 
@@ -2210,7 +2210,7 @@ iSwap Dagger Gate.
 [Matrix Representation]
 
 $$
-iSwap\_dagger_{q0,q1} = \begin{bmatrix}
+iSwapdg_{q0,q1} = \begin{bmatrix}
 1 & 0 & 0 & 0 \\ 
 0 & 0 & -i & 0 \\ 
 0 & -i & 0 & 0 \\ 
@@ -2373,8 +2373,8 @@ CCRz_{q0,q1,q2}(\lambda) = \begin{bmatrix}
 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\ 
 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\ 
 0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\ 
-0 & 0 & 0 & 0 & 0 & 0 & e^{\frac{-i*\lambda}{2}} & 0 \\ 
-0 & 0 & 0 & 0 & 0 & 0 & 0 & e^{\frac{i*\lambda}{2}} \\ 
+0 & 0 & 0 & 0 & 0 & 0 & e^{\frac{-i\lambda}{2}} & 0 \\ 
+0 & 0 & 0 & 0 & 0 & 0 & 0 & e^{\frac{i\lambda}{2}} \\ 
 \end{bmatrix}
 $$
 
