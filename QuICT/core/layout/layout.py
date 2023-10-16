@@ -426,7 +426,6 @@ class Layout:
         exist_unreachable_nodes = len(unreachable_nodes) != 0
         grid_width = int(log2(qubit_number)) if width is None else width
         error_rate = [1] * (qubit_number * 4) if error_rate is None else error_rate
-        print(error_rate)
         edge_idx = 0
         for s in range(0, qubit_number - grid_width + 1):
             vertical_exist, rhombus_exist = True, True

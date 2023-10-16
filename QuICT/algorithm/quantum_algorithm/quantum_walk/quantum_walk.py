@@ -3,7 +3,7 @@ from typing import Dict, List, Union
 
 from .graph import Graph
 from QuICT.core import Circuit
-from QuICT.core.gate import Unitary, CompositeGate
+from QuICT.core.gate import Unitary, CompositeGate, H, X
 from QuICT.simulation.state_vector import StateVectorSimulator
 
 

@@ -858,7 +858,15 @@ class PermFx(Perm):
 
 
 class MultiControlGate(BasicGate):
+    """ The multi-control qubits quantum gate. """
     def __init__(self, controls: int, gate_type: GateType, precision: str = "double", params: list = []):
+        """
+        Args:
+            controls (int): The number of control qubits
+            gate_type (GateType): The based quantum gate
+            precision (str, optional): The precison for quantum gate. Defaults to "double".
+            params (list, optional): The parameters for based quantum gate. Defaults to [].
+        """
         assert controls >= 0, ValueError("MultiControlGate.controls", ">= 0", controls)
         self._multi_controls = controls
         if gate_type not in GATEINFO_MAP.keys():
@@ -1412,7 +1420,7 @@ Single-Qubit Rotation Gate, which apply an $\lambda$ rotation about Y axis.
 
 $$
 Ry(\lambda) = \begin{bmatrix}
-\cos(\frac{\lambda}{2}) & -\sin(\frac{\lambda}{2}) \\ 
+\cos(\frac{\lambda}{2}) & -\sin(\frac{\lambda}{2}) \\
 \sin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) \\
 \end{bmatrix}
 $$
@@ -1444,7 +1452,7 @@ Single-Qubit Rotation Gate, which apply an $\lambda$ rotation about Z axis.
 
 $$
 Rz(\lambda) = \begin{bmatrix}
-e^{\frac{-i\lambda}{2}} & 0 \\ 
+e^{\frac{-i\lambda}{2}} & 0 \\
 0 & e^{\frac{i\lambda}{2}} \\
 \end{bmatrix}
 $$
@@ -1476,7 +1484,7 @@ Single-Qubit T Gate, which produce a $\frac{pi}{4}$ phase. Its matrix equals $Rz
 
 $$
 T = \begin{bmatrix}
-1 & 0 \\ 
+1 & 0 \\
 0 & \frac{1}{\sqrt{2}} + \frac{i}{\sqrt{2}} \\
 \end{bmatrix}
 $$
@@ -1508,7 +1516,7 @@ Single-Qubit T Dagger Gate, which produce a -pi/4 phase.
 
 $$
 Tdg = \begin{bmatrix}
-1 & 0 \\ 
+1 & 0 \\
 0 & \frac{1}{\sqrt{2}} - \frac{i}{\sqrt{2}} \\
 \end{bmatrix}
 $$
@@ -1572,7 +1580,7 @@ Global Phase Gate.
 
 $$
 GPhase(\lambda) = \begin{bmatrix}
-e^{i\lambda} & 0 \\ 
+e^{i\lambda} & 0 \\
 0 & e^{i\lambda} \\
 \end{bmatrix}
 $$
@@ -1604,10 +1612,10 @@ Controlled Z Gate.
 
 $$
 CZ_{q0,q1} = \begin{bmatrix}
-1 & 0 & 0 & 0 \\ 
-0 & 1 & 0 & 0 \\ 
-0 & 0 & 1 & 0 \\ 
-0 & 0 & 0 & -1 \\ 
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 0 & 0 & -1 \\
 \end{bmatrix}
 $$
 
@@ -1640,10 +1648,10 @@ Controlled X Gate.
 
 $$
 CX_{q0,q1} = \begin{bmatrix}
-1 & 0 & 0 & 0 \\ 
-0 & 1 & 0 & 0 \\ 
-0 & 0 & 0 & 1 \\ 
-0 & 0 & 1 & 0 \\ 
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 1 \\
+0 & 0 & 1 & 0 \\
 \end{bmatrix}
 $$
 
@@ -1676,10 +1684,10 @@ Controlled Y Gate.
 
 $$
 CY_{q0,q1} = \begin{bmatrix}
-1 & 0 & 0 & 0 \\ 
-0 & 1 & 0 & 0 \\ 
-0 & 0 & 0 & i \\ 
-0 & 0 & -i & 0 \\ 
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 0 & i \\
+0 & 0 & -i & 0 \\
 \end{bmatrix}
 $$
 
@@ -1712,7 +1720,7 @@ Controlled H Gate.
 
 $$
 CH_{q0,q1} = \begin{bmatrix}
-1 & 0 & 0 & 0 \\ 
+1 & 0 & 0 & 0 \\
 0 & 1 & 0 & 0 \\
 0 & 0 & \frac{1}{\sqrt{2}} & \frac{1}{\sqrt{2}} \\
 0 & 0 & \frac{1}{\sqrt{2}} & \frac{-1}{\sqrt{2}} \\
@@ -1748,7 +1756,7 @@ Controlled Ry Gate.
 
 $$
 CRy_{q0,q1}(\lambda) = \begin{bmatrix}
-1 & 0 & 0 & 0 \\ 
+1 & 0 & 0 & 0 \\
 0 & 1 & 0 & 0 \\
 0 & 0 & \cos(\frac{\lambda}{2}) & \sin(\frac{\lambda}{2}) \\
 0 & 0 & \sin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) \\
@@ -1786,8 +1794,8 @@ $$
 CRz_{q0,q1}(\lambda) = \begin{bmatrix}
 1 & 0 & 0 & 0 \\
 0 & 1 & 0 & 0 \\
-1 & 0 & e^{\frac{-i*\lambda}{2}} & 0 \\ 
-1 & 0 & 0 & e^{\frac{i*\lambda}{2}} \\ 
+1 & 0 & e^{\frac{-i*\lambda}{2}} & 0 \\
+1 & 0 & 0 & e^{\frac{i*\lambda}{2}} \\
 \end{bmatrix}
 $$
 
@@ -1892,7 +1900,7 @@ Fermions Simulation Quantum Gate.
 
 $$
 FSim_{q0,q1}(\sigma, \lambda) = \begin{bmatrix}
-1 & 0 & 0 & 0 \\ 
+1 & 0 & 0 & 0 \\
 0 & \cos(\theta) & -i\sin(\theta) & 0 \\
 0 & -i\sin(\theta) & \cos(\theta) & 0 \\
 0 & 0 & 0 & e^{-i*\lambda} \\
@@ -1928,7 +1936,7 @@ Double-Qubits X $\otimes$ X Gate.
 
 $$
 Rxx_{q0,q1}(\lambda) = \begin{bmatrix}
-\cos(\frac{\lambda}{2}) & 0 & 0 & -i\sin(\frac{\lambda}{2}) \\  
+\cos(\frac{\lambda}{2}) & 0 & 0 & -i\sin(\frac{\lambda}{2}) \\
 0 & \cos(\frac{\lambda}{2}) & -i\sin(\frac{\lambda}{2}) & 0 \\
 0 & -i\sin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) & 0 \\
 -i\sin(\frac{\lambda}{2}) & 0 & 0 & \cos(\frac{\lambda}{2}) \\
@@ -2000,7 +2008,7 @@ Double-Qubits Z $\otimes$ Z Gate.
 
 $$
 Rzz_{q0,q1}(\lambda) = \begin{bmatrix}
-e^{\frac{-i\lambda}{2}} & 0 & 0 & 0 \\ 
+e^{\frac{-i\lambda}{2}} & 0 & 0 & 0 \\
 0 & e^{\frac{i\lambda}{2}} & 0 & 0 \\
 0 & 0 & e^{\frac{i\lambda}{2}} & 0 \\
 0 & 0 & 0 & e^{\frac{-i\lambda}{2}} \\
@@ -2036,7 +2044,7 @@ Double-Qubits Z $\otimes$ X Gate.
 
 $$
 Rzx_{q0,q1}(\lambda) = \begin{bmatrix}
-\cos(\frac{\lambda}{2}) & -i\sin(\frac{\lambda}{2}) & 0 & 0 \\ 
+\cos(\frac{\lambda}{2}) & -i\sin(\frac{\lambda}{2}) & 0 & 0 \\
 -i\sin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) & 0 & 0 \\
 0 & 0 & \cos(\frac{\lambda}{2}) & i\sin(\frac{\lambda}{2}) \\
 0 & 0 & i\sin(\frac{\lambda}{2}) & \cos(\frac{\lambda}{2}) \\
@@ -2141,10 +2149,10 @@ Swap Gate.
 
 $$
 Swap_{q0,q1} = \begin{bmatrix}
-1 & 0 & 0 & 0 \\ 
-0 & 0 & 1 & 0 \\ 
-0 & 1 & 0 & 0 \\ 
-0 & 0 & 0 & 1 \\ 
+1 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 \\
+0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 1 \\
 \end{bmatrix}
 $$
 
@@ -2156,7 +2164,6 @@ Swap & [0, 1] | circuit
 
 [Graph Representation]
 ```python
-           
     q0:  ─────X─────
               |
     q1:  ─────X─────
@@ -2176,10 +2183,10 @@ iSwap Gate, a double-qubit XX + YY Gate.
 
 $$
 iSwap_{q0,q1} = \begin{bmatrix}
-1 & 0 & 0 & 0 \\ 
-0 & 0 & i & 0 \\ 
-0 & i & 0 & 0 \\ 
-0 & 0 & 0 & 1 \\ 
+1 & 0 & 0 & 0 \\
+0 & 0 & i & 0 \\
+0 & i & 0 & 0 \\
+0 & 0 & 0 & 1 \\
 \end{bmatrix}
 $$
 
@@ -2191,7 +2198,6 @@ iSwap & [0, 1] | circuit
 
 [Graph Representation]
 ```python
-           
     q0:  ─────X─────
               |
     q1:  ─────X─────
@@ -2211,10 +2217,10 @@ iSwap Dagger Gate.
 
 $$
 iSwapdg_{q0,q1} = \begin{bmatrix}
-1 & 0 & 0 & 0 \\ 
-0 & 0 & -i & 0 \\ 
-0 & -i & 0 & 0 \\ 
-0 & 0 & 0 & 1 \\ 
+1 & 0 & 0 & 0 \\
+0 & 0 & -i & 0 \\
+0 & -i & 0 & 0 \\
+0 & 0 & 0 & 1 \\
 \end{bmatrix}
 $$
 
@@ -2226,7 +2232,6 @@ iSwap_dagger & [0, 1] | circuit
 
 [Graph Representation]
 ```python
-           
     q0:  ─────X─────
               |
     q1:  ─────X─────
@@ -2246,10 +2251,10 @@ Swap Gate.
 
 $$
 sqiSwap_{q0,q1} = \begin{bmatrix}
-1 & 0 & 0 & 0 \\ 
-0 & \frac{1}{\sqrt{2}} & \frac{i}{\sqrt{2}} & 0 \\ 
-0 & \frac{i}{\sqrt{2}} & \frac{1}{\sqrt{2}} & 0 \\ 
-0 & 0 & 0 & 1 \\ 
+1 & 0 & 0 & 0 \\
+0 & \frac{1}{\sqrt{2}} & \frac{i}{\sqrt{2}} & 0 \\
+0 & \frac{i}{\sqrt{2}} & \frac{1}{\sqrt{2}} & 0 \\
+0 & 0 & 0 & 1 \\
 \end{bmatrix}
 $$
 
@@ -2261,7 +2266,6 @@ sqiSwap & [0, 1] | circuit
 
 [Graph Representation]
 ```python
-           
     q0:  ─────X─────
               |
     q1:  ─────X─────
@@ -2281,14 +2285,14 @@ Double-Qubit Controlled X Gate, CCX Gate.
 
 $$
 CCX_{q0,q1,q2} = \begin{bmatrix}
-1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
-0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
-0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\ 
-0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\ 
-0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\ 
-0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\ 
-0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\ 
-0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\ 
+1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\
+0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
 \end{bmatrix}
 $$
 
@@ -2324,14 +2328,14 @@ Double-Qubit Controlled Z Gate, CCZ Gate.
 
 $$
 CCZ_{q0,q1,q2} = \begin{bmatrix}
-1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
-0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
-0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\ 
-0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\ 
-0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\ 
-0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\ 
-0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\ 
-0 & 0 & 0 & 0 & 0 & 0 & 0 & -1 \\ 
+1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & -1 \\
 \end{bmatrix}
 $$
 
@@ -2367,14 +2371,14 @@ Double-Qubit Controlled Rz Gate, CCRz Gate.
 
 $$
 CCRz_{q0,q1,q2}(\lambda) = \begin{bmatrix}
-1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
-0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
-0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\ 
-0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\ 
-0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\ 
-0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\ 
-0 & 0 & 0 & 0 & 0 & 0 & e^{\frac{-i\lambda}{2}} & 0 \\ 
-0 & 0 & 0 & 0 & 0 & 0 & 0 & e^{\frac{i\lambda}{2}} \\ 
+1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & e^{\frac{-i\lambda}{2}} & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & e^{\frac{i\lambda}{2}} \\
 \end{bmatrix}
 $$
 
@@ -2410,14 +2414,14 @@ Controlled Swap Gate.
 
 $$
 CSwap_{q0,q1,q2} = \begin{bmatrix}
-1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
-0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\ 
-0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\ 
-0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\ 
-0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\ 
-0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\ 
-0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\ 
-0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\ 
+1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\
 \end{bmatrix}
 $$
 
