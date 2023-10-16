@@ -142,13 +142,13 @@ class Layout:
 
     @property
     def directionalized(self) -> Layout:
-        """Return a copy of current layout with all un-directional edges
+        """Return a copy of current layout with all undirected edges
         replaced with 2 reversed directional edges.
         """
         layout = Layout(self._qubit_number, self._name)
         for edge in self:
             if edge.directional:
-                layout.add_edge(u=edge.u, v=edge.v)
+                layout.add_edge(u=edge.u, v=edge.v, directional=True, error_rate=edge.error_rate)
             else:
                 layout.add_edge(
                     u=edge.u, v=edge.v, directional=True, error_rate=edge.error_rate
@@ -201,7 +201,7 @@ class Layout:
         )
 
     def valid_circuit(self, circuit) -> bool:
-        """ Valid the given Circuit/CompositeGate is valid with current Layout.
+        """ Validate the given Circuit/CompositeGate is valid with current Layout.
 
         Args:
             circuit (Union[Circuit, CompositeGate]): The given Circuit/CompositeGate
@@ -220,7 +220,7 @@ class Layout:
             if len(qidxes) > 2:
                 return False
             elif len(qidxes) == 2:
-                if not self.check_edge(qidxes[0], qidxes[1]):
+                if not self.check_edge(qidxes[0], qidxes[1]) or not self.check_edge(qidxes[1], qidxes[0]):
                     return False
 
         return True
@@ -299,7 +299,7 @@ class Layout:
         return sub_edges
 
     def sub_layout(self, qubits: list) -> Layout:
-        """ Get partial layout. Only working for undirectional layout.
+        """ Get partial layout. Only working for undirected layout.
 
         Args:
             qubits_number (list): The qubit indexes for sub-layout
@@ -325,7 +325,7 @@ class Layout:
 
     @staticmethod
     def linear_layout(qubit_number: int, directional: bool = DIRECTIONAL_DEFAULT, error_rate: list = None):
-        """ Get Linearly Topology.
+        """ Return the layout with linearly topology.
 
         Args:
             qubit_number(int): the number of qubits
@@ -361,7 +361,7 @@ class Layout:
             width (int, optional): The width of grid layout. Defaults to None.
             unreachable_nodes (list, optional): The nodes which are not work. Defaults to [].
             directional (bool, optional): Whether the edge is directional. Defaults to DIRECTIONAL_DEFAULT.
-            error_rate (list, optional): Error rate for each edges, default 1.0. Defaults to [].
+            error_rate (list, optional): Error rate for each edge, default 1.0. Defaults to [].
                 WARNING: The error rate is for each valid edges from top to bottom, left to right. Please make sure
                 you know exactly every edges' position and rate.
 
@@ -414,9 +414,9 @@ class Layout:
             width (int, optional): The width of grid layout. Defaults to None.
             unreachable_nodes (list, optional): The nodes which are not work. Defaults to [].
             directional (bool, optional): Whether the edge is directional. Defaults to DIRECTIONAL_DEFAULT.
-            error_rate (list, optional): Error rate for each edges, default 1.0. Defaults to [].
-                WARNING: The error rate is for each valid edges from top to bottom, left to right. Please make sure
-                you know exactly every edges' position and rate.
+            error_rate (list, optional): Error rate for each edge, default 1.0. Defaults to [].
+                WARNING: The error rate is arranged in order of valid edges, from top to bottom, left to right.
+                Please make sure you know exactly every edges' position and rate.
 
         Returns:
             Layout: The layout with rhombus topology

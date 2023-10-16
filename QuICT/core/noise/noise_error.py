@@ -215,7 +215,7 @@ class PhaseflipError(PauliError):
         [('z', prob), ('i', 1 - prob)]
 
     Args:
-        prob (float): The probability to flip the phase.
+        prob (float): The probability of fliping the phase.
     """
     def __init__(self, prob: float):
         ops = [('i', 1 - prob), ('z', prob)]
@@ -228,7 +228,7 @@ class PhaseBitflipError(PauliError):
         [('y', prob), ('i', 1 - prob)]
 
     Args:
-        prob (float): The probability to flip the qubit and phase.
+        prob (float): The probability of fliping the qubit and phase.
     """
     def __init__(self, prob: float):
         ops = [('i', 1 - prob), ('y', prob)]

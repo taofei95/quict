@@ -792,7 +792,7 @@ class Perm(BasicGate):
             params (list[int]): the list of index, and the index represent which should be 1.
 
         Returns:
-            PermFxGate: the gate after filled by parameters
+            PermGate: the Perm Gate.
         """
         if not isinstance(params, list) or not isinstance(targets, int):
             raise TypeError(f"targets must be int {type(targets)}, params must be list {type(params)}")
@@ -826,35 +826,6 @@ class Perm(BasicGate):
         inverse_targs = [self.targets - 1 - t for t in self.pargs]
 
         return Perm(self.targets, inverse_targs)
-
-
-class PermFx(Perm):
-    def __init__(self, targets: int, params: list):
-        """
-        Args:
-            n (int): the number of target qubits
-            params (list[int]): the list of index, and the index represent which should be 1.
-
-        Returns:
-            PermFxGate: the gate after filled by parameters
-        """
-        if not isinstance(params, list) or not isinstance(targets, int):
-            raise TypeError(f"targets must be int {type(targets)}, params must be list {type(params)}")
-
-        N = 1 << targets
-        for p in params:
-            assert p >= 0 and p < N, Exception("the params should be less than N")
-
-        targets = targets + 1
-        parameters = 1 << targets
-        pargs = []
-        for idx in range(1 << targets):
-            if idx >> 1 in params:
-                pargs.append(idx ^ 1)
-            else:
-                pargs.append(idx)
-
-        super().__init__(0, targets, parameters, GateType.perm_fx, MatrixType.normal, pargs)
 
 
 class MultiControlGate(BasicGate):
