@@ -82,7 +82,11 @@ class Hamiltonian:
         for pauli_operator in self._pauli_str:
             assert isinstance(pauli_operator[0], int) or isinstance(
                 pauli_operator[0], float
-            ), TypeError("Hamiltonian.init", "int or float", pauli_operator[0].type,)
+            ), TypeError(
+                "Hamiltonian.init",
+                "int or float",
+                pauli_operator[0].type,
+            )
             for pauli_gate in pauli_operator[1:][::-1]:
                 if "I" in pauli_gate:
                     pauli_operator.remove(pauli_gate)
@@ -90,7 +94,7 @@ class Hamiltonian:
 
         self._pauli_str = new_pauli_str
 
-    def get_hamiton_matrix(self, n_qubits):
+    def get_hamilton_matrix(self, n_qubits):
         """Construct a matrix form of the Hamiltonian.
 
         Args:
@@ -99,14 +103,14 @@ class Hamiltonian:
         Returns:
             np.array: The Hamiltonian matrix.
         """
-        hamiton_matrix = np.zeros((1 << n_qubits, 1 << n_qubits), dtype=np.complex128)
-        hamiton_circuits = self.construct_hamiton_circuit(n_qubits)
-        for coeff, circuit in zip(self._coefficients, hamiton_circuits):
-            hamiton_matrix += coeff * circuit.matrix()
+        hamilton_matrix = np.zeros((1 << n_qubits, 1 << n_qubits), dtype=np.complex128)
+        hamilton_circuits = self.construct_hamilton_circuit(n_qubits)
+        for coeff, circuit in zip(self._coefficients, hamilton_circuits):
+            hamilton_matrix += coeff * circuit.matrix()
 
-        return hamiton_matrix
+        return hamilton_matrix
 
-    def construct_hamiton_circuit(self, n_qubits):
+    def construct_hamilton_circuit(self, n_qubits):
         """Construct a circuit form of the Hamiltonian.
 
         Args:
@@ -115,7 +119,7 @@ class Hamiltonian:
         Returns:
             list<Circuit>: A list of circuits corresponding to the Hamiltonian.
         """
-        hamiton_circuits = []
+        hamilton_circuits = []
         gate_dict = {"X": X, "Y": Y, "Z": Z}
         for qubit_index, pauli_gate in zip(self._qubit_indexes, self._pauli_gates):
             circuit = Circuit(n_qubits)
@@ -123,8 +127,8 @@ class Hamiltonian:
                 if gate not in gate_dict.keys():
                     raise HamiltonianError("Invalid Pauli gate.")
                 gate_dict[gate] | circuit(qid)
-            hamiton_circuits.append(circuit)
-        return hamiton_circuits
+            hamilton_circuits.append(circuit)
+        return hamilton_circuits
 
     def _pauli_str_validation(self):
         """Validate the Pauli string."""
@@ -135,7 +139,11 @@ class Hamiltonian:
         """Validate the Pauli operator."""
         assert isinstance(pauli_operator[0], int) or isinstance(
             pauli_operator[0], float
-        ), TypeError("Hamiltonian.init", "int or float", pauli_operator[0].type,)
+        ), TypeError(
+            "Hamiltonian.init",
+            "int or float",
+            pauli_operator[0].type,
+        )
 
         indexes = []
         pauli_gates = ""
