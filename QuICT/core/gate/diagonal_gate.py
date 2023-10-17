@@ -495,9 +495,72 @@ class DiagonalGate(object):
         return gates
 
     @classmethod
+    def binary_addition(cls, binary_string1, binary_string2, n):
+        """
+        implement the function:
+        x ⊕ y = (x1 ⊕ y1, x2 ⊕ y2, · · · , xn ⊕ yn)^T
+
+        Args:
+            binary_string1(string):binary string like x
+            binary_string2(string):binary string like y
+            n(int):the length of the binary strings
+
+        return:
+            A string with bitwise binary addition
+        """
+
+        result = ''
+        for i in range(n):
+            bit1 = int(binary_string1[i])
+            bit2 = int(binary_string2[i])
+            sum_bits = (bit1 + bit2) % 2
+            result += str(sum_bits)
+        return result
+
+    @classmethod
+    def int_to_binary(cls, num, n):
+        """
+        implement the function:
+
+        Args:
+            num(int):the number from 0 to 2^n-1
+            n(int):the length of the binary strings
+
+        return:
+            Numeric num converted binary string
+        """
+
+        binary_str = bin(num)[2:]  # convert to binary without the '0b' prefix
+        if len(binary_str) < n:
+            binary_str = '0' * (n - len(binary_str)) + binary_str
+        elif len(binary_str) > n:
+            raise ValueError("Integer is not within the valid range.")
+        return binary_str
+
+    @classmethod
+    def S_x(cls, x, n):
+        """
+        implement the Appendix H,also the construction of sets S_x.
+
+        Args:
+            x(int):the number from 0 to 2^n-1
+            n(int):the length of these binary strings
+
+        return:
+            A array S_x = [x ⊕ e1,x ⊕ e2,...,x ⊕ en]
+        """
+        sx = [cls.int_to_binary(n, x)] * n
+        for i in range(n):
+            en = cls.int_to_binary(1 << (n - i - 1), n)
+            sx[i] = cls.binary_addition(sx[i], en, n)
+
+        return sx
+
+    @classmethod
     def linearly_independent_sets_T(cls, n):
         """
         implement the Appendix H,also the construction of sets T.
         """
 
-        s = []
+        sx = cls.S_x(x,n)
+
