@@ -4,78 +4,73 @@
 
     # core
         # circuit build
-            # random_append(special_set)
+            # random_append(special_set)  ok
                 # special_set=google_set/ibmq_set...
-            # supremacy_append
-            # gate() | cir()
-            # gate() | cir([])
-            # gate & [] | cir
-            # cir.append(gate & [])
-            # cir.sub_circuit
-            # cir.to_compositegate
-            # cir.add_qubit
-            # cir.insert(gate & compositegate_index, index)
-            # cir.extend
-            # cir.inverse
-            # cir.gate_decomposition
-            # cir.set_precision
-            # QFT() | cir
-            # IQFT() | cir
-            # Unitary | cir
-            # Perm | cir
-            # PermFx | cir
-            # MultiControlGate | cir
-            # cir.fast_gates
-            # cir.reset_qubits
-            # cir.find_position
-            # cir.get_DAG_circuit
-            # cir.pop
-            # cir.adjust
-            # cir | cir
-            # compositegate | cir
-            # compositegate(compositegate) | cir
-            # compositegate | compositegate
-            # cir | cir
+            # supremacy_append  ok
+            # gate() | cir()  ok
+            # gate() | cir([])  ok
+            # gate & [] | cir  ok
+            # cir.append(gate & [])  ok
+            # cir.sub_circuit  ok
+            # cir.to_compositegate  ok
+            # cir.add_qubit  ok
+            # cir.insert(gate & compositegate_index, index)  ok
+            # cir.extend  ok
+            # cir.inverse  ok
+            # cir.gate_decomposition  ok
+            # cir.set_precision  ok
+            # QFT() | cir  ok
+            # IQFT() | cir  ok
+            # Unitary | cir  ok
+            # Perm | cir  -
+            # PermFx | cir  -
+            # MultiControlGate | cir  -
+            # cir.fast_gates  ok
+            # cir.reset_qubits  ok
+            # cir.find_position  -
+            # cir.get_DAG_circuit  ok
+            # cir.pop  ok
+            # cir.adjust  -
+            # cir | cir  ok
+            # compositegate | cir  ok
+            # compositegate(compositegate) | cir  ok
+            # compositegate | compositegate  ok
 
         # circuit infos
-            # cir.width
-            # cir.size
-            # cir.depth
-            # cir.count_1qubit_gate
-            # cir.count_2qubit_gate
-            # cir.count_gate_by_gatetype(gate)
-            # cir.count_training_gate
-            # cir.matrix
-            # cir.get_unitary_matrix
-            # cir.merge_gates
-            # cir.get_gates_order_by_depth
-            # cir.ancilla_qubits 
-            # cir.gates
-            # cir.draw
-            # cir.qasm
+            # cir.width  ok with qiskit
+            # cir.size  ok with qiskit
+            # cir.depth  ok with qiskit
+            # cir.count_1qubit_gate  ok
+            # cir.count_2qubit_gate  ok
+            # cir.count_gate_by_gatetype(gate)  ok
+            # cir.count_training_gate  -
+            # cir.matrix  ok test with qcda
+            # cir.ancilla_qubits  ok
+            # cir.gates  ok
+            # cir.draw  ok
+            # cir.qasm  ok
+            # cir.show_detail  ok
 
         # compositegate
             # similar to circuit
 
         # gate infos
-            # gate.build_gate
+            # gate.build_gate  ok
             # gate.commutative
-            # gate.expand
-            # gate.copy
-            # gate.permit_element
-            # gate.type
-            # gate.matrix_type
-            # gate.precision
-            # gate.qasm_name
-            # gate.grad_matrix
-            # gate.targes + gate.controls
-            # gate.targ + gate.carg
-            # gate.params
-            # gate.variables
-            # gate.is_clifford/is_diagonal....
+            # gate.expand  ok
+            # gate.copy  ok
+            # gate.type  ok
+            # gate.matrix_type  ok
+            # gate.precision  ok
+            # gate.qasm_name  ok
+            # gate.targes + gate.controls  ok
+            # gate.targ + gate.carg ok
+            # gate.params  ok
+            # gate.variables  ok
+            # gate.is_clifford/is_diagonal....  ok
 
             # InstructionSet
-                # InstructionSet(gate_q2, [gate_q1])
+                # InstructionSet(gate_q2, [gate_q1])  ok test with qcda
 
         # layout
             # Layout.add_edge

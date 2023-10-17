@@ -19,7 +19,8 @@ all_gates = [
 ]
 
 # test circuit infos with qiskit
-def all_gates_random_circuit(q):
+def all_gates_random_circuit():
+    q = random.choice(list(range(5, 15)))
     cir_quict = Circuit(q)
     cir_qiskit = Circuit(q)
     qubit_range = list(range(q))
@@ -33,9 +34,11 @@ def all_gates_random_circuit(q):
 
         gate & index_quict | cir_quict
         gate & index_qiskit | cir_qiskit
+
     return cir_quict, cir_qiskit
 
-def special_random_circuit(q):
+def special_random_circuit():
+    q = random.choice(list(range(5, 15)))
     cir_quict = Circuit(q)
     cir_qiskit = Circuit(q)
     cgate1, cgate2 = all_gates_random_circuit(q)
@@ -99,7 +102,6 @@ def test_special_gate():
     mct = MultiControlToffoli(aux_usage='no_aux')
     mct_gate = mct(3)
     mct_gate | cir
-    print(cir.qasm())
 
 def test_gate_to_cir():
     q = random.choice(list(range(5, 15)))
@@ -192,4 +194,4 @@ def test_cir_to_cir():
             cir.inverse() | cir
     print(cir.qasm())
 
-test_cir_to_cir()
+all_gates_random_circuit()
