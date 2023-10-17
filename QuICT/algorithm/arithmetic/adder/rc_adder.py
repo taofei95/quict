@@ -5,14 +5,41 @@ from QuICT.algorithm.qft import ry_QFT, ry_IQFT
 
 
 class RCFourierAdderWired(CompositeGate):
-    """
-        An adder in Fourier space using ry QFT. A quantum-classical adder
-        circuit, addend is hardwired into the circuit. Assuming size of
-        the quantum register is "n" and the addend is in the range, this
-        adder is in place, uses n qubits.
+    r"""
+        A wired in-place adder in fourier basis. One of the addend is given classically and will be
+        written into the adder when contructing the gate. For a n-qubit binary encoded addends `a`
+        and a classically given integer `X`, this adder calculates the result and store it in place:
 
-        Based on paper "High Performance Quantum Modular Multipliers"
-        by Rich Rines, Isaac Chuang: https://arxiv.org/abs/1801.01081
+        $$
+            \vert{a}\rangle_n \to \vert{X+a \mod 2^n}\rangle_n
+        $$
+
+        Applying this adder with `X = 5` on a 4-qubit sized register looks like:
+
+                    ┌──────────┐┌──────────┐┌──────────┐
+            q_0: |0>┤0         ├┤ ry(5π/8) ├┤0         ├
+                    │          │├──────────┤│          │
+            q_1: |0>┤1         ├┤ ry(5π/4) ├┤1         ├
+                    │  cg_yQFT │├──────────┤│  cg_IQFT │
+            q_2: |0>┤2         ├┤ ry(5π/2) ├┤2         ├
+                    │          │└┬────────┬┘│          │
+            q_3: |0>┤3         ├─┤ ry(5π) ├─┤3         ├
+                    └──────────┘ └────────┘ └──────────┘
+
+        Examples:
+            >>> from QuICT.core import Circuit
+            >>> from QuICT.algorithm.arithmetic import RCFourierAdderWired
+            >>>
+            >>> X = 5
+            >>> circuit = Circuit(4)
+            >>> RCFourierAdderWired(4, addend=X) | circuit
+
+        Note:
+            The quantum fourier transform used in this adder is ryQFT instead of regular QFT.
+
+        References:
+            [1]: "High Performance Quantum Modular Multipliers" by Rich Rines, Isaac Chuang
+            <https://arxiv.org/abs/1801.01081>
     """
 
     def __init__(
@@ -25,10 +52,7 @@ class RCFourierAdderWired(CompositeGate):
         name: str = "RCAdder"
     ):
         """
-            Construct the adder circuit that adds 'addend' to a quantum
-            register of size 'qreg_size'The circuit will have width
-            'qreg_size' for 'controlled' is False and 'qreg_size + 1'
-            for 'controlled' is True with the control bit on the index 0.
+            Construct a wired classical-quantum adder in fourier basis.
 
             Args:
                 qreg_size (int):
@@ -51,6 +75,8 @@ class RCFourierAdderWired(CompositeGate):
                     If True, after the addition, the qreg will be left in
                     ry-qft basis.
 
+            Raises:
+                GateParametersAssignedError: If `qreg_size` is smaller than 2.
         """
 
         self._addend = addend
@@ -73,10 +99,12 @@ class RCFourierAdderWired(CompositeGate):
 
     @property
     def is_controlled(self):
+        """ A bool value indicating if the adder is a controlled gate. """
         return self._controlled
 
     @property
     def addend(self):
+        """ The classical addend in use for contructing the adder gate. """
         return self._addend
 
     def _build_phi_adder(

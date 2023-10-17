@@ -2,14 +2,19 @@ from QuICT.core.gate import H, CX, T, T_dagger, CompositeGate
 
 
 class HLPeres(CompositeGate):
-    """
+    r"""
         Implement a Peres Gate using T gates:
 
-        |a>|b>|c> ---> |a>|a⊕b>|a.b⊕c>
+        $$
+            \vert{a}\rangle \vert{b}\rangle \vert{c}\rangle
+            \to
+            \vert{a}\rangle \vert{a \oplus b}\rangle \vert{a \cdot b\oplus c}\rangle
+        $$
 
-        Based on papers ""Efficient quantum arithmetic operation circuits for quantum image processing"
-        by Hai-Sheng Li, Ping Fan, Haiying Xia, Huiling Peng and Gui-Lu Long:
-        https://doi.org/10.1007/s11433-020-1582-8
+        References:
+            [1]: "Efficient quantum arithmetic operation circuits for quantum image processing" by
+            Hai-Sheng Li, Ping Fan, Haiying Xia, Huiling Peng and Gui-Lu Long
+            <https://doi.org/10.1007/s11433-020-1582-8>
     """
 
     def __init__(self, name: str = None):
