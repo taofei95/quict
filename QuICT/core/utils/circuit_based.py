@@ -295,6 +295,10 @@ class CircuitBased(object):
         if decomposition:
             temp_decomp_gates = []
             for gate, qidxes, size in decomp_gates:
+                if type(gate).__name__ == "NoiseGate":
+                    temp_decomp_gates.append((gate, qidxes, size))
+                    continue
+
                 cgate = gate.build_gate(qidxes)
                 if cgate is not None:
                     temp_decomp_gates += cgate._gates

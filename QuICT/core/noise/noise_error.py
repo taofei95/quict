@@ -93,7 +93,7 @@ class QuantumNoiseError:
             expand_operator.append((expand_matrix, prob))
 
         if change_itself:
-            self.operators = expand_matrix
+            self.operators = expand_operator
         else:
             return QuantumNoiseError(expand_operator)
 
@@ -119,7 +119,7 @@ class QuantumNoiseError:
     def tensor(self, other):
         """ generate tensor noise error with self and other. """
         assert isinstance(other, QuantumNoiseError), TypeError(
-            "QuantumNoiseError.compose", "QuantumNoiseError", type(other)
+            "QuantumNoiseError.tensor", "QuantumNoiseError", type(other)
         )
 
         composed_ops = []
@@ -138,9 +138,11 @@ class QuantumNoiseError:
         return [dot(ops, matrix) for ops in self.kraus]
 
     def prob_mapping_operator(self, prob: float) -> np.ndarray:
-        """ Return the related noise error's matrix with given probability. """
+        """ Return the related noise error's matrix with given probability.
+        The given probability should within [0, 1].
+        """
         for matrix, error_prob in self._operators:
-            if prob < error_prob:
+            if prob <= error_prob:
                 return matrix
 
             prob -= error_prob

@@ -102,7 +102,7 @@ class JobValidation:
         # Validate qcda mapping args
         if qcda_dict["mapping"]["enable"]:
             try:
-                _ = Layout(1).load_file(qcda_dict["mapping"]["layout_path"])
+                _ = Layout(2).load_file(qcda_dict["mapping"]["layout_path"])
             except Exception as e:
                 raise KeyError(f"Failure to load layout from file as {e}.")
 

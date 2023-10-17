@@ -204,6 +204,9 @@ class CompositeGate(CircuitBased):
         Args:
             gates (CompositeGate): The given CompositeGate
         """
+        if gates.size() == 0:
+            return
+
         if self._pointer is not None:
             gate_args = gates.width()
             assert gate_args <= len(self._pointer), GateQubitAssignedError(
